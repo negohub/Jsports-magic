@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="回避マジック">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260926180550">
+<meta name="build" content="20260926181105">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -519,8 +519,8 @@ a.tn .nmx{border-bottom:1px solid rgba(255,255,255,.28)}
       <p>月度の最下位の担当者が、庄村にJ SPORTS代2,580円を支払います（担当：阪神＝根来、巨人＝池田、DeNA＝新國、中日＝庄村、ヤクルト＝今井）。</p>
       <p>対象は広島を除く5球団。3・4月と9・10月はまとめて1つの月度、それ以外は1か月ごとにリセット。交流戦も含む全公式戦の勝敗で集計します。</p>
       <p>順位は勝率（勝÷（勝＋敗）、引き分けは除外）。最下位で並んだ場合は回避できていない扱いです。</p>
-      <p>M は、どの試合で勝っても最下位回避が確定する残りの勝ち数。直接対決の勝ちは相手の負けも同時に進みます。自力で決められないときは「--」。</p>
-      <p>相手別の数字は「自分の勝ち＋相手の負け」の合計でいくつになれば、その球団より上が確定するか。</p>
+      <p>M は、どの試合で勝っても最下位回避が確定する残りの勝ち数。自力で決められない球団は空欄です。★は回避確定、赤い「支払い」は最下位確定。</p>
+      <p>差は1つ上の球団とのゲーム差。</p>
     </details>
   </section>
 
@@ -1483,9 +1483,11 @@ async function load() {
   catch { DATA = SNAP; fromSnap = true; }
   renderAll();
 }
-async function check() {
-  // サイト本体が新しくなっていないか
-  try {
+let lastSiteCheck = 0;
+async function check(force) {
+  // サイト本体が新しくなっていないか（通信量を抑えるため10分に1回、アプリに戻ったときは毎回）
+  if (force || Date.now() - lastSiteCheck > 10 * 60 * 1000) try {
+    lastSiteCheck = Date.now();
     const r = await fetch(location.pathname + "?t=" + Date.now(), { cache: "no-store" });
     const m = (await r.text()).match(/<meta name="build" content="([^"]+)"/);
     if (m && m[1] !== BUILD) { showToast("site"); return; }
@@ -1499,8 +1501,8 @@ async function check() {
 }
 load();
 setInterval(check, 60 * 1000);
-document.addEventListener("visibilitychange", () => { if (!document.hidden) check(); });
-window.addEventListener("pageshow", e => { if (e.persisted) check(); });
+document.addEventListener("visibilitychange", () => { if (!document.hidden) check(true); });
+window.addEventListener("pageshow", e => { if (e.persisted) check(true); });
 </script>
 </body>
 </html>
