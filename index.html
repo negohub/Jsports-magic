@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="回避マジック">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260926193938">
+<meta name="build" content="20260926194601">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -420,7 +420,7 @@ h2 small{margin-left:10px}
 .frow{padding:10px 8px;margin-bottom:4px;border-bottom:0;background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 22%,#0B0B0B),#0B0B0B 60%)}
 .fb i{background:#1A1A1A}
 /* 順位表：行ごとにチームカラーをうっすら */
-#std tbody tr{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 20%,transparent),transparent 55%)}
+#std tbody tr,.mtbl tbody tr{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 20%,transparent),transparent 55%)}
 #std tbody tr:first-child td{border-top:0}
 .hrow{padding:12px 10px;margin-bottom:4px;border-bottom:0;background:#0E0E0E}
 .yrow{padding:12px 10px 14px;margin-bottom:6px;border-bottom:0;background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 20%,#0B0B0B),#0B0B0B 60%)}
@@ -581,6 +581,21 @@ h2{font-weight:700;margin-top:30px}
 .alert .pay{font-weight:700}
 
 .lvmini{display:block;color:#FF3B3B;font-size:11px;font-weight:700;margin-top:1px;letter-spacing:0}
+
+/* マジックタブの表（順位表と同じ形） */
+.cards{margin-top:18px}
+.mtbl td .own{display:block;font-size:11px;color:var(--muted);font-weight:400;margin:1px 0 0 32px;letter-spacing:0}
+.mtbl td .lvmini{margin-left:32px}
+.mtbl tbody tr.low{background:linear-gradient(90deg,rgba(255,43,43,.28),rgba(255,43,43,.10) 70%)}
+.mtbl tbody tr.low td:first-child{box-shadow:inset 3px 0 0 var(--ng)}
+.mtbl tbody tr.paid{background:linear-gradient(90deg,rgba(255,43,43,.4),rgba(255,43,43,.15))}
+.mtbl td.mgc{text-align:right;min-width:48px}
+.mtbl .mt{font-size:19px;font-weight:700;color:#fff}
+.mtbl .mt.ng{color:var(--ng);font-size:14px}
+.mtbl th.mgh{text-align:right}
+.mtbl td,.mtbl th{padding-left:4px;padding-right:4px}
+.mtbl td:first-child,.mtbl th:first-child{padding-left:8px}
+.mtbl td:last-child,.mtbl th:last-child{padding-right:8px}
 </style>
 </head>
 <body>
@@ -1079,21 +1094,18 @@ function renderMagic() {
   }
 
   const lastIdx = a.rows.length - 1;
-  $("cards").innerHTML = `<div class="bhead"><span>順位・球団（タップで公式サイト）</span><span>マジック</span></div>` + a.rows.map((r, i) => {
-    const rp = r.rate * 100;
-    const ratePct = rp > 99 && rp < 100 ? Math.min(99.9, Math.floor(rp * 10) / 10) : rp > 0 && rp < 1 ? Math.max(0.1, Math.round(rp * 10) / 10) : Math.round(rp);
-    const gb = r.gb === null ? "首位" : `差${r.gb.toFixed(1)}`;
+  $("cards").innerHTML = `<div class="table-wrap"><table class="mtbl"><thead><tr><th>順</th><th>チーム</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>差</th><th>残</th><th class="mgh">M</th></tr></thead><tbody>` + a.rows.map((r, i) => {
     const isLow = !r.safe && (i === lastIdx || cmp(r.w, r.l, a.rows[lastIdx].w, a.rows[lastIdx].l) === 0);
     const paid = r.eliminated || (a.finished && i === lastIdx);
     let mg;
-    if (paid) mg = `<span class="mn ng">支払い</span>`;
-    else if (r.safe) mg = `<span class="mn star" aria-label="回避確定">★</span>`;
-    else mg = r.self === null ? "" : `<span class="mn"><small>M</small>${r.self}</span>`;
-    return `<div class="brow${isLow && !a.finished ? " low" : ""}${paid ? " paid" : ""}" style="${tv(r.t)};--i:${i}">
-      <a class="tb" href="${TEAM_URL[r.t]}" target="_blank" rel="noopener" aria-label="${fn(r.t)}の公式サイト"><span class="rk num">${i + 1}</span><span class="kj">${sn(r.t)}</span></a>
-      <div class="tm"><b><a class="tl" href="${TEAM_URL[r.t]}" target="_blank" rel="noopener">${fn(r.t)}</a><small class="ow">${CONFIG.owners[r.t] || ""}</small></b><span class="num">${r.w}勝${r.l}敗${r.d}分　<em>${pctOf(r.w, r.l)}</em></span><span class="sm num">${gb}　残${r.rem}${liveTag(r.t)}</span></div>
-      <div class="mg">${mg}</div></div>`;
-  }).join("");
+    if (paid) mg = `<span class="mt ng">支払い</span>`;
+    else if (r.safe) mg = `<span class="mt" aria-label="回避確定">★</span>`;
+    else mg = r.self === null ? "" : `<span class="mt">M${r.self}</span>`;
+    const gb = r.gb === null ? "-" : r.gb.toFixed(1);
+    return `<tr class="${isLow && !a.finished ? "low" : ""}${paid ? " paid" : ""}" style="${tv(r.t)}"><td>${i + 1}</td>
+      <td><a class="tn" href="${TEAM_URL[r.t]}" target="_blank" rel="noopener"><span class="badge" style="${tv(r.t)}">${sn(r.t)}</span><span class="nmx">${fn(r.t)}</span></a><small class="own">${CONFIG.owners[r.t] || ""}</small>${liveMini(r.t)}</td>
+      <td class="num">${r.w}</td><td class="num">${r.l}</td><td class="num">${r.d}</td><td class="num pc">${pctOf(r.w, r.l)}</td><td class="num">${gb}</td><td class="num">${r.rem}</td><td class="mgc">${mg}</td></tr>`;
+  }).join("") + `</tbody></table></div><p class="foot">球団名をタップすると公式サイト。差は1つ上の球団とのゲーム差、残は月度の残り試合、Mは最下位回避マジック（★は回避確定）。</p>`;
 
   renderTrend(a); renderForm();
   // 確定の条件（まとめて1か所）
