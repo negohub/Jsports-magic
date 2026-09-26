@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="回避マジック">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260926185925">
+<meta name="build" content="20260926192429">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -221,7 +221,7 @@ td.pc{font-weight:900}
 /* タブバー */
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:10;background:rgba(0,0,0,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   border-top:1px solid var(--line);padding:4px 10px calc(4px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center}
-.tabbar nav{display:grid;grid-template-columns:repeat(5,1fr);width:100%;max-width:480px}
+.tabbar nav{display:grid;grid-template-columns:repeat(6,1fr);width:100%;max-width:480px}
 .tabbar button{background:none;border:0;cursor:pointer;padding:8px 0 6px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:800;color:var(--dim);position:relative}
 .tabbar button svg{width:23px;height:23px}
 .tabbar button[aria-selected="true"]{color:#fff}
@@ -521,6 +521,33 @@ a.tn .nmx{border-bottom:1px solid rgba(255,255,255,.28)}
 .ytbl td.ya small{font-size:10.5px;color:var(--muted);font-weight:700}
 .ytbl .ytag{font-size:9px;padding:1px 4px;margin-left:4px;vertical-align:2px}
 @media (max-width:374px){.ytbl td.yn .badge{display:none}.ytbl td.yc2 b{width:22px;height:22px;font-size:13px}}
+
+/* 試合タブ */
+.lswrap{overflow-x:auto;margin:4px 0 10px}
+.ls{width:100%;border-collapse:separate;border-spacing:2px;min-width:320px}
+.ls th,.ls td{padding:0;text-align:center;font-size:14px;border:0;height:30px;font-weight:800}
+.ls thead th{font-size:11.5px;color:var(--muted);height:20px}
+.ls thead th.cur{color:#fff}
+.ls tbody th{width:28px}
+.ls tbody th .badge{width:24px;height:24px;font-size:11px}
+.ls td{background:#1A1A1A;color:#fff;min-width:20px}
+.ls td.cur{background:#3A0B0E;box-shadow:inset 0 0 0 1px #FF3B3B}
+.ls td.tot{background:#fff;color:#000;font-weight:900}
+.ls td.sub{background:#262626;color:#BDBDBD}
+.nowbat{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;background:#1A0406;border-left:3px solid #FF3B3B;padding:8px 10px;margin-bottom:10px}
+.nowbat b{font-size:15px}
+.nowbat .sit{font-size:13px;color:#DADADA;font-weight:700}
+.plays{margin:0 0 10px}
+.plays .pt{font-size:12px;color:var(--muted);font-weight:800;margin-bottom:4px}
+.pl{display:grid;grid-template-columns:44px 1fr auto;gap:2px 8px;align-items:baseline;padding:6px 0;border-top:1px solid #1E1E1E;font-size:13.5px}
+.pl .ph{color:var(--muted);font-weight:800;font-size:12px}
+.pl .pn{font-weight:800}
+.pl .pk{grid-column:2;font-size:11.5px;font-weight:900;color:#000;background:#FFD21F;padding:0 6px;justify-self:start}
+.pl .ps{grid-column:3;grid-row:1 / span 2;font-weight:900;font-size:14px;align-self:center}
+.pbp{display:block;text-align:center;border:1px solid #333;color:#fff;text-decoration:none;font-size:13px;font-weight:800;padding:9px;margin-bottom:10px}
+.pbp:active{opacity:.7}
+.tabbar button{font-size:10px}
+.tabbar button svg{width:22px;height:22px}
 </style>
 </head>
 <body>
@@ -540,10 +567,6 @@ a.tn .nmx{border-bottom:1px solid rgba(255,255,255,.28)}
     <div class="cards" id="cards"></div>
     <div class="excl" id="excl"></div>
     <button class="shot" id="shotBtn" type="button">画像にしてLINEで送る</button>
-    <section class="blk" id="todayBlk">
-      <h2 id="todayTtl">今日の試合</h2>
-      <div id="today"></div>
-    </section>
     <section class="blk" id="trendBlk">
       <h2>順位の推移<small id="trendNote"></small></h2>
       <div class="trend" id="trend"></div>
@@ -587,6 +610,14 @@ a.tn .nmx{border-bottom:1px solid rgba(255,255,255,.28)}
     <div class="tot" id="tot"></div>
     <p class="foot">数字は各月度の順位（白＝1位、赤＝最下位、点線＝集計中）。支払いの少ない順、同じなら平均順位の順に並べています。</p>
   </section>
+  <section class="view" id="v-game" aria-label="今日の試合" hidden>
+    <section class="blk" id="todayBlk">
+      <h2 id="todayTtl">今日の試合</h2>
+      <div id="today"></div>
+    </section>
+    <div class="rempty" id="noGame" hidden>対象の球団の試合はしばらくありません。</div>
+  </section>
+
   <section class="view" id="v-song" aria-label="応援歌" hidden>
     <div class="teams" id="songTeams"></div>
     <div class="songhead" id="songHead"></div>
@@ -626,6 +657,8 @@ a.tn .nmx{border-bottom:1px solid rgba(255,255,255,.28)}
   <nav role="tablist" aria-label="表示の切り替え">
     <button type="button" role="tab" data-tab="magic" aria-selected="true">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 15V9l2.5 3L13 9v6"/><path d="M16 9v6"/></svg>マジック</button>
+    <button type="button" role="tab" data-tab="game" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 9-9 9-9-9z"/><circle cx="12" cy="12" r="1.6"/></svg>試合</button>
     <button type="button" role="tab" data-tab="cal" aria-selected="false">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>日程</button>
     <button type="button" role="tab" data-tab="std" aria-selected="false">
@@ -951,6 +984,7 @@ function defaultPeriod(list) {
 }
 const TAB_TITLE = {
   magic: ["J SPORTS", "支払い回避マジック"],
+  game: ["J SPORTS 支払い回避マジック", "今日の試合"],
   cal: ["J SPORTS 支払い回避マジック", "日程・結果"],
   std: ["J SPORTS 支払い回避マジック", "順位・支払い"],
   song: ["J SPORTS 支払い回避マジック", "応援歌"],
@@ -960,9 +994,10 @@ function setTab(t) {
   S.tab = t;
   $("kicker").textContent = TAB_TITLE[t][0];
   $("ttl").textContent = TAB_TITLE[t][1];
+  if (t === "game") loadDetails();
   document.title = t === "magic" ? "J SPORTS 支払い回避マジック" : `${TAB_TITLE[t][1]}｜J SPORTS 支払い回避マジック`;
   document.querySelectorAll(".tabbar button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === t)));
-  ["magic", "cal", "std", "song", "stats"].forEach(k => ($("v-" + k).hidden = k !== t));
+  ["magic", "game", "cal", "std", "song", "stats"].forEach(k => ($("v-" + k).hidden = k !== t));
   window.scrollTo({ top: 0 });
 }
 document.querySelectorAll(".tabbar button").forEach(b => (b.onclick = () => setTab(b.dataset.tab)));
@@ -1027,7 +1062,7 @@ function renderMagic() {
       <div class="mg">${mg}</div></div>`;
   }).join("");
 
-  renderTrend(a); renderForm(); renderToday(a);
+  renderTrend(a); renderForm();
   // 確定の条件（まとめて1か所）
   const open = a.rows.filter(r => !r.safe && !r.eliminated);
   $("conds").hidden = a.finished || !open.length;
@@ -1083,7 +1118,10 @@ function liveWanted() {
 async function pollLive() {
   if (document.hidden || !liveWanted()) return;
   try {
-    const r = await fetch(CONFIG.liveApi + "?t=" + Date.now(), { cache: "no-store" });
+    const today = jst().iso;
+    const keys = [...new Set(DATA.games.filter(g => g.d === today && (g.st === "sched" || g.st === "live") && (TEAM[g.h] || TEAM[g.a])).map(g => `${g.h}-${g.a}`))];
+    if (!keys.length) return;
+    const r = await fetch(`${CONFIG.liveApi}?games=${keys.join(",")}&t=${Date.now()}`, { cache: "no-store" });
     const j = await r.json();
     let changed = false;
     for (const x of j.games || []) {
@@ -1096,10 +1134,49 @@ async function pollLive() {
     }
     liveAt = new Date();
     if (changed) renderAll(); else renderUpd();
+    if (S.tab === "game") loadDetails(changed);
   } catch {}
 }
 
 /* ---------- 今日の試合 ---------- */
+function renderGame() {
+  const list = periods(), cur = defaultPeriod(list);
+  const keep = S.period; S.period = cur;
+  renderToday(analyze(DATA.games, cur, CONFIG));
+  S.period = keep;
+  $("noGame").hidden = !$("todayBlk").hidden;
+}
+const GD = {}; // 試合詳細（スコア表・得点シーン）
+const gkey = g => `${g.h}-${g.a}`;
+async function loadDetail(g) {
+  if (!CONFIG.liveApi) return;
+  try {
+    const r = await fetch(`${CONFIG.liveApi}?game=${gkey(g)}&t=${Date.now()}`, { cache: "no-store" });
+    const d = await r.json();
+    if (d && !d.error) { GD[g.d + gkey(g)] = d; if (S.tab === "game") renderGame(); }
+  } catch {}
+}
+function loadDetails(force) {
+  const today = jst().iso;
+  DATA.games.filter(g => g.d === today && (g.st === "live" || g.st === "final") && (TEAM[g.h] || TEAM[g.a]))
+    .forEach(g => { const k = g.d + gkey(g); if (force || g.st === "live" || !GD[k]) loadDetail(g); });
+}
+function detailHTML(g) {
+  const d = GD[g.d + gkey(g)];
+  if (!d) return "";
+  let h = "";
+  const L = d.line;
+  if (L && L.away && L.home) {
+    const curInn = g.st === "live" && g.inn ? parseInt(g.inn) : 0;
+    const row = (x, t) => `<tr><th style="${tv(t)}"><span class="badge">${calSn(t)}</span></th>${x.inn.map((v, i) => `<td class="${curInn === i + 1 ? "cur" : ""}">${esc(v)}</td>`).join("")}<td class="tot">${esc(x.r)}</td><td class="sub">${esc(x.h)}</td><td class="sub">${esc(x.e)}</td></tr>`;
+    h += `<div class="lswrap"><table class="ls num"><thead><tr><th></th>${L.innings.map((c, i) => `<th class="${curInn === i + 1 ? "cur" : ""}">${esc(c)}</th>`).join("")}<th>計</th><th>安</th><th>失</th></tr></thead><tbody>${row(L.away, g.a)}${row(L.home, g.h)}</tbody></table></div>`;
+  }
+  if (d.now && g.st === "live") h += `<div class="nowbat"><span class="lv">● ${esc(d.now.half)}</span><b>${esc(d.now.order)} ${esc(d.now.name)}</b><span class="sit">${esc(d.now.sit)}</span></div>`;
+  if (d.plays && d.plays.length) h += `<div class="plays"><div class="pt">得点シーン</div>${d.plays.map(p => `<div class="pl"><span class="ph">${esc(p.half)}</span><span class="pn">${esc(p.order)} ${esc(p.name)}</span><span class="pk">${esc(p.kind)}</span><span class="ps num">${esc(p.score)}</span></div>`).join("")}</div>`;
+  if (d.url) h += `<a class="pbp" href="${d.url}" target="_blank" rel="noopener">スポナビで経過を見る</a>`;
+  return h;
+}
+
 function renderToday(a) {
   const byT = {}; a.rows.forEach(r => (byT[r.t] = r));
   const today = jst().iso;
@@ -1141,7 +1218,7 @@ function renderToday(a) {
       <div class="tgo${lead === "a" ? " now" : ""}" style="${tv(g.a)}"><b>${fn(g.a)}が勝ったら${lead === "a" ? `<em>このまま終われば</em>` : ""}</b><ul>${effects(g, false)}</ul></div>`;
     return `<div class="tg${live ? " islive" : ""}">
       <div class="tgh">${state}<span>${esc(g.v || "")}</span>${both ? `<span class="h2h">直接対決</span>` : ""}</div>
-      <div class="tgm"><span class="badge" style="${tv(g.h)}">${sn(g.h)}</span>${fn(g.h)}${mid}${fn(g.a)}<span class="badge" style="${tv(g.a)}">${sn(g.a)}</span></div>${outs}
+      <div class="tgm"><span class="badge" style="${tv(g.h)}">${sn(g.h)}</span>${fn(g.h)}${mid}${fn(g.a)}<span class="badge" style="${tv(g.a)}">${sn(g.a)}</span></div>${detailHTML(g)}${outs}
     </div>`;
   }).join("") + `<p class="foot">この試合の結果だけで見た場合の変化です（同じ日のほかの試合は考えていません）。</p>`;
 }
@@ -1543,7 +1620,7 @@ function renderAll() {
   const u = DATA.updated ? new Date(DATA.updated) : null;
   renderUpd();
   $("stripe").innerHTML = CL.filter(t => !CONFIG.excluded.includes(t)).map(t => `<i style="${tv(t)}"></i>`).join("");
-  renderMagic(); renderCal(); renderStd(); renderStats(); renderSong();
+  renderMagic(); renderGame(); renderCal(); renderStd(); renderStats(); renderSong();
   $("note").textContent = fromSnap ? "自動更新データを読み込めなかったため、ページ内に保存したデータを表示しています。" : "";
 }
 const BUILD = document.querySelector('meta[name="build"]').content;
