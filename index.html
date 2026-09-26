@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="回避マジック">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260926162456">
+<meta name="build" content="20260926162846">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -275,6 +275,49 @@ td.pc{font-weight:900}
 .conds .lab{font-size:11.5px;color:var(--muted);font-weight:700;margin-top:8px}
 .conds .pairs{margin:4px 0 0}
 @media (max-width:374px){.brow{grid-template-columns:18px 30px 1fr 96px;gap:8px}.brow .badge{width:30px;height:30px;font-size:16px}.mn{font-size:31px}.tm b{font-size:16px}}
+
+/* ===== 仕上げ（中継グラフィック） ===== */
+.top{position:relative;overflow:hidden}
+.top::before{content:"";position:absolute;right:-40px;top:-10px;width:220px;height:140%;
+  background:repeating-linear-gradient(-70deg,rgba(255,255,255,.05) 0 2px,transparent 2px 14px);pointer-events:none}
+.brand h1{font-size:36px;letter-spacing:-.03em}
+.brand .j{color:#fff;opacity:.55}
+.stripe{height:8px}
+
+.alert{padding:18px 20px 20px;min-height:170px;
+  background:repeating-linear-gradient(-70deg,rgba(0,0,0,.10) 0 2px,transparent 2px 16px),var(--tc)}
+.alert::after{right:-60px;width:170px;background:rgba(0,0,0,.18)}
+.alert .wm{position:absolute;right:-6px;bottom:-40px;font-size:190px;font-weight:900;line-height:1;opacity:.16;z-index:0;letter-spacing:-.05em}
+.alert .lbl{font-size:12.5px;letter-spacing:.08em}
+.alert .who b{font-size:60px;letter-spacing:-.04em;line-height:1.05}
+.alert .who span{font-size:16px;opacity:.85}
+.alert .pay{margin-top:10px;background:#000;color:#fff;padding:6px 12px;font-size:16px}
+.alert .sub{margin-top:8px}
+
+.cards{border-top:0;margin-top:18px}
+.bhead{padding:0 2px 8px}
+.brow{grid-template-columns:62px 1fr 112px;gap:0;padding:0;border-top:0;margin-bottom:4px;background:#0E0E0E;min-height:80px;align-items:stretch}
+.brow::before{display:none}
+.brow .tb{background:var(--tc);color:var(--ti);position:relative;display:grid;place-items:center;
+  clip-path:polygon(0 0,100% 0,calc(100% - 12px) 100%,0 100%)}
+.brow .tb .rk{position:absolute;left:7px;top:5px;font-size:12px;font-weight:900;color:inherit;opacity:.75}
+.brow .tb .kj{font-size:30px;font-weight:900;line-height:1;margin-right:8px}
+.brow .tm{justify-content:center;padding:10px 0 10px 14px}
+.brow .mg{padding-right:14px}
+.brow.low{background:#2A0A0C;box-shadow:inset 0 0 0 1px rgba(255,43,43,.55)}
+.brow.paid{background:#3A0B0E;box-shadow:inset 0 0 0 1px rgba(255,43,43,.7)}
+@media (prefers-reduced-motion:no-preference){
+  .brow{animation:rowIn .45s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i) * 60ms)}
+  @keyframes rowIn{from{transform:translateX(-18px);opacity:0}}
+  .alert .who b{animation:nameIn .5s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes nameIn{from{transform:translateY(10px);opacity:0}}
+}
+@media (max-width:374px){.brow{grid-template-columns:54px 1fr 96px}.brow .tb .kj{font-size:26px}.alert .who b{font-size:50px}}
+
+.day.win{background:color-mix(in srgb,var(--tc) 24%,#000)}
+.day.win .rs.w{color:#fff}
+.day.today{box-shadow:inset 0 -3px 0 #fff}
+.day.sel{box-shadow:inset 0 0 0 2px #fff}
 </style>
 </head>
 <body>
@@ -678,16 +721,16 @@ function renderMagic() {
   } else {
     const low = a.rows[a.rows.length - 1];
     if (a.finished) {
-      $("alert").innerHTML = `<div class="alert paid" style="${tv(low.t)}"><div class="lbl">${S.period.label}の結果</div>
+      $("alert").innerHTML = `<div class="alert paid" style="${tv(low.t)}"><span class="wm" aria-hidden="true">${sn(low.t)}</span><div class="lbl">${S.period.label}の結果</div>
         <div class="who"><b>${own(low.t)}</b><span>${fn(low.t)}が最下位</span></div>
         <div class="pay num">${payLine(low.t)}</div>
         <div class="sub num">${low.w}勝${low.l}敗${low.d}分　勝率${pctOf(low.w, low.l)}</div></div>`;
     } else if (low.eliminated) {
-      $("alert").innerHTML = `<div class="alert paid" style="${tv(low.t)}"><div class="lbl">${S.period.label}</div>
+      $("alert").innerHTML = `<div class="alert paid" style="${tv(low.t)}"><span class="wm" aria-hidden="true">${sn(low.t)}</span><div class="lbl">${S.period.label}</div>
         <div class="who"><b>${own(low.t)}</b><span>支払いが確定（${fn(low.t)}）</span></div>
         <div class="pay num">${payLine(low.t)}</div></div>`;
     } else {
-      $("alert").innerHTML = `<div class="alert" style="${tv(low.t)}"><div class="lbl">このままだと支払い</div>
+      $("alert").innerHTML = `<div class="alert" style="${tv(low.t)}"><span class="wm" aria-hidden="true">${sn(low.t)}</span><div class="lbl">このままだと支払い</div>
         <div class="who"><b>${own(low.t)}</b><span>${fn(low.t)}</span></div>
         <div class="pay num">${payLine(low.t)}</div>
         <div class="sub num">${(() => { const up = a.rows[a.rows.length - 2]; const g = ((up.w - low.w) + (low.l - up.l)) / 2; return `${fn(low.t)}の残り${low.rem}試合　${a.rows.length - 1}位の${fn(up.t)}まで${g.toFixed(1)}差`; })()}</div></div>`;
@@ -705,9 +748,8 @@ function renderMagic() {
     if (paid) mg = `<span class="mn ng">支払い</span>`;
     else if (r.safe) mg = `<span class="mn">回避</span>`;
     else mg = r.self === null ? "" : `<span class="mn"><small>M</small>${r.self}</span>`;
-    return `<div class="brow${isLow && !a.finished ? " low" : ""}${paid ? " paid" : ""}" style="${tv(r.t)}">
-      <span class="rk num">${i + 1}</span>
-      <span class="badge">${sn(r.t)}</span>
+    return `<div class="brow${isLow && !a.finished ? " low" : ""}${paid ? " paid" : ""}" style="${tv(r.t)};--i:${i}">
+      <div class="tb"><span class="rk num">${i + 1}</span><span class="kj">${sn(r.t)}</span></div>
       <div class="tm"><b>${fn(r.t)}<small class="ow">${CONFIG.owners[r.t] || ""}</small></b><span class="num">${r.w}勝${r.l}敗${r.d}分　<em>${pctOf(r.w, r.l)}</em></span><span class="sm num">${gb}　残${r.rem}</span></div>
       <div class="mg">${mg}</div></div>`;
   }).join("");
@@ -798,7 +840,8 @@ function renderCal() {
       else if (g.st === "live") inner += `<span class="tx">試合中</span>`;
       else inner += `<span class="tx num">${esc(g.t || "")}</span>`;
     }
-    html += `<button type="button" class="day${g ? " has" : ""}${iso === today ? " today" : ""}${S.calSel === iso ? " sel" : ""}" data-d="${iso}" ${g ? "" : "tabindex=-1"}>${inner}</button>`;
+    const win = g && resultOf(g, t) === "w";
+    html += `<button type="button" style="${tv(t)}" class="day${g ? " has" : ""}${win ? " win" : ""}${iso === today ? " today" : ""}${S.calSel === iso ? " sel" : ""}" data-d="${iso}" ${g ? "" : "tabindex=-1"}>${inner}</button>`;
   }
   const tail = (7 - ((lead + days) % 7)) % 7;
   for (let i = 0; i < tail; i++) html += `<div class="day blank"></div>`;
