@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ペナントレース">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260926195958">
+<meta name="build" content="20260926200828">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -616,6 +616,25 @@ h2{font-weight:700;margin-top:30px}
 .hero .hp b{display:block;font-size:18px;font-weight:700}
 .hero .hp small{font-size:11px;color:#C8C8C8}
 @media (prefers-reduced-motion:no-preference){.hero{animation:rowIn .4s cubic-bezier(.2,.8,.2,1) both}}
+
+/* スポナビ形式の順位表 */
+.ywrap{overflow-x:auto;margin-top:14px}
+.ytab{width:100%;border-collapse:collapse;table-layout:auto}
+.ytab th,.ytab td{border:1px solid #2A2A2A;padding:10px 4px;text-align:right;font-size:14.5px;white-space:nowrap;background:none}
+.ytab thead th{background:#141414;color:#A8A8A8;font-size:12px;font-weight:600;line-height:1.25;text-align:center;padding:8px 3px;vertical-align:middle}
+.ytab th.tnm{text-align:center}
+.ytab td:first-child{text-align:center;color:#C8C8C8;width:30px}
+.ytab td.tnm{text-align:left;box-shadow:inset 4px 0 0 var(--tc);padding-left:10px;min-width:78px}
+.ytab td.tnm a{color:#fff;font-weight:700;text-decoration:none;font-size:15px}
+.ytab td.tnm small{display:block;font-size:10.5px;color:var(--muted);font-weight:400;margin-top:1px}
+.ytab td.tnm .lvmini{margin-left:0}
+.ytab tbody tr{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 14%,transparent),transparent 45%)}
+.ytab tbody tr.low{background:linear-gradient(90deg,rgba(255,43,43,.28),rgba(255,43,43,.08) 70%)}
+.ytab tbody tr.paid{background:linear-gradient(90deg,rgba(255,43,43,.42),rgba(255,43,43,.15))}
+.ytab td.xc,.ytab th.xc{text-align:center;min-width:38px}
+.ytab .mt{font-size:16px;font-weight:700;color:#fff}
+.ytab .mt.ng{color:var(--ng);font-size:13px}
+@media (max-width:374px){.ytab th,.ytab td{font-size:13px;padding:8px 3px}.ytab td.tnm a{font-size:13.5px}.ytab td.tnm{min-width:64px}}
 </style>
 </head>
 <body>
@@ -669,8 +688,8 @@ h2{font-weight:700;margin-top:30px}
 
   <section class="view" id="v-std" aria-label="順位" hidden>
     <h2>セ・リーグ順位表<small id="stdNote"></small></h2>
-    <div class="table-wrap"><table id="std"></table></div>
-    <p class="foot">球団名をタップすると公式サイトが開きます。差は1つ上の球団とのゲーム差。首位の M は優勝マジック（あと何勝で優勝か）。</p>
+    <div id="std"></div>
+    <p class="foot">球団名をタップすると公式サイトが開きます。勝差は1つ上の球団とのゲーム差（1位の欄は優勝マジック）。首位の M は優勝マジック（あと何勝で優勝か）。</p>
     <h2>月度ごとの支払い</h2>
     <div class="hist" id="hist"></div>
     <p class="foot">白枠が最下位（支払い）。左から順位順、広島は対象外。</p>
@@ -1122,18 +1141,13 @@ function renderMagic() {
   }
 
   const lastIdx = a.rows.length - 1;
-  $("cards").innerHTML = `<div class="table-wrap"><table class="mtbl"><thead><tr><th>順</th><th>チーム</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>差</th><th>残</th><th class="mgh">M</th></tr></thead><tbody>` + a.rows.map((r, i) => {
+  $("cards").innerHTML = yTable(a.rows.map((r, i) => {
     const isLow = !r.safe && (i === lastIdx || cmp(r.w, r.l, a.rows[lastIdx].w, a.rows[lastIdx].l) === 0);
     const paid = r.eliminated || (a.finished && i === lastIdx);
-    let mg;
-    if (paid) mg = `<span class="mt ng">支払い</span>`;
-    else if (r.safe) mg = `<span class="mt" aria-label="回避確定">★</span>`;
-    else mg = r.self === null ? "" : `<span class="mt">M${r.self}</span>`;
-    const gb = r.gb === null ? "-" : r.gb.toFixed(1);
-    return `<tr class="${isLow && !a.finished ? "low" : ""}${paid ? " paid" : ""}" style="${tv(r.t)}"><td>${i + 1}</td>
-      <td><a class="tn" href="${TEAM_URL[r.t]}" target="_blank" rel="noopener"><span class="badge" style="${tv(r.t)}">${sn(r.t)}</span><span class="nmx">${fn(r.t)}</span></a><small class="own">${CONFIG.owners[r.t] || ""}</small>${liveMini(r.t)}</td>
-      <td class="num">${r.w}</td><td class="num">${r.l}</td><td class="num">${r.d}</td><td class="num pc">${pctOf(r.w, r.l)}</td><td class="num">${gb}</td><td class="num">${r.rem}</td><td class="mgc">${mg}</td></tr>`;
-  }).join("") + `</tbody></table></div><p class="foot">球団名をタップすると公式サイト。差は1つ上の球団とのゲーム差、残は月度の残り試合、Mは最下位回避マジック（★は回避確定）。</p>`;
+    const extra = paid ? `<span class="mt ng">支払</span>` : r.safe ? `<span class="mt">★</span>` : r.self === null ? "" : `<span class="mt">M${r.self}</span>`;
+    return { t: r.t, g: r.w + r.l + r.d, w: r.w, l: r.l, d: r.d, gb: r.gb, rem: r.rem, sub: CONFIG.owners[r.t] || "", extra,
+      cls: (isLow && !a.finished ? "low" : "") + (paid ? " paid" : "") };
+  }), "マジック") + `<p class="foot">球団名をタップすると公式サイト。勝差は1つ上の球団とのゲーム差、残試合は月度の残り試合。マジックの★は最下位回避の確定、「支払」は最下位の確定。</p>`;
 
   renderTrend(a); renderForm();
   // 確定の条件（まとめて1か所）
@@ -1215,6 +1229,21 @@ async function pollLive() {
     if (changed) renderAll(); else renderUpd();
     if (S.tab === "game") loadDetails(changed);
   } catch {}
+}
+
+/* ---------- スポナビ形式の順位表（戦況・順位で共通） ---------- */
+// rows: [{t, g, w, l, d, gb(null=1位), rem, first(1位の勝差欄に出す文字), cls, sub(担当など), extra(右端の追加列)}]
+function yTable(rows, extraHead) {
+  const v = h => h.split("").join("<br>");
+  const head = ["順位", "チーム名", "試合", "勝利", "敗戦", "引分", "勝率", "勝差", "残試合"];
+  return `<div class="ywrap"><table class="ytab"><thead><tr>${head.map((h, i) => `<th class="${i === 1 ? "tnm" : ""}">${i === 1 ? h : v(h)}</th>`).join("")}${extraHead ? `<th class="xc">${v(extraHead)}</th>` : ""}</tr></thead><tbody>` +
+    rows.map((r, i) => `<tr class="${r.cls || ""}" style="${tv(r.t)}">
+      <td class="num">${i + 1}</td>
+      <td class="tnm"><a href="${TEAM_URL[r.t]}" target="_blank" rel="noopener">${fn(r.t)}</a>${r.sub ? `<small>${r.sub}</small>` : ""}${liveMini(r.t)}</td>
+      <td class="num">${r.g}</td><td class="num">${r.w}</td><td class="num">${r.l}</td><td class="num">${r.d}</td>
+      <td class="num">${pctOf(r.w, r.l)}</td>
+      <td class="num">${r.gb === null ? (r.first || "-") : (Number.isInteger(r.gb) ? r.gb : r.gb.toFixed(1))}</td>
+      <td class="num">${r.rem}</td>${extraHead ? `<td class="xc">${r.extra || ""}</td>` : ""}</tr>`).join("") + `</tbody></table></div>`;
 }
 
 /* ---------- 今日の試合 ---------- */
@@ -1468,7 +1497,7 @@ function renderCal() {
   const ms = calMonths();
   if (!S.calMonth || !ms.includes(S.calMonth)) { const m = jst().m; S.calMonth = ms.includes(m) ? m : ms[ms.length - 1]; }
   const t = S.calTeam, y = DATA.season || jst().y, m = S.calMonth;
-  $("teamSel").innerHTML = calOrder().map(k => `<button class="tbtn" type="button" data-t="${k}" style="${tv(k)}" aria-pressed="${k === t}"><span class="badge">${sn(k)}</span>${CONFIG.owners[k] || fn(k)}</button>`).join("");
+  $("teamSel").innerHTML = calOrder().map(k => `<button class="tbtn" type="button" data-t="${k}" style="${tv(k)}" aria-pressed="${k === t}"><span class="badge">${sn(k)}</span>${CONFIG.owners[k] || "&nbsp;"}</button>`).join("");
   $("teamSel").querySelectorAll(".tbtn").forEach(b => (b.onclick = () => { S.calTeam = b.dataset.t; store("calTeam", S.calTeam); S.calSel = null; renderCal(); }));
   $("mTitle").textContent = `${y}年${m}月`;
   const idx = ms.indexOf(m);
@@ -1531,12 +1560,10 @@ function renderCal() {
 /* ---------- 順位 ---------- */
 function renderStd() {
   const rows = seasonTable(DATA.games);
-  $("std").innerHTML = `<thead><tr><th>順</th><th>チーム</th><th>試合</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>差</th></tr></thead><tbody>` +
-    rows.map((r, i) => {
-      const gbCell = i === 0 ? (r.magic === 0 ? `<td class="mg">優勝</td>` : r.magic != null ? `<td class="mg">M${r.magic}</td>` : `<td>-</td>`) : `<td>${Number.isInteger(r.gb) ? r.gb : r.gb.toFixed(1)}</td>`;
-      return `<tr style="${tv(r.t)}"><td>${i + 1}</td><td><a class="tn" href="${TEAM_URL[r.t]}" target="_blank" rel="noopener"><span class="badge" style="${tv(r.t)}">${sn(r.t)}</span><span class="nmx">${fn(r.t)}</span></a>${liveMini(r.t)}</td>
-      <td class="num">${r.g}</td><td class="num">${r.w}</td><td class="num">${r.l}</td><td class="num">${r.d}</td><td class="num pc">${pctOf(r.w, r.l)}</td>${gbCell}</tr>`;
-    }).join("") + `</tbody>`;
+  const remS = {};
+  DATA.games.forEach(g => { if (g.st === "sched" || g.st === "live") { remS[g.h] = (remS[g.h] || 0) + 1; remS[g.a] = (remS[g.a] || 0) + 1; } });
+  $("std").innerHTML = yTable(rows.map((r, i) => ({ t: r.t, g: r.g, w: r.w, l: r.l, d: r.d, gb: i === 0 ? null : r.gb, rem: remS[r.t] || 0,
+    first: r.magic === 0 ? "優勝" : r.magic != null ? `M${r.magic}` : "-" })));
   $("stdNote").textContent = "全試合";
   const list = periods();
   const paid = {};
