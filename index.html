@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="回避マジック">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260926181105">
+<meta name="build" content="20260926182132">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -471,6 +471,7 @@ a.tn .nmx{border-bottom:1px solid rgba(255,255,255,.28)}
 .sgo{color:#000;background:#fff}
 .sof{color:#fff;border:1px solid #555}
 .sgo:active,.sof:active{opacity:.7}
+.snote{margin:-2px 2px 8px;font-size:12px;color:var(--muted);font-weight:700}
 .scount{margin:10px 2px 0;font-size:12.5px;color:var(--muted);font-weight:700}
 .tabbar button{font-size:10.5px}
 
@@ -1337,6 +1338,10 @@ const SONG_PAGE = {
 };
 // チャンステーマ・チーム応援歌（曲名のみ）。[表示名, 公式ページ, ページ内でジャンプする文字（公式ページの見出しそのまま）]
 const CHANCE_PAGE = { DB: "https://www.baystars.co.jp/players/theme" };
+// ヤクルトのチャンステーマは、球団公式だとタブの中に隠れて位置まで飛べないので、私設応援団（全国ツバメ軍団）公式のページを使う
+const TSUBAME = "http://tsubamegundan.com/profile.html";
+const CHANCE_NOTE = {};
+
 const HT = "https://m.hanshintigers.jp/data/march/";
 const CHANCE = {
   T: [["チャンス襲来", HT + "chance01.html"], ["チャンスわっしょい", HT + "chance02.html"], ["チャンスマーチ", HT + "chance03.html"],
@@ -1357,12 +1362,14 @@ const CHANCE = {
   C: [["チャンステーマ6", 0, "チャンステーマ6"], ["チャンステーマ5（チャンス・スーパー）", 0, "チャンステーマ5"], ["チャンステーマ4（極チャンス）", 0, "チャンステーマ4"],
       ["チャンステーマ3（飛ばすチャンス）", 0, "チャンステーマ3"], ["マルチテーマGo!", 0, "マルチテーマ"], ["コンバットマーチ", 0, "コンバットマーチ"],
       ["攻めろ", 0, "攻めろ"], ["宮島さん", 0, "宮島さん"], ["それ行けカープ", 0, "それ行けカープ"]],
-  S: [["チャンステーマ1（夏祭り）", 0, "チャンステーマ1（夏祭り）"], ["チャンステーマ2（ルパン）", 0, "チャンステーマ2（ルパン）"],
-      ["チャンステーマ3", 0, "チャンステーマ3"], ["チャンステーマ4", 0, "チャンステーマ4"], ["チャンステーマ5", 0, "チャンステーマ5"],
-      ["チャンス川端", 0, "チャンス川端"], ["共通テーマα", 0, "共通テーマα"], ["共通テーマβ", 0, "共通テーマβ"], ["共通テーマγ（ガンマ）", 0, "共通テーマγ（ガンマ）"],
-      ["共通テーマδ", 0, "共通テーマδ"], ["共通テーマε（錨を上げて）", 0, "共通テーマε（錨を上げて）"],
-      ["マルチテーマA（新・とびだせヤクルトスワローズ）", 0, "マルチテーマA（新・とびだせヤクルトスワローズ）"], ["マルチテーマB（KO！）", 0, "マルチテーマB（KO！）"],
-      ["マルチテーマC", 0, "マルチテーマC"], ["マルチテーマD（今ここから）", 0, "マルチテーマD（今ここから）"]],
+  S: [["チャンステーマ1（夏祭り）", TSUBAME, "チャンステーマ１"], ["チャンステーマ2（ルパン）", TSUBAME, "チャンステーマ２"],
+      ["チャンステーマ3", TSUBAME, "チャンステーマ３"], ["チャンステーマ4", TSUBAME, "チャンステーマ４"], ["チャンステーマ5", TSUBAME, "チャンステーマ５"],
+      ["チャンス川端", TSUBAME, "チャンス川端"], ["共通テーマα（Come On!!!）", TSUBAME, "共通テーマα"], ["共通テーマβ（気まぐれロマンティック）", TSUBAME, "共通テーマβ"],
+      ["共通テーマγ（甲賀忍法帖）", TSUBAME, "共通テーマγ"], ["共通テーマδ（Counter Strike）", TSUBAME, "共通テーマδ"], ["共通テーマε（錨を上げて）", TSUBAME, "共通テーマε"],
+      ["マルチテーマA（新・とびだせヤクルトスワローズ）", TSUBAME, "マルチテーマＡ"], ["マルチテーマB（KO！）", TSUBAME, "マルチテーマＢ"],
+      ["マルチテーマC", TSUBAME, "マルチテーマＣ"], ["マルチテーマD（今ここから）", TSUBAME, "マルチテーマＤ"],
+      ["東京音頭（得点時）", TSUBAME, "東京音頭"], ["出塁・進塁のテーマ", TSUBAME, "出塁・進塁のテーマ"], ["攻撃開始のテーマ", TSUBAME, "攻撃開始のテーマ"],
+      ["甲子園限定テーマ『どかーん』", TSUBAME, "甲子園限定テーマ"]],
 };
 // 選手ごとのリンク先：阪神は選手別ページ、ほかは一覧ページのその選手の位置へ（Safariのテキストジャンプ）
 const SONG_ONE = {
@@ -1401,9 +1408,9 @@ function renderSong() {
   const ch = (CHANCE[t] || []).filter(([n]) => !q || n.replace(/\s+/g, "").includes(q));
   if (ch.length) {
     const base = CHANCE_PAGE[t] || (SONG_PAGE[t] && SONG_PAGE[t][0]);
-    html += `<div class="sgrp"><div class="sgt">チャンステーマ・チーム応援歌<small>${ch.length}曲</small></div>${ch.map(([n, url, q2]) => `<div class="srow ch" style="${tv(t)}">
+    html += `<div class="sgrp"><div class="sgt">チャンステーマ・チーム応援歌<small>${ch.length}曲</small></div>${CHANCE_NOTE[t] ? `<p class="snote">${CHANCE_NOTE[t]}</p>` : ""}${ch.map(([n, url, q2]) => `<div class="srow ch" style="${tv(t)}">
       <span class="sno">♪</span><span class="snm">${esc(n)}</span>
-      <span class="sbtn">${url || base ? `<a class="sof" href="${url || (q2 ? `${base}#:~:text=${frag(q2)}` : base)}" target="_blank" rel="noopener">公式</a>` : ""}<a class="sgo" href="https://www.youtube.com/results?search_query=${encodeURIComponent(`${TEAM[t].n} ${n} 応援歌`)}" target="_blank" rel="noopener">聴く</a></span></div>`).join("")}</div>`;
+      <span class="sbtn">${url || base ? `<a class="sof" href="${(url || base) + (q2 ? `#:~:text=${frag(q2)}` : "")}" target="_blank" rel="noopener">公式</a>` : ""}<a class="sgo" href="https://www.youtube.com/results?search_query=${encodeURIComponent(`${TEAM[t].n} ${n} 応援歌`)}" target="_blank" rel="noopener">聴く</a></span></div>`).join("")}</div>`;
   }
   if (!roster.length) { $("songList").innerHTML = `<div class="rempty">選手一覧は次の自動更新のあとに表示されます。</div>` + html; return; }
   $("songList").innerHTML = (judged ? `<p class="scount num">個別の応援歌がある選手 ${all.length}人</p>` : `<p class="scount">個別の応援歌の判定は次の自動更新で入ります（今は全選手を表示）</p>`) + (html || `<div class="rempty">見つかりませんでした。</div>`);
