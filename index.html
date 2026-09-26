@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="回避マジック">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260926193547">
+<meta name="build" content="20260926193938">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -579,6 +579,8 @@ h2{font-weight:700;margin-top:30px}
 .alert{padding:20px 22px 22px}
 .alert .sub{font-weight:400}
 .alert .pay{font-weight:700}
+
+.lvmini{display:block;color:#FF3B3B;font-size:11px;font-weight:700;margin-top:1px;letter-spacing:0}
 </style>
 </head>
 <body>
@@ -661,7 +663,7 @@ h2{font-weight:700;margin-top:30px}
     <h2>チーム成績<small id="stAsof"></small></h2>
     <div class="seg" id="tmSeg"><button type="button" data-k="bat" aria-pressed="true">打撃</button><button type="button" data-k="pit" aria-pressed="false">投手</button></div>
     <div class="table-wrap"><table class="tstat" id="tmTbl"></table></div>
-    <p class="foot">白い太字が各項目のリーグトップ。</p>
+    <p class="foot">白い太字が各項目のリーグトップ。得点・失点・得失点差は、試合が終わった時点の結果からすぐに計算しています。</p>
     <h2>個人ランキング</h2>
     <div class="cats"><span class="cl">打撃</span><div class="chips2" id="catBat"></div></div>
     <div class="cats"><span class="cl">投手</span><div class="chips2" id="catPit"></div></div>
@@ -1140,7 +1142,13 @@ function liveTag(t) {
   const me = g.h === t ? g.hs : g.as, op = g.h === t ? g.as : g.hs, o = g.h === t ? g.a : g.h;
   return `<span class="lvtag">● ${sn(o)}戦 ${me}-${op} ${esc(g.inn || "")}</span>`;
 }
-let liveAt = null;
+let liveAt = null, liveChangedAt = null;
+function liveMini(t) {
+  const g = DATA.games.find(x => x.d === jst().iso && x.st === "live" && (x.h === t || x.a === t));
+  if (!g) return "";
+  const me = g.h === t ? g.hs : g.as, op = g.h === t ? g.as : g.hs;
+  return `<small class="lvmini num">● ${me}-${op}</small>`;
+}
 function liveWanted() {
   if (!CONFIG.liveApi || !DATA) return false;
   const today = jst().iso, h = new Date(Date.now() + 9 * 3600e3).getUTCHours();
@@ -1160,7 +1168,7 @@ async function pollLive() {
       const g = DATA.games.find(y => y.d === x.d && y.h === x.h && y.a === x.a);
       if (!g || g.st === "final") continue;
       if (g.st !== x.st || g.hs !== x.hs || g.as !== x.as || g.inn !== x.inn) {
-        g.st = x.st; g.hs = x.hs; g.as = x.as; g.inn = x.inn; changed = true;
+        g.st = x.st; g.hs = x.hs; g.as = x.as; g.inn = x.inn; changed = true; liveChangedAt = new Date();
       }
     }
     liveAt = new Date();
@@ -1486,7 +1494,7 @@ function renderStd() {
   $("std").innerHTML = `<thead><tr><th>順</th><th>チーム</th><th>試合</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>差</th></tr></thead><tbody>` +
     rows.map((r, i) => {
       const gbCell = i === 0 ? (r.magic === 0 ? `<td class="mg">優勝</td>` : r.magic != null ? `<td class="mg">M${r.magic}</td>` : `<td>-</td>`) : `<td>${Number.isInteger(r.gb) ? r.gb : r.gb.toFixed(1)}</td>`;
-      return `<tr style="${tv(r.t)}"><td>${i + 1}</td><td><a class="tn" href="${TEAM_URL[r.t]}" target="_blank" rel="noopener"><span class="badge" style="${tv(r.t)}">${sn(r.t)}</span><span class="nmx">${fn(r.t)}</span></a></td>
+      return `<tr style="${tv(r.t)}"><td>${i + 1}</td><td><a class="tn" href="${TEAM_URL[r.t]}" target="_blank" rel="noopener"><span class="badge" style="${tv(r.t)}">${sn(r.t)}</span><span class="nmx">${fn(r.t)}</span></a>${liveMini(r.t)}</td>
       <td class="num">${r.g}</td><td class="num">${r.w}</td><td class="num">${r.l}</td><td class="num">${r.d}</td><td class="num pc">${pctOf(r.w, r.l)}</td>${gbCell}</tr>`;
     }).join("") + `</tbody>`;
   $("stdNote").textContent = "全試合";
@@ -1616,7 +1624,14 @@ function renderStats() {
   $("stAsof").textContent = st.asof ? `${st.asof} 更新` : "";
   document.querySelectorAll("#tmSeg button").forEach(b => { b.setAttribute("aria-pressed", String(b.dataset.k === S.tmKind)); b.onclick = () => { S.tmKind = b.dataset.k; renderStats(); }; });
   const T = st.team || {};
-  const get = (t, key) => (T[t] && T[t][key] != null ? T[t][key] : null);
+  const RS = {}, RA = {};
+  for (const g of DATA.games) {
+    if (g.st !== "final") continue;
+    RS[g.h] = (RS[g.h] || 0) + g.hs; RA[g.h] = (RA[g.h] || 0) + g.as;
+    RS[g.a] = (RS[g.a] || 0) + g.as; RA[g.a] = (RA[g.a] || 0) + g.hs;
+  }
+  const get = (t, key) => key === "得点" && RS[t] != null ? String(RS[t]) : key === "失点" && RA[t] != null ? String(RA[t])
+    : (T[t] && T[t][key] != null ? T[t][key] : null);
   const diff = t => { const a = num(get(t, "得点")), b = num(get(t, "失点")); return a == null || b == null ? null : (a - b > 0 ? "+" : "") + (a - b); };
   const cols = S.tmKind === "bat"
     ? [["打率", t => get(t, "打率"), "hi"], ["本塁打", t => get(t, "本塁打"), "hi"], ["得点", t => get(t, "得点"), "hi"], ["盗塁", t => get(t, "盗塁"), "hi"]]
@@ -1642,10 +1657,11 @@ function renderStats() {
 /* ---------- 読み込み ---------- */
 function renderUpd() {
   const u = DATA.updated ? new Date(DATA.updated) : null;
+  const t = liveChangedAt && (!u || liveChangedAt > u) ? liveChangedAt : u;
   const hm = d => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-  const today = jst().iso, liveNow = DATA.games.some(g => g.d === today && g.st === "live");
-  $("upd").innerHTML = (liveNow && liveAt ? `<span class="lvh">● LIVE</span> <b class="num">${hm(liveAt)}</b> 更新　` : "")
-    + (u ? `最終更新 <b class="num">${u.getMonth() + 1}/${u.getDate()} ${hm(u)}</b>　` : "") + (liveNow && liveAt ? "" : "広島を除くセ・リーグ5球団");
+  const today = jst().iso, liveNow = liveAt && DATA.games.some(g => g.d === today && g.st === "live");
+  $("upd").innerHTML = (liveNow ? `<span class="lvh">● LIVE</span>　` : "")
+    + (t ? `最終更新 <b class="num">${t.getMonth() + 1}/${t.getDate()} ${hm(t)}</b>　` : "") + (liveNow ? "" : "広島を除くセ・リーグ5球団");
 }
 function renderAll() {
   const u = DATA.updated ? new Date(DATA.updated) : null;
