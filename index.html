@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ペナントレース">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260926201936">
+<meta name="build" content="20260926202528">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -106,7 +106,7 @@ h2 small{font-size:12.5px;color:var(--muted);font-weight:600;font-style:normal;m
 .left span.vs{border-color:#fff;color:#fff;font-weight:800}
 .copy{display:block;width:100%;margin-top:18px;border:0;padding:16px;font-size:16px;font-weight:900;cursor:pointer;background:#fff;color:#000;letter-spacing:.02em}
 .copy.done{background:#00A660;color:#fff}
-.excl{margin-top:10px;font-size:12.5px;color:var(--dim);text-align:center}
+.excl{display:none;margin-top:10px;font-size:12.5px;color:var(--dim);text-align:center}
 
 /* カレンダー */
 .teams{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
@@ -647,6 +647,68 @@ h2{font-weight:700;margin-top:30px}
 .h2h td.self{background:#161616;color:#555}
 .h2h tbody tr{background:none}
 @media (max-width:374px){.h2h td b{font-size:11.5px}.h2h td small{font-size:10px}}
+
+/* ===== 統一：余白と見出し ===== */
+.view > h2,.blk > h2{margin:36px 0 12px;font-size:18px;font-weight:700;display:flex;align-items:baseline}
+.view > h2:first-child{margin-top:22px}
+.blk{margin-top:0}
+.ywrap{margin-top:0}
+.cards{margin-top:16px}
+.howto{margin:36px 0 8px;border-top:1px solid #222;padding-top:4px}
+.howto summary{cursor:pointer;list-style:none;font-size:13px;color:var(--muted);font-weight:600;padding:10px 0;display:flex;justify-content:space-between}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::after{content:"＋"}
+.howto[open] summary::after{content:"－"}
+.howto ul{margin:0;padding:0 0 6px 1.1em;color:#9A9A9A;font-size:12.5px;line-height:1.8}
+.howto li{margin-bottom:4px}
+.rules,.conds{margin-top:36px}
+
+/* チーム成績・ランキング */
+.tst th{text-align:center}
+.tst td.v.best{color:#fff;font-weight:700}
+.tst td.v{color:#C8C8C8}
+.rtab td.pnm{text-align:left;font-weight:600;color:#fff;width:38%;padding-left:10px}
+.rtab td.tnm{width:30%}
+.rtab td.tnm{font-weight:400;color:#C8C8C8;font-size:13px}
+.rtab td.v{font-weight:700;color:#fff}
+.rtab tr.lead td.v{color:#FFD21F}
+.cats{margin-bottom:10px}
+
+/* 月度ごとの支払い */
+.htab td.mo,.htab td:first-child{text-align:center;color:#C8C8C8;font-size:13px;white-space:nowrap;width:auto;min-width:44px}
+.htab td.rk5{text-align:left;white-space:nowrap}
+.htab td.rk5 .badge{width:20px;height:20px;font-size:10px;margin-right:2px;display:inline-grid}
+.htab td.rk5 .badge.last{outline:2px solid #fff;outline-offset:1px}
+.htab td.tnm{font-weight:700}
+.htab tbody tr{background:none}
+.htab .muted{color:var(--muted);font-weight:400}
+
+/* 年間成績を格子に */
+.ytbl.ytab{border-collapse:collapse;border-spacing:0}
+.ytbl.ytab th,.ytbl.ytab td{border:1px solid #2A2A2A;padding:8px 2px;white-space:normal}
+.ytbl.ytab td.yn{padding-left:6px}
+.ytbl.ytab td.ya{padding-right:6px}
+.ytbl.ytab tr td:first-child{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 22%,#0B0B0B),#0B0B0B)}
+
+/* 直近の調子 */
+.ftab td.fr{text-align:center;padding:6px 1px;width:36px}
+.ftab td.fr b{display:block;font-size:14px;font-weight:700;line-height:1.2}
+.ftab td.fr small{display:block;font-size:10px;color:var(--muted);font-weight:400}
+.ftab td.fr.w b{color:#fff}
+.ftab td.fr.l b{color:#666}
+.ftab td.fs{text-align:center;font-weight:700;font-size:13px}
+.ftab td.fs.w{color:#fff}.ftab td.fs.l{color:var(--ng)}
+.ftab th{text-align:center}
+
+/* 小さいヘッダー */
+.minibar{position:fixed;left:0;right:0;top:0;z-index:18;display:flex;align-items:center;gap:10px;
+  padding:calc(8px + env(safe-area-inset-top,0px)) 16px 8px;background:rgba(0,0,0,.92);border-bottom:1px solid #222;
+  transform:translateY(-110%);opacity:0;visibility:hidden;transition:transform .2s ease,opacity .2s ease,visibility .2s;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.minibar.show{transform:none;opacity:1;visibility:visible}
+.minibar .mk{font-size:10.5px;color:var(--muted);font-weight:600;letter-spacing:.1em}
+.minibar b{font-size:15px;font-weight:700}
+.minibar .ml{margin-left:auto;color:#FF3B3B;font-size:12px;font-weight:700}
+.minibar::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:3px;background:linear-gradient(90deg,#0A6FE0 0 20%,#F97709 20% 40%,#FFE100 40% 60%,#1F3FB0 60% 80%,#00A660 80%)}
 </style>
 </head>
 <body>
@@ -669,14 +731,13 @@ h2{font-weight:700;margin-top:30px}
     <section class="blk" id="mh2hBlk">
       <h2>対戦成績<small id="mh2hNote"></small></h2>
       <div id="mh2h"></div>
-      <p class="foot">左の球団から見た、この月度だけの成績です。</p>
     </section>
     <section class="blk" id="trendBlk">
       <h2>順位の推移<small id="trendNote"></small></h2>
       <div class="trend" id="trend"></div>
     </section>
     <section class="blk" id="formBlk">
-      <h2>直近の調子<small>最近5試合　右が最新</small></h2>
+      <h2>直近の調子</h2>
       <div class="form" id="form"></div>
     </section>
     <details class="rules conds" id="conds"><summary>確定の条件と残り試合</summary><div id="condBody"></div></details>
@@ -688,6 +749,7 @@ h2{font-weight:700;margin-top:30px}
       <p>M は、どの試合で勝っても最下位回避が確定する残りの勝ち数。自力で決められない球団は空欄です。★は回避確定、赤い「支払い」は最下位確定。</p>
       <p>差は1つ上の球団とのゲーム差。</p>
     </details>
+    <details class="howto"><summary>見方</summary><ul><li>順位表：勝差は1つ上の球団とのゲーム差、残試合はこの月度の残り試合。球団名をタップすると公式サイト。</li><li>マジック：最下位を回避するまでの勝ち数。★は回避確定、赤字の「支払」は最下位確定、空欄は自力では決められない状態。</li><li>対戦成績：左の球団から見た、この月度だけの勝数-負数（引分数）。</li><li>直近の調子：○は勝ち、●は負け、△は引き分け。下の文字は対戦相手。</li></ul></details>
   </section>
 
   <section class="view" id="v-cal" aria-label="日程" hidden>
@@ -706,16 +768,13 @@ h2{font-weight:700;margin-top:30px}
   <section class="view" id="v-std" aria-label="順位" hidden>
     <h2>セ・リーグ順位表<small id="stdNote"></small></h2>
     <div id="std"></div>
-    <p class="foot">球団名をタップすると公式サイトが開きます。勝差は1つ上の球団とのゲーム差（1位の欄は優勝マジック）。首位の M は優勝マジック（あと何勝で優勝か）。</p>
     <h2>対戦成績<small>勝-敗（引分）</small></h2>
     <div id="h2h"></div>
-    <p class="foot">左の球団から見た成績です（例：神の行・巨の列＝阪神の巨人戦）。</p>
     <h2>月度ごとの支払い</h2>
     <div class="hist" id="hist"></div>
-    <p class="foot">白枠が最下位（支払い）。左から順位順、広島は対象外。</p>
     <h2>担当者ごとの年間成績</h2>
     <div class="tot" id="tot"></div>
-    <p class="foot">数字は各月度の順位（白＝1位、赤＝最下位、点線＝集計中）。支払いの少ない順、同じなら平均順位の順に並べています。</p>
+    <details class="howto"><summary>見方</summary><ul><li>順位表：勝差は1つ上の球団とのゲーム差。1位の勝差の欄は優勝マジック。</li><li>対戦成績：左の球団から見た勝数-負数（引分数）。例：神の行・巨の列＝阪神の巨人戦。</li><li>月度ごとの支払い：順位は左から1位。赤枠が最下位（支払い）。広島は対象外。</li><li>担当者ごとの年間成績：数字は各月度の順位（白＝1位、赤＝最下位、点線＝集計中）。支払いの少ない順、同じなら平均順位の順。</li></ul></details>
   </section>
   <section class="view" id="v-game" aria-label="今日の試合" hidden>
     <section class="blk" id="todayBlk">
@@ -723,6 +782,7 @@ h2{font-weight:700;margin-top:30px}
       <div id="today"></div>
     </section>
     <div class="rempty" id="noGame" hidden>対象の球団の試合はしばらくありません。</div>
+    <details class="howto"><summary>見方</summary><ul><li>「勝ったら」は、その試合の結果だけで見た場合の変化です（同じ日のほかの試合は考えていません）。</li><li>試合中は30秒ごとに自動で更新します。スコア表・得点シーンはスポーツナビのテキスト速報から作っています。</li></ul></details>
   </section>
 
   <section class="view" id="v-song" aria-label="応援歌" hidden>
@@ -736,13 +796,12 @@ h2{font-weight:700;margin-top:30px}
   <section class="view" id="v-stats" aria-label="成績" hidden>
     <h2>チーム成績<small id="stAsof"></small></h2>
     <div class="seg" id="tmSeg"><button type="button" data-k="bat" aria-pressed="true">打撃</button><button type="button" data-k="pit" aria-pressed="false">投手</button></div>
-    <div class="table-wrap"><table class="tstat" id="tmTbl"></table></div>
-    <p class="foot">白い太字が各項目のリーグトップ。得点・失点・得失点差は、試合が終わった時点の結果からすぐに計算しています。</p>
+    <div class="ywrap"><table class="ytab tst" id="tmTbl"></table></div>
     <h2>個人ランキング</h2>
     <div class="cats"><span class="cl">打撃</span><div class="chips2" id="catBat"></div></div>
     <div class="cats"><span class="cl">投手</span><div class="chips2" id="catPit"></div></div>
-    <div class="rank" id="rankList"></div>
-    <p class="foot">打率・OPS・防御率は規定打席／規定投球回以上の選手が対象。出典：スポーツナビ。</p>
+    <div id="rankList"></div>
+    <details class="howto"><summary>見方</summary><ul><li>チーム成績：白い太字が各項目のリーグトップ。得点・失点・得失点差は試合結果からすぐに計算しています。</li><li>個人ランキング：打率・OPS・防御率は規定打席／規定投球回以上の選手が対象。出典：スポーツナビ。</li></ul></details>
   </section>
   <p class="note" id="note"></p>
 </main>
@@ -754,6 +813,8 @@ h2{font-weight:700;margin-top:30px}
     <div class="shotbtns"><button type="button" id="shotShare">LINEなどに送る</button><button type="button" id="shotClose" class="sub">閉じる</button></div>
   </div>
 </div>
+
+<div class="minibar" id="minibar" aria-hidden="true"><span class="mk">J SPORTS</span><b id="miniTtl"></b><span class="ml" id="miniLive"></span></div>
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden>
   <span id="toastMsg">最新の結果が届きました</span>
@@ -1166,7 +1227,7 @@ function renderMagic() {
     const extra = paid ? `<span class="mt ng">支払</span>` : r.safe ? `<span class="mt">★</span>` : r.self === null ? "" : `<span class="mt">M${r.self}</span>`;
     return { t: r.t, g: r.w + r.l + r.d, w: r.w, l: r.l, d: r.d, gb: r.gb, rem: r.rem, extra };
   }), "マジック")
-    + `<p class="foot">球団名をタップすると公式サイトが開きます。勝差は1つ上の球団とのゲーム差、残試合はこの月度の残り試合。マジックは最下位回避のマジックで、★は回避確定、「支払」は最下位確定。</p>`;
+;
 
   const tOrder = a.rows.map(r => r.t);
   $("mh2h").innerHTML = h2hTable(tOrder, [...tOrder, ...CONFIG.excluded], g => S.period.months.includes(monthOf(g.d)));
@@ -1370,7 +1431,7 @@ function renderToday(a) {
       <div class="tgh">${state}<span>${esc(g.v || "")}</span>${both ? `<span class="h2h">直接対決</span>` : ""}</div>
       <div class="tgm"><span class="badge" style="${tv(g.h)}">${sn(g.h)}</span>${fn(g.h)}${mid}${fn(g.a)}<span class="badge" style="${tv(g.a)}">${sn(g.a)}</span></div>${detailHTML(g)}${outs}
     </div>`;
-  }).join("") + `<p class="foot">この試合の結果だけで見た場合の変化です（同じ日のほかの試合は考えていません）。</p>`;
+  }).join("") ;
 }
 
 /* ---------- 画像にしてLINEで送る ---------- */
@@ -1512,11 +1573,11 @@ function renderForm() {
     return { t, last: res.slice(-5), streak, kind };
   });
   rows.sort((x, y) => (y.kind === "w" ? y.streak : -y.streak) - (x.kind === "w" ? x.streak : -x.streak));
-  $("form").innerHTML = rows.map(x => `<div class="frow" style="${tv(x.t)}">
-    <span class="badge">${sn(x.t)}</span>
-    <span class="fn">${fn(x.t)}<small>${CONFIG.owners[x.t] || ""}</small></span>
-    <span class="fb">${x.last.map(v => `<i class="${v.r}"><b>${v.r === "w" ? "○" : v.r === "l" ? "×" : "△"}</b><em>${sn(v.o)}</em></i>`).join("")}</span>
-    <span class="fs ${x.kind || ""}">${x.streak ? `${x.streak}${x.kind === "w" ? "連勝" : "連敗"}` : "-"}</span></div>`).join("");
+  $("form").innerHTML = `<div class="ywrap"><table class="ytab ftab"><thead><tr><th class="tnm">チーム名</th><th colspan="5">最近5試合（右が最新）</th><th>連続</th></tr></thead><tbody>` +
+    rows.map(x => `<tr style="${tv(x.t)}"><td class="tnm"><a href="${TEAM_URL[x.t]}" target="_blank" rel="noopener">${fn(x.t)}</a></td>${[0, 1, 2, 3, 4].map(k => {
+      const v = x.last[x.last.length - 5 + k];
+      return v ? `<td class="fr ${v.r}"><b>${v.r === "w" ? "○" : v.r === "l" ? "●" : "△"}</b><small>${calSn(v.o)}</small></td>` : `<td class="fr"></td>`;
+    }).join("")}<td class="fs ${x.kind || ""}">${x.streak ? `${x.streak}${x.kind === "w" ? "連勝" : "連敗"}` : "-"}</td></tr>`).join("") + `</tbody></table></div>`;
 }
 
 /* ---------- 日程カレンダー ---------- */
@@ -1610,14 +1671,14 @@ function renderStd() {
   $("stdNote").textContent = "全試合";
   const list = periods();
   const paid = {};
-  $("hist").innerHTML = list.map(p => {
+  $("hist").innerHTML = `<div class="ywrap"><table class="ytab htab"><thead><tr><th>月度</th><th>順位（左から1位）</th><th class="tnm">支払い</th><th>金額</th></tr></thead><tbody>` + list.map(p => {
     const a = analyze(DATA.games, p, CONFIG);
     const low = a.rows[a.rows.length - 1];
-    const payer = !a.played ? "—" : a.finished ? `<span style="display:inline-flex;align-items:center;gap:8px"><span class="badge" style="${tv(low.t)};width:24px;height:24px;font-size:13px">${sn(low.t)}</span>${own(low.t)}</span>` : `<span style="color:var(--muted)">集計中</span>`;
     if (a.finished) paid[low.t] = (paid[low.t] || 0) + 1;
-    const ranks = a.played ? `<div class="ranks">${a.rows.map((r, i) => `<span class="badge${a.finished && i === a.rows.length - 1 ? " last" : ""}" style="${tv(r.t)}">${sn(r.t)}</span>`).join("")}</div>` : "";
-    return `<div class="hrow"><span class="pl">${p.label}</span><span class="py">${a.finished ? payer + `<small style="color:var(--muted);font-weight:700;font-size:12.5px;margin-left:6px">${yen(CONFIG.fee)}</small>` : payer}</span>${ranks}</div>`;
-  }).join("");
+    const ranks = a.played ? a.rows.map((r, i) => `<span class="badge${a.finished && i === a.rows.length - 1 ? " last" : ""}" style="${tv(r.t)}">${sn(r.t)}</span>`).join("") : "";
+    return `<tr${a.finished ? ` style="${tv(low.t)}"` : ""}><td class="mo">${p.label.replace("月度", "")}</td><td class="rk5">${ranks}</td>
+      <td class="tnm">${!a.played ? "—" : a.finished ? own(low.t) : `<span class="muted">集計中</span>`}</td><td class="num">${a.finished ? yen(CONFIG.fee) : "-"}</td></tr>`;
+  }).join("") + `</tbody></table></div>`;
   const per = list.map(p => ({ p, a: analyze(DATA.games, p, CONFIG) })).filter(x => x.a.played);
   const people = Object.keys(CONFIG.owners).map(t => {
     const ranks = per.map(({ p, a }) => ({ p, r: a.rows.findIndex(x => x.t === t) + 1, done: a.finished }));
@@ -1626,12 +1687,12 @@ function renderStd() {
   }).sort((x, y) => (x.n - y.n) || (x.avg - y.avg));
   const best = people[0], maxN = Math.max(...people.map(x => x.n));
   const short = lbl => lbl.replace("月度", "");
-  $("tot").innerHTML = `<table class="ytbl"><thead><tr><th class="yn">担当</th>${per.map(({ p, a }) => `<th class="${a.finished ? "" : "cur"}">${short(p.label)}</th>`).join("")}<th class="ya">支払い</th></tr></thead><tbody>` +
+  $("tot").innerHTML = `<div class="ywrap"><table class="ytbl ytab"><thead><tr><th class="yn">担当</th>${per.map(({ p, a }) => `<th class="${a.finished ? "" : "cur"}">${short(p.label)}</th>`).join("")}<th class="ya">支払い</th></tr></thead><tbody>` +
     people.map(x => `<tr style="${tv(x.t)}">
       <td class="yn"><span class="badge">${sn(x.t)}</span><span class="ynm"><b>${own(x.t)}${x === best ? `<span class="ytag mvp">MVP</span>` : ""}</b><small class="num">平均${x.avg < 9 ? x.avg.toFixed(1) : "-"}位</small></span></td>
       ${x.ranks.map(v => `<td class="yc2${v.done && v.r === 1 ? " first" : ""}${v.done && v.r === 5 ? " last" : ""}${v.done ? "" : " now"}"><b class="num">${v.r}</b></td>`).join("")}
       <td class="ya num">${x.n ? `<b>${yen(x.n * CONFIG.fee)}</b><small>${x.n}回${maxN > 0 && x.n === maxN ? `<span class="ytag bad">最多</span>` : ""}</small>` : `<small>なし</small>`}</td>
-    </tr>`).join("") + `</tbody></table>`;
+    </tr>`).join("") + `</tbody></table></div>`;
 }
 
 /* ---------- 応援歌 ---------- */
@@ -1750,19 +1811,34 @@ function renderStats() {
   const first = cols[0];
   teams.sort((a, b) => { const x = num(first[1](a)), y = num(first[1](b)); if (x == null) return 1; if (y == null) return -1; return first[2] === "hi" ? y - x : x - y; });
   const best = cols.map(c => { const vs = teams.map(t => num(c[1](t))).filter(v => v != null); return vs.length ? (c[2] === "hi" ? Math.max(...vs) : Math.min(...vs)) : null; });
-  $("tmTbl").innerHTML = `<thead><tr><th>順</th><th>チーム</th>${cols.map(c => `<th>${c[0]}</th>`).join("")}</tr></thead><tbody>` +
-    teams.map((t, i) => `<tr style="${tv(t)}"><td>${i + 1}</td><td><span class="tn"><span class="badge" style="${tv(t)}">${sn(t)}</span><span class="nmx">${fn(t)}</span></span></td>${cols.map((c, j) => {
+  $("tmTbl").innerHTML = `<thead><tr><th>順位</th><th class="tnm">チーム名</th>${cols.map(c => `<th>${c[0]}</th>`).join("")}</tr></thead><tbody>` +
+    teams.map((t, i) => `<tr style="${tv(t)}"><td class="num">${i + 1}</td><td class="tnm"><a href="${TEAM_URL[t]}" target="_blank" rel="noopener">${fn(t)}</a></td>${cols.map((c, j) => {
       const v = c[1](t); const isB = v != null && best[j] != null && num(v) === best[j];
       return `<td class="num v${isB ? " best" : ""}">${v == null ? "-" : esc(v)}</td>`;
     }).join("")}</tr>`).join("") + `</tbody>`;
   const chip = (list, el) => { $(el).innerHTML = list.map(([k, l]) => `<button type="button" data-k="${k}" aria-pressed="${k === S.cat}">${l}</button>`).join(""); $(el).querySelectorAll("button").forEach(b => (b.onclick = () => { S.cat = b.dataset.k; renderStats(); })); };
   chip(CATS.bat, "catBat"); chip(CATS.pit, "catPit");
   const rows = (st.leaders || {})[S.cat] || [];
-  $("rankList").innerHTML = rows.length ? rows.map(r => `<div class="rrow${r.r === 1 ? " lead" : ""}" style="${tv(r.t)}">
-      <span class="rk num">${r.r}</span><span class="badge">${sn(r.t)}</span>
-      <span class="pn">${esc(r.n)}<small>${fn(r.t)}</small></span>
-      <span class="pv num">${esc(r.v)}</span></div>`).join("") : `<div class="rempty">データがありません。</div>`;
+  const lbl = [...CATS.bat, ...CATS.pit].find(([k]) => k === S.cat);
+  $("rankList").innerHTML = rows.length ? `<div class="ywrap"><table class="ytab rtab"><thead><tr><th>順位</th><th class="tnm">選手名</th><th class="tnm">チーム</th><th>${lbl ? lbl[1] : ""}</th></tr></thead><tbody>` +
+    rows.map(r => `<tr class="${r.r === 1 ? "lead" : ""}" style="${tv(r.t)}"><td class="num">${r.r}</td><td class="pnm">${esc(r.n)}</td><td class="tnm">${fn(r.t)}</td><td class="num v">${esc(r.v)}</td></tr>`).join("") +
+    `</tbody></table></div>` : `<div class="rempty">データがありません。</div>`;
 }
+
+/* ---------- スクロールしたら小さいヘッダー ---------- */
+(() => {
+  let on = false;
+  const tick = () => {
+    const h = document.querySelector(".top").offsetHeight;
+    const want = window.scrollY > h - 10;
+    if (want !== on) { on = want; $("minibar").classList.toggle("show", on); }
+    $("miniTtl").textContent = $("ttl").textContent;
+    $("miniLive").innerHTML = $("upd").querySelector(".lvh") ? "● LIVE" : "";
+  };
+  window.addEventListener("scroll", tick, { passive: true });
+  document.addEventListener("click", () => setTimeout(tick, 0));
+  tick();
+})();
 
 /* ---------- 読み込み ---------- */
 function renderUpd() {
