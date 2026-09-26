@@ -245,6 +245,34 @@ def fetch_stats(season, old_stats):
     return st
 
 
+def fetch_prev_order(season, old):
+    """前年の最終順位（日程タブの球団の並びに使う）。一度取れたら次から取りに行かない"""
+    prev = (old or {}).get("prev_order")
+    if prev and prev.get("season") == season - 1 and len(prev.get("order", [])) == 6:
+        return prev
+    html = fetch(f"https://npb.jp/bis/{season - 1}/stats/std_c.html")
+    if html:
+        soup = BeautifulSoup(html, "html.parser")
+        for table in soup.find_all("table"):
+            order = []
+            for tr in table.find_all("tr"):
+                cells = tr.find_all(["td", "th"])
+                m = TEAM_RE.search(norm(cells[0].get_text(" ", strip=True))) if cells else None
+                if m and CODE[m.group()] in CL and CODE[m.group()] not in order:
+                    order.append(CODE[m.group()])
+            if len(order) == 6:
+                print(f"[前年順位] {season - 1}年: {order}")
+                return {"season": season - 1, "order": order}
+    print("[前年順位] 取得できず")
+    return prev
+
+
+def write_json(data):
+    os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    with open(OUT, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
+
+
 def main():
     season = int(os.environ.get("SEASON") or datetime.now(JST).year)
     old = None
@@ -281,7 +309,16 @@ def main():
         print(f"[{mo}月] {len(gs)}試合 {st}")
         all_games += gs
 
+    month = datetime.now(JST).strftime("%Y-%m")
     if not all_games:
+        if old:
+            # オフシーズン（新しい年の日程がまだ出ていない）→ 前のデータをそのまま残す
+            print(f"{season}年の試合はまだありません。前のデータを残します")
+            if old.get("checked") != month:
+                old["checked"] = month  # 月1回ファイルを更新して、GitHubの自動実行が止まらないようにする
+                write_json(old)
+                print("月1回の生存確認を記録しました")
+            return
         print("試合が1件も取れませんでした。ページ構成が変わった可能性があります。")
         sys.exit(1)
 
@@ -303,7 +340,8 @@ def main():
     all_games.sort(key=lambda g: (g["d"], g["h"]))
     old_stats = old.get("stats") if old and old.get("season") == season else None
     stats = fetch_stats(season, old_stats)
-    if old and old_games == all_games and old_stats == stats:
+    prev_order = fetch_prev_order(season, old)
+    if old and old_games == all_games and old_stats == stats and old.get("prev_order") == prev_order and old.get("checked") == month:
         print("変化なし")
         return
     data = {
@@ -311,10 +349,10 @@ def main():
         "season": season,
         "games": all_games,
         "stats": stats,
+        "prev_order": prev_order,
+        "checked": month,
     }
-    os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    with open(OUT, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
+    write_json(data)
     print(f"保存しました: {len(all_games)}試合")
 
 
