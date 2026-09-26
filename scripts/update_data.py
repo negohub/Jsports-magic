@@ -351,7 +351,8 @@ def fetch_rosters(old):
     # 更新は3月〜7月だけ（支配下登録の期限が7月末のため）。まだ全球団そろっていなければ時期に関係なく取る
     if have_all and not (3 <= now.month <= 7):
         return rosters, (old or {}).get("roster_date")
-    if have_all and (old or {}).get("roster_date") == today:
+    # 取りに行くのは1日1回まで（応援歌ページが読めない球団があっても、何度も取りに行かない）
+    if len(rosters) == 6 and (old or {}).get("roster_date") == today and (old or {}).get("song_rev") == SONG_REV:
         return rosters, today
     for t, code in ROSTER_CODE.items():
         html = fetch(f"https://npb.jp/bis/teams/rst_{code}.html")
@@ -369,6 +370,62 @@ def fetch_rosters(old):
             print(f"[選手一覧] {t} 読み取れず（前回の値を使用）")
     print(f"[選手一覧] {sum(len(v) for v in rosters.values())}人（{len(rosters)}球団）")
     return rosters, today
+
+
+# ===== ポストシーズン（CS・日本シリーズ）：日程カレンダー用。戦況の計算には使わない =====
+def parse_post_rows(html, season, stage_of):
+    out = []
+    soup = BeautifulSoup(html, "html.parser")
+    for tr in soup.find_all("tr"):
+        text = norm(tr.get_text(" ", strip=True))
+        m = re.search(r"(\d{1,2})/(\d{1,2})", text)
+        if not m or "予備日" in text:
+            continue
+        st = stage_of(text)
+        n = re.search(r"第(\d)戦", text)
+        if not st or not n:
+            continue
+        g = {"d": f"{season}-{int(m.group(1)):02d}-{int(m.group(2)):02d}", "stage": st, "no": int(n.group(1))}
+        teams = [CODE[x] for x in TEAM_RE.findall(text)]
+        if len(teams) >= 2:
+            g["h"], g["a"] = teams[0], teams[1]
+            sc = re.search(r"(\d+)\s*-\s*(\d+)", text.split(")")[-1]) if ")" in text else None
+            if sc:
+                g["hs"], g["as"], g["st"] = int(sc.group(1)), int(sc.group(2)), "final"
+        if "中止" in text:
+            g["st"] = "canc"
+        tm = re.search(r"(\d{1,2}:\d{2})", text)
+        if tm:
+            g["t"] = tm.group(1)
+        out.append(g)
+    return out
+
+
+def fetch_post(season, old):
+    prev = [p for p in ((old or {}).get("post") or []) if p.get("d", "").startswith(str(season))]
+    games = []
+    html = fetch(f"https://npb.jp/games/{season}/schedule_climax_cl.html")
+    if html:
+        games += parse_post_rows(html, season, lambda t: "CSF" if "ファイナルステージ" in t else "CS1" if "ファーストステージ" in t else None)
+    html = fetch(f"https://npb.jp/nippons/{season}/")
+    if html:
+        text = norm(BeautifulSoup(html, "html.parser").get_text(" ", strip=True))
+        for m in re.finditer(r"【第(\d)戦】\s*(\d{1,2})月(\d{1,2})日[^【]*?(セ・リーグ|パ・リーグ)出場チーム本拠地", text):
+            games.append({"d": f"{season}-{int(m.group(2)):02d}-{int(m.group(3)):02d}", "stage": "JS", "no": int(m.group(1)),
+                          "home": "セ" if m.group(4).startswith("セ") else "パ"})
+    if not games:
+        print("[ポストシーズン] 読み取れず（前回の値を使用）")
+        return prev
+    # 前回に結果があって今回取れなかった試合は、結果を引き継ぐ
+    old_by = {(p["d"], p["stage"], p["no"]): p for p in prev}
+    for g in games:
+        o = old_by.get((g["d"], g["stage"], g["no"]))
+        if o and o.get("st") == "final" and g.get("st") != "final":
+            for k in ("h", "a", "hs", "as", "st"):
+                if k in o:
+                    g[k] = o[k]
+    print(f"[ポストシーズン] {len(games)}試合（CS {sum(g['stage'] != 'JS' for g in games)}・日本シリーズ {sum(g['stage'] == 'JS' for g in games)}）")
+    return games
 
 
 def write_json(data):
@@ -446,8 +503,10 @@ def main():
     stats = fetch_stats(season, old_stats)
     prev_order = fetch_prev_order(season, old)
     rosters, roster_date = fetch_rosters(old)
+    post = fetch_post(season, old)
     if (old and old_games == all_games and old_stats == stats and old.get("prev_order") == prev_order
-            and old.get("checked") == month and old.get("rosters") == rosters and old.get("song_rev") == SONG_REV):
+            and old.get("checked") == month and old.get("rosters") == rosters and old.get("song_rev") == SONG_REV
+            and old.get("post") == post):
         print("変化なし")
         return
     data = {
@@ -460,6 +519,7 @@ def main():
         "rosters": rosters,
         "roster_date": roster_date,
         "song_rev": SONG_REV,
+        "post": post,
     }
     write_json(data)
     print(f"保存しました: {len(all_games)}試合")
