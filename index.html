@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="回避マジック">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260926182534">
+<meta name="build" content="20260926183910">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -483,6 +483,19 @@ a.tn .nmx{border-bottom:1px solid rgba(255,255,255,.28)}
 .tabbar button[aria-selected="true"] svg{color:#fff}
 .tabbar button[aria-selected="true"]::before{background:#fff;height:3px;left:22%;right:22%}
 .tabbar button[aria-selected="true"]{background:linear-gradient(180deg,rgba(255,255,255,.10),transparent 80%)}
+
+/* ライブ */
+.lv{color:#FF3B3B;font-weight:900;letter-spacing:.02em}
+.lvh{color:#FF3B3B;font-weight:900}
+.fin{color:#fff;font-weight:900}
+.tg.islive{box-shadow:inset 0 0 0 1px rgba(255,59,59,.55)}
+.tgm .sc{font-size:26px;font-weight:900;display:flex;gap:6px;align-items:center;margin:0 4px}
+.tgm .sc i{font-style:normal;color:var(--muted);font-size:18px}
+.tgo.now{background:rgba(255,255,255,.05)}
+.tgo b em{font-style:normal;margin-left:8px;font-size:11px;background:#FF3B3B;color:#fff;padding:1px 6px}
+.lvtag{margin-left:8px;color:#FF3B3B;font-weight:900}
+.day .tx.lvc{color:#FF3B3B;font-weight:900}
+@media (prefers-reduced-motion:no-preference){.lv,.lvh,.lvtag{animation:blink 1.6s ease-in-out infinite}@keyframes blink{50%{opacity:.45}}}
 </style>
 </head>
 <body>
@@ -604,7 +617,7 @@ a.tn .nmx{border-bottom:1px solid rgba(255,255,255,.28)}
 /* ===== 計算ロジック（画面に依存しない部分） ===== */
 const CL = ["DB", "G", "T", "D", "S", "C"];
 const TEAM = {
-  DB: { s: "横", n: "DeNA", c: "#0A6FE0", i: "#FFF" }, G: { s: "巨", n: "巨人", c: "#F97709", i: "#000" },
+  DB: { s: "De", n: "DeNA", c: "#0A6FE0", i: "#FFF" }, G: { s: "巨", n: "巨人", c: "#F97709", i: "#000" },
   T: { s: "神", n: "阪神", c: "#FFE100", i: "#000" }, D: { s: "中", n: "中日", c: "#1F3FB0", i: "#FFF" },
   S: { s: "ヤ", n: "ヤクルト", c: "#00A660", i: "#FFF" }, C: { s: "広", n: "広島", c: "#E60012", i: "#FFF" },
   
@@ -848,6 +861,7 @@ const CONFIG = {
   owners: { D: "庄村", T: "根来", G: "池田", S: "今井", DB: "新國" }, // 担当
   payee: "庄村",          // 受け取る人
   fee: 2580,              // 1月度あたりの支払い額
+  liveApi: "https://jsports-live.kazushi-negoro.workers.dev/", // Cloudflare WorkerのURL（空ならライブ更新はしない）
   tieIsSafe: false,       // 最下位タイを回避扱いにするなら true
   calOrder: ["T", "DB", "G", "D", "C", "S"], // 日程の球団ボタンの並び（2025年の順位順）
   periods: [
@@ -984,7 +998,7 @@ function renderMagic() {
     else mg = r.self === null ? "" : `<span class="mn"><small>M</small>${r.self}</span>`;
     return `<div class="brow${isLow && !a.finished ? " low" : ""}${paid ? " paid" : ""}" style="${tv(r.t)};--i:${i}">
       <a class="tb" href="${TEAM_URL[r.t]}" target="_blank" rel="noopener" aria-label="${fn(r.t)}の公式サイト"><span class="rk num">${i + 1}</span><span class="kj">${sn(r.t)}</span></a>
-      <div class="tm"><b><a class="tl" href="${TEAM_URL[r.t]}" target="_blank" rel="noopener">${fn(r.t)}</a><small class="ow">${CONFIG.owners[r.t] || ""}</small></b><span class="num">${r.w}勝${r.l}敗${r.d}分　<em>${pctOf(r.w, r.l)}</em></span><span class="sm num">${gb}　残${r.rem}</span></div>
+      <div class="tm"><b><a class="tl" href="${TEAM_URL[r.t]}" target="_blank" rel="noopener">${fn(r.t)}</a><small class="ow">${CONFIG.owners[r.t] || ""}</small></b><span class="num">${r.w}勝${r.l}敗${r.d}分　<em>${pctOf(r.w, r.l)}</em></span><span class="sm num">${gb}　残${r.rem}${liveTag(r.t)}</span></div>
       <div class="mg">${mg}</div></div>`;
   }).join("");
 
@@ -1027,12 +1041,46 @@ function renderMagic() {
   $("excl").textContent = CONFIG.excluded.map(fn).join("・") + "は対象外";
 }
 
+/* ---------- ライブ ---------- */
+function liveTag(t) {
+  const today = jst().iso;
+  const g = DATA.games.find(x => x.d === today && x.st === "live" && (x.h === t || x.a === t));
+  if (!g) return "";
+  const me = g.h === t ? g.hs : g.as, op = g.h === t ? g.as : g.hs, o = g.h === t ? g.a : g.h;
+  return `<span class="lvtag">● ${sn(o)}戦 ${me}-${op} ${esc(g.inn || "")}</span>`;
+}
+let liveAt = null;
+function liveWanted() {
+  if (!CONFIG.liveApi || !DATA) return false;
+  const today = jst().iso, h = new Date(Date.now() + 9 * 3600e3).getUTCHours();
+  return h >= 11 && DATA.games.some(g => g.d === today && (g.st === "sched" || g.st === "live"));
+}
+async function pollLive() {
+  if (document.hidden || !liveWanted()) return;
+  try {
+    const r = await fetch(CONFIG.liveApi + "?t=" + Date.now(), { cache: "no-store" });
+    const j = await r.json();
+    let changed = false;
+    for (const x of j.games || []) {
+      if (x.st === "sched") continue;
+      const g = DATA.games.find(y => y.d === x.d && y.h === x.h && y.a === x.a);
+      if (!g || g.st === "final") continue;
+      if (g.st !== x.st || g.hs !== x.hs || g.as !== x.as || g.inn !== x.inn) {
+        g.st = x.st; g.hs = x.hs; g.as = x.as; g.inn = x.inn; changed = true;
+      }
+    }
+    liveAt = new Date();
+    if (changed) renderAll(); else renderUpd();
+  } catch {}
+}
+
 /* ---------- 今日の試合 ---------- */
 function renderToday(a) {
   const byT = {}; a.rows.forEach(r => (byT[r.t] = r));
   const today = jst().iso;
   const rem = a.remaining.slice().sort((x, y) => x.d < y.d ? -1 : 1);
-  const day = rem.find(g => g.d >= today) ? rem.find(g => g.d >= today).d : null;
+  const todays = DATA.games.filter(g => g.d === today && S.period.months.includes(monthOf(g.d)) && (byT[g.h] || byT[g.a]) && g.st !== "canc");
+  const day = todays.length ? today : rem.find(g => g.d >= today) ? rem.find(g => g.d >= today).d : null;
   $("todayBlk").hidden = !day || a.finished;
   if (!day || a.finished) return;
   const [yy, mm, dd] = day.split("-").map(Number);
@@ -1056,13 +1104,19 @@ function renderToday(a) {
     }
     return out.length ? out.join("") : `<li class="nil">順位・マジックに大きな動きなし</li>`;
   };
-  $("today").innerHTML = rem.filter(g => g.d === day).map(g => {
+  const list = (day === today ? todays : rem.filter(g => g.d === day)).slice().sort((x, y) => (x.t || "") < (y.t || "") ? -1 : 1);
+  $("today").innerHTML = list.map(g => {
     const both = byT[g.h] && byT[g.a];
-    return `<div class="tg">
-      <div class="tgh"><span class="num">${esc(g.t || "")}</span><span>${esc(g.v || "")}</span>${both ? `<span class="h2h">直接対決</span>` : ""}</div>
-      <div class="tgm"><span class="badge" style="${tv(g.h)}">${sn(g.h)}</span>${fn(g.h)}<i>vs</i>${fn(g.a)}<span class="badge" style="${tv(g.a)}">${sn(g.a)}</span></div>
-      <div class="tgo" style="${tv(g.h)}"><b>${fn(g.h)}が勝ったら</b><ul>${effects(g, true)}</ul></div>
-      <div class="tgo" style="${tv(g.a)}"><b>${fn(g.a)}が勝ったら</b><ul>${effects(g, false)}</ul></div>
+    const live = g.st === "live", fin = g.st === "final";
+    const lead = live && g.hs !== g.as ? (g.hs > g.as ? "h" : "a") : null;
+    const state = live ? `<span class="lv">● LIVE ${esc(g.inn || "")}</span>` : fin ? `<span class="fin">試合終了</span>` : `<span class="num">${esc(g.t || "")}</span>`;
+    const mid = live || fin ? `<b class="sc num">${g.hs}<i>-</i>${g.as}</b>` : `<i>vs</i>`;
+    const outs = fin ? "" : `
+      <div class="tgo${lead === "h" ? " now" : ""}" style="${tv(g.h)}"><b>${fn(g.h)}が勝ったら${lead === "h" ? `<em>このまま終われば</em>` : ""}</b><ul>${effects(g, true)}</ul></div>
+      <div class="tgo${lead === "a" ? " now" : ""}" style="${tv(g.a)}"><b>${fn(g.a)}が勝ったら${lead === "a" ? `<em>このまま終われば</em>` : ""}</b><ul>${effects(g, false)}</ul></div>`;
+    return `<div class="tg${live ? " islive" : ""}">
+      <div class="tgh">${state}<span>${esc(g.v || "")}</span>${both ? `<span class="h2h">直接対決</span>` : ""}</div>
+      <div class="tgm"><span class="badge" style="${tv(g.h)}">${sn(g.h)}</span>${fn(g.h)}${mid}${fn(g.a)}<span class="badge" style="${tv(g.a)}">${sn(g.a)}</span></div>${outs}
     </div>`;
   }).join("") + `<p class="foot">この試合の結果だけで見た場合の変化です（同じ日のほかの試合は考えていません）。</p>`;
 }
@@ -1214,6 +1268,8 @@ function renderForm() {
 }
 
 /* ---------- 日程カレンダー ---------- */
+// 日程カレンダーの対戦表示だけDeNAを「デ」にする
+const calSn = t => (t === "DB" ? "デ" : sn(t));
 function calOrder() {
   const p = DATA.prev_order;
   return p && p.order && p.order.length === 6 && (!DATA.season || p.season === DATA.season - 1) ? p.order : CONFIG.calOrder;
@@ -1259,10 +1315,10 @@ function renderCal() {
     const g = gs[gs.length - 1];
     let inner = `<span class="dn ${cls}">${dd}</span>`;
     if (g) {
-      inner += `<span class="hb ${g.h === t ? "on" : ""}" style="${tv(t)}"></span><span class="mu">${sn(g.h)} - ${sn(g.a)}</span>`;
+      inner += `<span class="hb ${g.h === t ? "on" : ""}" style="${tv(t)}"></span><span class="mu">${calSn(g.h)} - ${calSn(g.a)}</span>`;
       if (g.st === "canc") inner += `<span class="tx">中止</span>`;
       else if (g.st === "final") { const r = resultOf(g, t); inner += `<span class="rs ${r}">${r === "w" ? "○" : r === "l" ? "×" : "△"}</span>`; }
-      else if (g.st === "live") inner += `<span class="tx">試合中</span>`;
+      else if (g.st === "live") { const me = g.h === t ? g.hs : g.as, op = g.h === t ? g.as : g.hs; inner += `<span class="tx lvc num">${me}-${op}</span><span class="tx lvc">${esc((g.inn || "").replace("回", ""))}</span>`; }
       else inner += `<span class="tx num">${esc(g.t || "")}</span>`;
     }
     const win = g && resultOf(g, t) === "w";
@@ -1450,9 +1506,16 @@ function renderStats() {
 }
 
 /* ---------- 読み込み ---------- */
+function renderUpd() {
+  const u = DATA.updated ? new Date(DATA.updated) : null;
+  const hm = d => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const today = jst().iso, liveNow = DATA.games.some(g => g.d === today && g.st === "live");
+  $("upd").innerHTML = (liveNow && liveAt ? `<span class="lvh">● LIVE</span> <b class="num">${hm(liveAt)}</b> 更新　` : "")
+    + (u ? `最終更新 <b class="num">${u.getMonth() + 1}/${u.getDate()} ${hm(u)}</b>　` : "") + (liveNow && liveAt ? "" : "広島を除くセ・リーグ5球団");
+}
 function renderAll() {
   const u = DATA.updated ? new Date(DATA.updated) : null;
-  $("upd").innerHTML = u ? `最終更新 <b class="num">${u.getMonth() + 1}/${u.getDate()} ${String(u.getHours()).padStart(2, "0")}:${String(u.getMinutes()).padStart(2, "0")}</b>　広島を除くセ・リーグ5球団` : "";
+  renderUpd();
   $("stripe").innerHTML = CL.filter(t => !CONFIG.excluded.includes(t)).map(t => `<i style="${tv(t)}"></i>`).join("");
   renderMagic(); renderCal(); renderStd(); renderStats(); renderSong();
   $("note").textContent = fromSnap ? "自動更新データを読み込めなかったため、ページ内に保存したデータを表示しています。" : "";
@@ -1471,6 +1534,7 @@ $("toastBtn").onclick = () => {
   $("toast").hidden = true;
   if (!S.periodPicked) S.period = null;
   renderAll();
+  pollLive();
 };
 async function fetchData() {
   const r = await fetch("data/latest.json?t=" + Date.now(), { cache: "no-store" });
@@ -1483,6 +1547,7 @@ async function load() {
   try { DATA = await fetchData(); fromSnap = false; }
   catch { DATA = SNAP; fromSnap = true; }
   renderAll();
+  pollLive();
 }
 let lastSiteCheck = 0;
 async function check(force) {
@@ -1502,7 +1567,8 @@ async function check(force) {
 }
 load();
 setInterval(check, 60 * 1000);
-document.addEventListener("visibilitychange", () => { if (!document.hidden) check(true); });
+setInterval(pollLive, 30 * 1000); // 試合がある日だけ、30秒ごとにライブのスコアを取りに行く
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { check(true); pollLive(); } });
 window.addEventListener("pageshow", e => { if (e.persisted) check(true); });
 </script>
 </body>
