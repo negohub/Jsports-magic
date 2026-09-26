@@ -291,12 +291,55 @@ def parse_roster(html):
     return out
 
 
+# 個別の応援歌がある選手を調べるページ（名前だけを照合し、歌詞は保存しない）
+SONG_SOURCES = {
+    "T": ["https://m.hanshintigers.jp/data/march/", "https://www.yakyu-ouen.net/tigers/"],
+    "DB": ["https://sp.baystars.co.jp/player_songs/index", "https://www.yakyu-ouen.net/baystars/"],
+    "G": ["https://giants-cheeringclub.com/cheeringsong/", "https://www.yakyu-ouen.net/giants/"],
+    "D": ["https://chunichiouendan.wixsite.com/dragonsouendan/%E5%BF%9C%E6%8F%B4%E6%AD%8C", "https://www.yakyu-ouen.net/dragons/"],
+    "C": ["https://www.carp.co.jp/team/songs", "https://www.yakyu-ouen.net/carp/"],
+    "S": ["https://www.yakult-swallows.co.jp/players/song", "https://www.yakyu-ouen.net/swallows/"],
+}
+# 背番号で並んでいるページ（ヤクルト公式）は背番号でも照合する
+SONG_BY_NUMBER = {"https://www.yakult-swallows.co.jp/players/song"}
+VARIANT = str.maketrans({"髙": "高", "﨑": "崎", "濵": "浜", "德": "徳", "瀨": "瀬", "邊": "辺", "邉": "辺", "塚": "塚", "・": "", "＝": "", "=": ""})
+
+
+def squash(s):
+    return re.sub(r"\s+", "", norm(s)).translate(VARIANT)
+
+
+def mark_songs(t, rows):
+    """応援歌ページに名前（または背番号）が出てくる選手に song=True を付ける。どのページも読めなければ None"""
+    texts, numbers, ok = [], set(), False
+    for url in SONG_SOURCES.get(t, []):
+        html = fetch(url)
+        if not html:
+            continue
+        text = squash(BeautifulSoup(html, "html.parser").get_text(" "))
+        if len(text) < 200:
+            continue
+        ok = True
+        texts.append(text)
+        if url in SONG_BY_NUMBER:
+            numbers |= set(re.findall(r"背番号(\d{1,3})", text))
+    if not ok:
+        return None
+    blob = "\n".join(texts)
+    n = 0
+    for r in rows:
+        name = squash(r["n"])
+        r["song"] = (len(name) >= 2 and name in blob) or (not r["dev"] and r["no"] in numbers)
+        n += r["song"]
+    return n
+
+
 def fetch_rosters(old):
     """各球団の選手一覧（1日1回だけ取りに行く）"""
     now = datetime.now(JST)
     today = now.strftime("%Y-%m-%d")
     rosters = dict((old or {}).get("rosters") or {})
-    have_all = len(rosters) == 6
+    have_all = len(rosters) == 6 and all(any("song" in r for r in v) for v in rosters.values())
     # 更新は3月〜7月だけ（支配下登録の期限が7月末のため）。まだ全球団そろっていなければ時期に関係なく取る
     if have_all and not (3 <= now.month <= 7):
         return rosters, (old or {}).get("roster_date")
@@ -306,6 +349,13 @@ def fetch_rosters(old):
         html = fetch(f"https://npb.jp/bis/teams/rst_{code}.html")
         rows = parse_roster(html) if html else []
         if len(rows) >= 20:
+            n = mark_songs(t, rows)
+            if n is None and t in rosters:  # 応援歌ページが読めなかったときは前回の判定を引き継ぐ
+                prev = {(r["no"], r["n"]): r.get("song") for r in rosters[t]}
+                for r in rows:
+                    if prev.get((r["no"], r["n"])) is not None:
+                        r["song"] = prev[(r["no"], r["n"])]
+            print(f"[応援歌] {t}: 個別応援歌あり {n if n is not None else '判定できず'}人")
             rosters[t] = rows
         else:
             print(f"[選手一覧] {t} 読み取れず（前回の値を使用）")
