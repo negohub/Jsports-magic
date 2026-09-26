@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ペナントレース">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260926201345">
+<meta name="build" content="20260926201936">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -642,7 +642,7 @@ h2{font-weight:700;margin-top:30px}
 .h2h thead th{font-size:13px;color:#C8C8C8;background:#141414}
 .h2h th.rh{width:34px;background:#141414;color:#C8C8C8;font-size:13px;font-weight:600}
 .h2h tbody th.rh{box-shadow:inset 3px 0 0 var(--tc)}
-.h2h td b{display:block;font-size:13.5px;font-weight:700;color:#fff;line-height:1.3;white-space:nowrap}
+.h2h td b{display:block;font-size:13.5px;font-weight:400;color:#fff;line-height:1.3;white-space:nowrap}
 .h2h td small{display:block;font-size:11px;color:#9A9A9A;font-weight:400;line-height:1.2}
 .h2h td.self{background:#161616;color:#555}
 .h2h tbody tr{background:none}
@@ -1162,12 +1162,11 @@ function renderMagic() {
 
   const lastIdx = a.rows.length - 1;
   $("cards").innerHTML = yTable(a.rows.map((r, i) => {
-    const isLow = !r.safe && (i === lastIdx || cmp(r.w, r.l, a.rows[lastIdx].w, a.rows[lastIdx].l) === 0);
     const paid = r.eliminated || (a.finished && i === lastIdx);
     const extra = paid ? `<span class="mt ng">支払</span>` : r.safe ? `<span class="mt">★</span>` : r.self === null ? "" : `<span class="mt">M${r.self}</span>`;
-    return { t: r.t, g: r.w + r.l + r.d, w: r.w, l: r.l, d: r.d, gb: r.gb, rem: r.rem, sub: CONFIG.owners[r.t] || "", extra,
-      cls: (isLow && !a.finished ? "low" : "") + (paid ? " paid" : "") };
-  }), "マジック") + `<p class="foot">球団名をタップすると公式サイト。勝差は1つ上の球団とのゲーム差、残試合は月度の残り試合。マジックの★は最下位回避の確定、「支払」は最下位の確定。</p>`;
+    return { t: r.t, g: r.w + r.l + r.d, w: r.w, l: r.l, d: r.d, gb: r.gb, rem: r.rem, extra };
+  }), "マジック")
+    + `<p class="foot">球団名をタップすると公式サイトが開きます。勝差は1つ上の球団とのゲーム差、残試合はこの月度の残り試合。マジックは最下位回避のマジックで、★は回避確定、「支払」は最下位確定。</p>`;
 
   const tOrder = a.rows.map(r => r.t);
   $("mh2h").innerHTML = h2hTable(tOrder, [...tOrder, ...CONFIG.excluded], g => S.period.months.includes(monthOf(g.d)));
