@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="回避マジック">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260926165654">
+<meta name="build" content="20260926170518">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -206,8 +206,8 @@ td.pc{font-weight:900}
 .rrow .pn{font-size:16px;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rrow .pn small{display:block;font-size:12px;color:var(--muted);font-weight:600}
 .rrow .pv{font-size:24px;font-weight:900;letter-spacing:-.01em}
-.rrow.top .rk{color:#fff}
-.rrow.top .pv{font-size:30px}
+.rrow.lead .rk{color:#fff}
+.rrow.lead .pv{font-size:30px}
 .rempty{padding:24px 0;color:var(--dim);font-size:14px;text-align:center}
 
 /* 更新のお知らせ */
@@ -386,6 +386,57 @@ h2 small{font-weight:600}
 .day.win .rs.w{color:#fff}
 .day.today{box-shadow:inset 0 -3px 0 #fff}
 .day.sel{box-shadow:inset 0 0 0 2px #fff}
+
+/* ===== 色と見やすさの仕上げ ===== */
+:root{--p1:#111;--p2:#1B1B1B;--line:#262626;--line2:#1C1C1C;--muted:#9A9A9A}
+/* ヘッダーはコンパクトに */
+.top{padding:calc(14px + env(safe-area-inset-top,0px)) 16px 0}
+.brand{display:grid;grid-template-columns:1fr auto;align-items:end;column-gap:12px}
+.brand .j{grid-column:1/-1;font-size:11.5px}
+.brand h1{font-size:30px;margin-top:2px}
+.brand .upd{grid-column:1/-1;margin-top:6px;padding-bottom:12px}
+.stripe{max-width:none;height:5px;margin:0 -16px}
+.stripe i{transform:none}
+/* 見出しに斜めのマーク */
+h2{display:flex;align-items:baseline;gap:0;font-size:19px}
+h2::before{content:"";flex:0 0 auto;width:6px;height:17px;background:#fff;margin-right:12px;transform:skewX(-18deg);align-self:center}
+h2 small{margin-left:10px}
+/* 月度タブ */
+.chips{border-bottom:0;padding-top:4px}
+.chip{border:1px solid var(--line);margin-right:6px;padding:8px 14px}
+.chip[aria-pressed="true"]{background:#fff;color:#000;border-color:#fff}
+.chip[aria-pressed="true"]::after{display:none}
+/* マジック一覧：チームカラーを横に流す */
+.brow{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 34%,#0B0B0B) 0%,color-mix(in srgb,var(--tc) 12%,#0B0B0B) 38%,#0B0B0B 70%)}
+.brow .tm span{color:#E6E6E6}
+.brow .tm .sm{color:#A8A8A8}
+.brow.low{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 30%,#1A0406) 0%,#2A080B 55%,#2A080B 100%);box-shadow:inset 0 0 0 2px rgba(255,59,59,.75)}
+.brow.paid{background:linear-gradient(90deg,#3A0B0E,#2A080B);box-shadow:inset 0 0 0 2px #FF3B3B}
+.bhead{font-size:11.5px;letter-spacing:.04em}
+/* パネル類 */
+.trend,.tg{background:#101010;border:1px solid #1E1E1E}
+.tg{border-left:0;border-right:0}
+.frow{padding:10px 8px;margin-bottom:4px;border-bottom:0;background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 22%,#0B0B0B),#0B0B0B 60%)}
+.fb i{background:#1A1A1A}
+/* 順位表：行ごとにチームカラーをうっすら */
+#std tbody tr{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 20%,transparent),transparent 55%)}
+#std tbody tr:first-child td{border-top:0}
+.hrow{padding:12px 10px;margin-bottom:4px;border-bottom:0;background:#0E0E0E}
+.yrow{padding:12px 10px 14px;margin-bottom:6px;border-bottom:0;background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 20%,#0B0B0B),#0B0B0B 60%)}
+.yc{background:rgba(255,255,255,.06)}
+/* 成績 */
+.rrow{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 20%,#0B0B0B),#0B0B0B 60%);border-bottom:0;margin-bottom:4px;padding:11px 10px}
+.rank{border-top:0}
+.tstat tbody tr{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 18%,transparent),transparent 55%)}
+/* 日程 */
+.tbtn{background:#101010;border:1px solid #1E1E1E;border-bottom:3px solid transparent}
+.tbtn[aria-pressed="true"]{background:color-mix(in srgb,var(--tc) 22%,#101010);border-bottom-color:var(--tc)}
+.cal{border-color:#1E1E1E;background:#1E1E1E}
+.cal .wd{background:#111}
+.detail{background:#101010;border-left-color:var(--tc,#fff)}
+/* 下のタブバー */
+.tabbar{background:rgba(8,8,8,.94);border-top:1px solid #222}
+.tabbar button[aria-selected="true"]::before{height:3px;transform:skewX(-18deg)}
 </style>
 </head>
 <body>
@@ -1174,7 +1225,7 @@ function renderStd() {
   $("std").innerHTML = `<thead><tr><th>順</th><th>チーム</th><th>試合</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>差</th></tr></thead><tbody>` +
     rows.map((r, i) => {
       const gbCell = i === 0 ? (r.magic === 0 ? `<td class="mg">優勝</td>` : r.magic != null ? `<td class="mg">M${r.magic}</td>` : `<td>-</td>`) : `<td>${Number.isInteger(r.gb) ? r.gb : r.gb.toFixed(1)}</td>`;
-      return `<tr><td>${i + 1}</td><td><span class="tn"><span class="badge" style="${tv(r.t)}">${sn(r.t)}</span><span class="nmx">${fn(r.t)}</span></span></td>
+      return `<tr style="${tv(r.t)}"><td>${i + 1}</td><td><span class="tn"><span class="badge" style="${tv(r.t)}">${sn(r.t)}</span><span class="nmx">${fn(r.t)}</span></span></td>
       <td class="num">${r.g}</td><td class="num">${r.w}</td><td class="num">${r.l}</td><td class="num">${r.d}</td><td class="num pc">${pctOf(r.w, r.l)}</td>${gbCell}</tr>`;
     }).join("") + `</tbody>`;
   $("stdNote").textContent = "全試合";
@@ -1228,14 +1279,14 @@ function renderStats() {
   teams.sort((a, b) => { const x = num(first[1](a)), y = num(first[1](b)); if (x == null) return 1; if (y == null) return -1; return first[2] === "hi" ? y - x : x - y; });
   const best = cols.map(c => { const vs = teams.map(t => num(c[1](t))).filter(v => v != null); return vs.length ? (c[2] === "hi" ? Math.max(...vs) : Math.min(...vs)) : null; });
   $("tmTbl").innerHTML = `<thead><tr><th>順</th><th>チーム</th>${cols.map(c => `<th>${c[0]}</th>`).join("")}</tr></thead><tbody>` +
-    teams.map((t, i) => `<tr><td>${i + 1}</td><td><span class="tn"><span class="badge" style="${tv(t)}">${sn(t)}</span><span class="nmx">${fn(t)}</span></span></td>${cols.map((c, j) => {
+    teams.map((t, i) => `<tr style="${tv(t)}"><td>${i + 1}</td><td><span class="tn"><span class="badge" style="${tv(t)}">${sn(t)}</span><span class="nmx">${fn(t)}</span></span></td>${cols.map((c, j) => {
       const v = c[1](t); const isB = v != null && best[j] != null && num(v) === best[j];
       return `<td class="num v${isB ? " best" : ""}">${v == null ? "-" : esc(v)}</td>`;
     }).join("")}</tr>`).join("") + `</tbody>`;
   const chip = (list, el) => { $(el).innerHTML = list.map(([k, l]) => `<button type="button" data-k="${k}" aria-pressed="${k === S.cat}">${l}</button>`).join(""); $(el).querySelectorAll("button").forEach(b => (b.onclick = () => { S.cat = b.dataset.k; renderStats(); })); };
   chip(CATS.bat, "catBat"); chip(CATS.pit, "catPit");
   const rows = (st.leaders || {})[S.cat] || [];
-  $("rankList").innerHTML = rows.length ? rows.map(r => `<div class="rrow${r.r === 1 ? " top" : ""}" style="${tv(r.t)}">
+  $("rankList").innerHTML = rows.length ? rows.map(r => `<div class="rrow${r.r === 1 ? " lead" : ""}" style="${tv(r.t)}">
       <span class="rk num">${r.r}</span><span class="badge">${sn(r.t)}</span>
       <span class="pn">${esc(r.n)}<small>${fn(r.t)}</small></span>
       <span class="pv num">${esc(r.v)}</span></div>`).join("") : `<div class="rempty">データがありません。</div>`;
