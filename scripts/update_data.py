@@ -22,11 +22,13 @@ OUT = os.path.join(os.path.dirname(__file__), "..", "data", "latest.json")
 TEAMS = [
     ("ソフトバンク", "H"), ("日本ハム", "F"), ("オリックス", "B"),
     ("ヤクルト", "S"), ("DeNA", "DB"), ("ロッテ", "M"), ("西武", "L"),
-    ("楽天", "E"), ("巨人", "G"), ("阪神", "T"), ("中日", "D"), ("広島", "C"),
+    ("楽天", "E"), ("ジャイアンツ", "G"), ("巨人", "G"), ("阪神", "T"), ("中日", "D"), ("広島", "C"),
 ]
 CL = {"DB", "G", "T", "D", "S", "C"}
 TEAM_RE = re.compile("|".join(re.escape(n) for n, _ in TEAMS))
 CODE = dict(TEAMS)
+ABBR = {"神": "T", "巨": "G", "デ": "DB", "中": "D", "広": "C", "ヤ": "S"}
+
 URLCODE = {"g": "G", "db": "DB", "t": "T", "d": "D", "c": "C", "s": "S",
            "h": "H", "f": "F", "b": "B", "e": "E", "l": "L", "m": "M"}
 DATE_RE = re.compile(r"^(\d{1,2})/(\d{1,2})")
@@ -135,6 +137,114 @@ def fetch(url):
     return None
 
 
+# ---------- 成績（スポーツナビ） ----------
+YAHOO = "https://baseball.yahoo.co.jp/npb"
+BAT_CATS = {"avg": "打率", "hr": "本塁打", "rbi": "打点", "h": "安打", "sb": "盗塁", "ops": "OPS"}
+PIT_CATS = {"era": "防御率", "w": "勝利", "so": "奪三振", "sv": "セーブ", "hldp": "HP"}
+TEAM_KEYS = ["打率", "本塁打", "得点", "盗塁", "防御率", "失点", "失策"]
+STAMP_RE = re.compile(r"(\d{4})/(\d{1,2})/(\d{1,2})\s+(\d{1,2}):(\d{2})")
+
+
+def clean(s):
+    return re.sub(r"\s+", "", norm(s))
+
+
+def stamp_of(html):
+    m = STAMP_RE.search(norm(BeautifulSoup(html, "html.parser").get_text(" ")))
+    return (int(m.group(1)), int(m.group(2)), int(m.group(3)), int(m.group(4)), int(m.group(5))) if m else None
+
+
+def parse_yahoo_rank(html, label, limit=10):
+    """部門別の個人成績ページ（最大30位）から上位を取る"""
+    soup = BeautifulSoup(html, "html.parser")
+    for table in soup.find_all("table"):
+        rows = table.find_all("tr")
+        if not rows:
+            continue
+        head = [clean(c.get_text(" ", strip=True)) for c in rows[0].find_all(["th", "td"])]
+        if "選手名" not in head or label not in head:
+            continue
+        ni, vi = head.index("選手名"), head.index(label)
+        res = []
+        for tr in rows[1:]:
+            cells = [norm(c.get_text(" ", strip=True)) for c in tr.find_all(["td", "th"])]
+            if len(cells) != len(head) or not cells[0].isdigit():
+                continue
+            m = re.match(r"^(.+?)\s*\(\s*(.)\s*\)$", cells[ni])
+            if not m or m.group(2) not in ABBR:
+                continue
+            r = int(cells[0])
+            if r > limit:
+                break
+            res.append({"r": r, "n": m.group(1).strip(), "t": ABBR[m.group(2)], "v": cells[vi]})
+        if res:
+            return res
+    return None
+
+
+def parse_yahoo_team(html):
+    """セ・リーグ順位表（詳細）からチーム成績を取る。「-」の項目は入れない"""
+    soup = BeautifulSoup(html, "html.parser")
+    for table in soup.find_all("table"):
+        rows = table.find_all("tr")
+        if not rows:
+            continue
+        head = [clean(c.get_text(" ", strip=True)) for c in rows[0].find_all(["th", "td"])]
+        if "チーム名" not in head or "防御率" not in head:
+            continue
+        ti = head.index("チーム名")
+        out = {}
+        for tr in rows[1:]:
+            cells = [norm(c.get_text(" ", strip=True)) for c in tr.find_all(["td", "th"])]
+            if len(cells) != len(head):
+                continue
+            m = TEAM_RE.search(cells[ti])
+            if not m or CODE[m.group()] not in CL:
+                continue
+            out[CODE[m.group()]] = {k: cells[head.index(k)] for k in TEAM_KEYS
+                                    if k in head and re.search(r"\d", cells[head.index(k)])}
+        if len(out) == 6:
+            return out
+    return None
+
+
+def fetch_stats(season, old_stats):
+    """チーム成績と個人ランキング。取れなかった部分は前回の値を残す"""
+    st = json.loads(json.dumps(old_stats or {}))
+    st["team"] = st.get("team") if isinstance(st.get("team"), dict) else {}
+    st.setdefault("leaders", {})
+    stamps = []
+    html = fetch(f"{YAHOO}/standings/detail/1")
+    tbl = parse_yahoo_team(html) if html else None
+    if tbl:
+        for t, row in tbl.items():
+            cur = st["team"].get(t)
+            cur = cur if isinstance(cur, dict) and "bat" not in cur else {}
+            cur.update(row)
+            st["team"][t] = cur
+        stamps.append(stamp_of(html))
+        print("[成績] チーム成績 OK")
+    else:
+        print("[成績] チーム成績 読み取れず（前回の値を使用）")
+    for kind, cats in (("batter", BAT_CATS), ("pitcher", PIT_CATS)):
+        for key, label in cats.items():
+            html = fetch(f"{YAHOO}/stats/{kind}?gameKindId=1&type={key}")
+            rows = parse_yahoo_rank(html, label) if html else None
+            if rows:
+                st["leaders"][key] = rows
+                stamps.append(stamp_of(html))
+            else:
+                print(f"[成績] ランキング {label} 読み取れず（前回の値を使用）")
+            time.sleep(1)
+    stamps = [x for x in stamps if x]
+    if stamps:
+        y, mo, d, h, mi = max(stamps)
+        st["asof"] = f"{mo}/{d} {h}:{mi:02d}"
+    st["src"] = "スポーツナビ"
+    print(f"[成績] {st.get('asof')} 更新分 ランキング{len(st['leaders'])}部門")
+    return st
+
+
 def main():
     season = int(os.environ.get("SEASON") or datetime.now(JST).year)
     old = None
@@ -191,13 +301,16 @@ def main():
             print(f"  前回の確定結果を維持: {k}")
 
     all_games.sort(key=lambda g: (g["d"], g["h"]))
-    if old and old_games == all_games:
+    old_stats = old.get("stats") if old and old.get("season") == season else None
+    stats = fetch_stats(season, old_stats)
+    if old and old_games == all_games and old_stats == stats:
         print("変化なし")
         return
     data = {
-        "updated": datetime.now(JST).strftime("%Y-%m-%dT%H:%M:%S+09:00"),
+        "updated": datetime.now(JST).strftime("%Y-%m-%dT%H:%M:%S+09:00") if old_games != all_games or not old else old.get("updated"),
         "season": season,
         "games": all_games,
+        "stats": stats,
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
