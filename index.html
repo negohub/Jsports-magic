@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>J SPORTS 支払い回避マジック</title>
+<meta name="description" content="広島を除くセ・リーグ5球団の月度最下位回避マジック">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
+<style>
+:root{
+  --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
+  --text:#FFF; --muted:#8E8E8E; --dim:#5A5A5A; --ng:#FF2B2B;
+  --sat:#5B9BFF; --sun:#FF4F6D;
+  color-scheme:dark; box-sizing:border-box;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+  font-size:16px;line-height:1.55;font-feature-settings:"palt";-webkit-font-smoothing:antialiased;
+  padding-bottom:calc(72px + env(safe-area-inset-bottom,0px));}
+.num,.it{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.it{}
+button{font:inherit;color:inherit}
+button:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid #fff;outline-offset:2px}
+
+/* ヘッダー */
+.top{padding:calc(20px + env(safe-area-inset-top,0px)) 16px 0;background:var(--bg)}
+.brand{max-width:600px;margin:0 auto}
+.brand .j{font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.14em}
+.brand h1{margin:4px 0 0;font-size:34px;line-height:1.05;font-weight:900;letter-spacing:-.02em}
+.brand .upd{margin-top:10px;font-size:12.5px;color:var(--muted);padding-bottom:14px}
+.brand .upd b{color:var(--text);font-weight:700}
+.stripe{display:flex;height:6px;max-width:600px;margin:0 auto}
+.stripe i{flex:1;background:var(--tc);transform:skewX(-20deg)}
+
+main{max-width:600px;margin:0 auto;padding:16px 16px 24px}
+.view[hidden]{display:none}
+h2{font-size:20px;margin:28px 0 10px;font-weight:900;letter-spacing:-.01em}
+h2 small{font-size:12.5px;color:var(--muted);font-weight:600;font-style:normal;margin-left:8px}
+
+/* 月度 */
+.chips{display:flex;gap:0;overflow-x:auto;margin:0 -16px;padding:0 16px;scrollbar-width:none;border-bottom:1px solid var(--line)}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;border:0;background:none;padding:10px 12px 11px;font-size:14.5px;font-weight:800;cursor:pointer;color:var(--dim);display:flex;align-items:center;gap:6px;position:relative}
+.chip[aria-pressed="true"]{color:var(--text)}
+.chip[aria-pressed="true"]::after{content:"";position:absolute;left:10px;right:10px;bottom:-1px;height:3px;background:#fff}
+.chip .dot{width:6px;height:6px;background:var(--ng)}
+
+/* いま払う人 */
+.alert{margin-top:16px;background:var(--tc);color:var(--ti);padding:16px 18px 18px;position:relative;overflow:hidden}
+.alert::after{content:"";position:absolute;right:-30px;top:0;bottom:0;width:120px;background:rgba(0,0,0,.14);transform:skewX(-20deg)}
+.alert .lbl{font-size:13px;font-weight:800;opacity:.8;position:relative;z-index:1}
+.alert .who{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;position:relative;z-index:1}
+.alert .who b{font-size:42px;font-weight:900;letter-spacing:-.03em;line-height:1.1}
+.alert .who span{font-size:17px;font-weight:900}
+.alert .sub{margin-top:2px;font-size:13.5px;font-weight:700;opacity:.8;position:relative;z-index:1}
+
+/* 球団カード */
+.cards{margin-top:16px;border-top:1px solid var(--line)}
+.card{border-bottom:1px solid var(--line);position:relative}
+.card.ng{background:linear-gradient(90deg,rgba(255,43,43,.16),transparent 70%)}
+.card-main{display:grid;grid-template-columns:44px 88px 1fr;gap:12px;align-items:center;padding:14px 0 10px}
+.card .side{align-self:stretch;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.card .side .rkn{font-size:26px;font-weight:900;line-height:1;color:var(--muted)}
+.lamp{display:flex;align-items:flex-end;justify-content:flex-start;gap:3px;font-weight:900;font-size:52px;line-height:.9;letter-spacing:-.04em;color:#fff}
+.lamp small{font-size:15px;font-weight:900;margin-bottom:5px;color:var(--muted)}
+.lamp.off{color:var(--dim);font-size:40px}
+.lamp.ok{font-size:18px;font-style:normal;align-items:center;gap:6px;letter-spacing:0}
+.lamp.ok i{font-style:normal;width:26px;height:26px;display:grid;place-items:center;background:#fff;color:#000;font-size:15px}
+.lamp.ng{font-size:18px;font-style:normal;align-items:center;letter-spacing:0;color:#fff}
+.lamp.ng i{font-style:normal;background:var(--ng);color:#fff;padding:4px 8px;font-size:15px;font-weight:900}
+.nm{display:flex;align-items:center;gap:8px;font-weight:900;font-size:17px}
+.nm .rk{display:none}
+.badge{width:28px;height:28px;display:inline-grid;place-items:center;font-size:15px;font-weight:900;color:var(--ti,#000);background:var(--tc);flex:0 0 auto}
+.rec{margin-top:3px;font-size:14.5px;font-weight:700;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;color:#D6D6D6}
+.rec .pct{font-size:20px;font-weight:900;color:#fff}
+.meta{font-size:12.5px;color:var(--muted);margin-top:1px;display:flex;gap:12px}
+.meter{margin:0 0 12px 56px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.meter .track{height:5px;background:var(--p2)}
+.meter .fill{height:100%;background:var(--tc)}
+.meter .cap{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.meter .cap span{display:none}
+.meter .cap b{color:#fff;font-weight:900;font-size:15px}
+.card details{margin-left:56px;border-top:1px dashed var(--line)}
+.card summary{list-style:none;cursor:pointer;padding:9px 0;font-size:13px;color:var(--muted);font-weight:700;display:flex;justify-content:space-between}
+.card summary::-webkit-details-marker{display:none}
+.card summary::after{content:"＋";font-weight:400}
+.card details[open] summary::after{content:"－"}
+.more{padding:0 0 14px;font-size:14px}
+.more p{margin:0 0 8px}
+.more b{}
+.pairs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.pair{background:var(--p2);padding:3px 9px;font-size:13px;font-weight:700}
+.pair em{font-style:normal;font-weight:900;margin-left:4px}
+.left{display:flex;flex-wrap:wrap;gap:6px}
+.left span{border:1px solid var(--line);padding:2px 8px;font-size:13px;color:#CFCFCF}
+.left span.vs{border-color:#fff;color:#fff;font-weight:800}
+.copy{display:block;width:100%;margin-top:18px;border:0;padding:16px;font-size:16px;font-weight:900;cursor:pointer;background:#fff;color:#000;letter-spacing:.02em}
+.copy.done{background:#00A660;color:#fff}
+.excl{margin-top:10px;font-size:12.5px;color:var(--dim);text-align:center}
+
+/* カレンダー */
+.teams{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.tbtn{border:0;background:var(--p1);padding:9px 0 7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--muted);font-weight:800;border-bottom:3px solid transparent}
+.tbtn .badge{width:30px;height:30px;font-size:16px}
+.tbtn[aria-pressed="true"]{background:var(--p2);color:#fff;border-bottom-color:var(--tc)}
+.monthbar{display:flex;align-items:center;justify-content:space-between;margin:18px 0 6px}
+.monthbar h3{margin:0;font-size:24px;font-weight:900;letter-spacing:-.02em}
+.monthbar button{width:42px;height:42px;border:1px solid var(--line);background:none;cursor:pointer;font-size:20px}
+.monthbar button:disabled{opacity:.25;cursor:default}
+.mrec{text-align:center;font-size:13.5px;color:var(--muted);margin:0 0 12px}
+.mrec b{color:#fff;font-weight:900}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);background:var(--line2);gap:1px;border:1px solid var(--line2)}
+.cal .wd{background:var(--p1);text-align:center;font-size:12px;font-weight:800;padding:7px 0;color:var(--muted)}
+.cal .wd.sa{color:var(--sat)} .cal .wd.su{color:var(--sun)}
+.day{background:var(--bg);min-height:86px;padding:6px 1px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:default;border:0;text-align:center}
+.day.has{cursor:pointer}
+.day.blank{background:#070707}
+.day .dn{font-size:13px;font-weight:800;line-height:1.1;color:#D6D6D6}
+.day .dn.sa{color:var(--sat)} .day .dn.su{color:var(--sun)}
+.day .hb{width:68%;height:3px;background:var(--tc);opacity:0}
+.day .hb.on{opacity:1}
+.day .mu{font-size:11.5px;font-weight:800;white-space:nowrap;letter-spacing:-.02em}
+.day .rs{font-size:21px;font-weight:900;line-height:1}
+.day .rs.w{color:#fff} .day .rs.l{color:#555} .day .rs.d{color:var(--muted);font-size:18px}
+.day .tx{font-size:11px;color:var(--muted);font-weight:700}
+.day.today{background:#161616}
+.day.sel{box-shadow:inset 0 0 0 2px #fff}
+.detail{margin-top:12px;border-left:4px solid #fff;background:var(--p1);padding:12px 16px;min-height:62px}
+.detail .dd{font-size:12.5px;color:var(--muted);font-weight:700}
+.detail .sc{display:flex;align-items:center;gap:10px;margin-top:4px;font-size:17px;font-weight:900;flex-wrap:wrap}
+.detail .sc .n{font-size:28px;font-weight:900}
+.detail .res{margin-left:auto;font-size:13px;font-weight:900;padding:3px 10px;background:var(--p2)}
+.detail .res.w{background:#fff;color:#000}
+.detail .empty{color:var(--dim);font-size:14px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:14px;height:3px;background:#fff;vertical-align:middle;margin-right:4px}
+
+/* 順位表 */
+.table-wrap{overflow-x:auto;border-top:1px solid var(--line)}
+table{border-collapse:collapse;width:100%}
+th,td{padding:12px 6px;text-align:right;font-size:15px;white-space:nowrap}
+th:last-child,td:last-child{padding-right:4px}
+th{font-size:11.5px;color:var(--muted);font-weight:800;border-bottom:1px solid var(--line)}
+td{border-bottom:1px solid var(--line2)}
+th:first-child,td:first-child{text-align:center;width:30px;padding-left:0;color:var(--muted);font-weight:900;font-size:18px}
+th:first-child{font-size:11.5px;font-style:normal}
+th:nth-child(2),td:nth-child(2){text-align:left}
+td .tn{display:flex;align-items:center;gap:8px;font-weight:900}
+td .tn .badge{width:24px;height:24px;font-size:13px}
+td.mg{font-weight:900;color:#fff}
+td.pc{font-weight:900}
+@media (max-width:420px){th,td{font-size:14px;padding-left:4px;padding-right:4px}td .tn{gap:6px}}
+@media (max-width:359px){td .tn .nmx{display:none}}
+.hist{border-top:1px solid var(--line)}
+.hrow{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line2)}
+.hrow .pl{font-weight:900;font-size:15px}
+.hrow .py{font-weight:900;font-size:16px;text-align:right}
+.hrow .ranks{grid-column:1/-1}
+.ranks{display:flex;gap:4px}
+.ranks .badge{width:26px;height:26px;font-size:13px;opacity:.55}
+.ranks .badge.last{opacity:1;outline:2px solid #fff;outline-offset:2px}
+.foot{font-size:12px;color:var(--dim);margin-top:10px;line-height:1.7}
+
+/* ルール */
+.rules{margin-top:26px;border-top:1px solid var(--line)}
+.rules summary{list-style:none;cursor:pointer;padding:14px 0;font-weight:900;display:flex;justify-content:space-between}
+.rules summary::-webkit-details-marker{display:none}
+.rules summary::after{content:"＋";color:var(--muted);font-weight:400}
+.rules[open] summary::after{content:"－"}
+.rules p{margin:0 0 10px;font-size:14px;color:#BDBDBD;line-height:1.75}
+
+/* タブバー */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:10;background:rgba(0,0,0,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);padding:4px 10px calc(4px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center}
+.tabbar nav{display:grid;grid-template-columns:repeat(3,1fr);width:100%;max-width:480px}
+.tabbar button{background:none;border:0;cursor:pointer;padding:8px 0 6px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:800;color:var(--dim);position:relative}
+.tabbar button svg{width:23px;height:23px}
+.tabbar button[aria-selected="true"]{color:#fff}
+.tabbar button[aria-selected="true"]::before{content:"";position:absolute;top:-5px;left:30%;right:30%;height:3px;background:#fff}
+.note{font-size:12px;color:var(--dim);text-align:center;margin-top:18px}
+@media (max-width:374px){
+  .brand h1{font-size:29px}
+  .card-main{grid-template-columns:36px 76px 1fr;gap:10px}
+  .lamp{font-size:44px}
+  .meter,.card details{margin-left:46px}
+  .day .mu{font-size:10.5px}
+}
+
+/* マジック一覧（見やすさ優先） */
+.cards{margin-top:16px;border-top:2px solid #fff}
+.bhead{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-weight:800;padding:8px 2px}
+.brow{display:grid;grid-template-columns:22px 36px 1fr 104px;gap:10px;align-items:center;padding:14px 8px 14px 6px;border-top:1px solid var(--line);position:relative}
+.brow::before{content:"";position:absolute;left:-16px;top:0;bottom:0;width:4px;background:transparent}
+.brow.low{background:rgba(255,43,43,.12)}
+.brow.low::before,.brow.paid::before{background:var(--ng)}
+.brow.paid{background:rgba(255,43,43,.18)}
+.brow .rk{font-size:20px;font-weight:900;color:var(--muted);text-align:center}
+.brow .badge{width:36px;height:36px;font-size:19px}
+.tm{display:flex;flex-direction:column;min-width:0}
+.tm b{font-size:18px;font-weight:900;line-height:1.3}
+.tm span{font-size:14px;color:#DADADA;font-weight:700;white-space:nowrap}
+.tm em{font-style:normal;color:#fff;font-weight:900;font-size:15px}
+.tm .sm{font-size:12.5px;color:var(--muted);font-weight:600}
+.mg{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:4px;text-align:right}
+.mn{font-size:40px;font-weight:900;line-height:1;letter-spacing:-.02em;display:flex;align-items:baseline;gap:3px}
+.mn small{font-size:15px;color:var(--muted);font-weight:900}
+.mn.off{color:var(--dim);font-size:32px}
+.rt{font-size:11.5px;color:var(--muted);font-weight:700;white-space:nowrap}
+.rt b{color:#fff;font-size:13px}
+.st{font-size:15px;font-weight:900;padding:7px 10px;white-space:nowrap}
+.st.ok{background:#fff;color:#000}
+.st.ng{background:var(--ng);color:#fff}
+.excl{margin-top:0;padding:10px 0 0;border-top:1px solid var(--line);text-align:right}
+.conds .cond{padding:12px 0 14px;border-top:1px solid var(--line2)}
+.conds .ch{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.conds .ch .badge{width:24px;height:24px;font-size:13px}
+.conds .ch b{font-size:16px}
+.conds .why{font-size:14px;color:#DADADA;width:100%}
+.conds .why b{color:#fff;font-size:16px}
+.conds .lab{font-size:11.5px;color:var(--muted);font-weight:700;margin-top:8px}
+.conds .pairs{margin:4px 0 0}
+@media (max-width:374px){.brow{grid-template-columns:18px 30px 1fr 92px;gap:8px}.brow .badge{width:30px;height:30px;font-size:16px}.mn{font-size:34px}.tm b{font-size:16px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <div class="j">J SPORTS</div>
+    <h1>支払い回避マジック</h1>
+    <div class="upd" id="upd">読み込み中…</div>
+  </div>
+  <div class="stripe" id="stripe"></div>
+</header>
+
+<main>
+  <section class="view" id="v-magic" aria-label="マジック">
+    <div class="chips" id="chips" role="tablist" aria-label="月度"></div>
+    <div id="alert"></div>
+    <div class="cards" id="cards"></div>
+    <div class="excl" id="excl"></div>
+    <button class="copy" id="copyBtn" type="button">LINEに貼る文面をコピー</button>
+    <details class="rules conds" id="conds"><summary>確定の条件と残り試合</summary><div id="condBody"></div></details>
+    <details class="rules">
+      <summary>計算のルール</summary>
+      <p>対象は広島を除く5球団。3・4月と9・10月はまとめて1つの月度、それ以外は1か月ごとにリセット。交流戦も含む全公式戦の勝敗で集計します。</p>
+      <p>順位は勝率（勝÷（勝＋敗）、引き分けは除外）。最下位で並んだ場合は回避できていない扱いです。</p>
+      <p>M は、どの試合で勝っても最下位回避が確定する残りの勝ち数。直接対決の勝ちは相手の負けも同時に進みます。自力で決められないときは「--」。</p>
+      <p>相手別の数字は「自分の勝ち＋相手の負け」の合計でいくつになれば、その球団より上が確定するか。</p>
+      <p>回避率は残り試合をすべて五分五分とした場合の確率。残りが17試合以下なら全パターン、それより多ければ2万回の抽選で計算します。</p>
+    </details>
+  </section>
+
+  <section class="view" id="v-cal" aria-label="日程" hidden>
+    <div class="teams" id="teamSel"></div>
+    <div class="monthbar">
+      <button type="button" id="mPrev" aria-label="前の月">‹</button>
+      <h3 id="mTitle">—</h3>
+      <button type="button" id="mNext" aria-label="次の月">›</button>
+    </div>
+    <div class="mrec" id="mRec"></div>
+    <div class="cal" id="cal"></div>
+    <div class="detail" id="detail"></div>
+    <div class="legend"><span><i></i>ホームゲーム</span><span>○ 勝ち　× 負け　△ 引き分け</span></div>
+  </section>
+
+  <section class="view" id="v-std" aria-label="順位" hidden>
+    <h2>セ・リーグ順位表<small id="stdNote"></small></h2>
+    <div class="table-wrap"><table id="std"></table></div>
+    <p class="foot">差は1つ上の球団とのゲーム差。首位の M は優勝マジック（あと何勝で優勝か）。</p>
+    <h2>月度ごとの支払い</h2>
+    <div class="hist" id="hist"></div>
+    <p class="foot">白枠が最下位（支払い）。左から順位順、広島は対象外。</p>
+  </section>
+  <p class="note" id="note"></p>
+</main>
+
+<div class="tabbar">
+  <nav role="tablist" aria-label="表示の切り替え">
+    <button type="button" role="tab" data-tab="magic" aria-selected="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 15V9l2.5 3L13 9v6"/><path d="M16 9v6"/></svg>マジック</button>
+    <button type="button" role="tab" data-tab="cal" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>日程</button>
+    <button type="button" role="tab" data-tab="std" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>順位</button>
+  </nav>
+</div>
+
+<script id="snap" type="application/json">{"updated":"2026-09-26T22:04:00+09:00","season":2026,"games":[{"d":"2026-03-27","h":"C","a":"D","st":"final","hs":6,"as":5,"v":"マツダスタジアム"},{"d":"2026-03-27","h":"DB","a":"S","st":"final","hs":2,"as":3,"v":"横浜"},{"d":"2026-03-27","h":"G","a":"T","st":"final","hs":3,"as":1,"v":"東京ドーム"},{"d":"2026-03-28","h":"C","a":"D","st":"final","hs":2,"as":1,"v":"マツダスタジアム"},{"d":"2026-03-28","h":"DB","a":"S","st":"final","hs":2,"as":5,"v":"横浜"},{"d":"2026-03-28","h":"G","a":"T","st":"final","hs":0,"as":2,"v":"東京ドーム"},{"d":"2026-03-29","h":"C","a":"D","st":"final","hs":1,"as":0,"v":"マツダスタジアム"},{"d":"2026-03-29","h":"DB","a":"S","st":"final","hs":3,"as":5,"v":"横浜"},{"d":"2026-03-29","h":"G","a":"T","st":"final","hs":6,"as":12,"v":"東京ドーム"},{"d":"2026-03-31","h":"D","a":"G","st":"final","hs":2,"as":5,"v":"バンテリンドーム"},{"d":"2026-03-31","h":"S","a":"C","st":"final","hs":8,"as":3,"v":"神宮"},{"d":"2026-03-31","h":"T","a":"DB","st":"final","hs":4,"as":1,"v":"京セラD大阪"},{"d":"2026-04-01","h":"D","a":"G","st":"final","hs":5,"as":6,"v":"バンテリンドーム"},{"d":"2026-04-01","h":"S","a":"C","st":"canc","v":"神宮"},{"d":"2026-04-01","h":"T","a":"DB","st":"final","hs":1,"as":4,"v":"京セラD大阪"},{"d":"2026-04-02","h":"D","a":"G","st":"final","hs":2,"as":1,"v":"バンテリンドーム"},{"d":"2026-04-02","h":"S","a":"C","st":"final","hs":2,"as":1,"v":"神宮"},{"d":"2026-04-02","h":"T","a":"DB","st":"final","hs":4,"as":3,"v":"京セラD大阪"},{"d":"2026-04-03","h":"C","a":"T","st":"final","hs":2,"as":4,"v":"マツダスタジアム"},{"d":"2026-04-03","h":"G","a":"DB","st":"final","hs":1,"as":3,"v":"東京ドーム"},{"d":"2026-04-03","h":"S","a":"D","st":"final","hs":0,"as":1,"v":"神宮"},{"d":"2026-04-04","h":"C","a":"T","st":"final","hs":5,"as":7,"v":"マツダスタジアム"},{"d":"2026-04-04","h":"G","a":"DB","st":"final","hs":8,"as":4,"v":"東京ドーム"},{"d":"2026-04-04","h":"S","a":"D","st":"final","hs":11,"as":6,"v":"神宮"},{"d":"2026-04-05","h":"C","a":"T","st":"final","hs":2,"as":1,"v":"マツダスタジアム"},{"d":"2026-04-05","h":"G","a":"DB","st":"final","hs":3,"as":2,"v":"東京ドーム"},{"d":"2026-04-05","h":"S","a":"D","st":"final","hs":7,"as":5,"v":"神宮"},{"d":"2026-04-07","h":"C","a":"G","st":"final","hs":5,"as":2,"v":"マツダスタジアム"},{"d":"2026-04-07","h":"DB","a":"D","st":"final","hs":5,"as":3,"v":"横浜"},{"d":"2026-04-07","h":"T","a":"S","st":"final","hs":9,"as":3,"v":"甲子園"},{"d":"2026-04-08","h":"C","a":"G","st":"final","hs":1,"as":2,"v":"マツダスタジアム"},{"d":"2026-04-08","h":"DB","a":"D","st":"final","hs":4,"as":6,"v":"横浜"},{"d":"2026-04-08","h":"T","a":"S","st":"final","hs":2,"as":3,"v":"甲子園"},{"d":"2026-04-09","h":"C","a":"G","st":"canc","v":"マツダスタジアム"},{"d":"2026-04-09","h":"T","a":"S","st":"final","hs":2,"as":0,"v":"甲子園"},{"d":"2026-04-10","h":"D","a":"T","st":"final","hs":3,"as":5,"v":"バンテリンドーム"},{"d":"2026-04-10","h":"DB","a":"C","st":"canc","v":"横浜"},{"d":"2026-04-10","h":"G","a":"S","st":"final","hs":3,"as":2,"v":"東京ドーム"},{"d":"2026-04-11","h":"D","a":"T","st":"final","hs":3,"as":9,"v":"バンテリンドーム"},{"d":"2026-04-11","h":"DB","a":"C","st":"final","hs":4,"as":3,"v":"横浜"},{"d":"2026-04-11","h":"G","a":"S","st":"final","hs":2,"as":3,"v":"東京ドーム"},{"d":"2026-04-12","h":"D","a":"T","st":"final","hs":0,"as":3,"v":"バンテリンドーム"},{"d":"2026-04-12","h":"DB","a":"C","st":"final","hs":6,"as":5,"v":"横浜"},{"d":"2026-04-12","h":"G","a":"S","st":"final","hs":0,"as":2,"v":"東京ドーム"},{"d":"2026-04-14","h":"D","a":"C","st":"final","hs":6,"as":2,"v":"豊橋"},{"d":"2026-04-14","h":"S","a":"DB","st":"final","hs":5,"as":3,"v":"松山"},{"d":"2026-04-14","h":"T","a":"G","st":"final","hs":3,"as":4,"v":"甲子園"},{"d":"2026-04-15","h":"D","a":"C","st":"final","hs":2,"as":5,"v":"バンテリンドーム"},{"d":"2026-04-15","h":"T","a":"G","st":"canc","v":"甲子園"},{"d":"2026-04-16","h":"S","a":"DB","st":"final","hs":2,"as":0,"v":"神宮"},{"d":"2026-04-16","h":"T","a":"G","st":"final","hs":3,"as":4,"v":"甲子園"},{"d":"2026-04-17","h":"C","a":"DB","st":"final","hs":1,"as":5,"v":"マツダスタジアム"},{"d":"2026-04-17","h":"S","a":"G","st":"final","hs":2,"as":8,"v":"神宮"},{"d":"2026-04-17","h":"T","a":"D","st":"final","hs":2,"as":1,"v":"甲子園"},{"d":"2026-04-18","h":"C","a":"DB","st":"final","hs":2,"as":7,"v":"マツダスタジアム"},{"d":"2026-04-18","h":"S","a":"G","st":"final","hs":4,"as":3,"v":"神宮"},{"d":"2026-04-18","h":"T","a":"D","st":"final","hs":4,"as":3,"v":"甲子園"},{"d":"2026-04-19","h":"C","a":"DB","st":"final","hs":0,"as":2,"v":"マツダスタジアム"},{"d":"2026-04-19","h":"S","a":"G","st":"final","hs":3,"as":1,"v":"神宮"},{"d":"2026-04-19","h":"T","a":"D","st":"final","hs":7,"as":5,"v":"甲子園"},{"d":"2026-04-21","h":"C","a":"S","st":"final","hs":2,"as":1,"v":"マツダスタジアム"},{"d":"2026-04-21","h":"DB","a":"T","st":"final","hs":16,"as":9,"v":"横浜"},{"d":"2026-04-21","h":"G","a":"D","st":"final","hs":2,"as":1,"v":"長野"},{"d":"2026-04-22","h":"C","a":"S","st":"final","hs":0,"as":2,"v":"マツダスタジアム"},{"d":"2026-04-22","h":"DB","a":"T","st":"final","hs":7,"as":6,"v":"横浜"},{"d":"2026-04-22","h":"G","a":"D","st":"final","hs":5,"as":1,"v":"前橋"},{"d":"2026-04-23","h":"C","a":"S","st":"final","hs":0,"as":2,"v":"マツダスタジアム"},{"d":"2026-04-23","h":"DB","a":"T","st":"canc","v":"横浜"},{"d":"2026-04-24","h":"D","a":"S","st":"final","hs":6,"as":4,"v":"バンテリンドーム"},{"d":"2026-04-24","h":"DB","a":"G","st":"final","hs":2,"as":1,"v":"横浜"},{"d":"2026-04-25","h":"D","a":"S","st":"final","hs":5,"as":2,"v":"バンテリンドーム"},{"d":"2026-04-25","h":"DB","a":"G","st":"final","hs":2,"as":7,"v":"横浜"},{"d":"2026-04-25","h":"T","a":"C","st":"final","hs":2,"as":2,"v":"甲子園"},{"d":"2026-04-26","h":"D","a":"S","st":"final","hs":3,"as":0,"v":"バンテリンドーム"},{"d":"2026-04-26","h":"DB","a":"G","st":"final","hs":1,"as":4,"v":"横浜"},{"d":"2026-04-26","h":"T","a":"C","st":"final","hs":1,"as":0,"v":"甲子園"},{"d":"2026-04-28","h":"D","a":"DB","st":"final","hs":3,"as":0,"v":"バンテリンドーム"},{"d":"2026-04-28","h":"G","a":"C","st":"final","hs":1,"as":11,"v":"東京ドーム"},{"d":"2026-04-28","h":"S","a":"T","st":"final","hs":10,"as":5,"v":"神宮"},{"d":"2026-04-29","h":"D","a":"DB","st":"final","hs":2,"as":4,"v":"バンテリンドーム"},{"d":"2026-04-29","h":"G","a":"C","st":"final","hs":4,"as":2,"v":"東京ドーム"},{"d":"2026-04-29","h":"S","a":"T","st":"final","hs":0,"as":2,"v":"神宮"},{"d":"2026-04-30","h":"D","a":"DB","st":"final","hs":2,"as":6,"v":"バンテリンドーム"},{"d":"2026-04-30","h":"G","a":"C","st":"final","hs":2,"as":3,"v":"東京ドーム"},{"d":"2026-04-30","h":"S","a":"T","st":"final","hs":2,"as":10,"v":"神宮"},{"d":"2026-05-01","h":"C","a":"D","st":"final","hs":7,"as":3,"v":"マツダスタジアム"},{"d":"2026-05-01","h":"S","a":"DB","st":"final","hs":16,"as":5,"v":"神宮"},{"d":"2026-05-01","h":"T","a":"G","st":"final","hs":3,"as":5,"v":"甲子園"},{"d":"2026-05-02","h":"C","a":"D","st":"final","hs":0,"as":4,"v":"マツダスタジアム"},{"d":"2026-05-02","h":"S","a":"DB","st":"final","hs":6,"as":5,"v":"神宮"},{"d":"2026-05-02","h":"T","a":"G","st":"final","hs":7,"as":5,"v":"甲子園"},{"d":"2026-05-03","h":"C","a":"D","st":"canc","v":"マツダスタジアム"},{"d":"2026-05-03","h":"S","a":"DB","st":"final","hs":2,"as":12,"v":"神宮"},{"d":"2026-05-03","h":"T","a":"G","st":"final","hs":3,"as":0,"v":"甲子園"},{"d":"2026-05-04","h":"D","a":"T","st":"final","hs":7,"as":3,"v":"バンテリンドーム"},{"d":"2026-05-04","h":"DB","a":"C","st":"final","hs":11,"as":8,"v":"横浜"},{"d":"2026-05-04","h":"G","a":"S","st":"final","hs":1,"as":5,"v":"東京ドーム"},{"d":"2026-05-05","h":"D","a":"T","st":"final","hs":7,"as":3,"v":"バンテリンドーム"},{"d":"2026-05-05","h":"DB","a":"C","st":"final","hs":5,"as":5,"v":"横浜"},{"d":"2026-05-05","h":"G","a":"S","st":"final","hs":3,"as":2,"v":"東京ドーム"},{"d":"2026-05-06","h":"D","a":"T","st":"final","hs":0,"as":2,"v":"バンテリンドーム"},{"d":"2026-05-06","h":"DB","a":"C","st":"final","hs":0,"as":10,"v":"横浜"},{"d":"2026-05-06","h":"G","a":"S","st":"final","hs":0,"as":5,"v":"東京ドーム"},{"d":"2026-05-08","h":"C","a":"S","st":"final","hs":1,"as":4,"v":"マツダスタジアム"},{"d":"2026-05-08","h":"D","a":"G","st":"final","hs":9,"as":2,"v":"バンテリンドーム"},{"d":"2026-05-08","h":"T","a":"DB","st":"final","hs":1,"as":10,"v":"甲子園"},{"d":"2026-05-09","h":"C","a":"S","st":"final","hs":0,"as":4,"v":"マツダスタジアム"},{"d":"2026-05-09","h":"D","a":"G","st":"final","hs":4,"as":2,"v":"バンテリンドーム"},{"d":"2026-05-09","h":"T","a":"DB","st":"final","hs":1,"as":3,"v":"甲子園"},{"d":"2026-05-10","h":"C","a":"S","st":"final","hs":4,"as":0,"v":"マツダスタジアム"},{"d":"2026-05-10","h":"D","a":"G","st":"final","hs":4,"as":9,"v":"バンテリンドーム"},{"d":"2026-05-10","h":"T","a":"DB","st":"final","hs":3,"as":0,"v":"甲子園"},{"d":"2026-05-12","h":"DB","a":"D","st":"final","hs":3,"as":1,"v":"横浜"},{"d":"2026-05-12","h":"G","a":"C","st":"final","hs":5,"as":3,"v":"岐阜"},{"d":"2026-05-12","h":"S","a":"T","st":"final","hs":0,"as":10,"v":"神宮"},{"d":"2026-05-13","h":"DB","a":"D","st":"final","hs":5,"as":0,"v":"横浜"},{"d":"2026-05-13","h":"G","a":"C","st":"final","hs":4,"as":2,"v":"福井"},{"d":"2026-05-13","h":"S","a":"T","st":"final","hs":4,"as":2,"v":"神宮"},{"d":"2026-05-14","h":"DB","a":"D","st":"final","hs":0,"as":0,"v":"横浜"},{"d":"2026-05-15","h":"D","a":"S","st":"final","hs":5,"as":8,"v":"バンテリンドーム"},{"d":"2026-05-15","h":"G","a":"DB","st":"final","hs":2,"as":0,"v":"東京ドーム"},{"d":"2026-05-15","h":"T","a":"C","st":"final","hs":0,"as":2,"v":"甲子園"},{"d":"2026-05-16","h":"D","a":"S","st":"final","hs":8,"as":0,"v":"バンテリンドーム"},{"d":"2026-05-16","h":"G","a":"DB","st":"final","hs":4,"as":3,"v":"東京ドーム"},{"d":"2026-05-16","h":"T","a":"C","st":"final","hs":3,"as":1,"v":"甲子園"},{"d":"2026-05-17","h":"D","a":"S","st":"final","hs":1,"as":5,"v":"バンテリンドーム"},{"d":"2026-05-17","h":"G","a":"DB","st":"final","hs":1,"as":0,"v":"東京ドーム"},{"d":"2026-05-17","h":"T","a":"C","st":"final","hs":0,"as":1,"v":"甲子園"},{"d":"2026-05-19","h":"C","a":"DB","st":"final","hs":3,"as":1,"v":"マツダスタジアム"},{"d":"2026-05-19","h":"S","a":"G","st":"final","hs":0,"as":2,"v":"いわき"},{"d":"2026-05-19","h":"T","a":"D","st":"final","hs":4,"as":2,"v":"倉敷"},{"d":"2026-05-20","h":"C","a":"DB","st":"final","hs":3,"as":4,"v":"マツダスタジアム"},{"d":"2026-05-20","h":"T","a":"D","st":"final","hs":8,"as":7,"v":"甲子園"},{"d":"2026-05-21","h":"C","a":"DB","st":"final","hs":3,"as":1,"v":"マツダスタジアム"},{"d":"2026-05-21","h":"S","a":"G","st":"final","hs":3,"as":1,"v":"神宮"},{"d":"2026-05-21","h":"T","a":"D","st":"canc","v":"甲子園"},{"d":"2026-05-22","h":"D","a":"C","st":"final","hs":6,"as":2,"v":"バンテリンドーム"},{"d":"2026-05-22","h":"G","a":"T","st":"final","hs":4,"as":7,"v":"東京ドーム"},{"d":"2026-05-23","h":"D","a":"C","st":"final","hs":3,"as":5,"v":"バンテリンドーム"},{"d":"2026-05-23","h":"DB","a":"S","st":"final","hs":0,"as":6,"v":"横浜"},{"d":"2026-05-23","h":"G","a":"T","st":"final","hs":0,"as":3,"v":"東京ドーム"},{"d":"2026-05-24","h":"D","a":"C","st":"final","hs":3,"as":5,"v":"バンテリンドーム"},{"d":"2026-05-24","h":"DB","a":"S","st":"final","hs":1,"as":0,"v":"横浜"},{"d":"2026-05-24","h":"G","a":"T","st":"final","hs":3,"as":6,"v":"東京ドーム"},{"d":"2026-05-26","h":"C","a":"M","st":"final","hs":1,"as":3,"v":"マツダスタジアム"},{"d":"2026-05-26","h":"D","a":"E","st":"final","hs":1,"as":0,"v":"バンテリンドーム"},{"d":"2026-05-26","h":"DB","a":"B","st":"final","hs":1,"as":7,"v":"横浜"},{"d":"2026-05-26","h":"G","a":"H","st":"final","hs":3,"as":8,"v":"東京ドーム"},{"d":"2026-05-26","h":"S","a":"L","st":"final","hs":1,"as":2,"v":"神宮"},{"d":"2026-05-26","h":"T","a":"F","st":"final","hs":0,"as":4,"v":"甲子園"},{"d":"2026-05-27","h":"C","a":"M","st":"final","hs":4,"as":5,"v":"マツダスタジアム"},{"d":"2026-05-27","h":"D","a":"E","st":"final","hs":7,"as":2,"v":"バンテリンドーム"},{"d":"2026-05-27","h":"DB","a":"B","st":"final","hs":2,"as":5,"v":"横浜"},{"d":"2026-05-27","h":"G","a":"H","st":"final","hs":5,"as":1,"v":"東京ドーム"},{"d":"2026-05-27","h":"S","a":"L","st":"final","hs":2,"as":2,"v":"神宮"},{"d":"2026-05-27","h":"T","a":"F","st":"final","hs":2,"as":5,"v":"甲子園"},{"d":"2026-05-28","h":"C","a":"M","st":"final","hs":3,"as":6,"v":"マツダスタジアム"},{"d":"2026-05-28","h":"D","a":"E","st":"final","hs":2,"as":1,"v":"バンテリンドーム"},{"d":"2026-05-28","h":"DB","a":"B","st":"final","hs":3,"as":1,"v":"横浜"},{"d":"2026-05-28","h":"G","a":"H","st":"final","hs":4,"as":8,"v":"東京ドーム"},{"d":"2026-05-28","h":"S","a":"L","st":"final","hs":0,"as":8,"v":"神宮"},{"d":"2026-05-28","h":"T","a":"F","st":"final","hs":2,"as":4,"v":"甲子園"},{"d":"2026-05-29","h":"B","a":"D","st":"final","hs":1,"as":5,"v":"京セラD大阪"},{"d":"2026-05-29","h":"E","a":"S","st":"final","hs":2,"as":7,"v":"楽天モバイル"},{"d":"2026-05-29","h":"F","a":"G","st":"final","hs":2,"as":4,"v":"エスコンＦ"},{"d":"2026-05-29","h":"H","a":"C","st":"final","hs":2,"as":0,"v":"みずほPayPay"},{"d":"2026-05-29","h":"L","a":"DB","st":"final","hs":13,"as":4,"v":"ベルーナドーム"},{"d":"2026-05-29","h":"M","a":"T","st":"final","hs":0,"as":1,"v":"ZOZOマリン"},{"d":"2026-05-30","h":"B","a":"D","st":"final","hs":3,"as":1,"v":"京セラD大阪"},{"d":"2026-05-30","h":"E","a":"S","st":"final","hs":7,"as":8,"v":"楽天モバイル"},{"d":"2026-05-30","h":"F","a":"G","st":"final","hs":3,"as":5,"v":"エスコンＦ"},{"d":"2026-05-30","h":"H","a":"C","st":"final","hs":4,"as":2,"v":"みずほPayPay"},{"d":"2026-05-30","h":"L","a":"DB","st":"final","hs":6,"as":0,"v":"ベルーナドーム"},{"d":"2026-05-30","h":"M","a":"T","st":"final","hs":3,"as":4,"v":"ZOZOマリン"},{"d":"2026-05-31","h":"B","a":"D","st":"final","hs":7,"as":5,"v":"京セラD大阪"},{"d":"2026-05-31","h":"E","a":"S","st":"final","hs":1,"as":2,"v":"楽天モバイル"},{"d":"2026-05-31","h":"F","a":"G","st":"final","hs":3,"as":0,"v":"エスコンＦ"},{"d":"2026-05-31","h":"H","a":"C","st":"final","hs":3,"as":1,"v":"みずほPayPay"},{"d":"2026-05-31","h":"L","a":"DB","st":"final","hs":0,"as":6,"v":"ベルーナドーム"},{"d":"2026-05-31","h":"M","a":"T","st":"final","hs":4,"as":2,"v":"ZOZOマリン"},{"d":"2026-06-02","h":"C","a":"F","st":"canc","v":"マツダスタジアム"},{"d":"2026-06-02","h":"D","a":"H","st":"final","hs":0,"as":3,"v":"バンテリンドーム"},{"d":"2026-06-02","h":"DB","a":"E","st":"final","hs":3,"as":7,"v":"横浜"},{"d":"2026-06-02","h":"G","a":"B","st":"final","hs":3,"as":2,"v":"東京ドーム"},{"d":"2026-06-02","h":"S","a":"M","st":"final","hs":0,"as":5,"v":"神宮"},{"d":"2026-06-02","h":"T","a":"L","st":"canc","v":"甲子園"},{"d":"2026-06-03","h":"C","a":"F","st":"final","hs":3,"as":1,"v":"マツダスタジアム"},{"d":"2026-06-03","h":"D","a":"H","st":"final","hs":5,"as":8,"v":"バンテリンドーム"},{"d":"2026-06-03","h":"DB","a":"E","st":"final","hs":0,"as":2,"v":"横浜"},{"d":"2026-06-03","h":"G","a":"B","st":"final","hs":5,"as":4,"v":"東京ドーム"},{"d":"2026-06-03","h":"S","a":"M","st":"final","hs":1,"as":0,"v":"神宮"},{"d":"2026-06-03","h":"T","a":"L","st":"final","hs":2,"as":3,"v":"甲子園"},{"d":"2026-06-04","h":"C","a":"F","st":"final","hs":2,"as":5,"v":"マツダスタジアム"},{"d":"2026-06-04","h":"D","a":"H","st":"final","hs":1,"as":2,"v":"バンテリンドーム"},{"d":"2026-06-04","h":"DB","a":"E","st":"final","hs":8,"as":7,"v":"横浜"},{"d":"2026-06-04","h":"G","a":"B","st":"final","hs":2,"as":1,"v":"東京ドーム"},{"d":"2026-06-04","h":"S","a":"M","st":"final","hs":2,"as":5,"v":"神宮"},{"d":"2026-06-04","h":"T","a":"L","st":"final","hs":2,"as":4,"v":"甲子園"},{"d":"2026-06-05","h":"C","a":"B","st":"final","hs":2,"as":2,"v":"マツダスタジアム"},{"d":"2026-06-05","h":"D","a":"L","st":"final","hs":1,"as":0,"v":"バンテリンドーム"},{"d":"2026-06-05","h":"DB","a":"H","st":"final","hs":8,"as":3,"v":"横浜"},{"d":"2026-06-05","h":"G","a":"M","st":"final","hs":8,"as":2,"v":"東京ドーム"},{"d":"2026-06-05","h":"S","a":"F","st":"final","hs":1,"as":3,"v":"神宮"},{"d":"2026-06-05","h":"T","a":"E","st":"final","hs":8,"as":1,"v":"甲子園"},{"d":"2026-06-06","h":"C","a":"B","st":"final","hs":7,"as":4,"v":"マツダスタジアム"},{"d":"2026-06-06","h":"D","a":"L","st":"final","hs":2,"as":5,"v":"バンテリンドーム"},{"d":"2026-06-06","h":"DB","a":"H","st":"final","hs":3,"as":6,"v":"横浜"},{"d":"2026-06-06","h":"G","a":"M","st":"final","hs":1,"as":1,"v":"東京ドーム"},{"d":"2026-06-06","h":"S","a":"F","st":"final","hs":0,"as":2,"v":"神宮"},{"d":"2026-06-06","h":"T","a":"E","st":"final","hs":1,"as":0,"v":"甲子園"},{"d":"2026-06-07","h":"C","a":"B","st":"final","hs":5,"as":2,"v":"マツダスタジアム"},{"d":"2026-06-07","h":"D","a":"L","st":"final","hs":1,"as":4,"v":"バンテリンドーム"},{"d":"2026-06-07","h":"DB","a":"H","st":"final","hs":2,"as":4,"v":"横浜"},{"d":"2026-06-07","h":"G","a":"M","st":"final","hs":2,"as":2,"v":"東京ドーム"},{"d":"2026-06-07","h":"S","a":"F","st":"final","hs":1,"as":7,"v":"神宮"},{"d":"2026-06-07","h":"T","a":"E","st":"canc","v":"甲子園"},{"d":"2026-06-08","h":"T","a":"E","st":"canc","v":"甲子園"},{"d":"2026-06-09","h":"B","a":"S","st":"final","hs":4,"as":3,"v":"京セラD大阪"},{"d":"2026-06-09","h":"E","a":"G","st":"final","hs":2,"as":8,"v":"楽天モバイル"},{"d":"2026-06-09","h":"F","a":"DB","st":"final","hs":4,"as":1,"v":"エスコンＦ"},{"d":"2026-06-09","h":"H","a":"T","st":"final","hs":10,"as":4,"v":"みずほPayPay"},{"d":"2026-06-09","h":"L","a":"C","st":"final","hs":4,"as":3,"v":"ベルーナドーム"},{"d":"2026-06-09","h":"M","a":"D","st":"final","hs":3,"as":1,"v":"ZOZOマリン"},{"d":"2026-06-10","h":"B","a":"S","st":"final","hs":8,"as":4,"v":"京セラD大阪"},{"d":"2026-06-10","h":"E","a":"G","st":"final","hs":0,"as":7,"v":"楽天モバイル"},{"d":"2026-06-10","h":"F","a":"DB","st":"final","hs":4,"as":2,"v":"エスコンＦ"},{"d":"2026-06-10","h":"H","a":"T","st":"final","hs":6,"as":2,"v":"みずほPayPay"},{"d":"2026-06-10","h":"L","a":"C","st":"final","hs":5,"as":4,"v":"ベルーナドーム"},{"d":"2026-06-10","h":"M","a":"D","st":"final","hs":4,"as":11,"v":"ZOZOマリン"},{"d":"2026-06-11","h":"B","a":"S","st":"final","hs":4,"as":2,"v":"京セラD大阪"},{"d":"2026-06-11","h":"E","a":"G","st":"final","hs":8,"as":2,"v":"楽天モバイル"},{"d":"2026-06-11","h":"F","a":"DB","st":"final","hs":3,"as":0,"v":"エスコンＦ"},{"d":"2026-06-11","h":"H","a":"T","st":"final","hs":3,"as":2,"v":"みずほPayPay"},{"d":"2026-06-11","h":"L","a":"C","st":"final","hs":4,"as":1,"v":"ベルーナドーム"},{"d":"2026-06-11","h":"M","a":"D","st":"final","hs":3,"as":2,"v":"ZOZOマリン"},{"d":"2026-06-12","h":"B","a":"T","st":"final","hs":2,"as":1,"v":"京セラD大阪"},{"d":"2026-06-12","h":"E","a":"C","st":"final","hs":2,"as":1,"v":"楽天モバイル"},{"d":"2026-06-12","h":"F","a":"D","st":"final","hs":3,"as":1,"v":"エスコンＦ"},{"d":"2026-06-12","h":"H","a":"S","st":"final","hs":2,"as":4,"v":"みずほPayPay"},{"d":"2026-06-12","h":"L","a":"G","st":"final","hs":3,"as":0,"v":"ベルーナドーム"},{"d":"2026-06-12","h":"M","a":"DB","st":"final","hs":3,"as":2,"v":"ZOZOマリン"},{"d":"2026-06-13","h":"B","a":"T","st":"final","hs":3,"as":6,"v":"京セラD大阪"},{"d":"2026-06-13","h":"E","a":"C","st":"final","hs":0,"as":2,"v":"楽天モバイル"},{"d":"2026-06-13","h":"F","a":"D","st":"final","hs":4,"as":3,"v":"エスコンＦ"},{"d":"2026-06-13","h":"H","a":"S","st":"final","hs":8,"as":1,"v":"みずほPayPay"},{"d":"2026-06-13","h":"L","a":"G","st":"final","hs":1,"as":2,"v":"ベルーナドーム"},{"d":"2026-06-13","h":"M","a":"DB","st":"final","hs":6,"as":16,"v":"ZOZOマリン"},{"d":"2026-06-14","h":"B","a":"T","st":"final","hs":3,"as":2,"v":"京セラD大阪"},{"d":"2026-06-14","h":"E","a":"C","st":"final","hs":0,"as":3,"v":"楽天モバイル"},{"d":"2026-06-14","h":"F","a":"D","st":"final","hs":5,"as":9,"v":"エスコンＦ"},{"d":"2026-06-14","h":"H","a":"S","st":"final","hs":0,"as":4,"v":"みずほPayPay"},{"d":"2026-06-14","h":"L","a":"G","st":"final","hs":1,"as":0,"v":"ベルーナドーム"},{"d":"2026-06-14","h":"M","a":"DB","st":"final","hs":6,"as":4,"v":"ZOZOマリン"},{"d":"2026-06-16","h":"C","a":"F","st":"final","hs":0,"as":2,"v":"マツダスタジアム"},{"d":"2026-06-16","h":"T","a":"L","st":"final","hs":0,"as":1,"v":"甲子園"},{"d":"2026-06-17","h":"T","a":"E","st":"final","hs":10,"as":3,"v":"甲子園"},{"d":"2026-06-19","h":"DB","a":"T","st":"final","hs":3,"as":11,"v":"横浜"},{"d":"2026-06-19","h":"G","a":"D","st":"final","hs":2,"as":3,"v":"東京ドーム"},{"d":"2026-06-19","h":"S","a":"C","st":"final","hs":9,"as":2,"v":"神宮"},{"d":"2026-06-20","h":"DB","a":"T","st":"canc","v":"横浜"},{"d":"2026-06-20","h":"G","a":"D","st":"final","hs":1,"as":0,"v":"東京ドーム"},{"d":"2026-06-20","h":"S","a":"C","st":"final","hs":6,"as":8,"v":"神宮"},{"d":"2026-06-21","h":"DB","a":"T","st":"final","hs":1,"as":2,"v":"横浜"},{"d":"2026-06-21","h":"G","a":"D","st":"final","hs":3,"as":5,"v":"東京ドーム"},{"d":"2026-06-21","h":"S","a":"C","st":"final","hs":1,"as":2,"v":"神宮"},{"d":"2026-06-23","h":"C","a":"G","st":"final","hs":3,"as":7,"v":"マツダスタジアム"},{"d":"2026-06-23","h":"D","a":"DB","st":"final","hs":5,"as":2,"v":"岐阜"},{"d":"2026-06-23","h":"T","a":"S","st":"final","hs":3,"as":4,"v":"甲子園"},{"d":"2026-06-24","h":"C","a":"G","st":"canc","v":"マツダスタジアム"},{"d":"2026-06-24","h":"D","a":"DB","st":"final","hs":4,"as":6,"v":"バンテリンドーム"},{"d":"2026-06-24","h":"T","a":"S","st":"canc","v":"甲子園"},{"d":"2026-06-25","h":"D","a":"DB","st":"final","hs":3,"as":1,"v":"バンテリンドーム"},{"d":"2026-06-25","h":"T","a":"S","st":"canc","v":"甲子園"},{"d":"2026-06-26","h":"C","a":"T","st":"canc","v":"マツダスタジアム"},{"d":"2026-06-26","h":"DB","a":"G","st":"canc","v":"横浜"},{"d":"2026-06-26","h":"S","a":"D","st":"canc","v":"神宮"},{"d":"2026-06-27","h":"C","a":"T","st":"final","hs":3,"as":2,"v":"マツダスタジアム"},{"d":"2026-06-27","h":"DB","a":"G","st":"canc","v":"横浜"},{"d":"2026-06-27","h":"S","a":"D","st":"canc","v":"神宮"},{"d":"2026-06-28","h":"C","a":"T","st":"final","hs":3,"as":12,"v":"マツダスタジアム"},{"d":"2026-06-28","h":"DB","a":"G","st":"final","hs":1,"as":2,"v":"横浜"},{"d":"2026-06-28","h":"S","a":"D","st":"final","hs":4,"as":3,"v":"神宮"},{"d":"2026-06-30","h":"DB","a":"C","st":"final","hs":4,"as":7,"v":"ハードオフ新潟"},{"d":"2026-06-30","h":"G","a":"S","st":"final","hs":3,"as":4,"v":"弘前"},{"d":"2026-06-30","h":"T","a":"D","st":"final","hs":3,"as":2,"v":"甲子園"},{"d":"2026-07-01","h":"G","a":"S","st":"final","hs":2,"as":1,"v":"盛岡"},{"d":"2026-07-01","h":"T","a":"D","st":"canc","v":"甲子園"},{"d":"2026-07-02","h":"DB","a":"C","st":"final","hs":3,"as":3,"v":"横浜"},{"d":"2026-07-02","h":"T","a":"D","st":"final","hs":2,"as":3,"v":"甲子園"},{"d":"2026-07-03","h":"D","a":"G","st":"final","hs":1,"as":0,"v":"バンテリンドーム"},{"d":"2026-07-03","h":"S","a":"DB","st":"final","hs":2,"as":7,"v":"神宮"},{"d":"2026-07-03","h":"T","a":"C","st":"final","hs":1,"as":5,"v":"甲子園"},{"d":"2026-07-04","h":"D","a":"G","st":"final","hs":2,"as":1,"v":"バンテリンドーム"},{"d":"2026-07-04","h":"S","a":"DB","st":"final","hs":1,"as":12,"v":"神宮"},{"d":"2026-07-04","h":"T","a":"C","st":"canc","v":"甲子園"},{"d":"2026-07-05","h":"D","a":"G","st":"final","hs":0,"as":1,"v":"バンテリンドーム"},{"d":"2026-07-05","h":"S","a":"DB","st":"final","hs":4,"as":6,"v":"神宮"},{"d":"2026-07-05","h":"T","a":"C","st":"final","hs":6,"as":4,"v":"甲子園"},{"d":"2026-07-07","h":"C","a":"S","st":"final","hs":4,"as":3,"v":"マツダスタジアム"},{"d":"2026-07-07","h":"DB","a":"D","st":"final","hs":4,"as":0,"v":"横浜"},{"d":"2026-07-07","h":"G","a":"T","st":"final","hs":4,"as":3,"v":"東京ドーム"},{"d":"2026-07-08","h":"C","a":"S","st":"final","hs":4,"as":3,"v":"マツダスタジアム"},{"d":"2026-07-08","h":"DB","a":"D","st":"final","hs":4,"as":3,"v":"横浜"},{"d":"2026-07-08","h":"G","a":"T","st":"final","hs":1,"as":4,"v":"東京ドーム"},{"d":"2026-07-09","h":"C","a":"S","st":"final","hs":0,"as":1,"v":"マツダスタジアム"},{"d":"2026-07-09","h":"DB","a":"D","st":"final","hs":3,"as":4,"v":"横浜"},{"d":"2026-07-09","h":"G","a":"T","st":"final","hs":2,"as":10,"v":"東京ドーム"},{"d":"2026-07-10","h":"D","a":"C","st":"final","hs":10,"as":1,"v":"バンテリンドーム"},{"d":"2026-07-10","h":"DB","a":"G","st":"final","hs":11,"as":6,"v":"横浜"},{"d":"2026-07-10","h":"T","a":"S","st":"final","hs":1,"as":2,"v":"甲子園"},{"d":"2026-07-11","h":"D","a":"C","st":"final","hs":8,"as":1,"v":"バンテリンドーム"},{"d":"2026-07-11","h":"DB","a":"G","st":"final","hs":4,"as":5,"v":"横浜"},{"d":"2026-07-11","h":"T","a":"S","st":"final","hs":2,"as":1,"v":"甲子園"},{"d":"2026-07-12","h":"D","a":"C","st":"final","hs":1,"as":5,"v":"バンテリンドーム"},{"d":"2026-07-12","h":"DB","a":"G","st":"final","hs":3,"as":4,"v":"横浜"},{"d":"2026-07-12","h":"T","a":"S","st":"final","hs":3,"as":0,"v":"甲子園"},{"d":"2026-07-14","h":"C","a":"DB","st":"final","hs":4,"as":5,"v":"マツダスタジアム"},{"d":"2026-07-14","h":"D","a":"T","st":"final","hs":2,"as":5,"v":"バンテリンドーム"},{"d":"2026-07-14","h":"S","a":"G","st":"final","hs":5,"as":4,"v":"神宮"},{"d":"2026-07-15","h":"C","a":"DB","st":"final","hs":6,"as":4,"v":"マツダスタジアム"},{"d":"2026-07-15","h":"D","a":"T","st":"final","hs":6,"as":5,"v":"バンテリンドーム"},{"d":"2026-07-15","h":"S","a":"G","st":"final","hs":2,"as":8,"v":"神宮"},{"d":"2026-07-16","h":"D","a":"T","st":"final","hs":1,"as":3,"v":"バンテリンドーム"},{"d":"2026-07-16","h":"S","a":"G","st":"final","hs":1,"as":3,"v":"神宮"},{"d":"2026-07-17","h":"C","a":"T","st":"final","hs":2,"as":4,"v":"マツダスタジアム"},{"d":"2026-07-17","h":"DB","a":"S","st":"final","hs":12,"as":4,"v":"横浜"},{"d":"2026-07-17","h":"G","a":"D","st":"final","hs":4,"as":1,"v":"東京ドーム"},{"d":"2026-07-18","h":"C","a":"T","st":"final","hs":2,"as":1,"v":"マツダスタジアム"},{"d":"2026-07-18","h":"DB","a":"S","st":"final","hs":8,"as":0,"v":"横浜"},{"d":"2026-07-18","h":"G","a":"D","st":"final","hs":1,"as":5,"v":"東京ドーム"},{"d":"2026-07-19","h":"C","a":"T","st":"final","hs":2,"as":4,"v":"マツダスタジアム"},{"d":"2026-07-19","h":"DB","a":"S","st":"final","hs":5,"as":1,"v":"横浜"},{"d":"2026-07-19","h":"G","a":"D","st":"final","hs":6,"as":1,"v":"東京ドーム"},{"d":"2026-07-20","h":"G","a":"C","st":"final","hs":3,"as":1,"v":"東京ドーム"},{"d":"2026-07-20","h":"S","a":"D","st":"final","hs":2,"as":4,"v":"神宮"},{"d":"2026-07-20","h":"T","a":"DB","st":"final","hs":0,"as":7,"v":"甲子園"},{"d":"2026-07-21","h":"G","a":"C","st":"final","hs":11,"as":5,"v":"東京ドーム"},{"d":"2026-07-21","h":"S","a":"D","st":"final","hs":4,"as":11,"v":"神宮"},{"d":"2026-07-21","h":"T","a":"DB","st":"final","hs":2,"as":1,"v":"甲子園"},{"d":"2026-07-22","h":"G","a":"C","st":"final","hs":1,"as":6,"v":"東京ドーム"},{"d":"2026-07-22","h":"S","a":"D","st":"final","hs":8,"as":5,"v":"神宮"},{"d":"2026-07-22","h":"T","a":"DB","st":"final","hs":5,"as":4,"v":"甲子園"},{"d":"2026-07-24","h":"D","a":"DB","st":"final","hs":3,"as":2,"v":"バンテリンドーム"},{"d":"2026-07-24","h":"S","a":"C","st":"final","hs":5,"as":3,"v":"神宮"},{"d":"2026-07-24","h":"T","a":"G","st":"final","hs":2,"as":4,"v":"甲子園"},{"d":"2026-07-25","h":"D","a":"DB","st":"final","hs":0,"as":5,"v":"バンテリンドーム"},{"d":"2026-07-25","h":"S","a":"C","st":"final","hs":2,"as":1,"v":"神宮"},{"d":"2026-07-25","h":"T","a":"G","st":"final","hs":1,"as":5,"v":"甲子園"},{"d":"2026-07-26","h":"D","a":"DB","st":"final","hs":5,"as":1,"v":"バンテリンドーム"},{"d":"2026-07-26","h":"S","a":"C","st":"final","hs":3,"as":4,"v":"神宮"},{"d":"2026-07-26","h":"T","a":"G","st":"final","hs":1,"as":0,"v":"甲子園"},{"d":"2026-07-31","h":"C","a":"D","st":"final","hs":3,"as":1,"v":"マツダスタジアム"},{"d":"2026-07-31","h":"G","a":"DB","st":"final","hs":6,"as":0,"v":"東京ドーム"},{"d":"2026-07-31","h":"S","a":"T","st":"final","hs":3,"as":4,"v":"神宮"},{"d":"2026-08-01","h":"C","a":"D","st":"final","hs":1,"as":7,"v":"マツダスタジアム"},{"d":"2026-08-01","h":"G","a":"DB","st":"final","hs":7,"as":8,"v":"東京ドーム"},{"d":"2026-08-01","h":"S","a":"T","st":"final","hs":3,"as":7,"v":"神宮"},{"d":"2026-08-02","h":"C","a":"D","st":"final","hs":4,"as":3,"v":"マツダスタジアム"},{"d":"2026-08-02","h":"G","a":"DB","st":"final","hs":1,"as":2,"v":"東京ドーム"},{"d":"2026-08-02","h":"S","a":"T","st":"final","hs":3,"as":4,"v":"神宮"},{"d":"2026-08-04","h":"C","a":"G","st":"final","hs":4,"as":3,"v":"マツダスタジアム"},{"d":"2026-08-04","h":"D","a":"S","st":"final","hs":4,"as":3,"v":"バンテリンドーム"},{"d":"2026-08-04","h":"DB","a":"T","st":"final","hs":1,"as":0,"v":"横浜"},{"d":"2026-08-05","h":"C","a":"G","st":"final","hs":0,"as":4,"v":"マツダスタジアム"},{"d":"2026-08-05","h":"D","a":"S","st":"final","hs":4,"as":1,"v":"バンテリンドーム"},{"d":"2026-08-05","h":"DB","a":"T","st":"final","hs":11,"as":7,"v":"横浜"},{"d":"2026-08-06","h":"C","a":"G","st":"final","hs":7,"as":11,"v":"マツダスタジアム"},{"d":"2026-08-06","h":"D","a":"S","st":"final","hs":5,"as":0,"v":"バンテリンドーム"},{"d":"2026-08-06","h":"DB","a":"T","st":"final","hs":5,"as":10,"v":"横浜"},{"d":"2026-08-07","h":"DB","a":"C","st":"final","hs":2,"as":1,"v":"横浜"},{"d":"2026-08-07","h":"G","a":"S","st":"final","hs":0,"as":1,"v":"東京ドーム"},{"d":"2026-08-07","h":"T","a":"D","st":"final","hs":2,"as":3,"v":"京セラD大阪"},{"d":"2026-08-08","h":"DB","a":"C","st":"final","hs":4,"as":3,"v":"横浜"},{"d":"2026-08-08","h":"G","a":"S","st":"final","hs":8,"as":2,"v":"東京ドーム"},{"d":"2026-08-08","h":"T","a":"D","st":"final","hs":1,"as":7,"v":"京セラD大阪"},{"d":"2026-08-09","h":"DB","a":"C","st":"final","hs":3,"as":0,"v":"横浜"},{"d":"2026-08-09","h":"G","a":"S","st":"final","hs":7,"as":3,"v":"東京ドーム"},{"d":"2026-08-09","h":"T","a":"D","st":"final","hs":1,"as":0,"v":"京セラD大阪"},{"d":"2026-08-11","h":"D","a":"DB","st":"final","hs":5,"as":2,"v":"バンテリンドーム"},{"d":"2026-08-11","h":"G","a":"T","st":"final","hs":1,"as":9,"v":"東京ドーム"},{"d":"2026-08-11","h":"S","a":"C","st":"canc","v":"神宮"},{"d":"2026-08-12","h":"D","a":"DB","st":"final","hs":3,"as":6,"v":"バンテリンドーム"},{"d":"2026-08-12","h":"G","a":"T","st":"final","hs":1,"as":5,"v":"東京ドーム"},{"d":"2026-08-12","h":"S","a":"C","st":"final","hs":12,"as":0,"v":"神宮"},{"d":"2026-08-13","h":"D","a":"DB","st":"final","hs":1,"as":5,"v":"バンテリンドーム"},{"d":"2026-08-13","h":"G","a":"T","st":"final","hs":2,"as":3,"v":"東京ドーム"},{"d":"2026-08-13","h":"S","a":"C","st":"canc","v":"神宮"},{"d":"2026-08-14","h":"C","a":"T","st":"final","hs":6,"as":1,"v":"マツダスタジアム"},{"d":"2026-08-14","h":"D","a":"G","st":"final","hs":0,"as":1,"v":"バンテリンドーム"},{"d":"2026-08-14","h":"S","a":"DB","st":"final","hs":7,"as":2,"v":"神宮"},{"d":"2026-08-15","h":"C","a":"T","st":"final","hs":5,"as":2,"v":"マツダスタジアム"},{"d":"2026-08-15","h":"D","a":"G","st":"final","hs":11,"as":2,"v":"バンテリンドーム"},{"d":"2026-08-15","h":"S","a":"DB","st":"final","hs":4,"as":3,"v":"神宮"},{"d":"2026-08-16","h":"C","a":"T","st":"final","hs":1,"as":8,"v":"マツダスタジアム"},{"d":"2026-08-16","h":"D","a":"G","st":"final","hs":0,"as":11,"v":"バンテリンドーム"},{"d":"2026-08-16","h":"S","a":"DB","st":"final","hs":2,"as":1,"v":"神宮"},{"d":"2026-08-18","h":"C","a":"D","st":"final","hs":11,"as":4,"v":"マツダスタジアム"},{"d":"2026-08-18","h":"DB","a":"G","st":"final","hs":4,"as":3,"v":"横浜"},{"d":"2026-08-18","h":"T","a":"S","st":"final","hs":3,"as":2,"v":"京セラD大阪"},{"d":"2026-08-19","h":"C","a":"D","st":"final","hs":4,"as":1,"v":"マツダスタジアム"},{"d":"2026-08-19","h":"DB","a":"G","st":"final","hs":1,"as":0,"v":"横浜"},{"d":"2026-08-19","h":"T","a":"S","st":"final","hs":2,"as":1,"v":"京セラD大阪"},{"d":"2026-08-20","h":"C","a":"D","st":"final","hs":2,"as":1,"v":"マツダスタジアム"},{"d":"2026-08-20","h":"DB","a":"G","st":"final","hs":3,"as":6,"v":"横浜"},{"d":"2026-08-20","h":"T","a":"S","st":"final","hs":1,"as":4,"v":"京セラD大阪"},{"d":"2026-08-21","h":"D","a":"S","st":"final","hs":3,"as":0,"v":"バンテリンドーム"},{"d":"2026-08-21","h":"DB","a":"T","st":"final","hs":1,"as":4,"v":"横浜"},{"d":"2026-08-21","h":"G","a":"C","st":"final","hs":2,"as":0,"v":"東京ドーム"},{"d":"2026-08-22","h":"D","a":"S","st":"final","hs":5,"as":4,"v":"バンテリンドーム"},{"d":"2026-08-22","h":"DB","a":"T","st":"canc","v":"横浜"},{"d":"2026-08-22","h":"G","a":"C","st":"final","hs":5,"as":0,"v":"東京ドーム"},{"d":"2026-08-23","h":"D","a":"S","st":"final","hs":3,"as":2,"v":"バンテリンドーム"},{"d":"2026-08-23","h":"DB","a":"T","st":"final","hs":3,"as":5,"v":"横浜"},{"d":"2026-08-23","h":"G","a":"C","st":"final","hs":2,"as":3,"v":"東京ドーム"},{"d":"2026-08-25","h":"C","a":"DB","st":"final","hs":8,"as":7,"v":"マツダスタジアム"},{"d":"2026-08-25","h":"D","a":"T","st":"final","hs":4,"as":2,"v":"バンテリンドーム"},{"d":"2026-08-25","h":"S","a":"G","st":"final","hs":6,"as":8,"v":"神宮"},{"d":"2026-08-26","h":"C","a":"DB","st":"final","hs":3,"as":2,"v":"マツダスタジアム"},{"d":"2026-08-26","h":"D","a":"T","st":"final","hs":4,"as":0,"v":"バンテリンドーム"},{"d":"2026-08-26","h":"S","a":"G","st":"final","hs":3,"as":5,"v":"神宮"},{"d":"2026-08-27","h":"C","a":"DB","st":"final","hs":1,"as":6,"v":"マツダスタジアム"},{"d":"2026-08-27","h":"D","a":"T","st":"final","hs":3,"as":4,"v":"バンテリンドーム"},{"d":"2026-08-27","h":"S","a":"G","st":"final","hs":2,"as":9,"v":"神宮"},{"d":"2026-08-28","h":"C","a":"S","st":"final","hs":1,"as":3,"v":"マツダスタジアム"},{"d":"2026-08-28","h":"DB","a":"D","st":"final","hs":4,"as":2,"v":"横浜"},{"d":"2026-08-28","h":"T","a":"G","st":"final","hs":4,"as":1,"v":"甲子園"},{"d":"2026-08-29","h":"C","a":"S","st":"final","hs":1,"as":9,"v":"マツダスタジアム"},{"d":"2026-08-29","h":"DB","a":"D","st":"final","hs":1,"as":0,"v":"横浜"},{"d":"2026-08-29","h":"T","a":"G","st":"final","hs":4,"as":1,"v":"甲子園"},{"d":"2026-08-30","h":"C","a":"S","st":"final","hs":5,"as":1,"v":"マツダスタジアム"},{"d":"2026-08-30","h":"DB","a":"D","st":"final","hs":4,"as":3,"v":"横浜"},{"d":"2026-08-30","h":"T","a":"G","st":"final","hs":3,"as":1,"v":"甲子園"},{"d":"2026-09-01","h":"D","a":"C","st":"final","hs":1,"as":5,"v":"バンテリンドーム"},{"d":"2026-09-01","h":"G","a":"DB","st":"final","hs":4,"as":3,"v":"京セラD大阪"},{"d":"2026-09-01","h":"S","a":"T","st":"final","hs":2,"as":6,"v":"神宮"},{"d":"2026-09-02","h":"D","a":"C","st":"final","hs":5,"as":4,"v":"バンテリンドーム"},{"d":"2026-09-02","h":"G","a":"DB","st":"final","hs":1,"as":2,"v":"京セラD大阪"},{"d":"2026-09-02","h":"S","a":"T","st":"final","hs":5,"as":3,"v":"神宮"},{"d":"2026-09-03","h":"D","a":"C","st":"final","hs":2,"as":5,"v":"バンテリンドーム"},{"d":"2026-09-03","h":"S","a":"T","st":"final","hs":4,"as":7,"v":"神宮"},{"d":"2026-09-04","h":"C","a":"G","st":"final","hs":1,"as":3,"v":"マツダスタジアム"},{"d":"2026-09-04","h":"S","a":"D","st":"final","hs":1,"as":1,"v":"神宮"},{"d":"2026-09-05","h":"C","a":"G","st":"final","hs":5,"as":10,"v":"マツダスタジアム"},{"d":"2026-09-05","h":"S","a":"D","st":"final","hs":4,"as":8,"v":"神宮"},{"d":"2026-09-05","h":"T","a":"DB","st":"final","hs":2,"as":3,"v":"甲子園"},{"d":"2026-09-06","h":"C","a":"G","st":"final","hs":0,"as":4,"v":"マツダスタジアム"},{"d":"2026-09-06","h":"S","a":"D","st":"canc","v":"神宮"},{"d":"2026-09-06","h":"T","a":"DB","st":"final","hs":1,"as":4,"v":"甲子園"},{"d":"2026-09-08","h":"DB","a":"S","st":"final","hs":1,"as":3,"v":"横浜"},{"d":"2026-09-08","h":"G","a":"D","st":"final","hs":0,"as":3,"v":"東京ドーム"},{"d":"2026-09-08","h":"T","a":"C","st":"canc","v":"甲子園"},{"d":"2026-09-09","h":"DB","a":"S","st":"final","hs":9,"as":2,"v":"横浜"},{"d":"2026-09-09","h":"G","a":"D","st":"final","hs":5,"as":1,"v":"東京ドーム"},{"d":"2026-09-09","h":"T","a":"C","st":"final","hs":1,"as":3,"v":"甲子園"},{"d":"2026-09-10","h":"DB","a":"S","st":"final","hs":8,"as":1,"v":"横浜"},{"d":"2026-09-10","h":"G","a":"D","st":"final","hs":5,"as":3,"v":"東京ドーム"},{"d":"2026-09-10","h":"T","a":"C","st":"canc","v":"甲子園"},{"d":"2026-09-11","h":"C","a":"DB","st":"final","hs":1,"as":6,"v":"マツダスタジアム"},{"d":"2026-09-12","h":"C","a":"DB","st":"final","hs":2,"as":7,"v":"マツダスタジアム"},{"d":"2026-09-12","h":"D","a":"S","st":"final","hs":5,"as":6,"v":"バンテリンドーム"},{"d":"2026-09-12","h":"G","a":"T","st":"final","hs":1,"as":0,"v":"東京ドーム"},{"d":"2026-09-13","h":"DB","a":"G","st":"final","hs":5,"as":0,"v":"横浜"},{"d":"2026-09-13","h":"S","a":"C","st":"final","hs":3,"as":1,"v":"神宮"},{"d":"2026-09-13","h":"T","a":"D","st":"final","hs":0,"as":1,"v":"甲子園"},{"d":"2026-09-14","h":"DB","a":"G","st":"final","hs":4,"as":3,"v":"横浜"},{"d":"2026-09-14","h":"S","a":"C","st":"final","hs":0,"as":3,"v":"神宮"},{"d":"2026-09-14","h":"T","a":"D","st":"final","hs":0,"as":6,"v":"甲子園"},{"d":"2026-09-15","h":"DB","a":"G","st":"final","hs":13,"as":2,"v":"横浜"},{"d":"2026-09-15","h":"S","a":"C","st":"final","hs":4,"as":9,"v":"神宮"},{"d":"2026-09-15","h":"T","a":"D","st":"final","hs":1,"as":4,"v":"甲子園"},{"d":"2026-09-17","h":"S","a":"DB","st":"final","hs":1,"as":2,"v":"神宮"},{"d":"2026-09-17","h":"T","a":"C","st":"final","hs":7,"as":2,"v":"甲子園"},{"d":"2026-09-18","h":"DB","a":"S","st":"final","hs":1,"as":3,"v":"横浜"},{"d":"2026-09-18","h":"G","a":"D","st":"final","hs":2,"as":0,"v":"東京ドーム"},{"d":"2026-09-18","h":"T","a":"C","st":"final","hs":2,"as":1,"v":"甲子園"},{"d":"2026-09-19","h":"DB","a":"S","st":"final","hs":5,"as":3,"v":"横浜"},{"d":"2026-09-19","h":"G","a":"D","st":"final","hs":14,"as":1,"v":"東京ドーム"},{"d":"2026-09-19","h":"T","a":"C","st":"final","hs":1,"as":5,"v":"甲子園"},{"d":"2026-09-20","h":"D","a":"C","st":"final","hs":8,"as":5,"v":"バンテリンドーム"},{"d":"2026-09-20","h":"G","a":"S","st":"final","hs":3,"as":2,"v":"東京ドーム"},{"d":"2026-09-20","h":"T","a":"DB","st":"final","hs":8,"as":1,"v":"甲子園"},{"d":"2026-09-21","h":"D","a":"C","st":"final","hs":10,"as":0,"v":"バンテリンドーム"},{"d":"2026-09-21","h":"T","a":"DB","st":"final","hs":3,"as":2,"v":"甲子園"},{"d":"2026-09-22","h":"C","a":"G","st":"final","hs":2,"as":1,"v":"マツダスタジアム"},{"d":"2026-09-22","h":"DB","a":"D","st":"final","hs":7,"as":3,"v":"横浜"},{"d":"2026-09-22","h":"S","a":"T","st":"final","hs":7,"as":9,"v":"神宮"},{"d":"2026-09-23","h":"C","a":"G","st":"final","hs":1,"as":2,"v":"マツダスタジアム"},{"d":"2026-09-23","h":"DB","a":"D","st":"final","hs":4,"as":3,"v":"横浜"},{"d":"2026-09-23","h":"S","a":"T","st":"final","hs":4,"as":8,"v":"神宮"},{"d":"2026-09-24","h":"C","a":"G","st":"final","hs":3,"as":1,"v":"マツダスタジアム"},{"d":"2026-09-25","h":"C","a":"G","st":"final","hs":3,"as":2,"v":"マツダスタジアム"},{"d":"2026-09-25","h":"DB","a":"T","st":"final","hs":2,"as":1,"v":"横浜"},{"d":"2026-09-25","h":"S","a":"D","st":"final","hs":5,"as":4,"v":"神宮"},{"d":"2026-09-26","h":"DB","a":"T","st":"final","hs":3,"as":8,"v":"横浜"},{"d":"2026-09-26","h":"S","a":"D","st":"final","hs":5,"as":3,"v":"神宮"},{"d":"2026-09-27","h":"DB","a":"C","st":"sched","t":"14:00","v":"横浜"},{"d":"2026-09-27","h":"G","a":"S","st":"sched","t":"18:00","v":"東京ドーム"},{"d":"2026-09-28","h":"DB","a":"C","st":"sched","t":"18:00","v":"横浜"},{"d":"2026-09-29","h":"G","a":"C","st":"sched","t":"18:00","v":"東京ドーム"},{"d":"2026-09-29","h":"T","a":"S","st":"sched","t":"18:00","v":"甲子園"},{"d":"2026-09-30","h":"T","a":"S","st":"sched","t":"18:00","v":"甲子園"},{"d":"2026-10-01","h":"C","a":"D","st":"sched","t":"18:00","v":"マツダスタジアム"},{"d":"2026-10-01","h":"T","a":"G","st":"sched","t":"18:00","v":"甲子園"},{"d":"2026-10-02","h":"S","a":"G","st":"sched","t":"18:00","v":"神宮"},{"d":"2026-10-03","h":"C","a":"T","st":"sched","t":"14:00","v":"マツダスタジアム"},{"d":"2026-10-03","h":"G","a":"DB","st":"sched","t":"18:00","v":"東京ドーム"},{"d":"2026-10-03","h":"S","a":"D","st":"sched","t":"18:00","v":"神宮"},{"d":"2026-10-04","h":"DB","a":"T","st":"sched","t":"18:00","v":"横浜"},{"d":"2026-10-04","h":"S","a":"C","st":"sched","t":"18:00","v":"神宮"},{"d":"2026-10-06","h":"T","a":"C","st":"sched","t":"18:00","v":"甲子園"},{"d":"2026-10-07","h":"T","a":"C","st":"sched","t":"18:00","v":"甲子園"}]}</script>
+<script>
+/* ===== 計算ロジック（画面に依存しない部分） ===== */
+const CL = ["DB", "G", "T", "D", "S", "C"];
+const TEAM = {
+  DB: { s: "横", n: "DeNA", c: "#0A6FE0", i: "#FFF" }, G: { s: "巨", n: "巨人", c: "#F97709", i: "#000" },
+  T: { s: "神", n: "阪神", c: "#FFE100", i: "#000" }, D: { s: "中", n: "中日", c: "#1F3FB0", i: "#FFF" },
+  S: { s: "ヤ", n: "ヤクルト", c: "#00A660", i: "#FFF" }, C: { s: "広", n: "広島", c: "#E60012", i: "#FFF" },
+  H: { s: "ソ", n: "ソフトバンク", c: "#3A3A3A", i: "#FFF" }, F: { s: "日", n: "日本ハム", c: "#3A3A3A", i: "#FFF" },
+  B: { s: "オ", n: "オリックス", c: "#3A3A3A", i: "#FFF" }, E: { s: "楽", n: "楽天", c: "#3A3A3A", i: "#FFF" },
+  L: { s: "西", n: "西武", c: "#3A3A3A", i: "#FFF" }, M: { s: "ロ", n: "ロッテ", c: "#3A3A3A", i: "#FFF" },
+};
+
+function monthOf(d) { return +d.slice(5, 7); }
+// 勝率の比較（引き分けは除外。試合0なら.000扱い）
+function cmp(w1, l1, w2, l2) { return w1 * ((w2 + l2) || 1) - w2 * ((w1 + l1) || 1); }
+
+function analyze(games, period, cfg) {
+  const targets = CL.filter(t => !cfg.excluded.includes(t));
+  const R = {};
+  CL.forEach(t => (R[t] = { w: 0, l: 0, d: 0, left: [] }));
+  const remaining = [];
+  for (const g of games) {
+    if (!period.months.includes(monthOf(g.d)) || g.st === "canc") continue;
+    const inH = !!R[g.h], inA = !!R[g.a];
+    if (g.st === "final") {
+      if (g.hs > g.as) { if (inH) R[g.h].w++; if (inA) R[g.a].l++; }
+      else if (g.hs < g.as) { if (inH) R[g.h].l++; if (inA) R[g.a].w++; }
+      else { if (inH) R[g.h].d++; if (inA) R[g.a].d++; }
+    } else {
+      if (inH) R[g.h].left.push(g);
+      if (inA) R[g.a].left.push(g);
+      if (targets.includes(g.h) || targets.includes(g.a)) remaining.push(g);
+    }
+  }
+  CL.forEach(t => (R[t].rem = R[t].left.length));
+
+  // 残り試合の内訳：対象球団どうし(h2h) と それ以外(out)
+  const h2h = {}, out = {};
+  targets.forEach(t => { h2h[t] = {}; targets.forEach(u => (h2h[t][u] = 0)); out[t] = 0; });
+  for (const g of remaining) {
+    const a = targets.includes(g.h), b = targets.includes(g.a);
+    if (a && b) { h2h[g.h][g.a]++; h2h[g.a][g.h]++; }
+    else if (a) out[g.h]++;
+    else if (b) out[g.a]++;
+  }
+  const tieSafe = !!cfg.tieIsSafe;
+
+  // X の勝ち方(winsVs)を固定したとき、残り4球団が全員Xの勝率以上になれるか（=Xを最下位にできるか）
+  function advCanMakeLast(X, winsVs) {
+    let tot = 0; for (const k in winsVs) tot += winsVs[k];
+    const xw = R[X].w + tot, xl = R[X].l + R[X].rem - tot, xd = (xw + xl) || 1;
+    const others = targets.filter(t => t !== X);
+    const need = {};
+    let sum = 0;
+    for (const Y of others) {
+      const baseW = R[Y].w + (h2h[X][Y] - (winsVs[Y] || 0)) + out[Y];
+      const den = (R[Y].w + R[Y].l + R[Y].rem) || 1;
+      const minW = tieSafe ? Math.floor((xw * den) / xd) + 1 : Math.ceil((xw * den) / xd);
+      need[Y] = Math.max(0, minW - baseW);
+      sum += need[Y];
+    }
+    if (sum === 0) return true;
+    // 最大流：対象球団どうしの残り試合の勝ちを、足りない球団に配れるか
+    const pairs = [];
+    for (let i = 0; i < others.length; i++)
+      for (let j = i + 1; j < others.length; j++) {
+        const n = h2h[others[i]][others[j]];
+        if (n > 0) pairs.push([others[i], others[j], n]);
+      }
+    const N = 2 + pairs.length + others.length, S = 0, T = N - 1;
+    const cap = Array.from({ length: N }, () => new Array(N).fill(0));
+    const tIdx = {}; others.forEach((y, i) => (tIdx[y] = 1 + pairs.length + i));
+    pairs.forEach(([y, z, n], i) => { cap[S][1 + i] = n; cap[1 + i][tIdx[y]] = n; cap[1 + i][tIdx[z]] = n; });
+    others.forEach(y => (cap[tIdx[y]][T] = need[y]));
+    let flow = 0;
+    while (true) {
+      const prev = new Array(N).fill(-1); prev[S] = S;
+      const q = [S];
+      while (q.length && prev[T] < 0) {
+        const u = q.shift();
+        for (let v = 0; v < N; v++) if (prev[v] < 0 && cap[u][v] > 0) { prev[v] = u; q.push(v); }
+      }
+      if (prev[T] < 0) break;
+      let f = Infinity;
+      for (let v = T; v !== S; v = prev[v]) f = Math.min(f, cap[prev[v]][v]);
+      for (let v = T; v !== S; v = prev[v]) { cap[prev[v]][v] -= f; cap[v][prev[v]] += f; }
+      flow += f;
+    }
+    return flow >= sum;
+  }
+
+  // 自力マジック：あと何勝すれば（どの試合で勝っても）確定するか
+  function selfMagic(X) {
+    const rivals = targets.filter(t => t !== X && h2h[X][t] > 0);
+    for (let k = 0; k <= R[X].rem; k++) {
+      const ow = Math.min(k, out[X]);
+      let r = k - ow, bad = false;
+      const cur = { OUT: ow };
+      (function rec(i, left) {
+        if (bad) return;
+        if (i === rivals.length) { if (left === 0 && advCanMakeLast(X, cur)) bad = true; return; }
+        const c = h2h[X][rivals[i]];
+        for (let v = Math.min(c, left); v >= 0; v--) { cur[rivals[i]] = v; rec(i + 1, left - v); if (bad) return; }
+        delete cur[rivals[i]];
+      })(0, r);
+      if (!bad) return k;
+    }
+    return null;
+  }
+
+  // 相手別マジック：自分の勝ち＋相手の負けが合計いくつで、その相手より上が確定するか
+  function pairMagic(X, Y) {
+    const h = h2h[X][Y], oX = R[X].rem - h, oY = R[Y].rem - h;
+    const maxEv = oX + oY + 2 * h;
+    let maxBad = -1;
+    for (let a = 0; a <= oX; a++)
+      for (let c = 0; c <= h; c++)
+        for (let b = 0; b <= oY; b++) {
+          const s = cmp(R[X].w + a + c, R[X].l + (oX - a) + (h - c), R[Y].w + b + (h - c), R[Y].l + (oY - b) + c);
+          if (tieSafe ? s < 0 : s <= 0) maxBad = Math.max(maxBad, a + c + (oY - b) + c);
+        }
+    if (maxBad < 0) return 0;
+    if (maxBad >= maxEv) return null;
+    return maxBad + 1;
+  }
+
+  // 回避率：残り試合を五分五分と仮定（少なければ全通り、多ければ抽選）
+  function avoidRates() {
+    const n = remaining.length, idx = {};
+    targets.forEach((t, i) => (idx[t] = i));
+    const cnt = targets.map(() => 0);
+    const exact = n <= 17, trials = exact ? 1 << n : 20000;
+    const w = new Array(targets.length), l = new Array(targets.length);
+    for (let m = 0; m < trials; m++) {
+      targets.forEach((t, i) => { w[i] = R[t].w; l[i] = R[t].l; });
+      for (let i = 0; i < n; i++) {
+        const g = remaining[i];
+        const homeWin = exact ? (m >> i) & 1 : Math.random() < 0.5;
+        const win = homeWin ? g.h : g.a, lose = homeWin ? g.a : g.h;
+        if (win in idx) w[idx[win]]++;
+        if (lose in idx) l[idx[lose]]++;
+      }
+      for (let i = 0; i < targets.length; i++) {
+        for (let j = 0; j < targets.length; j++) {
+          if (i === j) continue;
+          const s = cmp(w[i], l[i], w[j], l[j]);
+          if (tieSafe ? s >= 0 : s > 0) { cnt[i]++; break; }
+        }
+      }
+    }
+    const res = {};
+    targets.forEach((t, i) => (res[t] = cnt[i] / trials));
+    return { res, exact };
+  }
+
+  const rows = targets.map(X => {
+    const r = R[X];
+    const safe = !advCanMakeLast(X, { OUT: 0 });
+    const pairs = {};
+    targets.filter(Y => Y !== X).forEach(Y => (pairs[Y] = pairMagic(X, Y)));
+    const eliminated = !safe && Object.values(pairs).every(v => v === null);
+    const self = safe || eliminated ? null : selfMagic(X);
+    const helpVals = Object.entries(pairs).filter(([, v]) => v !== null && v > 0);
+    helpVals.sort((a, b) => a[1] - b[1]);
+    return { t: X, ...r, safe, eliminated, self, pairs, best: helpVals[0] || null };
+  });
+  rows.sort((a, b) => { const s = cmp(b.w, b.l, a.w, a.l); return s !== 0 ? s : b.w - a.w; });
+  const top = rows[0];
+  rows.forEach(r => (r.gb = r === top ? null : ((top.w - r.w) + (r.l - top.l)) / 2));
+  const { res, exact } = avoidRates();
+  rows.forEach(r => (r.rate = r.safe ? 1 : r.eliminated ? 0 : res[r.t]));
+  const played = CL.some(t => R[t].w + R[t].l + R[t].d > 0);
+  const finished = remaining.length === 0 && played;
+  return { rows, R, remaining, exact, finished, played, excluded: cfg.excluded };
+}
+
+function fmtPct(w, l) {
+  if (w + l === 0) return ".000";
+  const p = w / (w + l);
+  return p >= 1 ? "1.000" : p.toFixed(3).replace(/^0/, "");
+}
+function badge(r) {
+  if (r.safe) return "⭐︎";
+  if (r.eliminated) return "💸";
+  return r.self === null ? "--" : "M" + r.self;
+}
+function copyText(a, label) {
+  const lines = [`【J SPORTS支払い回避マジック（${label}）】`];
+  for (const r of a.rows) {
+    const gb = r.gb === null ? "---" : r.gb.toFixed(1);
+    lines.push(`${TEAM[r.t].s} ( ${badge(r)} )： ${r.w}勝${r.l}敗${r.d}分 (${fmtPct(r.w, r.l)}) [残${r.rem}] ${gb}`);
+  }
+  a.excluded.forEach(t => lines.push(`${TEAM[t].s} (外)： ━━━━ 対象外 ━━━━`));
+  return lines.join("\n");
+}
+
+/* ===== シーズン順位表（スポナビ形式） ===== */
+function seasonTable(games) {
+  const R = {};
+  CL.forEach(t => (R[t] = { t, w: 0, l: 0, d: 0, rem: 0, h2h: {} }));
+  CL.forEach(t => CL.forEach(u => (R[t].h2h[u] = 0)));
+  for (const g of games) {
+    if (g.st === "canc") continue;
+    const inH = !!R[g.h], inA = !!R[g.a];
+    if (g.st === "final") {
+      if (g.hs > g.as) { if (inH) R[g.h].w++; if (inA) R[g.a].l++; }
+      else if (g.hs < g.as) { if (inH) R[g.h].l++; if (inA) R[g.a].w++; }
+      else { if (inH) R[g.h].d++; if (inA) R[g.a].d++; }
+    } else {
+      if (inH) R[g.h].rem++;
+      if (inA) R[g.a].rem++;
+      if (inH && inA) { R[g.h].h2h[g.a]++; R[g.a].h2h[g.h]++; }
+    }
+  }
+  const rows = CL.map(t => R[t]);
+  rows.sort((a, b) => { const s = cmp(b.w, b.l, a.w, a.l); return s !== 0 ? s : b.w - a.w; });
+  rows.forEach((r, i) => {
+    r.g = r.w + r.l + r.d;
+    r.gb = i === 0 ? null : ((rows[i - 1].w - r.w) + (r.l - rows[i - 1].l)) / 2;
+  });
+  // 優勝マジック：首位があと何勝すれば、どの球団にも抜かれないか（同率は未確定扱い）
+  const X = rows[0];
+  let magic = null;
+  for (let k = 0; k <= X.rem && magic === null; k++) {
+    const ok = rows.slice(1).every(Y => {
+      const h = X.h2h[Y.t];
+      const vsY = Math.max(0, k - (X.rem - h)); // 他の相手で先に勝ちを使い切ったあと、残りを直接対決で勝つ
+      return cmp(X.w + k, X.l + X.rem - k, Y.w + Y.rem - vsY, Y.l + vsY) > 0;
+    });
+    if (ok) magic = k;
+  }
+  X.magic = magic;
+  return rows;
+}
+
+</script>
+<script>
+const CONFIG = {
+  excluded: ["C"],        // 対象外の球団
+  tieIsSafe: false,       // 最下位タイを回避扱いにするなら true
+  calOrder: ["T", "DB", "G", "D", "C", "S"], // 日程の球団ボタンの並び（2025年の順位順）
+  periods: [
+    { id: "3-4", months: [3, 4], label: "3・4月度" },
+    { id: "5", months: [5], label: "5月度" },
+    { id: "6", months: [6], label: "6月度" },
+    { id: "7", months: [7], label: "7月度" },
+    { id: "8", months: [8], label: "8月度" },
+    { id: "9-10", months: [9, 10], label: "9・10月度" },
+  ],
+};
+// 2026年の祝日（3〜10月）
+const HOLIDAYS = new Set(["2026-03-20","2026-04-29","2026-05-03","2026-05-04","2026-05-05","2026-05-06","2026-07-20","2026-08-11","2026-09-21","2026-09-22","2026-09-23","2026-10-12"]);
+const WD = "日月火水木金土";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const tc = t => (TEAM[t] ? TEAM[t].c : "#777");
+const tv = t => `--tc:${tc(t)};--ti:${TEAM[t] && TEAM[t].i ? TEAM[t].i : "#000"}`;
+const sn = t => (TEAM[t] ? TEAM[t].s : t);
+const fn = t => (TEAM[t] ? TEAM[t].n : t);
+const pctOf = (w, l) => fmtPct(w, l);
+function jst() { const n = new Date(Date.now() + 9 * 3600e3); return { y: n.getUTCFullYear(), m: n.getUTCMonth() + 1, d: n.getUTCDate(), iso: n.toISOString().slice(0, 10) }; }
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { return null; } }
+
+let DATA = null, fromSnap = false;
+const S = { tab: "magic", period: null, periodPicked: false, calTeam: store("calTeam") || "T", calMonth: null, calSel: null };
+
+/* ---------- 共通 ---------- */
+function periods() {
+  const ms = new Set(DATA.games.map(g => monthOf(g.d)));
+  return CONFIG.periods.filter(p => p.months.some(m => ms.has(m)));
+}
+function defaultPeriod(list) {
+  const m = jst().m;
+  return list.find(p => p.months.includes(m)) || list[list.length - 1] || CONFIG.periods[0];
+}
+function setTab(t) {
+  S.tab = t;
+  document.querySelectorAll(".tabbar button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === t)));
+  ["magic", "cal", "std"].forEach(k => ($("v-" + k).hidden = k !== t));
+  window.scrollTo({ top: 0 });
+}
+document.querySelectorAll(".tabbar button").forEach(b => (b.onclick = () => setTab(b.dataset.tab)));
+
+/* ---------- マジック ---------- */
+function lampHTML(r) {
+  if (r.safe) return `<div class="lamp ok"><i>✓</i>回避</div>`;
+  if (r.eliminated) return `<div class="lamp ng"><i>支払い</i></div>`;
+  if (r.self === null) return `<div class="lamp off"><small>M</small>--</div>`;
+  return `<div class="lamp num"><small>M</small>${r.self}</div>`;
+}
+function renderMagic() {
+  const list = periods();
+  if (!S.period || !list.some(p => p.id === S.period.id)) S.period = defaultPeriod(list);
+  const results = {};
+  list.forEach(p => (results[p.id] = analyze(DATA.games, p, CONFIG)));
+  $("chips").innerHTML = list.map(p => {
+    const done = results[p.id].finished;
+    return `<button class="chip" role="tab" type="button" data-id="${p.id}" aria-pressed="${p.id === S.period.id}">${p.label}${done ? "" : `<span class="dot" title="集計中"></span>`}</button>`;
+  }).join("");
+  $("chips").querySelectorAll(".chip").forEach(b => (b.onclick = () => { S.period = CONFIG.periods.find(p => p.id === b.dataset.id); S.periodPicked = true; renderMagic(); }));
+  const a = results[S.period.id];
+  window.__last = a;
+  const on = $("chips").querySelector('[aria-pressed="true"]');
+  if (on) $("chips").scrollLeft = on.offsetLeft - ($("chips").clientWidth - on.offsetWidth) / 2;
+
+  if (!a.played) {
+    $("alert").innerHTML = `<div class="alert" style="--tc:var(--muted)"><div class="lbl">${S.period.label}</div><div class="who"><span>まだ試合がありません</span></div></div>`;
+  } else {
+    const low = a.rows[a.rows.length - 1];
+    if (a.finished) {
+      $("alert").innerHTML = `<div class="alert paid" style="${tv(low.t)}"><div class="lbl">${S.period.label}の結果</div>
+        <div class="who"><b>${fn(low.t)}</b><span>が支払い</span></div>
+        <div class="sub num">${low.w}勝${low.l}敗${low.d}分　勝率${pctOf(low.w, low.l)}</div></div>`;
+    } else if (low.eliminated) {
+      $("alert").innerHTML = `<div class="alert paid" style="${tv(low.t)}"><div class="lbl">${S.period.label}</div>
+        <div class="who"><b>${fn(low.t)}</b><span>の支払いが確定</span></div></div>`;
+    } else {
+      $("alert").innerHTML = `<div class="alert" style="${tv(low.t)}"><div class="lbl">このままだと支払い</div>
+        <div class="who"><b>${fn(low.t)}</b><span>回避率 ${Math.round(low.rate * 100)}%</span></div>
+        <div class="sub num">${(() => { const up = a.rows[a.rows.length - 2]; const g = ((up.w - low.w) + (low.l - up.l)) / 2; return `${fn(low.t)}の残り${low.rem}試合　${a.rows.length - 1}位の${fn(up.t)}まで${g.toFixed(1)}差`; })()}</div></div>`;
+    }
+  }
+
+  const lastIdx = a.rows.length - 1;
+  $("cards").innerHTML = `<div class="bhead"><span>順位・球団</span><span>マジック</span></div>` + a.rows.map((r, i) => {
+    const rp = r.rate * 100;
+    const ratePct = rp > 99 && rp < 100 ? Math.min(99.9, Math.floor(rp * 10) / 10) : rp > 0 && rp < 1 ? Math.max(0.1, Math.round(rp * 10) / 10) : Math.round(rp);
+    const gb = r.gb === null ? "首位" : `差${r.gb.toFixed(1)}`;
+    const isLow = !r.safe && (i === lastIdx || cmp(r.w, r.l, a.rows[lastIdx].w, a.rows[lastIdx].l) === 0);
+    const paid = r.eliminated || (a.finished && i === lastIdx);
+    let mg;
+    if (paid) mg = `<span class="st ng">支払い</span>`;
+    else if (r.safe) mg = `<span class="st ok">回避確定</span>`;
+    else mg = `<span class="mn${r.self === null ? " off" : ""}"><small>M</small>${r.self === null ? "--" : r.self}</span><span class="rt">回避率 <b>${ratePct}%</b></span>`;
+    return `<div class="brow${isLow && !a.finished ? " low" : ""}${paid ? " paid" : ""}" style="${tv(r.t)}">
+      <span class="rk num">${i + 1}</span>
+      <span class="badge">${sn(r.t)}</span>
+      <div class="tm"><b>${fn(r.t)}</b><span class="num">${r.w}勝${r.l}敗${r.d}分　<em>${pctOf(r.w, r.l)}</em></span><span class="sm num">${gb}　残${r.rem}</span></div>
+      <div class="mg">${mg}</div></div>`;
+  }).join("");
+
+  // 確定の条件（まとめて1か所）
+  const open = a.rows.filter(r => !r.safe && !r.eliminated);
+  $("conds").hidden = a.finished || !open.length;
+  $("condBody").innerHTML = open.map(r => {
+    let why;
+    if (r.self !== null) why = `あと<b>${r.self}勝</b>で確定`;
+    else if (r.best) why = `自力なし。${fn(r.best[0])}相手に「${fn(r.t)}の勝ち＋${fn(r.best[0])}の負け」合計<b>${r.best[1]}</b>で確定`;
+    else why = `自力なし`;
+    const pairs = Object.entries(r.pairs).sort((x, y) => (x[1] ?? 99) - (y[1] ?? 99))
+      .map(([t, v]) => `<span class="pair">対${sn(t)} <em>${v === null ? "×" : v === 0 ? "済" : v}</em></span>`).join("");
+    const left = r.left.map(g => {
+      const opp = g.h === r.t ? g.a : g.h;
+      const vs = !CONFIG.excluded.includes(opp) && CL.includes(opp);
+      return `<span class="${vs ? "vs" : ""}">${Number(g.d.slice(5, 7))}/${Number(g.d.slice(8))} ${sn(opp)}</span>`;
+    }).join("");
+    return `<div class="cond" style="${tv(r.t)}"><div class="ch"><span class="badge">${sn(r.t)}</span><b>${fn(r.t)}</b><span class="why">${why}</span></div>
+      <div class="lab">相手別（自分の勝ち＋相手の負け）</div><div class="pairs num">${pairs}</div>
+      <div class="lab">残り試合（白枠は直接対決）</div><div class="left num">${left}</div></div>`;
+  }).join("");
+  $("excl").textContent = CONFIG.excluded.map(fn).join("・") + "は対象外";
+  $("copyBtn").hidden = !a.played;
+}
+$("copyBtn").onclick = async () => {
+  const txt = copyText(window.__last, S.period.label);
+  try { await navigator.clipboard.writeText(txt); }
+  catch { const t = document.createElement("textarea"); t.value = txt; document.body.appendChild(t); t.select(); document.execCommand("copy"); t.remove(); }
+  const b = $("copyBtn"); b.textContent = "コピーしました"; b.classList.add("done");
+  setTimeout(() => { b.textContent = "LINEに貼る文面をコピー"; b.classList.remove("done"); }, 1800);
+};
+
+/* ---------- 日程カレンダー ---------- */
+function calMonths() {
+  const ms = [...new Set(DATA.games.map(g => monthOf(g.d)))].sort((a, b) => a - b);
+  return ms.length ? ms : [3];
+}
+function resultOf(g, t) {
+  if (g.st !== "final") return null;
+  const me = g.h === t ? g.hs : g.as, op = g.h === t ? g.as : g.hs;
+  return me > op ? "w" : me < op ? "l" : "d";
+}
+function renderCal() {
+  const ms = calMonths();
+  if (!S.calMonth || !ms.includes(S.calMonth)) { const m = jst().m; S.calMonth = ms.includes(m) ? m : ms[ms.length - 1]; }
+  const t = S.calTeam, y = DATA.season || jst().y, m = S.calMonth;
+  $("teamSel").innerHTML = CONFIG.calOrder.map(k => `<button class="tbtn" type="button" data-t="${k}" style="${tv(k)}" aria-pressed="${k === t}"><span class="badge">${sn(k)}</span>${fn(k)}</button>`).join("");
+  $("teamSel").querySelectorAll(".tbtn").forEach(b => (b.onclick = () => { S.calTeam = b.dataset.t; store("calTeam", S.calTeam); S.calSel = null; renderCal(); }));
+  $("mTitle").textContent = `${y}年${m}月`;
+  const idx = ms.indexOf(m);
+  $("mPrev").disabled = idx <= 0; $("mNext").disabled = idx >= ms.length - 1;
+  $("mPrev").onclick = () => { S.calMonth = ms[idx - 1]; S.calSel = null; renderCal(); };
+  $("mNext").onclick = () => { S.calMonth = ms[idx + 1]; S.calSel = null; renderCal(); };
+
+  const games = DATA.games.filter(g => monthOf(g.d) === m && (g.h === t || g.a === t));
+  const byDay = {};
+  games.forEach(g => (byDay[g.d] = byDay[g.d] || []).push(g));
+  let w = 0, l = 0, d = 0;
+  games.forEach(g => { const r = resultOf(g, t); if (r === "w") w++; else if (r === "l") l++; else if (r === "d") d++; });
+  $("mRec").innerHTML = `${fn(t)}の${m}月　<b class="num">${w}勝${l}敗${d}分</b>`;
+
+  const first = new Date(y, m - 1, 1), days = new Date(y, m, 0).getDate();
+  const lead = (first.getDay() + 6) % 7; // 月曜はじまり
+  const today = jst().iso;
+  let html = ["月", "火", "水", "木", "金", "土", "日"].map((x, i) => `<div class="wd ${i === 5 ? "sa" : i === 6 ? "su" : ""}">${x}</div>`).join("");
+  for (let i = 0; i < lead; i++) html += `<div class="day blank"></div>`;
+  for (let dd = 1; dd <= days; dd++) {
+    const iso = `${y}-${String(m).padStart(2, "0")}-${String(dd).padStart(2, "0")}`;
+    const dow = new Date(y, m - 1, dd).getDay();
+    const cls = HOLIDAYS.has(iso) || dow === 0 ? "su" : dow === 6 ? "sa" : "";
+    const gs = byDay[iso] || [];
+    const g = gs[gs.length - 1];
+    let inner = `<span class="dn ${cls}">${dd}</span>`;
+    if (g) {
+      inner += `<span class="hb ${g.h === t ? "on" : ""}" style="${tv(t)}"></span><span class="mu">${sn(g.h)} - ${sn(g.a)}</span>`;
+      if (g.st === "canc") inner += `<span class="tx">中止</span>`;
+      else if (g.st === "final") { const r = resultOf(g, t); inner += `<span class="rs ${r}">${r === "w" ? "○" : r === "l" ? "×" : "△"}</span>`; }
+      else if (g.st === "live") inner += `<span class="tx">試合中</span>`;
+      else inner += `<span class="tx num">${esc(g.t || "")}</span>`;
+    }
+    html += `<button type="button" class="day${g ? " has" : ""}${iso === today ? " today" : ""}${S.calSel === iso ? " sel" : ""}" data-d="${iso}" ${g ? "" : "tabindex=-1"}>${inner}</button>`;
+  }
+  const tail = (7 - ((lead + days) % 7)) % 7;
+  for (let i = 0; i < tail; i++) html += `<div class="day blank"></div>`;
+  $("cal").innerHTML = html;
+  $("cal").querySelectorAll(".day.has").forEach(b => (b.onclick = () => { S.calSel = b.dataset.d; renderCal(); }));
+
+  // 詳細：選んだ日 → なければ今日以降の直近の試合 → 最後の試合
+  let selD = S.calSel;
+  if (!selD || !byDay[selD]) {
+    const ds = Object.keys(byDay).sort();
+    selD = ds.find(x => x >= today && byDay[x].some(g => g.st !== "canc")) || ds[ds.length - 1];
+  }
+  const dg = selD ? byDay[selD] : null;
+  if (!dg) { $("detail").innerHTML = `<div class="empty">この月の試合はありません。</div>`; return; }
+  const [yy, mm, d2] = selD.split("-").map(Number);
+  $("detail").innerHTML = dg.map(g => {
+    const r = resultOf(g, t);
+    const res = g.st === "canc" ? `<span class="res">中止</span>` : r ? `<span class="res ${r}">${r === "w" ? "勝ち" : r === "l" ? "負け" : "引き分け"}</span>` : `<span class="res num">${esc(g.t || "試合前")}</span>`;
+    const score = g.st === "final" ? `<span class="n num">${g.hs}</span><span style="color:var(--muted)">-</span><span class="n num">${g.as}</span>` : `<span style="color:var(--muted)">vs</span>`;
+    return `<div class="dd">${mm}/${d2}（${WD[new Date(yy, mm - 1, d2).getDay()]}）${esc(g.v || "")}</div>
+      <div class="sc"><span style="color:${tc(g.h)}">${fn(g.h)}</span>${score}<span style="color:${tc(g.a)}">${fn(g.a)}</span>${res}</div>`;
+  }).join("");
+}
+
+/* ---------- 順位 ---------- */
+function renderStd() {
+  const rows = seasonTable(DATA.games);
+  $("std").innerHTML = `<thead><tr><th>順</th><th>チーム</th><th>試合</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>差</th></tr></thead><tbody>` +
+    rows.map((r, i) => {
+      const gbCell = i === 0 ? (r.magic === 0 ? `<td class="mg">優勝</td>` : r.magic != null ? `<td class="mg">M${r.magic}</td>` : `<td>-</td>`) : `<td>${Number.isInteger(r.gb) ? r.gb : r.gb.toFixed(1)}</td>`;
+      return `<tr><td>${i + 1}</td><td><span class="tn"><span class="badge" style="${tv(r.t)}">${sn(r.t)}</span><span class="nmx">${fn(r.t)}</span></span></td>
+      <td class="num">${r.g}</td><td class="num">${r.w}</td><td class="num">${r.l}</td><td class="num">${r.d}</td><td class="num pc">${pctOf(r.w, r.l)}</td>${gbCell}</tr>`;
+    }).join("") + `</tbody>`;
+  $("stdNote").textContent = "全試合";
+  const list = periods();
+  $("hist").innerHTML = list.map(p => {
+    const a = analyze(DATA.games, p, CONFIG);
+    const low = a.rows[a.rows.length - 1];
+    const payer = !a.played ? "—" : a.finished ? `<span style="display:inline-flex;align-items:center;gap:8px"><span class="badge" style="${tv(low.t)};width:24px;height:24px;font-size:13px">${sn(low.t)}</span>${fn(low.t)}</span>` : `<span style="color:var(--muted)">集計中</span>`;
+    const ranks = a.played ? `<div class="ranks">${a.rows.map((r, i) => `<span class="badge${a.finished && i === a.rows.length - 1 ? " last" : ""}" style="${tv(r.t)}">${sn(r.t)}</span>`).join("")}</div>` : "";
+    return `<div class="hrow"><span class="pl">${p.label}</span><span class="py">${a.finished ? payer + `<small style="color:var(--muted);font-weight:700;font-size:12.5px;margin-left:6px">支払い</small>` : payer}</span>${ranks}</div>`;
+  }).join("");
+}
+
+/* ---------- 読み込み ---------- */
+function renderAll() {
+  const u = DATA.updated ? new Date(DATA.updated) : null;
+  $("upd").innerHTML = u ? `最終更新 <b class="num">${u.getMonth() + 1}/${u.getDate()} ${String(u.getHours()).padStart(2, "0")}:${String(u.getMinutes()).padStart(2, "0")}</b>　広島を除くセ・リーグ5球団` : "";
+  $("stripe").innerHTML = CL.filter(t => !CONFIG.excluded.includes(t)).map(t => `<i style="${tv(t)}"></i>`).join("");
+  renderMagic(); renderCal(); renderStd();
+  $("note").textContent = fromSnap ? "自動更新データを読み込めなかったため、ページ内に保存したデータを表示しています。" : "";
+}
+async function load() {
+  try {
+    const r = await fetch("data/latest.json?t=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error(r.status);
+    const d = await r.json();
+    if (!d.games || !d.games.length) throw new Error("empty");
+    DATA = d; fromSnap = false;
+  } catch {
+    if (!DATA) { DATA = JSON.parse($("snap").textContent); fromSnap = true; }
+  }
+  if (!S.periodPicked) S.period = null;
+  renderAll();
+}
+load();
+setInterval(load, 5 * 60 * 1000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
+</script>
+</body>
+</html>
