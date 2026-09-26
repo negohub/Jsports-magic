@@ -267,6 +267,52 @@ def fetch_prev_order(season, old):
     return prev
 
 
+ROSTER_CODE = {"T": "t", "G": "g", "DB": "db", "D": "d", "C": "c", "S": "s"}
+POSITIONS = ("投手", "捕手", "内野手", "外野手")
+
+
+def parse_roster(html):
+    """NPBの選手一覧ページから、背番号・名前・ポジション・育成かどうかを取る"""
+    soup = BeautifulSoup(html, "html.parser")
+    out = []
+    for table in soup.find_all("table"):
+        h = table.find_previous(["h3", "h4"])
+        dev = bool(h and "育成" in h.get_text())
+        pos = None
+        for tr in table.find_all("tr"):
+            cells = [norm(c.get_text(" ", strip=True)) for c in tr.find_all(["td", "th"])]
+            if len(cells) < 2:
+                continue
+            if cells[0] == "No.":
+                pos = cells[1] if cells[1] in POSITIONS else None
+                continue
+            if pos and re.fullmatch(r"\d{1,3}", cells[0]) and cells[1]:
+                out.append({"no": cells[0], "n": re.sub(r"\s+", " ", cells[1]), "p": pos, "dev": dev})
+    return out
+
+
+def fetch_rosters(old):
+    """各球団の選手一覧（1日1回だけ取りに行く）"""
+    now = datetime.now(JST)
+    today = now.strftime("%Y-%m-%d")
+    rosters = dict((old or {}).get("rosters") or {})
+    have_all = len(rosters) == 6
+    # 更新は3月〜7月だけ（支配下登録の期限が7月末のため）。まだ全球団そろっていなければ時期に関係なく取る
+    if have_all and not (3 <= now.month <= 7):
+        return rosters, (old or {}).get("roster_date")
+    if have_all and (old or {}).get("roster_date") == today:
+        return rosters, today
+    for t, code in ROSTER_CODE.items():
+        html = fetch(f"https://npb.jp/bis/teams/rst_{code}.html")
+        rows = parse_roster(html) if html else []
+        if len(rows) >= 20:
+            rosters[t] = rows
+        else:
+            print(f"[選手一覧] {t} 読み取れず（前回の値を使用）")
+    print(f"[選手一覧] {sum(len(v) for v in rosters.values())}人（{len(rosters)}球団）")
+    return rosters, today
+
+
 def write_json(data):
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
@@ -341,7 +387,9 @@ def main():
     old_stats = old.get("stats") if old and old.get("season") == season else None
     stats = fetch_stats(season, old_stats)
     prev_order = fetch_prev_order(season, old)
-    if old and old_games == all_games and old_stats == stats and old.get("prev_order") == prev_order and old.get("checked") == month:
+    rosters, roster_date = fetch_rosters(old)
+    if (old and old_games == all_games and old_stats == stats and old.get("prev_order") == prev_order
+            and old.get("checked") == month and old.get("rosters") == rosters):
         print("変化なし")
         return
     data = {
@@ -351,6 +399,8 @@ def main():
         "stats": stats,
         "prev_order": prev_order,
         "checked": month,
+        "rosters": rosters,
+        "roster_date": roster_date,
     }
     write_json(data)
     print(f"保存しました: {len(all_games)}試合")
