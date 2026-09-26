@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>J SPORTS 支払い回避マジック</title>
-<meta name="description" content="広島を除くセ・リーグ5球団の月度最下位回避マジック">
+<title>J SPORTS ペナントレース</title>
+<meta name="description" content="J SPORTS ペナントレース｜広島を除くセ・リーグ5球団で、月度の最下位がJ SPORTS代を払う">
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="回避マジック">
+<meta name="apple-mobile-web-app-title" content="ペナントレース">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260926194601">
+<meta name="build" content="20260926195958">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -596,13 +596,33 @@ h2{font-weight:700;margin-top:30px}
 .mtbl td,.mtbl th{padding-left:4px;padding-right:4px}
 .mtbl td:first-child,.mtbl th:first-child{padding-left:8px}
 .mtbl td:last-child,.mtbl th:last-child{padding-right:8px}
+
+/* このままだと支払い（コンパクト版） */
+.hero{margin-top:16px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;padding:14px 16px;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 38%,#0B0B0B) 0%,color-mix(in srgb,var(--tc) 12%,#0B0B0B) 55%,#0B0B0B 100%);
+  border-left:4px solid var(--tc);position:relative}
+.hero.now{box-shadow:inset 0 0 0 1px rgba(255,59,59,.45)}
+.hero.done{box-shadow:inset 0 0 0 1px rgba(255,59,59,.8)}
+.hero.none{grid-template-columns:1fr;border-left-color:#333;background:#0E0E0E}
+.hero .hb{width:40px;height:40px;display:grid;place-items:center;background:var(--tc);color:var(--ti);font-size:20px;font-weight:700;clip-path:polygon(0 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+.hero .hm{min-width:0}
+.hero .hl{font-size:11px;color:#FF6B6B;font-weight:700;letter-spacing:.08em}
+.hero.none .hl{color:var(--muted)}
+.hero .hn{display:flex;align-items:baseline;gap:8px;line-height:1.3}
+.hero .hn b{font-size:22px;font-weight:700;letter-spacing:.02em}
+.hero .hn span{font-size:12.5px;color:#C8C8C8}
+.hero .hs{font-size:11.5px;color:#A8A8A8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hero .hp{text-align:right;line-height:1.2}
+.hero .hp b{display:block;font-size:18px;font-weight:700}
+.hero .hp small{font-size:11px;color:#C8C8C8}
+@media (prefers-reduced-motion:no-preference){.hero{animation:rowIn .4s cubic-bezier(.2,.8,.2,1) both}}
 </style>
 </head>
 <body>
 <header class="top">
   <div class="brand">
-    <div class="j" id="kicker">J SPORTS</div>
-    <h1 id="ttl">支払い回避マジック</h1>
+    <div class="j" id="kicker">J SPORTS ペナントレース</div>
+    <h1 id="ttl">今月の戦況</h1>
     <div class="upd" id="upd">読み込み中…</div>
   </div>
   <div class="stripe" id="stripe"></div>
@@ -704,7 +724,7 @@ h2{font-weight:700;margin-top:30px}
 <div class="tabbar">
   <nav role="tablist" aria-label="表示の切り替え">
     <button type="button" role="tab" data-tab="magic" aria-selected="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 15V9l2.5 3L13 9v6"/><path d="M16 9v6"/></svg>マジック</button>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V3"/><path d="M5 4l14 4.5L5 13"/></svg>戦況</button>
     <button type="button" role="tab" data-tab="game" aria-selected="false">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 9-9 9-9-9z"/><circle cx="12" cy="12" r="1.6"/></svg>試合</button>
     <button type="button" role="tab" data-tab="cal" aria-selected="false">
@@ -1031,19 +1051,20 @@ function defaultPeriod(list) {
   return list.find(p => p.months.includes(m)) || list[list.length - 1] || CONFIG.periods[0];
 }
 const TAB_TITLE = {
-  magic: ["J SPORTS", "支払い回避マジック"],
-  game: ["J SPORTS 支払い回避マジック", "今日の試合"],
-  cal: ["J SPORTS 支払い回避マジック", "日程・結果"],
-  std: ["J SPORTS 支払い回避マジック", "順位・支払い"],
-  song: ["J SPORTS 支払い回避マジック", "応援歌"],
-  stats: ["J SPORTS 支払い回避マジック", "成績"],
+  magic: ["J SPORTS ペナントレース", "今月の戦況"],
+  game: ["J SPORTS ペナントレース", "今日の試合"],
+  cal: ["J SPORTS ペナントレース", "日程・結果"],
+  std: ["J SPORTS ペナントレース", "順位・支払い"],
+  song: ["J SPORTS ペナントレース", "応援歌"],
+  stats: ["J SPORTS ペナントレース", "成績"],
 };
 function setTab(t) {
   S.tab = t;
   $("kicker").textContent = TAB_TITLE[t][0];
   $("ttl").textContent = TAB_TITLE[t][1];
+  magicTitle();
   if (t === "game") loadDetails();
-  document.title = t === "magic" ? "J SPORTS 支払い回避マジック" : `${TAB_TITLE[t][1]}｜J SPORTS 支払い回避マジック`;
+  document.title = t === "magic" ? "J SPORTS ペナントレース" : `${TAB_TITLE[t][1]}｜J SPORTS ペナントレース`;
   document.querySelectorAll(".tabbar button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === t)));
   ["magic", "game", "cal", "std", "song", "stats"].forEach(k => ($("v-" + k).hidden = k !== t));
   window.scrollTo({ top: 0 });
@@ -1057,9 +1078,15 @@ function lampHTML(r) {
   if (r.self === null) return `<div class="lamp off"><small>M</small>--</div>`;
   return `<div class="lamp num"><small>M</small>${r.self}</div>`;
 }
+function magicTitle() {
+  if (S.tab !== "magic" || !S.period) return;
+  const cur = defaultPeriod(periods());
+  $("ttl").textContent = S.period.id === cur.id ? "今月の戦況" : `${S.period.label}の戦況`;
+}
 function renderMagic() {
   const list = periods();
   if (!S.period || !list.some(p => p.id === S.period.id)) S.period = defaultPeriod(list);
+  magicTitle();
   const results = {};
   list.forEach(p => (results[p.id] = analyze(DATA.games, p, CONFIG)));
   $("chips").innerHTML = list.map(p => {
@@ -1072,24 +1099,25 @@ function renderMagic() {
   const on = $("chips").querySelector('[aria-pressed="true"]');
   if (on) $("chips").scrollLeft = on.offsetLeft - ($("chips").clientWidth - on.offsetWidth) / 2;
 
+  const hero = (t, lbl, sub, state) => {
+    const toPayee = own(t) === CONFIG.payee ? "支払い" : `→ ${CONFIG.payee}`;
+    return `<div class="hero ${state}" style="${tv(t)}">
+      <span class="hb">${sn(t)}</span>
+      <div class="hm"><div class="hl">${lbl}</div><div class="hn"><b>${own(t)}</b><span>${fn(t)}</span></div>${sub ? `<div class="hs num">${sub}</div>` : ""}</div>
+      <div class="hp num"><b>${yen(CONFIG.fee)}</b><small>${toPayee}</small></div>
+    </div>`;
+  };
   if (!a.played) {
-    $("alert").innerHTML = `<div class="alert" style="--tc:var(--muted)"><div class="lbl">${S.period.label}</div><div class="who"><span>まだ試合がありません</span></div></div>`;
+    $("alert").innerHTML = `<div class="hero none"><div class="hm"><div class="hl">${S.period.label}</div><div class="hn"><span>まだ試合がありません</span></div></div></div>`;
   } else {
     const low = a.rows[a.rows.length - 1];
     if (a.finished) {
-      $("alert").innerHTML = `<div class="alert paid" style="${tv(low.t)}"><span class="wm" aria-hidden="true">${sn(low.t)}</span><div class="lbl">${S.period.label}の結果</div>
-        <div class="who"><b>${own(low.t)}</b><span>${fn(low.t)}が最下位</span></div>
-        ${payLine(low.t) ? `<div class="pay num">${payLine(low.t)}</div>` : ""}
-        <div class="sub num">${low.w}勝${low.l}敗${low.d}分　勝率${pctOf(low.w, low.l)}</div></div>`;
+      $("alert").innerHTML = hero(low.t, `${S.period.label}の支払い`, `${low.w}勝${low.l}敗${low.d}分　勝率${pctOf(low.w, low.l)}`, "done");
     } else if (low.eliminated) {
-      $("alert").innerHTML = `<div class="alert paid" style="${tv(low.t)}"><span class="wm" aria-hidden="true">${sn(low.t)}</span><div class="lbl">${S.period.label}</div>
-        <div class="who"><b>${own(low.t)}</b><span>支払いが確定（${fn(low.t)}）</span></div>
-        ${payLine(low.t) ? `<div class="pay num">${payLine(low.t)}</div>` : ""}</div>`;
+      $("alert").innerHTML = hero(low.t, "支払いが確定", `${low.w}勝${low.l}敗${low.d}分　勝率${pctOf(low.w, low.l)}`, "done");
     } else {
-      $("alert").innerHTML = `<div class="alert" style="${tv(low.t)}"><span class="wm" aria-hidden="true">${sn(low.t)}</span><div class="lbl">このままだと支払い</div>
-        <div class="who"><b>${own(low.t)}</b><span>${fn(low.t)}</span></div>
-        ${payLine(low.t) ? `<div class="pay num">${payLine(low.t)}</div>` : ""}
-        <div class="sub num">${(() => { const up = a.rows[a.rows.length - 2]; const g = ((up.w - low.w) + (low.l - up.l)) / 2; return `${fn(low.t)}の残り${low.rem}試合　${a.rows.length - 1}位の${fn(up.t)}まで${g.toFixed(1)}差`; })()}</div></div>`;
+      const up = a.rows[a.rows.length - 2], g = ((up.w - low.w) + (low.l - up.l)) / 2;
+      $("alert").innerHTML = hero(low.t, "このままだと支払い", `残り${low.rem}試合・${fn(up.t)}まで${g.toFixed(1)}差`, "now");
     }
   }
 
@@ -1284,7 +1312,7 @@ function drawCard(a) {
   x.fillStyle = "#000"; x.fillRect(0, 0, W, H);
   x.textBaseline = "alphabetic";
   x.fillStyle = "#8E8E8E"; x.font = F(800, 30); x.fillText("J SPORTS", 64, 92);
-  x.fillStyle = "#fff"; x.font = F(900, 84); x.fillText("支払い回避マジック", 60, 196);
+  x.fillStyle = "#fff"; x.font = F(900, 84); x.fillText("ペナントレース", 60, 196);
   x.font = F(900, 36); x.textAlign = "right"; x.fillText(S.period.label, W - 64, 92); x.textAlign = "left";
   const targets = CL.filter(t => !CONFIG.excluded.includes(t)), sw = (W - 128) / targets.length;
   targets.forEach((t, i) => { x.fillStyle = tc(t); x.beginPath(); const x0 = 64 + i * sw; x.moveTo(x0 + 8, 232); x.lineTo(x0 + sw + 8, 232); x.lineTo(x0 + sw - 8, 248); x.lineTo(x0 - 8, 248); x.fill(); });
