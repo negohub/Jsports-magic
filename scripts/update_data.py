@@ -296,10 +296,17 @@ SONG_SOURCES = {
     "T": ["https://m.hanshintigers.jp/data/march/", "https://www.yakyu-ouen.net/tigers/"],
     "DB": ["https://sp.baystars.co.jp/player_songs/index", "https://www.yakyu-ouen.net/baystars/"],
     "G": ["https://giants-cheeringclub.com/cheeringsong/", "https://www.yakyu-ouen.net/giants/"],
-    "D": ["https://chunichiouendan.wixsite.com/dragonsouendan/%E5%BF%9C%E6%8F%B4%E6%AD%8C", "https://www.yakyu-ouen.net/dragons/"],
+    "D": ["https://www.yakyu-ouen.net/dragons/"],
     "C": ["https://www.carp.co.jp/team/songs", "https://www.yakyu-ouen.net/carp/"],
     "S": ["https://www.yakult-swallows.co.jp/players/song", "https://www.yakyu-ouen.net/swallows/"],
 }
+# 公式がPDFで配っている球団は、PDFに載っている選手名をここに書いておく（中日：cheersong2026.pdf）
+SONG_EXTRA = {
+    "D": ["岡林勇希", "田中幹也", "高橋周平", "カリステ", "村松開人", "福永裕基", "大島洋平", "石伊雄太", "大野雄大",
+          "ボスラー", "石川昂弥", "根尾昂", "木下拓哉", "宇佐見真吾", "ブライト健太", "土田龍空", "阿部寿樹",
+          "加藤匠馬", "上林誠知", "細川成也", "山本泰寛", "鵜飼航丞"],
+}
+SONG_REV = 2  # 判定のしかたを変えたら数字を上げる（上げると時期に関係なく1回やり直す）
 # 背番号で並んでいるページ（ヤクルト公式）は背番号でも照合する
 SONG_BY_NUMBER = {"https://www.yakult-swallows.co.jp/players/song"}
 VARIANT = str.maketrans({"髙": "高", "﨑": "崎", "濵": "浜", "德": "徳", "瀨": "瀬", "邊": "辺", "邉": "辺", "塚": "塚", "・": "", "＝": "", "=": ""})
@@ -311,7 +318,7 @@ def squash(s):
 
 def mark_songs(t, rows):
     """応援歌ページに名前（または背番号）が出てくる選手に song=True を付ける。どのページも読めなければ None"""
-    texts, numbers, ok = [], set(), False
+    texts, numbers, ok = [squash(" ".join(SONG_EXTRA.get(t, [])))], set(), bool(SONG_EXTRA.get(t))
     for url in SONG_SOURCES.get(t, []):
         html = fetch(url)
         if not html:
@@ -339,7 +346,8 @@ def fetch_rosters(old):
     now = datetime.now(JST)
     today = now.strftime("%Y-%m-%d")
     rosters = dict((old or {}).get("rosters") or {})
-    have_all = len(rosters) == 6 and all(any("song" in r for r in v) for v in rosters.values())
+    have_all = (len(rosters) == 6 and all(any("song" in r for r in v) for v in rosters.values())
+                and (old or {}).get("song_rev") == SONG_REV)
     # 更新は3月〜7月だけ（支配下登録の期限が7月末のため）。まだ全球団そろっていなければ時期に関係なく取る
     if have_all and not (3 <= now.month <= 7):
         return rosters, (old or {}).get("roster_date")
@@ -439,7 +447,7 @@ def main():
     prev_order = fetch_prev_order(season, old)
     rosters, roster_date = fetch_rosters(old)
     if (old and old_games == all_games and old_stats == stats and old.get("prev_order") == prev_order
-            and old.get("checked") == month and old.get("rosters") == rosters):
+            and old.get("checked") == month and old.get("rosters") == rosters and old.get("song_rev") == SONG_REV):
         print("変化なし")
         return
     data = {
@@ -451,6 +459,7 @@ def main():
         "checked": month,
         "rosters": rosters,
         "roster_date": roster_date,
+        "song_rev": SONG_REV,
     }
     write_json(data)
     print(f"保存しました: {len(all_games)}試合")
