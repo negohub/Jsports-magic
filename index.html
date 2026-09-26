@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ペナントレース">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260926200828">
+<meta name="build" content="20260926201345">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -635,6 +635,18 @@ h2{font-weight:700;margin-top:30px}
 .ytab .mt{font-size:16px;font-weight:700;color:#fff}
 .ytab .mt.ng{color:var(--ng);font-size:13px}
 @media (max-width:374px){.ytab th,.ytab td{font-size:13px;padding:8px 3px}.ytab td.tnm a{font-size:13.5px}.ytab td.tnm{min-width:64px}}
+
+/* 対戦成績（スポナビ形式） */
+.h2h{table-layout:fixed}
+.h2h th,.h2h td{text-align:center;padding:8px 1px;letter-spacing:0}
+.h2h thead th{font-size:13px;color:#C8C8C8;background:#141414}
+.h2h th.rh{width:34px;background:#141414;color:#C8C8C8;font-size:13px;font-weight:600}
+.h2h tbody th.rh{box-shadow:inset 3px 0 0 var(--tc)}
+.h2h td b{display:block;font-size:13.5px;font-weight:700;color:#fff;line-height:1.3;white-space:nowrap}
+.h2h td small{display:block;font-size:11px;color:#9A9A9A;font-weight:400;line-height:1.2}
+.h2h td.self{background:#161616;color:#555}
+.h2h tbody tr{background:none}
+@media (max-width:374px){.h2h td b{font-size:11.5px}.h2h td small{font-size:10px}}
 </style>
 </head>
 <body>
@@ -654,6 +666,11 @@ h2{font-weight:700;margin-top:30px}
     <div class="cards" id="cards"></div>
     <div class="excl" id="excl"></div>
     <button class="shot" id="shotBtn" type="button">画像にしてLINEで送る</button>
+    <section class="blk" id="mh2hBlk">
+      <h2>対戦成績<small id="mh2hNote"></small></h2>
+      <div id="mh2h"></div>
+      <p class="foot">左の球団から見た、この月度だけの成績です。</p>
+    </section>
     <section class="blk" id="trendBlk">
       <h2>順位の推移<small id="trendNote"></small></h2>
       <div class="trend" id="trend"></div>
@@ -690,6 +707,9 @@ h2{font-weight:700;margin-top:30px}
     <h2>セ・リーグ順位表<small id="stdNote"></small></h2>
     <div id="std"></div>
     <p class="foot">球団名をタップすると公式サイトが開きます。勝差は1つ上の球団とのゲーム差（1位の欄は優勝マジック）。首位の M は優勝マジック（あと何勝で優勝か）。</p>
+    <h2>対戦成績<small>勝-敗（引分）</small></h2>
+    <div id="h2h"></div>
+    <p class="foot">左の球団から見た成績です（例：神の行・巨の列＝阪神の巨人戦）。</p>
     <h2>月度ごとの支払い</h2>
     <div class="hist" id="hist"></div>
     <p class="foot">白枠が最下位（支払い）。左から順位順、広島は対象外。</p>
@@ -1149,6 +1169,9 @@ function renderMagic() {
       cls: (isLow && !a.finished ? "low" : "") + (paid ? " paid" : "") };
   }), "マジック") + `<p class="foot">球団名をタップすると公式サイト。勝差は1つ上の球団とのゲーム差、残試合は月度の残り試合。マジックの★は最下位回避の確定、「支払」は最下位の確定。</p>`;
 
+  const tOrder = a.rows.map(r => r.t);
+  $("mh2h").innerHTML = h2hTable(tOrder, [...tOrder, ...CONFIG.excluded], g => S.period.months.includes(monthOf(g.d)));
+  $("mh2hNote").textContent = `${S.period.label}　勝数-負数（引分数）`;
   renderTrend(a); renderForm();
   // 確定の条件（まとめて1か所）
   const open = a.rows.filter(r => !r.safe && !r.eliminated);
@@ -1230,6 +1253,26 @@ async function pollLive() {
     if (S.tab === "game") loadDetails(changed);
   } catch {}
 }
+
+/* ---------- 対戦成績（スポナビ形式：勝数-負数（引分数）） ---------- */
+function h2hTable(rowsT, colsT, filter) {
+  const M = {};
+  for (const g of DATA.games) {
+    if (g.st !== "final" || (filter && !filter(g))) continue;
+    for (const [me, op, a, b] of [[g.h, g.a, g.hs, g.as], [g.a, g.h, g.as, g.hs]]) {
+      const r = (M[me + ">" + op] = M[me + ">" + op] || [0, 0, 0]);
+      r[a > b ? 0 : a < b ? 1 : 2]++;
+    }
+  }
+  const cell = (me, op) => {
+    if (me === op) return `<td class="self">-</td>`;
+    const [w, l, d] = M[me + ">" + op] || [0, 0, 0];
+    return `<td class="num"><b>${w} - ${l}</b><small>(${d})</small></td>`;
+  };
+  return `<div class="ywrap"><table class="ytab h2h"><thead><tr><th class="rh"></th>${colsT.map(t => `<th>${calSn(t)}</th>`).join("")}</tr></thead><tbody>` +
+    rowsT.map(t => `<tr style="${tv(t)}"><th class="rh">${calSn(t)}</th>${colsT.map(o => cell(t, o)).join("")}</tr>`).join("") + `</tbody></table></div>`;
+}
+function renderH2H(order) { $("h2h").innerHTML = h2hTable(order, order); }
 
 /* ---------- スポナビ形式の順位表（戦況・順位で共通） ---------- */
 // rows: [{t, g, w, l, d, gb(null=1位), rem, first(1位の勝差欄に出す文字), cls, sub(担当など), extra(右端の追加列)}]
@@ -1562,6 +1605,7 @@ function renderStd() {
   const rows = seasonTable(DATA.games);
   const remS = {};
   DATA.games.forEach(g => { if (g.st === "sched" || g.st === "live") { remS[g.h] = (remS[g.h] || 0) + 1; remS[g.a] = (remS[g.a] || 0) + 1; } });
+  renderH2H(rows.map(r => r.t));
   $("std").innerHTML = yTable(rows.map((r, i) => ({ t: r.t, g: r.g, w: r.w, l: r.l, d: r.d, gb: i === 0 ? null : r.gb, rem: remS[r.t] || 0,
     first: r.magic === 0 ? "優勝" : r.magic != null ? `M${r.magic}` : "-" })));
   $("stdNote").textContent = "全試合";
