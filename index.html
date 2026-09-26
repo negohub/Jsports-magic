@@ -4,13 +4,26 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>J SPORTS ペナントレース</title>
-<meta name="description" content="J SPORTS ペナントレース｜広島を除くセ・リーグ5球団で、月度の最下位がJ SPORTS代を払う">
+<meta name="description" content="月度の最下位が、J SPORTS代を払う。戦況・試合速報・順位・成績・応援歌">
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ペナントレース">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="J SPORTS ペナントレース">
+<meta property="og:title" content="J SPORTS ペナントレース">
+<meta property="og:description" content="月度の最下位が、J SPORTS代を払う。戦況・試合速報・順位・成績・応援歌">
+<meta property="og:url" content="https://negohub.github.io/Jsports-magic/">
+<meta property="og:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="J SPORTS ペナントレース">
+<meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260926202528">
+<meta name="build" content="20260926205200">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1436,51 +1449,80 @@ function renderToday(a) {
 
 /* ---------- 画像にしてLINEで送る ---------- */
 function drawCard(a) {
-  const W = 1080, rowH = 150, gap = 10, top = 660;
-  const H = top + a.rows.length * (rowH + gap) + 120;
+  const W = 1080, P = 64, rowH = 112, headH = 84, tableY = 480;
+  const rows = a.rows, H = tableY + headH + rows.length * rowH + 150;
   const c = document.createElement("canvas"); c.width = W; c.height = H;
   const x = c.getContext("2d");
   const F = (w, s) => `${w} ${s}px "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, "Noto Sans JP", sans-serif`;
+  const mix = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
+  const stripe = (y, h) => { const cols = ["#0A6FE0", "#F97709", "#FFE100", "#1F3FB0", "#00A660"], sw = W / 5;
+    cols.forEach((col, i) => { x.fillStyle = col; x.beginPath(); x.moveTo(i * sw + 8, y); x.lineTo((i + 1) * sw + 8, y); x.lineTo((i + 1) * sw - 8, y + h); x.lineTo(i * sw - 8, y + h); x.fill(); }); };
   x.fillStyle = "#000"; x.fillRect(0, 0, W, H);
-  x.textBaseline = "alphabetic";
-  x.fillStyle = "#8E8E8E"; x.font = F(800, 30); x.fillText("J SPORTS", 64, 92);
-  x.fillStyle = "#fff"; x.font = F(900, 84); x.fillText("ペナントレース", 60, 196);
-  x.font = F(900, 36); x.textAlign = "right"; x.fillText(S.period.label, W - 64, 92); x.textAlign = "left";
-  const targets = CL.filter(t => !CONFIG.excluded.includes(t)), sw = (W - 128) / targets.length;
-  targets.forEach((t, i) => { x.fillStyle = tc(t); x.beginPath(); const x0 = 64 + i * sw; x.moveTo(x0 + 8, 232); x.lineTo(x0 + sw + 8, 232); x.lineTo(x0 + sw - 8, 248); x.lineTo(x0 - 8, 248); x.fill(); });
-  // いま払う人
-  const low = a.rows[a.rows.length - 1], ti = TEAM[low.t].i || "#000";
-  x.fillStyle = tc(low.t); x.fillRect(64, 290, W - 128, 330);
-  x.save(); x.beginPath(); x.rect(64, 290, W - 128, 330); x.clip();
-  x.globalAlpha = .16; x.fillStyle = ti; x.font = F(900, 420); x.textAlign = "right"; x.fillText(sn(low.t), W - 40, 700); x.restore();
-  x.textAlign = "left"; x.fillStyle = ti;
+  // 右上の斜線
+  x.strokeStyle = "#121212"; x.lineWidth = 3;
+  for (let k = 620; k < 1500; k += 28) { x.beginPath(); x.moveTo(k, 0); x.lineTo(k - 220, 230); x.stroke(); }
+  // 見出し
+  const cur = defaultPeriod(periods());
+  const ttl = S.period.id === cur.id ? "今月の戦況" : `${S.period.label}の戦況`;
+  x.textBaseline = "alphabetic"; x.textAlign = "left";
+  x.fillStyle = "#9A9A9A"; x.font = F(600, 28); x.fillText("J SPORTS ペナントレース", P, 92);
+  x.fillStyle = "#fff"; x.font = F(700, 76); x.fillText(ttl, P - 4, 182);
+  const u = liveChangedAt && (!DATA.updated || liveChangedAt > new Date(DATA.updated)) ? liveChangedAt : DATA.updated ? new Date(DATA.updated) : null;
+  if (u) { x.textAlign = "right"; x.fillStyle = "#8A8A8A"; x.font = F(400, 26);
+    x.fillText(`${u.getMonth() + 1}/${u.getDate()} ${String(u.getHours()).padStart(2, "0")}:${String(u.getMinutes()).padStart(2, "0")} 更新`, W - P, 92); x.textAlign = "left"; }
+  stripe(214, 10);
+  // このままだと支払い（帯）
+  const low = rows[rows.length - 1], lc = tc(low.t), li = TEAM[low.t].i || "#000";
   const done = a.finished || low.eliminated;
-  x.font = F(800, 32); x.fillText(done ? `${S.period.label}　支払い確定` : "このままだと支払い", 100, 350);
-  x.font = F(900, 150); x.fillText(own(low.t), 94, 500);
-  const nw = x.measureText(own(low.t)).width;
-  x.font = F(900, 44); x.fillText(fn(low.t), 94 + nw + 24, 500);
-  x.font = F(900, 40); const pay = payLine(low.t), pw = x.measureText(pay).width;
-  if (pay) { x.fillStyle = "#000"; x.fillRect(100, 530, pw + 44, 64); x.fillStyle = "#fff"; x.fillText(pay, 122, 576); }
-  // 一覧
-  a.rows.forEach((r, i) => {
-    const y = top + i * (rowH + gap), isLow = i === a.rows.length - 1 && !r.safe;
-    x.fillStyle = isLow ? "#2A0A0C" : "#0E0E0E"; x.fillRect(64, y, W - 128, rowH);
-    if (isLow) { x.strokeStyle = "rgba(255,43,43,.7)"; x.lineWidth = 3; x.strokeRect(65.5, y + 1.5, W - 131, rowH - 3); }
-    x.fillStyle = tc(r.t); x.beginPath(); x.moveTo(64, y); x.lineTo(214, y); x.lineTo(190, y + rowH); x.lineTo(64, y + rowH); x.fill();
-    const it = TEAM[r.t].i || "#000"; x.fillStyle = it;
-    x.font = F(900, 28); x.globalAlpha = .75; x.fillText(String(i + 1), 80, y + 38); x.globalAlpha = 1;
-    x.font = F(900, 72); x.textAlign = "center"; x.fillText(sn(r.t), 134, y + 102); x.textAlign = "left";
-    x.fillStyle = "#fff"; x.font = F(900, 46); x.fillText(fn(r.t), 240, y + 58);
-    const w1 = x.measureText(fn(r.t)).width; x.fillStyle = "#8E8E8E"; x.font = F(800, 30); x.fillText(CONFIG.owners[r.t] || "", 240 + w1 + 16, y + 58);
-    x.fillStyle = "#DADADA"; x.font = F(800, 34); x.fillText(`${r.w}勝${r.l}敗${r.d}分　${pctOf(r.w, r.l)}`, 240, y + 102);
-    x.fillStyle = "#8E8E8E"; x.font = F(700, 28); x.fillText(`${r.gb === null ? "首位" : "差" + r.gb.toFixed(1)}　残${r.rem}`, 240, y + 138);
-    const paid = r.eliminated || (a.finished && i === a.rows.length - 1);
-    const mg = paid ? "支払い" : r.safe ? "★" : r.self === null ? "" : "M" + r.self;
-    x.fillStyle = paid ? "#FF2B2B" : "#fff"; x.font = F(900, 84); x.textAlign = "right"; x.fillText(mg, W - 96, y + 108); x.textAlign = "left";
+  const bY = 262, bH = 176;
+  const g = x.createLinearGradient(P, 0, W - P, 0);
+  g.addColorStop(0, mix(lc, .42)); g.addColorStop(.55, mix(lc, .12)); g.addColorStop(1, "rgba(11,11,11,1)");
+  x.fillStyle = "#0B0B0B"; x.fillRect(P, bY, W - 2 * P, bH); x.fillStyle = g; x.fillRect(P, bY, W - 2 * P, bH);
+  x.fillStyle = lc; x.fillRect(P, bY, 10, bH);
+  x.strokeStyle = done ? "rgba(255,59,59,.85)" : "rgba(255,59,59,.5)"; x.lineWidth = 2; x.strokeRect(P + 1, bY + 1, W - 2 * P - 2, bH - 2);
+  x.fillStyle = lc; x.beginPath(); x.moveTo(P + 40, bY + 40); x.lineTo(P + 140, bY + 40); x.lineTo(P + 128, bY + 136); x.lineTo(P + 40, bY + 136); x.fill();
+  x.fillStyle = li; x.font = F(700, 52); x.textAlign = "center"; x.fillText(sn(low.t), P + 88, bY + 107); x.textAlign = "left";
+  x.fillStyle = "#FF6B6B"; x.font = F(700, 26); x.fillText(a.finished ? `${S.period.label}の支払い` : done ? "支払いが確定" : "このままだと支払い", P + 172, bY + 56);
+  x.fillStyle = "#fff"; x.font = F(700, 60); x.fillText(own(low.t), P + 168, bY + 116);
+  const ow = x.measureText(own(low.t)).width;
+  x.fillStyle = "#C8C8C8"; x.font = F(400, 30); x.fillText(fn(low.t), P + 168 + ow + 18, bY + 116);
+  if (!done) { const up = rows[rows.length - 2], gg = ((up.w - low.w) + (low.l - up.l)) / 2;
+    x.fillStyle = "#A8A8A8"; x.font = F(400, 24); x.fillText(`残り${low.rem}試合・${fn(up.t)}まで${gg.toFixed(1)}差`, P + 172, bY + 158); }
+  x.textAlign = "right"; x.fillStyle = "#fff"; x.font = F(700, 50); x.fillText(yen(CONFIG.fee), W - P - 36, bY + 100);
+  x.fillStyle = "#C8C8C8"; x.font = F(400, 26); x.fillText(own(low.t) === CONFIG.payee ? "支払い" : `→ ${CONFIG.payee}`, W - P - 36, bY + 140); x.textAlign = "left";
+  // 順位表（サイトと同じ形式）
+  const cols = [["順位", 72], ["チーム名", 246], ["試合", 70], ["勝利", 70], ["敗戦", 70], ["引分", 62], ["勝率", 104], ["勝差", 72], ["残試合", 84], ["マジック", 102]];
+  const colX = []; let cx = P; cols.forEach(([, w]) => { colX.push(cx); cx += w; });
+  const tW = cx - P;
+  x.fillStyle = "#141414"; x.fillRect(P, tableY, tW, headH);
+  x.fillStyle = "#A8A8A8"; x.font = F(600, 24); x.textAlign = "center";
+  cols.forEach(([h, w], k) => x.fillText(h, colX[k] + w / 2, tableY + headH / 2 + 9));
+  rows.forEach((r, i) => {
+    const y = tableY + headH + i * rowH, t = r.t, col = tc(t);
+    const rg = x.createLinearGradient(P, 0, P + tW, 0); rg.addColorStop(0, mix(col, .16)); rg.addColorStop(.45, "rgba(0,0,0,0)");
+    x.fillStyle = rg; x.fillRect(P, y, tW, rowH);
+    x.fillStyle = col; x.fillRect(colX[1], y, 8, rowH);
+    const paid = r.eliminated || (a.finished && i === rows.length - 1);
+    const mg = paid ? "支払" : r.safe ? "★" : r.self === null ? "" : "M" + r.self;
+    const gb = r.gb === null ? "-" : (Number.isInteger(r.gb) ? String(r.gb) : r.gb.toFixed(1));
+    const vals = [String(i + 1), "", String(r.w + r.l + r.d), String(r.w), String(r.l), String(r.d), pctOf(r.w, r.l), gb, String(r.rem)];
+    x.font = F(400, 34); x.fillStyle = "#fff";
+    vals.forEach((v, k) => { if (k === 1) return; x.textAlign = k === 0 ? "center" : "right"; x.fillStyle = k === 0 ? "#C8C8C8" : "#fff";
+      x.fillText(v, k === 0 ? colX[k] + cols[k][1] / 2 : colX[k] + cols[k][1] - 14, y + rowH / 2 + 12); });
+    x.textAlign = "left"; x.fillStyle = "#fff"; x.font = F(700, 38); x.fillText(fn(t), colX[1] + 26, y + 58);
+    x.fillStyle = "#8A8A8A"; x.font = F(400, 22); x.fillText(CONFIG.owners[t] || "", colX[1] + 28, y + 92);
+    x.textAlign = "center"; x.fillStyle = paid ? "#FF3B3B" : "#fff"; x.font = F(700, paid ? 30 : 38); x.fillText(mg, colX[9] + cols[9][1] / 2, y + rowH / 2 + 13); x.textAlign = "left";
   });
-  const u = DATA.updated ? new Date(DATA.updated) : null;
-  x.fillStyle = "#6A6A6A"; x.font = F(700, 28);
-  x.fillText(`${u ? `最終更新 ${u.getMonth() + 1}/${u.getDate()} ${String(u.getHours()).padStart(2, "0")}:${String(u.getMinutes()).padStart(2, "0")}　` : ""}${location.host}${location.pathname}`, 64, H - 50);
+  // 罫線
+  x.strokeStyle = "#2A2A2A"; x.lineWidth = 2;
+  const tH = headH + rows.length * rowH;
+  for (let k = 0; k <= rows.length + 1; k++) { const yy = tableY + (k === 0 ? 0 : headH + (k - 1) * rowH); x.beginPath(); x.moveTo(P, yy); x.lineTo(P + tW, yy); x.stroke(); }
+  [...colX, P + tW].forEach(xx => { x.beginPath(); x.moveTo(xx, tableY); x.lineTo(xx, tableY + tH); x.stroke(); });
+  // フッター
+  const fy = tableY + tH + 64;
+  x.fillStyle = "#6A6A6A"; x.font = F(400, 24); x.fillText("★＝最下位回避確定　M＝回避マジック", P, fy);
+  x.textAlign = "right"; x.fillText(`${location.host}${location.pathname}`, W - P, fy); x.textAlign = "left";
+  stripe(H - 22, 22);
   return c;
 }
 $("shotBtn").onclick = () => {
