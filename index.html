@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927110103">
+<meta name="build" content="20260927113819">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1197,6 +1197,15 @@ h2::before{transform:none;width:5px;height:18px;border-radius:3px;background:lin
 .putab tr.cur td{background:rgba(255,210,31,.10)}
 .putab tr.cur td.pnx b::before{content:"▶ ";color:#FFD21F;font-size:10px}
 @media (max-width:374px){.putab{font-size:12px}.putab .pnx{width:30%}}
+/* 打席が終わったときの打者カード */
+.pr3{white-space:nowrap;align-items:center}
+.pr3 .abt{letter-spacing:.02em;color:#FFD21F}
+.pr3 .abd{font-size:10.5px;letter-spacing:0;padding:1px 6px;white-space:nowrap}
+.pnx3.up{margin-top:10px;padding:8px 10px;border-radius:10px;background:rgba(255,210,31,.12);color:#FFD21F;letter-spacing:.04em}
+.pnx3.up b{color:#fff;font-size:14px}
+.pnx3.up{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pr3.done{overflow:hidden}
+@media (max-width:374px){.pr3.done em{display:none}.pnx3.up{font-size:9.5px;padding:7px 8px;white-space:normal;flex-direction:column;align-items:flex-start;gap:2px}.pnx3.up b{font-size:12.5px}}
 /* ページ切り替え・開閉をなめらかに */
 @media (prefers-reduced-motion:no-preference){
   .view:not([hidden]){animation:vin .35s cubic-bezier(.22,1,.36,1)}
@@ -1993,7 +2002,7 @@ function yTable(rows, extraHead) {
       <td class="tnm"><a href="${TEAM_URL[r.t]}" target="_blank" rel="noopener">${fn(r.t)}</a>${r.sub ? `<small>${r.sub}</small>` : ""}${liveMini(r.t)}</td>
       <td class="num">${r.g}</td><td class="num">${r.w}</td><td class="num">${r.l}</td><td class="num">${r.d}</td>
       <td class="num">${pctOf(r.w, r.l)}</td>
-      <td class="num">${i === 0 ? (r.first || "-") : (() => { const t = rows[0], gb = ((t.w - r.w) + (r.l - t.l)) / 2; return gb === 0 ? "0" : Number.isInteger(gb) ? gb : gb.toFixed(1); })()}</td>
+      <td class="num">${i === 0 ? (r.first || "-") : (() => { const t = rows[0], gb = ((t.w - r.w) + (r.l - t.l)) / 2; return gb.toFixed(1); })()}</td>
       <td class="num">${r.rem}</td>${extraHead ? `<td class="xc">${r.extra || ""}</td>` : ""}</tr>`).join("") + `</tbody></table></div>`;
 }
 
@@ -2170,6 +2179,8 @@ function pitchHTML(g) {
   </svg>`;
   const pcell = (k, v) => v != null && v !== "" ? `<div><span>${k}</span><b class="num">${esc(String(v))}</b></div>` : "";
   const pg = p.pitcher && p.pitcher.game, bg = p.batter && p.batter.game;
+  const lastRes = last ? String(last.res || "").normalize("NFKC").trim() : "";
+  const abDone = !!lastRes && !/^(ボール|見逃し|空振り|ファウル|ストライク|ファール)$/.test(lastRes);
   return `<div class="pbox">
     ${last ? `<div class="plast ${pitchCls(last.res)}${newPitch(g, last) ? " fresh" : ""}"><span class="pn">${last.n}</span><div class="plr"><b>${esc(last.res)}</b><small>${esc(last.type)}</small></div><div class="pkm num"><b>${kmh(last.speed) || "-"}</b><small>km/h</small></div></div>` : ""}
     <div class="pmid">
@@ -2184,11 +2195,11 @@ function pitchHTML(g) {
         <div class="pg3">${pcell("防", p.pitcher.era)}${pcell("球", pg ? pg.np : p.pitcher.np)}${pcell("回", pg && pg.ip)}${pcell("安", pg && pg.h)}${pcell("振", pg && pg.so)}${pcell("四", pg && pg.bb)}${pcell("失", pg && pg.r)}${pcell("打", pg ? pg.bf : p.pitcher.bf)}</div>` : ""}
       </div>
       <div class="pc3" style="${tv(atk)}"><span class="wm num">${esc(p.batter ? p.batter.no : "")}</span>
-        <div class="pr3">BATTER<em>${fn(atk)}</em></div>
+        <div class="pr3${abDone ? " done" : ""}">${abDone ? `<span class="abt">打席終了</span><span class="abd rc ${resCls(lastRes)}">${esc(lastRes)}</span>` : "BATTER"}<em>${fn(atk)}</em></div>
         ${p.batter ? `<div class="pn3"><b>${esc(p.batter.name)}</b>${hand(p.batter.hand)}</div>
         <div class="pg3">${pcell("率", p.batter.avg)}${pcell("打", bg && bg.ab)}${pcell("安", bg && bg.hit)}${pcell("点", bg && bg.rbi)}${pcell("本", bg && bg.hr)}${pcell("四", bg && bg.bb)}</div>
         ${bg && bg.results && bg.results.length ? `<div class="pres3">${bg.results.map((r, i) => `<span class="rc ${resCls(r)}"><em>${i + 1}</em>${esc(r)}</span>`).join("")}</div>` : ""}` : ""}
-        ${p.next ? `<div class="pnx3">NEXT<b>${esc(p.next)}</b></div>` : ""}
+        ${p.next ? `<div class="pnx3${abDone ? " up" : ""}">${abDone ? "次の打者" : "NEXT"}<b>${esc(p.next)}</b></div>` : ""}
       </div>
     </div>
     ${list.length ? `<div class="plist3">${list.map(x => `<div class="pl3 ${pitchCls(x.res)}"><span class="pn">${x.n}</span><span class="pty">${esc(x.type)}</span><span class="pbar"><i style="width:${spd(x.speed)}%"></i><b class="num">${kmh(x.speed) || ""}</b></span><span class="prs">${esc(x.res)}</span></div>`).join("")}</div>` : `<p class="pnone">この打席はまだ投球がありません</p>`}
@@ -2404,7 +2415,7 @@ function drawCard(a) {
     const paid = r.eliminated || (a.finished && i === rows.length - 1);
     const mg = paid ? "支払" : r.safe ? "★" : r.self === null ? "" : "M" + r.self;
     const t0 = rows[0], gbv = ((t0.w - r.w) + (r.l - t0.l)) / 2;
-    const gb = i === 0 ? "-" : (Number.isInteger(gbv) ? String(gbv) : gbv.toFixed(1));
+    const gb = i === 0 ? "-" : gbv.toFixed(1);
     const vals = [String(i + 1), "", String(r.w + r.l + r.d), String(r.w), String(r.l), String(r.d), pctOf(r.w, r.l), gb, String(r.rem)];
     x.font = F(400, 34); x.fillStyle = "#fff";
     vals.forEach((v, k) => { if (k === 1) return; x.textAlign = k === 0 ? "center" : "right"; x.fillStyle = k === 0 ? "#C8C8C8" : "#fff";
