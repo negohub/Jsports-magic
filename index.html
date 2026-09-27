@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927080142">
+<meta name="build" content="20260927080706">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -878,6 +878,72 @@ h2{font-weight:700;margin-top:30px}
 /* スコア表の得点マス */
 .ls td.scd{cursor:pointer;color:#FFD21F;box-shadow:inset 0 -2px 0 #FFD21F}
 .ls td.scd.on{background:#3A2E06}
+
+/* ===== スコアバグ ===== */
+.bug{display:flex;align-items:stretch;background:#050505;border:1px solid #242424;margin:0 0 8px;overflow:hidden}
+.bteams{flex:1;display:flex;flex-direction:column}
+.bt{position:relative;display:flex;align-items:center;gap:10px;height:44px;padding-right:12px;background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 34%,#0A0A0A) 0%,#0A0A0A 62%)}
+.bt+.bt{border-top:1px solid #1C1C1C}
+.bt .bk{width:40px;align-self:stretch;display:grid;place-items:center;background:var(--tc);color:var(--ti);font-weight:700;font-size:16px;clip-path:polygon(0 0,100% 0,calc(100% - 7px) 100%,0 100%)}
+.bt .bn{font-size:16px;font-weight:700;letter-spacing:.02em}
+.bt .bs2{margin-left:auto;font-size:26px;font-weight:700;min-width:30px;text-align:right}
+.bt.atk::after{content:"";position:absolute;left:44px;top:50%;width:0;height:0;border-left:6px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;transform:translate(-2px,-50%);opacity:.9}
+.bt.atk .bn{padding-left:6px}
+.bi{width:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:#101010;border-left:1px solid #1C1C1C}
+.bi b{font-size:22px;font-weight:700;line-height:1}
+.bi.fin b{font-size:12.5px;line-height:1.3;text-align:center;color:#C8C8C8}
+.bi.pre b{font-size:17px}.bi.pre small{font-size:10px;color:var(--muted)}
+.barrow{display:block;width:14px;height:14px;color:#FFD21F}
+.barrow.b{transform:rotate(180deg)}
+.barrow .ic{width:14px;height:14px;stroke:#FFD21F;stroke-width:3;fill:none}
+.bo{display:flex;gap:4px}
+.bo i{width:8px;height:8px;border-radius:50%;background:#2A2A2A}
+.bo i.on{background:#FF3B3B;box-shadow:0 0 6px rgba(255,59,59,.8)}
+.btag{display:flex;align-items:center;gap:10px;margin:-2px 0 10px;font-size:12px;color:var(--muted)}
+.btag .lv{display:inline-flex;align-items:center;gap:6px;color:#FF3B3B;font-weight:700;letter-spacing:.06em}
+.btag .h2h{margin-left:auto}
+.btag .stg{margin-left:0}
+.ldot{width:7px;height:7px;border-radius:50%;background:#FF3B3B;display:inline-block;box-shadow:0 0 0 0 rgba(255,59,59,.6)}
+.tg .tgh{display:none}
+/* 得点の瞬間 */
+.bt .gl{font-style:normal;font-size:11px;font-weight:700;background:#FFD21F;color:#000;padding:1px 6px;margin-left:4px}
+@media (prefers-reduced-motion:no-preference){
+  .ldot{animation:ldot 1.6s ease-out infinite}
+  @keyframes ldot{0%{box-shadow:0 0 0 0 rgba(255,59,59,.6)}100%{box-shadow:0 0 0 8px rgba(255,59,59,0)}}
+  .bt.flash{animation:bflash 1.2s ease-out 3}
+  @keyframes bflash{0%{background:color-mix(in srgb,var(--tc) 80%,#fff)}100%{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 34%,#0A0A0A) 0%,#0A0A0A 62%)}}
+  .bt.flash .bs2{animation:bpop .6s cubic-bezier(.2,1.6,.4,1) 2}
+  @keyframes bpop{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+  .bt .gl{animation:gl 4s ease forwards}
+  @keyframes gl{0%{opacity:0;transform:translateY(4px)}10%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}
+  /* 新しい1球 */
+  .plast.fresh{animation:pin .5s cubic-bezier(.2,.9,.3,1)}
+  @keyframes pin{0%{opacity:0;transform:translateY(-8px)}100%{opacity:1;transform:none}}
+  .plast.fresh .pn{animation:pnpop .5s cubic-bezier(.2,1.6,.4,1)}
+  @keyframes pnpop{0%{transform:scale(.3)}100%{transform:scale(1)}}
+  /* 走者のいる塁 */
+  .fld .bs.on{animation:bglow 1.8s ease-in-out infinite}
+  @keyframes bglow{50%{opacity:.65}}
+}
+/* ===== アイコン ===== */
+.ic{width:1em;height:1em;vertical-align:-.12em;flex:0 0 auto}
+.ic-safe{fill:currentColor}
+.ic-shield,.ic-pay,.ic-swap{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;margin-right:6px}
+.ytab .mt .ic-safe{width:17px;height:17px;color:#fff;vertical-align:-3px}
+.tgo li .ic{width:15px;height:15px;vertical-align:-3px}
+/* ===== 読み込み中 ===== */
+.skel{padding:2px 0 10px}
+.sk{background:linear-gradient(90deg,#141414 0%,#222 40%,#141414 80%);background-size:300% 100%;border-radius:2px}
+.sk-ls{height:66px;margin-bottom:8px}.sk-bar{height:48px;margin-bottom:8px}.sk-fld{height:170px;margin-bottom:8px}
+.sk2{display:grid;grid-template-columns:1fr 1fr;gap:6px}.sk-c{height:110px}
+@media (prefers-reduced-motion:no-preference){.sk{animation:sk 1.3s linear infinite}@keyframes sk{0%{background-position:100% 0}100%{background-position:-100% 0}}}
+/* ===== ガラス調のタブバー ===== */
+.tabbar{background:rgba(14,14,14,.62);-webkit-backdrop-filter:blur(22px) saturate(1.6);backdrop-filter:blur(22px) saturate(1.6);border-top:1px solid rgba(255,255,255,.08)}
+.tabbar nav{padding:6px 6px 2px}
+.tabbar button{border-radius:14px;margin:0 2px;transition:background .2s ease,color .2s ease}
+.tabbar button[aria-selected="true"]{background:rgba(255,255,255,.1);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.tabbar button[aria-selected="true"]::before{display:none}
+.tabbar button[aria-selected="true"] svg{filter:drop-shadow(0 0 6px rgba(255,255,255,.35))}
 </style>
 </head>
 <body>
@@ -1450,7 +1516,7 @@ function renderMagic() {
   const lastIdx = a.rows.length - 1;
   $("cards").innerHTML = yTable(a.rows.map((r, i) => {
     const paid = r.eliminated || (a.finished && i === lastIdx);
-    const extra = paid ? `<span class="mt ng">支払</span>` : r.safe ? `<span class="mt">★</span>` : r.self === null ? "" : `<span class="mt">M${r.self}</span>`;
+    const extra = paid ? `<span class="mt ng">支払</span>` : r.safe ? `<span class="mt">${IC.safe}</span>` : r.self === null ? "" : `<span class="mt">M${r.self}</span>`;
     return { t: r.t, g: r.w + r.l + r.d, w: r.w, l: r.l, d: r.d, gb: r.gb, rem: r.rem, extra };
   }), "マジック")
 ;
@@ -1592,6 +1658,15 @@ function pendingHTML(teams) {
   return `<div class="pend"><b>振替待ち ${total}試合</b><span>${list.map(p => `${p.b ? `${fn(p.a)}−${fn(p.b)}` : `${fn(p.a)}（交流戦）`} ${p.n}`).join("　")}</span><small>振替日が決まると日程に入り、マジックも変わります</small></div>`;
 }
 
+/* ---------- アイコン（線画・サイト共通） ---------- */
+const IC = {
+  safe: `<svg class="ic ic-safe" viewBox="0 0 24 24" aria-label="回避確定"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z"/></svg>`,
+  shield: `<svg class="ic ic-shield" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l8 3v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10v-6z"/><path d="M8.2 12.2l2.6 2.6 5-5.3"/></svg>`,
+  pay: `<svg class="ic ic-pay" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M9 8l3 4 3-4M12 12v5M9.3 13.3h5.4"/></svg>`,
+  swap: `<svg class="ic ic-swap" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>`,
+  up: `<svg class="ic ic-up" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 15l7-7 7 7"/></svg>`,
+};
+
 /* ---------- スポナビ形式の順位表（戦況・順位で共通） ---------- */
 // rows: [{t, g, w, l, d, gb(null=1位), rem, first(1位の勝差欄に出す文字), cls, sub(担当など), extra(右端の追加列)}]
 function yTable(rows, extraHead) {
@@ -1621,14 +1696,31 @@ function renderGame() {
   }
   $("noGame").hidden = !$("todayBlk").hidden;
 }
+// 中継画面のスコア表示（スコアバグ）：上がビジター、下がホーム
+const SCORE_PREV = {}, SCORE_FLASH = {};
+function bugHTML(g, tag) {
+  const k = g.d + gkey(g), live = g.st === "live", fin = g.st === "final", started = live || fin;
+  const prev = SCORE_PREV[k];
+  if (started && prev && (prev.hs !== g.hs || prev.as !== g.as)) SCORE_FLASH[k] = { side: prev.hs !== g.hs ? "h" : "a", until: Date.now() + 4000 };
+  if (started) SCORE_PREV[k] = { hs: g.hs, as: g.as };
+  const fl = SCORE_FLASH[k] && SCORE_FLASH[k].until > Date.now() ? SCORE_FLASH[k].side : null;
+  const p = PD[k], top = /表/.test(g.inn || ""), n = parseInt(g.inn || "", 10);
+  const outs = live && p ? p.o || 0 : 0;
+  const row = (t, sc, side) => `<div class="bt${fl === side ? " flash" : ""}${live && ((side === "a") === top) ? " atk" : ""}" style="${tv(t)}">
+      <span class="bk">${sn(t)}</span><b class="bn">${fn(t)}</b>${fl === side ? `<em class="gl">得点</em>` : ""}<span class="bs2 num">${started ? sc : ""}</span></div>`;
+  const right = live ? `<div class="bi"><span class="barrow ${top ? "t" : "b"}">${IC.up}</span><b class="num">${n || ""}</b><span class="bo">${[0, 1].map(i => `<i class="${i < outs ? "on" : ""}"></i>`).join("")}</span></div>`
+    : fin ? `<div class="bi fin"><b>試合<br>終了</b></div>` : `<div class="bi pre"><b class="num">${esc(g.t || "")}</b><small>開始</small></div>`;
+  return `<div class="bug${live ? " live" : ""}">
+    <div class="bteams">${row(g.a, g.as, "a")}${row(g.h, g.hs, "h")}</div>${right}
+  </div>${tag ? `<div class="btag">${tag}</div>` : ""}`;
+}
 function postCard(g) {
   const live = g.st === "live", fin = g.st === "final";
   const k = g.d + gkey(g), canOpen = (live || fin) && CONFIG.liveApi, open = canOpen && S.open[k];
   const state = live ? `<span class="lv">● LIVE ${esc(g.inn || "")}</span>` : fin ? `<span class="fin">試合終了</span>` : `<span class="num">${esc(g.t || "")}</span>`;
   const mid = live || fin ? `<b class="sc num">${g.hs}<i>-</i>${g.as}</b>` : `<i>vs</i>`;
   return `<div class="tg post${live ? " islive" : ""}${canOpen ? " can" : ""}${open ? " open" : ""}"${canOpen ? ` data-open="${k}"` : ""}>
-    <div class="tgh">${state}<span class="stg">${STAGE[g.stage][1]} 第${g.no}戦</span></div>
-    <div class="tgm"><span class="badge" style="${tv(g.h)}">${sn(g.h)}</span>${fn(g.h)}${mid}${fn(g.a)}<span class="badge" style="${tv(g.a)}">${sn(g.a)}</span></div>
+    ${bugHTML(g, `<span class="stg">${STAGE[g.stage][1]} 第${g.no}戦</span>`)}
     ${canOpen ? `<div class="tgx">${open ? "閉じる" : live ? "タップで一球速報・スコア・打順" : "タップでスコア・打順"}<i></i></div>` : ""}
     ${open ? `<div class="tgd">${detailHTML(g)}</div>` : ""}
     <p class="pnote">ポストシーズンは戦況（マジック・支払い）には関係ありません。</p>
@@ -1708,6 +1800,13 @@ function runnerOK(p, b, atk, on) {
   const n = sq(name);
   return n.length >= 1 && roster.some(r => r === n || r.startsWith(n));
 }
+const PITCH_PREV = {};
+function newPitch(g, last) {
+  const k = g.d + gkey(g), sig = `${last.n}|${last.res}|${last.speed}`;
+  const isNew = PITCH_PREV[k] && PITCH_PREV[k] !== sig;
+  PITCH_PREV[k] = sig;
+  return isNew;
+}
 const YSHORT = { "DeNA": "DB", "阪神": "T", "巨人": "G", "中日": "D", "広島": "C", "ヤクルト": "S", "ソフトバンク": "H", "日本ハム": "F", "オリックス": "B", "楽天": "E", "西武": "L", "ロッテ": "M" };
 function pitchHTML(g) {
   const p = PD[g.d + gkey(g)], d = GD[g.d + gkey(g)];
@@ -1745,7 +1844,7 @@ function pitchHTML(g) {
   const pcell = (k, v) => v != null && v !== "" ? `<div><span>${k}</span><b class="num">${esc(String(v))}</b></div>` : "";
   const pg = p.pitcher && p.pitcher.game, bg = p.batter && p.batter.game;
   return `<div class="pbox">
-    ${last ? `<div class="plast ${pitchCls(last.res)}"><span class="pn">${last.n}</span><div class="plr"><b>${esc(last.res)}</b><small>${esc(last.type)}</small></div><div class="pkm num"><b>${kmh(last.speed) || "-"}</b><small>km/h</small></div></div>` : ""}
+    ${last ? `<div class="plast ${pitchCls(last.res)}${newPitch(g, last) ? " fresh" : ""}"><span class="pn">${last.n}</span><div class="plr"><b>${esc(last.res)}</b><small>${esc(last.type)}</small></div><div class="pkm num"><b>${kmh(last.speed) || "-"}</b><small>km/h</small></div></div>` : ""}
     <div class="pmid">
       <div class="pinn"><b>${esc(p.half || "")}</b><span style="${tv(atk)}"><i></i>${fn(atk)}攻撃</span></div>
       <div class="bso3"><div><span>B</span>${lamp(p.b || 0, 3, "b")}</div><div><span>S</span>${lamp(p.s || 0, 2, "s")}</div><div><span>O</span>${lamp(p.o || 0, 2, "o")}</div></div>
@@ -1823,7 +1922,7 @@ document.addEventListener("click", e => {
 });
 function detailHTML(g) {
   const d = GD[g.d + gkey(g)];
-  if (!d) return "";
+  if (!d) return `<div class="skel"><div class="sk sk-ls"></div><div class="sk sk-bar"></div><div class="sk sk-fld"></div><div class="sk2"><div class="sk sk-c"></div><div class="sk sk-c"></div></div></div>`;
   let h = "";
   const L = d.line;
   if (L && L.away && L.home) {
@@ -1861,11 +1960,11 @@ function renderToday(a) {
     const out = [];
     for (const r of b.rows) {
       const B = byT[r.t];
-      if (!B.safe && r.safe) out.push(`<li class="ok">★ ${fn(r.t)}（${own(r.t)}）の回避が確定</li>`);
-      if (!B.eliminated && r.eliminated) out.push(`<li class="ng">💸 ${own(r.t)}の支払いが確定</li>`);
+      if (!B.safe && r.safe) out.push(`<li class="ok">${IC.shield}${fn(r.t)}（${own(r.t)}）の回避が確定</li>`);
+      if (!B.eliminated && r.eliminated) out.push(`<li class="ng">${IC.pay}${own(r.t)}の支払いが確定</li>`);
     }
     const lowA = b.rows[b.rows.length - 1].t;
-    if (lowA !== lowB) out.push(`<li class="ng">最下位が${fn(lowA)}（${own(lowA)}）に入れ替わる</li>`);
+    if (lowA !== lowB) out.push(`<li class="ng">${IC.swap}最下位が${fn(lowA)}（${own(lowA)}）に入れ替わる</li>`);
     for (const t of [g.h, g.a]) {
       if (!byT[t] || !A[t] || A[t].safe || A[t].eliminated) continue;
       if (byT[t].self !== A[t].self) out.push(`<li>${fn(t)}のマジック ${byT[t].self == null ? "なし" : "M" + byT[t].self} → ${A[t].self == null ? "なし" : "M" + A[t].self}</li>`);
@@ -1884,8 +1983,7 @@ function renderToday(a) {
       <div class="tgo${lead === "a" ? " now" : ""}" style="${tv(g.a)}"><b>${fn(g.a)}が勝ったら${lead === "a" ? `<em>このまま終われば</em>` : ""}</b><ul>${effects(g, false)}</ul></div>`;
     const k = g.d + gkey(g), canOpen = (live || fin) && CONFIG.liveApi, open = canOpen && S.open[k];
     return `<div class="tg${live ? " islive" : ""}${canOpen ? " can" : ""}${open ? " open" : ""}"${canOpen ? ` data-open="${k}"` : ""}>
-      <div class="tgh">${state}<span>${esc(g.v || "")}</span>${both ? `<span class="h2h">直接対決</span>` : ""}</div>
-      <div class="tgm"><span class="badge" style="${tv(g.h)}">${sn(g.h)}</span>${fn(g.h)}${mid}${fn(g.a)}<span class="badge" style="${tv(g.a)}">${sn(g.a)}</span></div>
+      ${bugHTML(g, `${live ? `<span class="lv"><i class="ldot"></i>LIVE</span>` : ""}<span class="vn">${esc(g.v || "")}</span>${both ? `<span class="h2h">直接対決</span>` : ""}`)}
       ${canOpen ? `<div class="tgx">${open ? "閉じる" : live ? "タップで一球速報・スコア・打順" : "タップでスコア・打順"}<i></i></div>` : ""}
       ${open ? `<div class="tgd">${detailHTML(g)}</div>` : ""}${outs}
     </div>`;
