@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927100751">
+<meta name="build" content="20260927101331">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -901,7 +901,7 @@ h2{font-weight:700;margin-top:30px}
 .bo i.on{background:#FF3B3B;box-shadow:0 0 6px rgba(255,59,59,.8)}
 .btag{display:flex;align-items:center;gap:10px;margin:-2px 0 10px;font-size:12px;color:var(--muted)}
 .btag .lv{display:inline-flex;align-items:center;gap:6px;color:#FF3B3B;font-weight:700;letter-spacing:.06em}
-.btag .h2h{margin-left:auto}
+.btag .vsb{margin-left:auto;font-size:11px;color:#000;background:#fff;padding:2px 8px;font-weight:700}
 .btag .stg{margin-left:0}
 .ldot{width:7px;height:7px;border-radius:50%;background:#FF3B3B;display:inline-block;box-shadow:0 0 0 0 rgba(255,59,59,.6)}
 .tg .tgh{display:none}
@@ -1056,22 +1056,6 @@ body{padding-bottom:calc(98px + env(safe-area-inset-bottom,0px))}
 .sheet-x{width:32px;height:32px;border-radius:50%;border:0;background:rgba(255,255,255,.1);color:#fff;font-size:20px;line-height:1;cursor:pointer}
 .sh-sec{margin-top:14px}
 .sh-note{font-size:11.5px;color:var(--muted);margin:10px 0 0;line-height:1.6}
-.sh-sec h3{font-size:12.5px;color:var(--muted);font-weight:700;letter-spacing:.06em;margin:0 0 8px}
-.ps-info,.ps-msg{font-size:13px;color:#DADADA;line-height:1.7;margin:4px 0}
-.ps-msg{color:#FFD21F}
-.ps-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
-.ps-st{font-size:13px;font-weight:700;padding:3px 10px;border-radius:10px}
-.ps-st.on{background:rgba(46,204,113,.18);color:#5BE08F}.ps-st.off{background:rgba(255,255,255,.08);color:#BDBDBD}
-.ps-btn,.ps-test{font:inherit;font-weight:700;font-size:14px;border:0;border-radius:14px;padding:10px 16px;cursor:pointer}
-.ps-btn.on{background:#fff;color:#000}.ps-btn.off{background:rgba(255,255,255,.1);color:#fff}
-.ps-test{width:100%;margin-top:12px;background:rgba(255,255,255,.1);color:#fff}
-.ps-lab{font-size:11.5px;color:var(--muted);margin:10px 0 6px}
-.ps-teams{display:flex;flex-wrap:wrap;gap:6px}
-.ps-teams label{display:flex;align-items:center;gap:6px;padding:6px 10px 6px 6px;border-radius:12px;background:rgba(255,255,255,.06);font-size:13px;font-weight:700}
-.ps-teams .badge{width:22px;height:22px;font-size:11px}
-.ps-teams input,.ps-kinds input{accent-color:#FFD21F;width:16px;height:16px}
-.ps-kinds{display:grid;gap:6px}
-.ps-kinds label{display:flex;align-items:center;gap:8px;font-size:13.5px}
 .hi{display:grid;grid-template-columns:12px 112px 1fr;align-items:baseline;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
 .hi i{width:9px;height:9px;border-radius:50%;background:#2ECC71;align-self:center}
 .hi.warn i{background:#FFB020}.hi.ng i{background:#FF3B3B}.hi.off i{background:#555}
@@ -1134,7 +1118,7 @@ h2::before{transform:none;width:5px;height:18px;border-radius:3px;background:lin
 .day.sel{box-shadow:inset 0 0 0 2px #fff}
 .day.today{box-shadow:inset 0 0 0 2px rgba(255,59,59,.8)}
 /* 打席結果・凡例のタグも丸く */
-.rc,.rleg span,.pres3 span,.lutab .lr span,.fr,.pk,.gl,.frun,.stg,.h2h,.qnote{border-radius:6px}
+.rc,.rleg span,.pres3 span,.lutab .lr span,.fs .fr,.pk,.gl,.frun,.stg,.vsb{border-radius:6px}
 /* 日程の残りの部品 */
 .wd{border-radius:8px}
 #mPrev,#mNext{border-radius:12px;border-color:var(--soft-line) !important;background:rgba(255,255,255,.04) !important}
@@ -1150,6 +1134,40 @@ h2::before{transform:none;width:5px;height:18px;border-radius:3px;background:lin
 @media (max-width:374px){.ftab th.tnm,.ftab td.tnm{width:80px}.ftab th:last-child,.ftab td.fsk{width:56px}.ftab td.fsk{font-size:12px}}
 /* 順位の推移のグラフも丸い枠に */
 .trend{border-radius:var(--r-md);border:1px solid var(--soft-line);background:var(--card);overflow:hidden}
+/* ===== 見直しで直した細部 ===== */
+#todayTtl.same{display:none}
+#todayBlk{margin-top:18px}
+/* 開閉できる欄（確定の条件・計算のルール・見方）は間を詰めてまとまりに */
+.rules,.conds,.howto{margin-top:12px !important}
+#conds{margin-top:28px !important}
+.howto{margin-top:28px !important}
+/* ラベル類を角丸に */
+.tgo b em,.ytag,.hero .hp small,.res,.lvmini{border-radius:5px}
+.ytbl .yc2 b{border-radius:6px}
+.ytbl td.yn .badge{border-radius:6px}
+/* 月度ごとの支払い：表の上の余計な線をなくす */
+.hist{border-top:0}
+/* 個人ランキング：チームカラーの線は選手名の左に */
+.rtab td.tnm{box-shadow:none !important}
+.rtab td.pnm{box-shadow:inset 3px 0 0 var(--tc)}
+/* 直近の調子：○●を大きさをそろえて見やすく */
+.ftab td.fr b{font-size:16px;line-height:1.1}
+.ftab td.fr.w b{color:#fff}.ftab td.fr.l b{color:#5A5A5A}.ftab td.fr.d b{color:#BDBDBD}
+/* 応援歌タブ：角を丸く */
+.songhead{border-radius:var(--r-md);overflow:hidden}
+.songq,#songQ{border-radius:var(--r-md) !important;border-color:var(--soft-line) !important;background:var(--card) !important}
+.srow{border-radius:var(--r-md);margin-bottom:6px;overflow:hidden}
+.sbtn,.sof,.sgo{border-radius:999px !important}
+.sgrp{border-radius:var(--r-md);overflow:hidden}
+.songhead a,.songhead .sof{border-radius:999px}
+/* 小さいiPhone（幅320）での細部 */
+@media (max-width:374px){
+  .hero .hs{white-space:normal;overflow:visible}
+  .pl3{grid-template-columns:22px 1fr 58px 58px !important;gap:6px}
+  .pl3 .pty{white-space:nowrap;overflow:visible;font-size:12.5px}
+  .pbar b{font-size:11px;padding-right:4px}
+  .rleg{gap:3px}.rleg span{padding:1px 3px;font-size:9.5px}
+}
 /* ページ切り替え・開閉をなめらかに */
 @media (prefers-reduced-motion:no-preference){
   .view:not([hidden]){animation:vin .35s cubic-bezier(.22,1,.36,1)}
@@ -1958,7 +1976,7 @@ function renderGame() {
   S.period = keep;
   const pt = postToday();
   if (pt.length) {
-    if ($("todayBlk").hidden) { $("today").innerHTML = ""; $("todayTtl").innerHTML = "今日の試合"; }
+    if ($("todayBlk").hidden) { $("today").innerHTML = ""; $("todayTtl").innerHTML = "今日の試合"; $("todayTtl").classList.add("same"); }
     $("todayBlk").hidden = false;
     // ポストシーズンも、試合中・これからは上、終わった試合は下
     const ptActive = pt.filter(g => g.st !== "final"), ptDone = pt.filter(g => g.st === "final");
@@ -2223,6 +2241,7 @@ function renderToday(a) {
   if (!day || a.finished) return;
   const [yy, mm, dd] = day.split("-").map(Number);
   $("todayTtl").innerHTML = day === today ? "今日の試合" : `次の試合<small>${mm}/${dd}（${WD[new Date(yy, mm - 1, dd).getDay()]}）</small>`;
+  $("todayTtl").classList.toggle("same", day === today);
   const lowB = a.rows[a.rows.length - 1].t;
   const effects = (g, homeWin) => {
     const g2 = DATA.games.map(x => x === g ? { ...x, st: "final", hs: homeWin ? 1 : 0, as: homeWin ? 0 : 1 } : x);
@@ -2257,7 +2276,7 @@ function renderToday(a) {
       <div class="tgo${lead === "a" ? " now" : ""}" style="${tv(g.a)}"><b>${fn(g.a)}が勝ったら${lead === "a" ? `<em>このまま終われば</em>` : ""}</b><ul>${effects(g, false)}</ul></div>`;
     const k = g.d + gkey(g), canOpen = (live || fin) && CONFIG.liveApi, open = canOpen && S.open[k];
     return `<div class="tg${live ? " islive" : ""}${canOpen ? " can" : ""}${open ? " open" : ""}"${canOpen ? ` data-open="${k}"` : ""}>
-      ${bugHTML(g, `${live ? `<span class="lv"><i class="ldot"></i>LIVE</span>` : ""}<span class="vn">${esc(g.v || "")}</span>${both ? `<span class="h2h">直接対決</span>` : ""}`)}
+      ${bugHTML(g, `${live ? `<span class="lv"><i class="ldot"></i>LIVE</span>` : ""}<span class="vn">${esc(g.v || "")}</span>${both ? `<span class="vsb">直接対決</span>` : ""}`)}
       ${canOpen ? `<div class="tgx">${open ? "閉じる" : live ? "タップで一球速報・スコア・打順" : "タップでスコア・打順"}<i></i></div>` : ""}
       ${open ? `<div class="tgd">${detailHTML(g)}</div>` : ""}${outs}
     </div>`;
@@ -2405,7 +2424,7 @@ function renderTrend(a) {
   for (const t of targets) {
     const r = hist[n - 1].indexOf(t), x = X(n - 1), y = Y(r);
     svg += `<circle cx="${x}" cy="${y}" r="4.5" fill="${tc(t)}" stroke="#000" stroke-width="1.5"/>`;
-    svg += `<rect x="${x + 9}" y="${y - 11}" width="22" height="22" fill="${tc(t)}"/><text x="${x + 20}" y="${y + 5}" text-anchor="middle" font-size="13" font-weight="900" fill="${TEAM[t].i || "#000"}">${sn(t)}</text>`;
+    svg += `<rect x="${x + 9}" y="${y - 11}" width="22" height="22" rx="5" fill="${tc(t)}"/><text x="${x + 20}" y="${y + 5}" text-anchor="middle" font-size="13" font-weight="900" fill="${TEAM[t].i || "#000"}">${sn(t)}</text>`;
   }
   const md = d => `${Number(d.slice(5, 7))}/${Number(d.slice(8))}`;
   const ticks = n > 2 ? [0, Math.floor((n - 1) / 2), n - 1] : [0, n - 1];
