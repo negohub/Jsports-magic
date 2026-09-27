@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927172119">
+<meta name="build" content="20260927174510">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -3582,15 +3582,36 @@ function posGroups(t, name, fallback) {
   const key = String(name || "").replace(/[\s*＊]/g, "");
   let d = T[key];
   if (!d) { const hits = Object.keys(T).filter(k => k.startsWith(key)); if (hits.length === 1) d = T[hits[0]]; }
-  const g = d ? Object.entries(d).filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1]).map(([k]) => k) : [];
-  if (!g.length && d) { const top = Object.entries(d).sort((a, b) => b[1] - a[1])[0]; if (top) g.push(top[0]); }
+  const pawaRule = document.documentElement.classList.contains("theme-pawa");
+  let g;
+  if (pawaRule) {
+    // パワプロ風：登録の守備位置（名簿）を必ず先頭に入れ、今季1試合でも守った位置を試合数の多い順に足す
+    const reg = PKEY[fallback] || fallback || null;
+    const played = d ? Object.entries(d).filter(([, n]) => n >= 1).sort((a, b) => b[1] - a[1]).map(([k]) => k) : [];
+    g = [...new Set([...(reg ? [reg] : []), ...played])];
+  } else {
+    g = d ? Object.entries(d).filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1]).map(([k]) => k) : [];
+    // 3試合以上守った位置がないときは、登録の守備位置（名簿）を出す
+    if (!g.length && (PKEY[fallback] || fallback)) g.push(PKEY[fallback] || fallback);
+    if (!g.length && d) { const top = Object.entries(d).sort((a, b) => b[1] - a[1])[0]; if (top) g.push(top[0]); }
+  }
   if (!g.length) g.push(PKEY[fallback] || fallback || "内");
   // 投手は役割（先発・中継ぎ・抑え）の色に置き換える
   const R = (((DATA.fpos || {}).roles || {})[t] || {});
   let role = R[key];
   if (!role) { const hits = Object.keys(R).filter(k => k.startsWith(key)); if (hits.length === 1) role = R[hits[0]]; }
+  // 役割の形：{先: 先発数, 中/抑: 救援登板数}（スポナビの登板・先発から）または ["先","中"]（推定）
+  let roleList = null;
+  if (role && !Array.isArray(role)) {
+    const ent = Object.entries(role).sort((a, b) => b[1] - a[1]);
+    roleList = ent.filter(([, n]) => n >= (pawaRule ? 1 : 3)).map(([k]) => k);
+    if (!roleList.length && ent.length) roleList = [ent[0][0]];
+  } else if (role && role.length) roleList = role;
   const out = [];
-  for (const k of g) { if (k === "投" && role && role.length) out.push(...role.map(r => (r === "抑" ? "中" : r))); else out.push(k); } // 抑えは中継ぎと同じ色
+  for (const k of g) {
+    if (k === "投" && roleList && roleList.length) out.push(...(pawaRule ? roleList.map(r => (r === "抑" ? "中" : r)) : roleList)); // パワプロ風は抑えも中継ぎと同じ色
+    else out.push(k);
+  }
   return [...new Set(out)].slice(0, 3);
 }
 function tileStyle(groups) {
