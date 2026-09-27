@@ -197,6 +197,13 @@ async def essentials(pg, label):
     await pg.evaluate("setTab('song')")
     if await pg.evaluate("document.querySelectorAll('#songList .ptile').length") < 5:
         bad(f"{label}: 応援歌の選手タイルが足りない")
+    # パワプロ風：どの表でも、球団名のマスにチームカラーのグラデーションが付いているか（偶数行で消えていた不具合の再発防止）
+    if await pg.evaluate("document.documentElement.classList.contains('theme-pawa')"):
+        for tab, sel in (("magic", "#cards"), ("std", "#std"), ("stats", "#tmTbl")):
+            await pg.evaluate(f"setTab('{tab}')")
+            miss = await pg.evaluate(f"[...document.querySelectorAll('{sel} tbody tr:not(.ex) td.tnm')].filter(td => !getComputedStyle(td).backgroundImage.startsWith('linear')).map(td => td.innerText.split('\\n')[0])")
+            if miss:
+                bad(f"{label}: {tab} の表で球団名のグラデーションが消えている {miss}")
 
 
 async def game_live(pg, label):
