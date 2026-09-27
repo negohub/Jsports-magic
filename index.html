@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927164048">
+<meta name="build" content="20260927164427">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1698,6 +1698,77 @@ html.theme-pawa .me-pick button small{color:#4A6390}
 html.theme-pawa .me-pick button.none{background:rgba(255,255,255,.85)}
 html.theme-pawa .me-pick button.none.on{border-color:#13264A;box-shadow:0 0 0 1px #13264A}
 
+
+/* =====================================================================
+   スタイリッシュ：洗練版（パワプロ風には効かない）
+   方針：色と装飾を減らし、余白・ヘアライン・文字の強弱で見せる。チームカラーは細いラインと小さな光だけ
+   ===================================================================== */
+html:not(.theme-pawa){--card:#111114;--card2:#15151A;--soft-line:rgba(255,255,255,.07);--hair:rgba(255,255,255,.06);--muted:#8B8B95;--dim:#5E5E68}
+html:not(.theme-pawa) body{background:radial-gradient(90% 45% at 50% -12%,rgba(255,255,255,.07),rgba(255,255,255,0) 60%) fixed,#0A0A0C;
+  font-feature-settings:"palt";-webkit-font-smoothing:antialiased}
+html:not(.theme-pawa) .num,html:not(.theme-pawa) td{font-variant-numeric:tabular-nums}
+/* ヘッダー */
+html:not(.theme-pawa) #kicker{color:#6E6E78;letter-spacing:.22em;font-size:10.5px;font-weight:600}
+html:not(.theme-pawa) #ttl{font-weight:800;letter-spacing:.01em}
+html:not(.theme-pawa) #upd{color:#6E6E78}
+html:not(.theme-pawa) #upd b{color:#E8E8EC;font-weight:600}
+html:not(.theme-pawa) .stripe{opacity:.9;height:3px}
+/* 見出し：細い縦線＋タイトル＋控えめな補足 */
+html:not(.theme-pawa) h2{font-size:17px;font-weight:700;letter-spacing:.02em;color:#F2F2F4}
+html:not(.theme-pawa) h2::before{width:3px;height:15px;border-radius:2px;background:#F2F2F4;margin-right:10px}
+html:not(.theme-pawa) h2 small{font-weight:500;color:#6E6E78;font-size:11.5px}
+/* カード類：少し明るい面＋ヘアライン＋ごく弱い影 */
+html:not(.theme-pawa) .ywrap,html:not(.theme-pawa) .tg,html:not(.theme-pawa) .trend,html:not(.theme-pawa) .lu,html:not(.theme-pawa) .howto,html:not(.theme-pawa) .rules,
+html:not(.theme-pawa) .conds,html:not(.theme-pawa) .pbox,html:not(.theme-pawa) #detail,html:not(.theme-pawa) .srow,html:not(.theme-pawa) .se-box{
+  background:linear-gradient(180deg,#141418,#101013) !important;border:1px solid var(--hair) !important;box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 10px 30px rgba(0,0,0,.35) !important}
+html:not(.theme-pawa) .ywrap{border-radius:18px}
+/* 表：格子の線をやめて横のヘアラインだけ。行の色の面もやめる */
+html:not(.theme-pawa) .ytab th,html:not(.theme-pawa) .ytab td{border:0 !important;border-bottom:1px solid var(--hair) !important}
+html:not(.theme-pawa) .ytab tbody tr:last-child td,html:not(.theme-pawa) .ytab tbody tr:last-child th{border-bottom:0 !important}
+html:not(.theme-pawa) .ytab thead th{background:transparent !important;color:#6E6E78 !important;font-weight:600 !important;font-size:10.5px;letter-spacing:.04em}
+html:not(.theme-pawa) .ytab tbody tr{background:none !important}
+html:not(.theme-pawa) .ytab tbody td{background:transparent !important;color:#E8E8EC}
+html:not(.theme-pawa) .ytab td.tnm{background:none !important;box-shadow:inset 3px 0 0 var(--tc) !important}
+html:not(.theme-pawa) .ytab td.tnm a{color:#F2F2F4 !important;font-weight:600}
+html:not(.theme-pawa) .ytab tr.me td{background:rgba(255,255,255,.035) !important}
+html:not(.theme-pawa) .ytab tr.ex td{opacity:.4}
+html:not(.theme-pawa) .ytab .mt{font-weight:700}
+html:not(.theme-pawa) .h2h td.self{background:rgba(255,255,255,.025) !important}
+html:not(.theme-pawa) .h2h tbody th.rh{background:transparent !important}
+/* 戦況の帯：黒い面にチームカラーの小さな光 */
+html:not(.theme-pawa) .hero{background:radial-gradient(120% 160% at 0% 50%,color-mix(in srgb,var(--tc) 26%,transparent),transparent 58%),linear-gradient(180deg,#141418,#101013) !important;
+  border:1px solid var(--hair) !important;box-shadow:0 10px 30px rgba(0,0,0,.35) !important}
+html:not(.theme-pawa) .hero .hl{letter-spacing:.08em;font-weight:600}
+html:not(.theme-pawa) .mecard{background:radial-gradient(120% 160% at 0% 50%,color-mix(in srgb,var(--tc) 18%,transparent),transparent 55%),#111114 !important;border:1px solid var(--hair) !important;box-shadow:none !important}
+/* 月度などの選択ボタン：細い枠だけ、選んでいるものだけ明るく */
+html:not(.theme-pawa) .chip{background:transparent !important;border:1px solid rgba(255,255,255,.1) !important;color:#8B8B95;font-weight:600}
+html:not(.theme-pawa) .chip[aria-pressed="true"]{background:#F2F2F4 !important;color:#0A0A0C !important;border-color:#F2F2F4 !important;box-shadow:0 6px 18px rgba(255,255,255,.08) !important}
+html:not(.theme-pawa) .seg{background:rgba(255,255,255,.04) !important;border:1px solid var(--hair) !important}
+html:not(.theme-pawa) .seg button{color:#8B8B95;font-weight:600}
+html:not(.theme-pawa) .seg button[aria-pressed="true"]{background:#F2F2F4;color:#0A0A0C}
+html:not(.theme-pawa) .tbtn{background:#111114 !important;border:1px solid var(--hair) !important;box-shadow:none !important}
+html:not(.theme-pawa) .tbtn[aria-pressed="true"]{background:linear-gradient(180deg,color-mix(in srgb,var(--tc) 22%,#141418),#111114) !important;box-shadow:inset 0 -2px 0 var(--tc) !important;border-color:rgba(255,255,255,.12) !important}
+html:not(.theme-pawa) .shot{background:#F2F2F4;color:#0A0A0C;font-weight:700;box-shadow:0 10px 30px rgba(255,255,255,.06)}
+/* 日程のマス */
+html:not(.theme-pawa) .day{background:#111114 !important;box-shadow:inset 0 0 0 1px var(--hair)}
+html:not(.theme-pawa) .day.win{background:linear-gradient(180deg,color-mix(in srgb,var(--tc) 16%,#111114),#111114) !important}
+html:not(.theme-pawa) .day.blank{background:transparent !important;box-shadow:none}
+html:not(.theme-pawa) .wd{background:transparent !important;color:#6E6E78;font-weight:600}
+/* 試合のカード */
+html:not(.theme-pawa) .tg.islive{border-color:rgba(255,59,59,.35) !important;box-shadow:0 0 0 1px rgba(255,59,59,.12),0 10px 30px rgba(0,0,0,.35) !important}
+html:not(.theme-pawa) .tgx{background:rgba(255,255,255,.04) !important;border:1px solid var(--hair) !important;color:#B5B5BD}
+html:not(.theme-pawa) .tgo{background:rgba(255,255,255,.025) !important;border:0 !important}
+/* 優勝ライン：球団の見出しは黒い面＋上にチームカラーの線 */
+html:not(.theme-pawa) .race .rcT{background:linear-gradient(180deg,color-mix(in srgb,var(--tc) 22%,#141418),#141418) !important;color:#F2F2F4 !important;box-shadow:inset 0 3px 0 var(--tc);font-weight:700}
+html:not(.theme-pawa) .race .rcR th{background:transparent !important;color:#8B8B95 !important;font-weight:600}
+html:not(.theme-pawa) .race .rcC td{background:rgba(255,255,255,.04) !important}
+html:not(.theme-pawa) .race td.pace{background:rgba(255,210,31,.08) !important}
+html:not(.theme-pawa) #kicker{color:#7C7C86}
+/* 応援歌の見出し：戦況の帯と同じ、黒い面にチームカラーの小さな光 */
+html:not(.theme-pawa) .songhead .sh{background:radial-gradient(120% 180% at 0% 50%,color-mix(in srgb,var(--tc) 26%,transparent),transparent 60%),#111114 !important;border:1px solid var(--hair);border-radius:16px}
+html:not(.theme-pawa) .songq,html:not(.theme-pawa) #songQ{background:#111114 !important;border:1px solid var(--hair) !important}
+/* 開閉できる欄 */
+html:not(.theme-pawa) .howto summary,html:not(.theme-pawa) .rules summary{color:#E8E8EC;font-weight:600}
 </style>
 </head>
 <body>
