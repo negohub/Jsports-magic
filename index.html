@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927074852">
+<meta name="build" content="20260927080142">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -952,7 +952,7 @@ h2{font-weight:700;margin-top:30px}
       <div id="today"></div>
     </section>
     <div class="rempty" id="noGame" hidden>対象の球団の試合はしばらくありません。</div>
-    <details class="howto"><summary>見方</summary><ul><li>「勝ったら」は、その試合の結果だけで見た場合の変化です（同じ日のほかの試合は考えていません）。</li><li>試合中は自動で更新します（スコアは30秒、一球速報は15秒ごと）。スコア表・得点シーン・一球速報のデータはスポーツナビから取得しています。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li>「勝ったら」は、その試合の結果だけで見た場合の変化です（同じ日のほかの試合は考えていません）。</li><li>試合中は自動で更新します（スコアは30秒、一球速報は15秒ごと）。スコア表の点が入ったマスをタップすると、その回の流れが開きます。スコア表・流れ・一球速報のデータはスポーツナビから取得しています。</li></ul></details>
   </section>
 
   <section class="view" id="v-song" aria-label="応援歌" hidden>
@@ -1664,6 +1664,41 @@ function loadPitches() {
 }
 setInterval(() => { if (S.tab === "game" && !document.hidden) loadPitches(); }, 15 * 1000);
 const pitchCls = r => /ボール|四球|死球/.test(r) ? "b" : /空振|見逃|ファウル|ストライク|三振/.test(r) ? "s" : /犠/.test(r) ? "sac" : /安打|ヒット|二塁打|三塁打|本塁打|出塁|失策|エラー/.test(r) ? "h" : "o";
+// その回の打席の流れから、今どの塁に誰がいるかを割り出す（出塁した順に並べ、実際に走者がいる塁へ当てはめる）
+function runnerNames(p, d, g, on) {
+  const cur = d && d.cur;
+  if (!cur || !p || cur.half !== p.half) return {};
+  let rs = []; // {name, order, base}
+  const adv = n => { rs.forEach(r => (r.base += n)); rs = rs.filter(r => r.base <= 3); };
+  const force = () => { // 押し出し：詰まっている分だけ進む
+    const occ = b => rs.some(r => r.base === b);
+    if (occ(1)) { if (occ(2)) { if (occ(3)) rs = rs.filter(r => r.base !== 3); rs.filter(r => r.base === 2).forEach(r => (r.base = 3)); } rs.filter(r => r.base === 1).forEach(r => (r.base = 2)); }
+  };
+  for (const st of cur.steps) {
+    const x = st.res || "", me = { name: st.name, order: parseInt(st.order, 10) };
+    if (/本/.test(x)) { rs = []; continue; }
+    if (/3|三塁打/.test(x) && !/三振|三ゴロ|三飛|三直|三邪/.test(x)) { rs = []; rs.push({ ...me, base: 3 }); continue; }
+    if (/2|二塁打/.test(x) && !/二ゴロ|二飛|二直|二邪/.test(x)) { adv(2); rs.push({ ...me, base: 2 }); continue; }
+    if (/四球|死球|打妨/.test(x)) { force(); rs.push({ ...me, base: 1 }); continue; }
+    if (/安|失|野選|振逃/.test(x)) { adv(1); rs.push({ ...me, base: 1 }); continue; }
+    if (/犠/.test(x)) { adv(1); continue; }
+    if (/併/.test(x)) { rs = rs.filter(r => r.base !== 1); continue; }
+  }
+  const occupied = ["1", "2", "3"].filter(b => on({ "1": "一", "2": "二", "3": "三" }[b]));
+  if (!occupied.length || !rs.length) return {};
+  rs.sort((a, b) => a.base - b.base);
+  const side = cur.half.includes("表") ? 0 : 1, lu = (d.lineups || [])[side] || [];
+  const out = {};
+  occupied.forEach((b, i) => {
+    const r = rs[i];
+    if (!r) return;
+    // 代走が出ていれば、その選手に置き換える
+    const subs = lu.filter(x => x.order === r.order && !x.starter && /^走/.test(x.pos));
+    const nm = subs.length ? subs[subs.length - 1].name : r.name;
+    out[b] = nm.split(" ")[0];
+  });
+  return out;
+}
 // ランナー名は「攻撃中の球団の選手名簿にいる」かつ「その塁に走者がいる」ときだけ表示（誤読み防止）
 function runnerOK(p, b, atk, on) {
   const name = p.runners && p.runners[b];
@@ -1688,6 +1723,7 @@ function pitchHTML(g) {
   const hand = h => `<em class="hd ${/左/.test(h) ? "l" : "r"}">${esc(h)}</em>`;
   const kmh = x => parseInt(x, 10) || 0;
   const spd = sp => Math.max(6, Math.min(100, ((kmh(sp) - 90) / 70) * 100));
+  const RN = runnerNames(p, d, g, on);
   const field = `<svg class="fld" viewBox="0 0 300 190" aria-label="走者">
     <defs>
       <radialGradient id="gr" cx="50%" cy="100%" r="95%"><stop offset="0" stop-color="#2F7A33"/><stop offset="1" stop-color="#16461A"/></radialGradient>
@@ -1704,7 +1740,7 @@ function pitchHTML(g) {
     <line x1="150" y1="182" x2="10" y2="78" stroke="rgba(255,255,255,.7)" stroke-width="1.2"/><line x1="150" y1="182" x2="290" y2="78" stroke="rgba(255,255,255,.7)" stroke-width="1.2"/>
     ${[["2", 150, 54], ["1", 213, 112], ["3", 87, 112]].map(([b, x, y]) => `<rect class="bs ${on({ "1": "一", "2": "二", "3": "三" }[b]) ? "on" : ""}" ${on({ "1": "一", "2": "二", "3": "三" }[b]) ? 'filter="url(#glow)"' : ""} x="${x - 7}" y="${y - 7}" width="14" height="14" transform="rotate(45 ${x} ${y})"/>`).join("")}
     <path d="M143 174 h14 v6 l-7 6 l-7 -6 z" fill="#fff"/>
-    ${[["2", 150, 34], ["1", 238, 96], ["3", 62, 96]].map(([b, x, y]) => runnerOK(p, b, atk, on) ? `<g><rect x="${x - 26}" y="${y - 13}" width="52" height="18" fill="rgba(0,0,0,.85)"/><text x="${x}" y="${y}" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">${esc(p.runners[b])}</text></g>` : "").join("")}
+    ${[["2", 150, 34], ["1", 238, 96], ["3", 62, 96]].map(([b, x, y]) => { const nm = runnerOK(p, b, atk, on) ? p.runners[b].split(" ")[0] : RN[b]; return nm ? `<g><rect x="${x - 30}" y="${y - 13}" width="60" height="19" rx="2" fill="rgba(0,0,0,.85)"/><text x="${x}" y="${y + 1}" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff">${esc(nm)}</text></g>` : ""; }).join("")}
   </svg>`;
   const pcell = (k, v) => v != null && v !== "" ? `<div><span>${k}</span><b class="num">${esc(String(v))}</b></div>` : "";
   const pg = p.pitcher && p.pitcher.game, bg = p.batter && p.batter.game;
@@ -1803,13 +1839,7 @@ function detailHTML(g) {
   if (g.st === "live" && PD[g.d + gkey(g)]) h += pitchHTML(g);
   else if (d.now && g.st === "live") h += `<div class="nowbat"><span class="lv">● ${esc(d.now.half)}</span><b>${esc(d.now.order)} ${esc(d.now.name)}</b><span class="sit">${esc(d.now.sit)}</span></div>`;
   h += lineupHTML(g, d);
-  if (d.plays && d.plays.length) {
-    const key = g.d + gkey(g), openHalf = S.flow[key];
-    const lastIdx = {}; d.plays.forEach((p, i) => (lastIdx[p.half] = i));
-    const atkOf = half => half.includes("表") ? g.a : g.h;
-    h += `<div class="plays"><div class="pt">得点シーン<small>タップで流れ</small></div>${d.plays.map((p, i) => `<div class="pl${openHalf === p.half ? " on" : ""}" data-flow="${key}|${esc(p.half)}"><span class="ph">${esc(p.half)}</span><span class="pnm2">${p.order ? esc(p.order) + " " : ""}${esc(p.name)}</span><span class="pk">${esc(p.kind)}</span><span class="ps num">${esc(p.score)}</span></div>` +
-      (openHalf === p.half && S.flowAt[key] !== "line" && lastIdx[p.half] === i ? flowHTML((d.flows || []).find(f => f.half === p.half), atkOf(p.half)) : "")).join("")}</div>`;
-  }
+  // 得点シーンの一覧は出さない（スコア表の得点マスをタップすると、その回の流れが開く）
   return h;
 }
 
