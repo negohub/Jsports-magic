@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927050456">
+<meta name="build" content="20260927052935">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1557,7 +1557,7 @@ function pitchHTML(g) {
       ${p.pitcher ? `<div><span class="pl2">投手</span><b>${esc(p.pitcher.name)}</b><small>#${esc(p.pitcher.no)} ${esc(p.pitcher.hand)}　${p.pitcher.np}球　防御率${esc(p.pitcher.era)}</small></div>` : ""}
       ${p.batter ? `<div><span class="pl2">打者</span><b>${esc(p.batter.name)}</b><small>#${esc(p.batter.no)} ${esc(p.batter.hand)}　打率${esc(p.batter.avg)}</small></div>` : ""}
     </div>
-    ${p.pitches && p.pitches.length ? `<table class="ptab num">${p.pitches.map(x => `<tr class="${pitchCls(x.res)}"><td>${x.n}</td><td>${esc(x.type)}</td><td>${esc(x.speed)}</td><td class="pr">${esc(x.res)}</td></tr>`).join("")}</table>` : `<p class="pnone">この打席はまだ投球がありません</p>`}
+    ${p.pitches && p.pitches.length ? `<table class="ptab num">${p.pitches.slice().sort((x, y) => x.n - y.n).map(x => `<tr class="${pitchCls(x.res)}"><td>${x.n}</td><td>${esc(x.type)}</td><td>${esc(x.speed)}</td><td class="pr">${esc(x.res)}</td></tr>`).join("")}</table>` : `<p class="pnone">この打席はまだ投球がありません</p>`}
     ${p.next ? `<p class="pnext">次の打者　${esc(p.next)}</p>` : ""}
     <a class="pbp" href="${p.url}" target="_blank" rel="noopener">スポナビの一球速報を見る</a>
   </div>`;
