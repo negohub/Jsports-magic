@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927083531">
+<meta name="build" content="20260927090907">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1788,7 +1788,10 @@ function renderGame() {
   if (pt.length) {
     if ($("todayBlk").hidden) { $("today").innerHTML = ""; $("todayTtl").innerHTML = "今日の試合"; }
     $("todayBlk").hidden = false;
-    $("today").insertAdjacentHTML("afterbegin", pt.map(postCard).join(""));
+    // ポストシーズンも、試合中・これからは上、終わった試合は下
+    const ptActive = pt.filter(g => g.st !== "final"), ptDone = pt.filter(g => g.st === "final");
+    $("today").insertAdjacentHTML("afterbegin", ptActive.map(postCard).join(""));
+    $("today").insertAdjacentHTML("beforeend", ptDone.map(postCard).join(""));
   }
   $("noGame").hidden = !$("todayBlk").hidden;
 }
@@ -2067,7 +2070,10 @@ function renderToday(a) {
     }
     return out.length ? out.join("") : `<li class="nil">順位・マジックに大きな動きなし</li>`;
   };
-  const list = (day === today ? todays : rem.filter(g => g.d === day)).slice().sort((x, y) => (x.t || "") < (y.t || "") ? -1 : 1);
+  // 試合中 → これから → 終わった試合 → 中止 の順。同じ中では開始時刻順
+  const stRank = g => ({ live: 0, sched: 1, final: 2, canc: 3 }[g.st] ?? 1);
+  const list = (day === today ? todays : rem.filter(g => g.d === day)).slice()
+    .sort((x, y) => stRank(x) - stRank(y) || ((x.t || "") < (y.t || "") ? -1 : (x.t || "") > (y.t || "") ? 1 : 0));
   $("today").innerHTML = list.map(g => {
     const both = byT[g.h] && byT[g.a];
     const live = g.st === "live", fin = g.st === "final";
@@ -2640,13 +2646,24 @@ async function check(force) {
     lastSiteCheck = Date.now();
     const r = await fetch(location.pathname + "?t=" + Date.now(), { cache: "no-store" });
     const m = (await r.text()).match(/<meta name="build" content="([^"]+)"/);
-    if (m && m[1] !== BUILD) { showToast("site"); return; }
+    if (m && m[1] !== BUILD) {
+      // アプリに戻ってきた瞬間なら、そのまま新しいサイトに切り替える。見ている最中なら案内だけ出す
+      if (force) { location.replace(location.pathname + "?v=" + Date.now()); return; }
+      showToast("site"); return;
+    }
   } catch {}
   // データが新しくなっていないか
   try {
     const d = await fetchData();
-    if (fromSnap) { DATA = d; fromSnap = false; writeCache(d); if (!S.periodPicked) S.period = null; renderAll(); return; }
-    if (sig(d) !== sig(pending || DATA)) { pending = d; showToast("data"); }
+    // 新しい結果が届いたら、通知なしでそのまま反映する（見ている月度・開いているカードはそのまま）
+    if (fromSnap || sig(d) !== sig(DATA)) {
+      const y = window.scrollY;
+      DATA = d; fromSnap = false; pending = null; writeCache(d);
+      if (!S.periodPicked) S.period = null;
+      renderAll();
+      window.scrollTo(0, y);
+      pollLive();
+    }
   } catch {}
 }
 load();
