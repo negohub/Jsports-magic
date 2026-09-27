@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927093802">
+<meta name="build" content="20260927095632">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1032,11 +1032,58 @@ body{padding-bottom:calc(98px + env(safe-area-inset-bottom,0px))}
 .chips2.quick::-webkit-scrollbar{display:none}
 .chips2.quick button{flex:0 0 auto}
 .qnote{font-size:11.5px;color:var(--muted);margin:6px 0 0}
+
+/* ===== 通知とデータの状態 ===== */
+.top{position:relative}
+.gear{position:absolute;right:14px;top:calc(12px + env(safe-area-inset-top,0px));width:40px;height:40px;border-radius:50%;border:0;color:#fff;cursor:pointer;display:grid;place-items:center;z-index:3;
+  background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04)),rgba(30,30,32,.5);-webkit-backdrop-filter:blur(18px) saturate(170%);backdrop-filter:blur(18px) saturate(170%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 0 0 1px rgba(255,255,255,.12),0 4px 12px rgba(0,0,0,.4)}
+.gear svg{width:20px;height:20px}
+.gdot{position:absolute;right:7px;top:7px;width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 2px #000}
+.gdot.warn{background:#FFB020}.gdot.ng{background:#FF3B3B}
+.hwarn[hidden]{display:none}
+.hwarn{display:block;width:calc(100% - 52px);margin:0 0 8px;padding:8px 12px;border:0;border-radius:12px;font:inherit;font-size:12.5px;font-weight:700;text-align:left;cursor:pointer}
+.hwarn.ng{background:rgba(255,59,59,.16);color:#FF8A8A;box-shadow:inset 0 0 0 1px rgba(255,59,59,.4)}
+.sheet{position:fixed;inset:0;z-index:40}
+.sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.45);opacity:0;transition:opacity .28s ease}
+.sheet-card{position:absolute;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));max-width:560px;margin:0 auto;max-height:82vh;overflow:auto;border-radius:28px;padding:8px 18px 20px;
+  background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04) 40%),rgba(24,24,26,.72);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);
+  box-shadow:0 20px 50px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.35),inset 0 0 0 1px rgba(255,255,255,.1);transform:translateY(110%);transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.sheet.open .sheet-bg{opacity:1}.sheet.open .sheet-card{transform:none}
+.sheet-grip{width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.3);margin:4px auto 8px}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.sheet-head b{font-size:17px}
+.sheet-x{width:32px;height:32px;border-radius:50%;border:0;background:rgba(255,255,255,.1);color:#fff;font-size:20px;line-height:1;cursor:pointer}
+.sh-sec{margin-top:14px}
+.sh-note{font-size:11.5px;color:var(--muted);margin:10px 0 0;line-height:1.6}
+.sh-sec h3{font-size:12.5px;color:var(--muted);font-weight:700;letter-spacing:.06em;margin:0 0 8px}
+.ps-info,.ps-msg{font-size:13px;color:#DADADA;line-height:1.7;margin:4px 0}
+.ps-msg{color:#FFD21F}
+.ps-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.ps-st{font-size:13px;font-weight:700;padding:3px 10px;border-radius:10px}
+.ps-st.on{background:rgba(46,204,113,.18);color:#5BE08F}.ps-st.off{background:rgba(255,255,255,.08);color:#BDBDBD}
+.ps-btn,.ps-test{font:inherit;font-weight:700;font-size:14px;border:0;border-radius:14px;padding:10px 16px;cursor:pointer}
+.ps-btn.on{background:#fff;color:#000}.ps-btn.off{background:rgba(255,255,255,.1);color:#fff}
+.ps-test{width:100%;margin-top:12px;background:rgba(255,255,255,.1);color:#fff}
+.ps-lab{font-size:11.5px;color:var(--muted);margin:10px 0 6px}
+.ps-teams{display:flex;flex-wrap:wrap;gap:6px}
+.ps-teams label{display:flex;align-items:center;gap:6px;padding:6px 10px 6px 6px;border-radius:12px;background:rgba(255,255,255,.06);font-size:13px;font-weight:700}
+.ps-teams .badge{width:22px;height:22px;font-size:11px}
+.ps-teams input,.ps-kinds input{accent-color:#FFD21F;width:16px;height:16px}
+.ps-kinds{display:grid;gap:6px}
+.ps-kinds label{display:flex;align-items:center;gap:8px;font-size:13.5px}
+.hi{display:grid;grid-template-columns:12px 112px 1fr;align-items:baseline;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
+.hi i{width:9px;height:9px;border-radius:50%;background:#2ECC71;align-self:center}
+.hi.warn i{background:#FFB020}.hi.ng i{background:#FF3B3B}.hi.off i{background:#555}
+.hi b{font-weight:700}.hi span{color:#C8C8C8}
+.hi.ng span{color:#FF8A8A}.hi.warn span{color:#FFD08A}
 </style>
 </head>
 <body>
 <header class="top">
   <div class="brand">
+    <button type="button" class="gear" id="gearBtn" aria-label="データの状態"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg><i class="gdot" id="gearDot" hidden></i></button>
+    <button type="button" class="hwarn" id="hWarn" hidden></button>
     <div class="j" id="kicker">J SPORTS ペナントレース</div>
     <h1 id="ttl">今月の戦況</h1>
     <div class="upd" id="upd">読み込み中…</div>
@@ -1136,6 +1183,18 @@ body{padding-bottom:calc(98px + env(safe-area-inset-bottom,0px))}
     <img id="shotImg" alt="マジックの画像">
     <p>画像を長押しでも保存できます</p>
     <div class="shotbtns"><button type="button" id="shotShare">LINEなどに送る</button><button type="button" id="shotClose" class="sub">閉じる</button></div>
+  </div>
+</div>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="sheet-bg" data-close></div>
+  <div class="sheet-card" role="dialog" aria-label="データの状態">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head"><b>データの状態</b><button type="button" class="sheet-x" data-close aria-label="閉じる">×</button></div>
+    <section class="sh-sec">
+      <div id="healthBox"></div>
+      <p class="sh-note">緑は正常、黄は注意、赤は自動更新が止まっている可能性があります。</p>
+    </section>
   </div>
 </div>
 
@@ -1722,10 +1781,10 @@ async function pollLive() {
         g.st = x.st; g.hs = x.hs; g.as = x.as; g.inn = x.inn; changed = true; liveChangedAt = new Date();
       }
     }
-    liveAt = new Date();
-    if (changed) renderAll(); else renderUpd();
+    liveAt = new Date(); liveFail = 0;
+    if (changed) renderAll(); else { renderUpd(); renderHealth(); }
     if (S.tab === "game") { loadDetails(changed); loadPitches(); }
-  } catch {}
+  } catch { liveFail++; renderHealth(); }
 }
 
 /* ---------- 対戦成績（スポナビ形式：勝数-負数（引分数）） ---------- */
@@ -2702,6 +2761,50 @@ function renderStats() {
   tick();
 })();
 
+/* ---------- データの健康チェック ---------- */
+let liveFail = 0;
+function healthItems() {
+  const out = [], today = jst().iso, nowH = new Date(Date.now() + 9 * 3600e3).getUTCHours() + new Date(Date.now() + 9 * 3600e3).getUTCMinutes() / 60;
+  // 試合結果：過去の試合が「予定」のまま残っていないか
+  const stuck = DATA.games.filter(g => (g.st === "sched" || g.st === "live") && (g.d < today || (g.d === today && g.t && nowH > parseInt(g.t, 10) + 5.5)));
+  out.push(stuck.length
+    ? { lv: "ng", k: "試合結果", v: `${stuck.length}試合の結果が反映されていません（最古 ${stuck[0].d.slice(5).replace("-", "/")}）。自動更新が止まっている可能性があります。` }
+    : { lv: "ok", k: "試合結果", v: DATA.updated ? `最新（${fmtDT(DATA.updated)} 更新）` : "最新" });
+  // 成績：終わった試合の日付より大きく遅れていないか
+  const st = DATA.stats || {};
+  const lastFinal = DATA.games.filter(g => g.st === "final" && g.d < today).map(g => g.d).sort().pop();
+  const asof = st.asof ? (() => { const m = st.asof.match(/(\d+)\/(\d+)/); return m ? `${DATA.season}-${String(m[1]).padStart(2, "0")}-${String(m[2]).padStart(2, "0")}` : null; })() : null;
+  const lagDays = asof && lastFinal ? (new Date(lastFinal) - new Date(asof)) / 864e5 : 0;
+  out.push(!asof ? { lv: "warn", k: "成績", v: "まだ取得できていません" }
+    : lagDays > 2 ? { lv: "warn", k: "成績", v: `${st.asof} から更新されていません` }
+    : { lv: "ok", k: "成績", v: `最新（${st.asof} 時点）` });
+  // 自動更新データの読み込み
+  out.push(fromSnap ? { lv: "warn", k: "自動更新データ", v: "読み込めていません。サイト内の控えのデータを表示しています。" } : { lv: "ok", k: "自動更新データ", v: "読み込みOK" });
+  // ライブ速報
+  const liveNeeded = liveWanted() && DATA.games.some(g => g.d === today && g.st === "live");
+  out.push(!CONFIG.liveApi ? { lv: "off", k: "ライブ速報", v: "使っていません" }
+    : liveFail >= 3 && liveNeeded ? { lv: "warn", k: "ライブ速報", v: "中継プログラムから応答がありません" }
+    : { lv: "ok", k: "ライブ速報", v: liveAt ? `OK（${String(liveAt.getHours()).padStart(2, "0")}:${String(liveAt.getMinutes()).padStart(2, "0")} に取得）` : "試合が始まると自動で取得します" });
+  return out;
+}
+function fmtDT(iso) { const d = new Date(iso); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; }
+function renderHealth() {
+  const items = healthItems();
+  const worst = items.some(x => x.lv === "ng") ? "ng" : items.some(x => x.lv === "warn") ? "warn" : "ok";
+  $("gearDot").hidden = worst === "ok";
+  $("gearDot").className = "gdot " + worst;
+  const w = $("hWarn");
+  if (worst === "ng") { w.hidden = false; w.textContent = "⚠ 試合結果の自動更新が止まっている可能性があります"; w.className = "hwarn ng"; }
+  else w.hidden = true;
+  $("healthBox").innerHTML = items.map(x => `<div class="hi ${x.lv}"><i></i><b>${x.k}</b><span>${esc(x.v)}</span></div>`).join("");
+}
+
+function openSheet() { $("sheet").hidden = false; requestAnimationFrame(() => $("sheet").classList.add("open")); renderHealth(); }
+function closeSheet() { $("sheet").classList.remove("open"); setTimeout(() => ($("sheet").hidden = true), 280); }
+$("gearBtn").onclick = openSheet;
+$("hWarn").onclick = openSheet;
+$("sheet").addEventListener("click", e => { if (e.target.closest("[data-close]")) closeSheet(); });
+
 /* ---------- 読み込み ---------- */
 function renderUpd() {
   const u = DATA.updated ? new Date(DATA.updated) : null;
@@ -2717,6 +2820,7 @@ function renderAll() {
   renderUpd();
   $("stripe").innerHTML = CL.filter(t => !CONFIG.excluded.includes(t)).map(t => `<i style="${tv(t)}"></i>`).join("");
   renderMagic(); renderGame(); renderCal(); renderStd(); renderStats(); renderSong();
+  renderHealth();
   $("note").textContent = fromSnap ? "自動更新データを読み込めなかったため、ページ内に保存したデータを表示しています。" : "";
 }
 const BUILD = document.querySelector('meta[name="build"]').content;
