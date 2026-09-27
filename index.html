@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927165731">
+<meta name="build" content="20260927170600">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1797,6 +1797,13 @@ html:not(.theme-pawa) .songhead .sh{background:radial-gradient(120% 180% at 0% 5
 html:not(.theme-pawa) .songq,html:not(.theme-pawa) #songQ{background:#111114 !important;border:1px solid var(--hair) !important}
 /* 開閉できる欄 */
 html:not(.theme-pawa) .howto summary,html:not(.theme-pawa) .rules summary{color:#E8E8EC;font-weight:600}
+
+/* 画面が短いタブ（試合が少ない日の試合タブなど）でも、ページが画面の高さより少しだけ長くなるようにする。
+   短くてスクロールできないと、iPhoneのSafariが自分の下のバーを元の大きさに戻し、見える範囲が縮んでタブバーが押し上げられるため */
+body{min-height:calc(100vh + 48px);min-height:calc(100lvh + 48px);box-sizing:border-box}
+/* ページの外側（引っぱったときに見える部分など）もテーマの背景の色に */
+html{background:#0A0A0C}
+html.theme-pawa{background:#CDEBFF}
 </style>
 </head>
 <body>
