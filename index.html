@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927131103">
+<meta name="build" content="20260927134853">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1302,6 +1302,11 @@ th.srt.on{color:#fff}
 .ytbl.ytab td.ya b{font-size:13.5px;font-weight:700}
 .ytbl.ytab td.ya small{font-size:10px;font-weight:500;display:inline-flex;align-items:center;gap:3px;justify-content:flex-end;white-space:nowrap}
 @media (max-width:374px){.ytbl.ytab col.cn{width:29%}.ytbl.ytab col.cp{width:20%}.ytbl.ytab td.yn .badge{display:none !important}.ytbl.ytab td.yc2 b{width:20px;height:20px;font-size:11.5px}.ytbl.ytab td.ya b{font-size:12px}}
+/* 対象外の球団（広島）の行：参考として薄く */
+.ytab tr.ex td{opacity:.45}
+.ytab tr.ex td.tnm small{display:inline-block;font-size:9.5px;font-weight:600;color:#BDBDBD;border:1px solid #444;border-radius:4px;padding:0 4px;margin-left:6px;opacity:1}
+.ytab tr.ex{background:none !important}
+.ytab tr.ex td.tnm{box-shadow:inset 3px 0 0 color-mix(in srgb,var(--tc) 45%,#000)}
 /* ページ切り替え・開閉をなめらかに */
 @media (prefers-reduced-motion:no-preference){
   .view:not([hidden]){animation:vin .35s cubic-bezier(.22,1,.36,1)}
@@ -1353,7 +1358,7 @@ th.srt.on{color:#fff}
       <p>M は、どの試合で勝っても最下位回避が確定する残りの勝ち数。自力で決められない（残り全勝でも最下位の可能性が残る）球団は「自力消滅」と表示します。★は回避確定、赤い「支払い」は最下位確定。</p>
       <p>勝差は1位とのゲーム差。</p>
     </details>
-    <details class="howto"><summary>見方</summary><ul><li>順位表：勝差は1位とのゲーム差、残試合はこの月度の残り試合。球団名をタップすると公式サイト。</li><li>マジック：最下位を回避するまでの勝ち数。★は回避確定、赤字の「支払」は最下位確定、「自力消滅」は、残り試合に全部勝っても、ほかの球団の結果しだいで最下位の可能性が残る状態（自力での最下位脱出ができない）。</li><li>対戦成績：左の球団から見た、この月度だけの勝数-負数（引分数）。</li><li>直近の調子：○は勝ち、●は負け、△は引き分け。下の文字は対戦相手。</li><li>日程の天気は、試合開始時刻の球場の予報（約2週間先まで）。％は試合中の降水確率の最大値です。天気予報：Open-Meteo。</li><li>勝率で並んだときは、セ・リーグの規定（勝利数→当該球団間の対戦勝率→交流戦を除く勝率→前年度順位）で順位を決めます。</li><li>振替待ちは、中止になって振替日がまだ決まっていない試合です。日程に入るとマジックが変わります。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li>順位表：勝差は1位とのゲーム差、残試合はこの月度の残り試合。広島は参考として薄く表示（対象外なので順位・マジック・支払いは広島を除く5球団で計算）。球団名をタップすると公式サイト。</li><li>マジック：最下位を回避するまでの勝ち数。★は回避確定、赤字の「支払」は最下位確定、「自力消滅」は、残り試合に全部勝っても、ほかの球団の結果しだいで最下位の可能性が残る状態（自力での最下位脱出ができない）。</li><li>対戦成績：左の球団から見た、この月度だけの勝数-負数（引分数）。</li><li>直近の調子：○は勝ち、●は負け、△は引き分け。下の文字は対戦相手。</li><li>日程の天気は、試合開始時刻の球場の予報（約2週間先まで）。％は試合中の降水確率の最大値です。天気予報：Open-Meteo。</li><li>勝率で並んだときは、セ・リーグの規定（勝利数→当該球団間の対戦勝率→交流戦を除く勝率→前年度順位）で順位を決めます。</li><li>振替待ちは、中止になって振替日がまだ決まっていない試合です。日程に入るとマジックが変わります。</li></ul></details>
   </section>
 
   <section class="view" id="v-cal" aria-label="日程" hidden>
@@ -1921,12 +1926,25 @@ function renderMagic() {
   }
 
   const lastIdx = a.rows.length - 1;
-  $("cards").innerHTML = yTable(a.rows.map((r, i) => {
+  const tRows = a.rows.map((r, i) => {
     const paid = r.eliminated || (a.finished && i === lastIdx);
     const extra = paid ? `<span class="mt ng">支払</span>` : r.safe ? `<span class="mt">${IC.safe}</span>` : r.self === null ? `<span class="mt mx">自力<br>消滅</span>` : `<span class="mt">M${r.self}</span>`;
     return { t: r.t, g: r.w + r.l + r.d, w: r.w, l: r.l, d: r.d, gb: r.gb, rem: r.rem, extra };
-  }), "マジック")
-;
+  });
+  // 広島（対象外）：この月度の成績を参考として、勝率の位置に薄く入れる。順位・マジック・支払いには関係しない
+  for (const x of CONFIG.excluded) {
+    const R = { t: x, w: 0, l: 0, d: 0, rem: 0 };
+    for (const g of DATA.games) {
+      if ((g.h !== x && g.a !== x) || !S.period.months.includes(monthOf(g.d)) || g.st === "canc") continue;
+      if (g.st === "final") { const me = g.h === x ? g.hs : g.as, op = g.h === x ? g.as : g.hs; me > op ? R.w++ : me < op ? R.l++ : R.d++; }
+      else R.rem++;
+    }
+    const p = R.w + R.l ? R.w / (R.w + R.l) : 0;
+    let at = tRows.findIndex(r => (r.w + r.l ? r.w / (r.w + r.l) : 0) < p);
+    if (at < 0) at = tRows.length;
+    tRows.splice(at, 0, { ...R, g: R.w + R.l + R.d, ex: true, sub: "対象外", extra: "" });
+  }
+  $("cards").innerHTML = yTable(tRows, "マジック");
 
   const isCur = S.period.id === defaultPeriod(periods()).id;
   $("cards").insertAdjacentHTML("beforeend", isCur && !a.finished ? pendingHTML(a.rows.map(r => r.t)) : "");
@@ -2098,13 +2116,15 @@ const IC = {
 function yTable(rows, extraHead) {
   const v = h => h.split("").join("<br>");
   const head = ["順位", "チーム名", "試合", "勝利", "敗戦", "引分", "勝率", "勝差", "残試合"];
+  const top = rows.find(x => !x.ex) || rows[0];
+  let rk = 0;
   return `<div class="ywrap"><table class="ytab"><thead><tr>${head.map((h, i) => `<th class="${i === 1 ? "tnm" : ""}">${i === 1 ? h : v(h)}</th>`).join("")}${extraHead ? `<th class="xc">${v(extraHead)}</th>` : ""}</tr></thead><tbody>` +
-    rows.map((r, i) => `<tr class="${r.cls || ""}" style="${tv(r.t)}">
-      <td class="num">${i + 1}</td>
+    rows.map((r, i) => `<tr class="${r.cls || ""}${r.ex ? " ex" : ""}" style="${tv(r.t)}">
+      <td class="num">${r.ex ? "-" : ++rk}</td>
       <td class="tnm"><a href="${TEAM_URL[r.t]}" target="_blank" rel="noopener">${fn(r.t)}</a>${r.sub ? `<small>${r.sub}</small>` : ""}${liveMini(r.t)}</td>
       <td class="num">${r.g}</td><td class="num">${r.w}</td><td class="num">${r.l}</td><td class="num">${r.d}</td>
       <td class="num">${pctOf(r.w, r.l)}</td>
-      <td class="num">${i === 0 ? (r.first || "-") : (() => { const t = rows[0], gb = ((t.w - r.w) + (r.l - t.l)) / 2; return gb.toFixed(1); })()}</td>
+      <td class="num">${r === top ? (r.first || "-") : (() => { const t = top, gb = ((t.w - r.w) + (r.l - t.l)) / 2; return gb.toFixed(1); })()}</td>
       <td class="num">${r.rem}</td>${extraHead ? `<td class="xc">${r.extra || ""}</td>` : ""}</tr>`).join("") + `</tbody></table></div>`;
 }
 
@@ -3163,8 +3183,8 @@ function renderAll() {
   CONFIG.prevOrder = calOrder(); // 同率時の最後の決め手（前年度順位）
   const u = DATA.updated ? new Date(DATA.updated) : null;
   renderUpd();
-  // ヘッダーの色の帯：前年の順位順（広島を除く）
-  $("stripe").innerHTML = calOrder().filter(t => !CONFIG.excluded.includes(t)).map(t => `<i style="${tv(t)}"></i>`).join("");
+  // ヘッダーの色の帯：前年の順位順（セ・リーグ6球団）
+  $("stripe").innerHTML = calOrder().map(t => `<i style="${tv(t)}"></i>`).join("");
   renderMagic(); renderGame(); renderCal(); renderStd(); renderStats(); renderSong();
   renderHealth();
   $("note").textContent = fromSnap ? "自動更新データを読み込めなかったため、ページ内に保存したデータを表示しています。" : "";
