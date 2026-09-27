@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927053600">
+<meta name="build" content="20260927054018">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -782,7 +782,7 @@ h2{font-weight:700;margin-top:30px}
 .pnm b{font-size:17px;font-weight:700}
 .hd{font-style:normal;font-size:11px;font-weight:700;padding:1px 5px;color:#fff}
 .hd.l{background:#1E6FD9}.hd.r{background:#C2185B}
-.pst{display:grid;grid-template-columns:auto 1fr;gap:4px 8px;padding:8px 10px 0;font-size:13px;align-items:baseline}
+.pst{display:none;grid-template-columns:auto 1fr;gap:4px 8px;padding:8px 10px 0;font-size:13px;align-items:baseline}
 .pst span{color:var(--muted);font-size:12px}
 .pst b{font-weight:700}
 .pnx{padding:8px 10px 0;font-size:11.5px;color:var(--muted)}
@@ -794,6 +794,17 @@ h2{font-weight:700;margin-top:30px}
 .pli .prs{font-weight:700;min-width:56px;text-align:right}
 .pli.b .prs{color:#2ECC71}.pli.s .prs{color:#FFD21F}.pli.o .prs{color:#FF6B6B}.pli.h .prs{color:#5AB0FF}.pli.sac .prs{color:#C8C8C8}
 .pnone{font-size:12.5px;color:var(--muted);margin:0;padding:10px}
+
+/* 一球速報：成績のマス */
+.pgrid{display:grid;grid-template-columns:repeat(2,1fr);margin:8px 0 0;border-top:1px solid #1C1C1C}
+.pgrid div{display:flex;align-items:baseline;gap:8px;padding:6px 10px;border-bottom:1px solid #1C1C1C}
+.pgrid div:nth-child(odd){border-right:1px solid #1C1C1C}
+.pgrid span{font-size:11.5px;color:var(--muted);width:14px}
+.pgrid b{font-size:15px;font-weight:700}
+.pres{display:flex;flex-wrap:wrap;gap:4px;padding:8px 10px 0}
+.pres span{font-size:12px;background:#161616;padding:3px 7px;display:inline-flex;gap:5px;align-items:baseline}
+.pres span em{font-style:normal;color:var(--muted);font-size:10.5px}
+.pres span.h{color:#5AB0FF}.pres span.b{color:#2ECC71}
 </style>
 </head>
 <body>
@@ -1579,6 +1590,7 @@ function pitchHTML(g) {
     <rect class="bs ${on("一") ? "on" : ""}" x="206" y="105" width="14" height="14" transform="rotate(45 213 112)"/>
     <rect class="bs ${on("三") ? "on" : ""}" x="80" y="105" width="14" height="14" transform="rotate(45 87 112)"/>
     <path d="M143 172 h14 v6 l-7 6 l-7 -6 z" fill="#fff"/>
+    ${[["2", 150, 36], ["1", 236, 96], ["3", 64, 96]].map(([b, x, y]) => p.runners && p.runners[b] ? `<g><rect x="${x - 26}" y="${y - 13}" width="52" height="18" fill="rgba(0,0,0,.8)"/><text x="${x}" y="${y}" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">${esc(p.runners[b])}</text></g>` : "").join("")}
   </svg>`;
   return `<div class="pbox">
     ${last ? `<div class="plast ${pitchCls(last.res)}"><span class="pn">${last.n}</span><b>${esc(last.res)}</b></div><div class="pspd num">${esc(last.speed)}　${esc(last.type)}</div>` : `<div class="plast"><b>${esc(p.half || "")}</b></div>`}
@@ -1586,9 +1598,14 @@ function pitchHTML(g) {
     <div class="fwrap">${field}<div class="fhalf"><b>${esc(p.half || "")}</b><small>${fn(atk)}の攻撃</small></div></div>
     <div class="pvs2">
       <div class="pc" style="${tv(def)}"><div class="pt2">${fn(def)}</div>${p.pitcher ? `<div class="pr2">投手 ${esc(p.pitcher.no)}</div><div class="pnm"><b>${esc(p.pitcher.name)}</b>${hand(p.pitcher.hand)}</div>
-        <div class="pst"><span>防</span><b class="num">${esc(p.pitcher.era)}</b><span>球</span><b class="num">${p.pitcher.np}</b><span>打</span><b class="num">${p.pitcher.bf}</b></div>` : ""}</div>
+        ${(() => { const x = p.pitcher.game;
+          const cells = [["防", p.pitcher.era], ["球", x ? x.np : p.pitcher.np], ["回", x && x.ip], ["打", x ? x.bf : p.pitcher.bf], ["安", x && x.h], ["振", x && x.so], ["四", x && x.bb], ["失", x && x.r]].filter(c => c[1] != null && c[1] !== "");
+          return `<div class="pgrid">${cells.map(([k, v]) => `<div><span>${k}</span><b class="num">${esc(String(v))}</b></div>`).join("")}</div>`; })()}` : ""}</div>
       <div class="pc" style="${tv(atk)}"><div class="pt2">${fn(atk)}</div>${p.batter ? `<div class="pr2">打者 ${esc(p.batter.no)}</div><div class="pnm"><b>${esc(p.batter.name)}</b>${hand(p.batter.hand)}</div>
-        <div class="pst"><span>率</span><b class="num">${esc(p.batter.avg)}</b></div>` : ""}${p.next ? `<div class="pnx">次打者 ${esc(p.next)}</div>` : ""}</div>
+        ${(() => { const x = p.batter.game;
+          const cells = [["率", p.batter.avg], ["打", x && x.ab], ["安", x && x.hit], ["点", x && x.rbi], ["本", x && x.hr], ["四", x && x.bb]].filter(c => c[1] != null && c[1] !== "");
+          return `<div class="pgrid">${cells.map(([k, v]) => `<div><span>${k}</span><b class="num">${esc(String(v))}</b></div>`).join("")}</div>` +
+            (x && x.results && x.results.length ? `<div class="pres">${x.results.map((r, i) => `<span class="${/安|本|二|三|塁打/.test(r) && !/犠/.test(r) ? "h" : /四|死/.test(r) ? "b" : ""}"><em>${i + 1}</em>${esc(r)}</span>`).join("")}</div>` : ""); })()}` : ""}${p.next ? `<div class="pnx">次打者 ${esc(p.next)}</div>` : ""}</div>
     </div>
     ${list.length ? `<div class="plist">${list.map(x => `<div class="pli ${pitchCls(x.res)}"><span class="pn">${x.n}</span><span class="pty">${esc(x.type)}</span><span class="psp num">${esc(x.speed)}</span><span class="prs">${esc(x.res)}</span></div>`).join("")}</div>` : `<p class="pnone">この打席はまだ投球がありません</p>`}
   </div>`;
