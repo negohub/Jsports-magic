@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927144907">
+<meta name="build" content="20260927150726">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1477,92 +1477,80 @@ html.theme-pawa .rleg{border-color:#E3ECF7}
 /* 応援歌 */
 html.theme-pawa .srow *{color:#13264A}
 html.theme-pawa .songq,html.theme-pawa #songQ{background:#fff !important;color:#13264A !important;border:3px solid #1D3E7C !important}
-/* 下のタブバー・上の小さいバー：白いガラス */
-html.theme-pawa .tabbar{background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(235,245,255,.85)),rgba(255,255,255,.6);box-shadow:0 10px 26px rgba(19,38,74,.35),inset 0 0 0 2px #1D3E7C}
-html.theme-pawa .tabbar button{color:#4A6390}
+/* 下のタブバー・上の小さいバー・右上のボタン：明るい空に合う白いLiquid Glass */
+html.theme-pawa .tabbar{background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.22) 55%,rgba(255,255,255,.34)),rgba(200,230,255,.18);
+  -webkit-backdrop-filter:blur(26px) saturate(200%) brightness(1.06);backdrop-filter:blur(26px) saturate(200%) brightness(1.06);
+  box-shadow:0 14px 34px rgba(19,38,74,.30),0 2px 6px rgba(19,38,74,.18),inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.35),inset 0 0 0 1.5px rgba(255,255,255,.55)}
+html.theme-pawa .tabbar::before{background:radial-gradient(120% 70% at 18% -10%,rgba(255,255,255,.75),transparent 55%),radial-gradient(90% 60% at 100% 120%,rgba(255,255,255,.35),transparent 60%)}
+html.theme-pawa .tabbar button{color:rgba(19,38,74,.62)}
 html.theme-pawa .tabbar button[aria-selected="true"]{color:#13264A}
-html.theme-pawa .tabbar .lens{background:linear-gradient(180deg,#FFE680,#FFB300);box-shadow:inset 0 2px 0 rgba(255,255,255,.6),0 2px 0 rgba(19,38,74,.25)}
-html.theme-pawa .minibar{background:rgba(255,255,255,.9);box-shadow:0 8px 20px rgba(19,38,74,.3),inset 0 0 0 2px #1D3E7C}
+html.theme-pawa .tabbar .lens{background:radial-gradient(120% 90% at 50% 0%,rgba(255,246,190,.95),rgba(255,210,70,.62) 58%,rgba(255,184,0,.5));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -2px 0 rgba(200,130,0,.25),inset 0 0 0 1px rgba(255,255,255,.55),0 4px 14px rgba(200,130,0,.28)}
+html.theme-pawa .minibar{background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.28)),rgba(200,230,255,.2);
+  -webkit-backdrop-filter:blur(24px) saturate(190%);backdrop-filter:blur(24px) saturate(190%);
+  box-shadow:0 10px 26px rgba(19,38,74,.28),inset 0 1px 0 rgba(255,255,255,.95),inset 0 0 0 1.5px rgba(255,255,255,.55)}
 html.theme-pawa .minibar *{color:#13264A}
-html.theme-pawa .gear{color:#1D3E7C;background:linear-gradient(180deg,#FFFFFF,#D9EBFF);box-shadow:0 3px 0 rgba(19,38,74,.3),inset 0 0 0 2px #1D3E7C}
+html.theme-pawa .gear{color:#13264A;background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,.3)),rgba(200,230,255,.2);
+  -webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);
+  box-shadow:0 6px 14px rgba(19,38,74,.25),inset 0 1px 0 rgba(255,255,255,.95),inset 0 0 0 1.5px rgba(255,255,255,.6)}
+/* 応援歌タブの選手：守備位置の色のタイル（投手ピンク・捕手水色・内野手黄色・外野手緑） */
+.ptiles{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:4px 2px 8px}
+.ptile{position:relative;height:40px;border-radius:9px;border:1.5px solid rgba(0,0,0,.18);font:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:#1F2A44;box-shadow:inset 0 2px 0 rgba(255,255,255,.65),inset 0 -2px 0 rgba(0,0,0,.08),0 2px 0 rgba(19,38,74,.18);overflow:hidden}
+.ptile b{font-size:15px;font-weight:700;letter-spacing:.08em;white-space:nowrap}
+.ptile.sp b{letter-spacing:.7em;margin-right:-.7em}
+.ptile small{position:absolute;left:5px;top:3px;font-size:9px;font-weight:700;color:rgba(31,42,68,.55);letter-spacing:0}
+.ptile.pp{background:linear-gradient(180deg,#FFC2D0,#F58FA6);border-color:#D9687F}
+.ptile.pc{background:linear-gradient(180deg,#A6ECFB,#4FC8EC);border-color:#2FA3C8}
+.ptile.pi{background:linear-gradient(180deg,#FFEB9A,#F7C948);border-color:#D6A21E}
+.ptile.po{background:linear-gradient(180deg,#B5EDA8,#63CC5E);border-color:#3FA43A}
+.ptile:active{transform:translateY(1px)}
+.ptile.lg b{font-size:12.5px;letter-spacing:0;margin-left:8px}
+html.theme-pawa .srow .sgo{background:linear-gradient(180deg,#62D873,#1FA83A) !important;color:#fff !important;border:2px solid #0E6B22 !important}
+html.theme-pawa .srow .sof{color:#1D3E7C !important}
+@media (max-width:374px){.ptile b{font-size:13.5px}.ptiles{gap:5px}.ptile.lg b{font-size:10.5px;margin-left:10px}}
+.sp-h{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 25%,#fff),rgba(255,255,255,.85))}
+.sp-h b{font-size:18px;font-weight:700;color:#13264A}.sp-h small{color:#4A6390;font-size:12px}
+.sp-b{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.sp-b a{display:flex;align-items:center;justify-content:center;height:46px;border-radius:14px;font-weight:700;font-size:15px;text-decoration:none}
+.sp-b .sof{background:linear-gradient(180deg,#FFFFFF,#D9EBFF);color:#1D3E7C;border:2px solid #1D3E7C}
+.sp-b .sgo{background:linear-gradient(180deg,#62D873,#1FA83A);color:#fff;border:2px solid #0E6B22}
+.sp-b a:only-child{grid-column:1 / -1}
+html.theme-pawa .sgrp .ptiles{background:transparent}
+/* 成績タブ（パワプロ風）：個人ランキングの選手名もタイル、1〜3位はメダル色 */
+.rtab .rkm{display:inline;font-weight:inherit}
+html.theme-pawa .rtab .rkm{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;font-weight:800;font-size:13px;color:#13264A;background:#E3ECF7;box-shadow:inset 0 -2px 0 rgba(0,0,0,.08)}
+html.theme-pawa .rtab .rkm.r1{background:linear-gradient(180deg,#FFE680,#F2B600);box-shadow:inset 0 2px 0 rgba(255,255,255,.7),0 2px 0 #B98A00}
+html.theme-pawa .rtab .rkm.r2{background:linear-gradient(180deg,#F2F5FA,#BFC8D6);box-shadow:inset 0 2px 0 #fff,0 2px 0 #8C97A8}
+html.theme-pawa .rtab .rkm.r3{background:linear-gradient(180deg,#F5C9A0,#D98C4A);box-shadow:inset 0 2px 0 rgba(255,255,255,.6),0 2px 0 #A8622A}
+html.theme-pawa .rtab td.pnm{padding:6px 6px !important;box-shadow:none !important}
+html.theme-pawa .rtab td.pnm .ptile{display:flex;width:100%;max-width:130px;height:34px;cursor:default}
+html.theme-pawa .rtab td.pnm .ptile b{font-size:14px}
+html.theme-pawa .rtab tr.lead td.pnm{color:inherit !important}
+html.theme-pawa .rtab tr.lead td.pnm .ptile{box-shadow:inset 0 2px 0 rgba(255,255,255,.65),0 0 0 2px #FFB300,0 2px 0 rgba(19,38,74,.18)}
+html.theme-pawa .rtab td.tnm{font-size:12.5px}
+/* 設定の画面・「あなたは誰？」の画面も白いガラスに */
+html.theme-pawa .sheet-bg{background:rgba(19,38,74,.25)}
+html.theme-pawa .sheet-card{background:linear-gradient(180deg,rgba(255,255,255,.78),rgba(255,255,255,.55) 40%),rgba(210,235,255,.35);
+  -webkit-backdrop-filter:blur(30px) saturate(190%);backdrop-filter:blur(30px) saturate(190%);
+  box-shadow:0 20px 50px rgba(19,38,74,.35),inset 0 1px 0 #fff,inset 0 0 0 1.5px rgba(255,255,255,.7);color:#13264A}
+html.theme-pawa .sheet-grip{background:rgba(19,38,74,.25)}
+html.theme-pawa .sheet-head b,html.theme-pawa .me-lead,html.theme-pawa .hi b{color:#13264A}
+html.theme-pawa .sheet-x{background:rgba(19,38,74,.08);color:#13264A}
+html.theme-pawa .sh-lab,html.theme-pawa .sh-note{color:#4A6390}
+html.theme-pawa .hi{border-color:rgba(19,38,74,.1)}
+html.theme-pawa .hi span{color:#3B5480}
+html.theme-pawa .hi.warn span{color:#B26A00}html.theme-pawa .hi.ng span{color:#D32F2F}
+html.theme-pawa .me-row{background:rgba(255,255,255,.6);color:#13264A;box-shadow:inset 0 0 0 1px rgba(19,38,74,.12)}
+html.theme-pawa .me-row span{color:#C98A00}
+html.theme-pawa .themeSeg{background:rgba(19,38,74,.08)}
+html.theme-pawa .themeSeg button{color:#4A6390}
+html.theme-pawa .themeSeg button[aria-pressed="true"]{background:linear-gradient(180deg,#FFE680,#FFB300);color:#13264A;box-shadow:0 2px 0 rgba(19,38,74,.2)}
+html.theme-pawa .me-pick button{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 22%,#fff),rgba(255,255,255,.85));color:#13264A;border-color:rgba(19,38,74,.15)}
+html.theme-pawa .me-pick button small{color:#4A6390}
+html.theme-pawa .me-pick button.none{background:rgba(255,255,255,.85)}
+html.theme-pawa .me-pick button.none.on{border-color:#13264A;box-shadow:0 0 0 1px #13264A}
 
-/* パワプロ風：細部の直し */
-/* 試合タブ（パワプロ風）：スコアバグ・一球速報も明るく */
-html.theme-pawa .bug{background:#fff !important;border:2px solid #1D3E7C !important}
-html.theme-pawa .bt{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 32%,#fff) 0%,#fff 65%) !important}
-html.theme-pawa .bt+.bt{border-top:2px solid #DCE7F5}
-html.theme-pawa .bt .bn,html.theme-pawa .bt .bs2{color:#13264A !important}
-html.theme-pawa .bt .bk{color:var(--ti) !important}
-html.theme-pawa .bt.atk::after{border-left-color:#13264A}
-html.theme-pawa .bi{background:linear-gradient(180deg,#4DA3F2,#1E6FD0) !important;border-left:2px solid #1D3E7C}
-html.theme-pawa .bi,html.theme-pawa .bi *{color:#fff !important}
-html.theme-pawa .bi .ic{stroke:#FFE14A !important}
-html.theme-pawa .bo i{background:rgba(255,255,255,.35)}
-html.theme-pawa .pbox{background:#fff !important;border:3px solid #1D3E7C !important;border-radius:16px !important;box-shadow:0 4px 0 rgba(19,38,74,.28)}
-html.theme-pawa .plast{background:#F4F9FF !important}
-html.theme-pawa .plast.b{background:linear-gradient(90deg,#DFF7E7,#fff 70%) !important}
-html.theme-pawa .plast.s{background:linear-gradient(90deg,#FFF3C4,#fff 70%) !important}
-html.theme-pawa .plast.o{background:linear-gradient(90deg,#FFE0E0,#fff 70%) !important}
-html.theme-pawa .plast.h{background:linear-gradient(90deg,#DCEBFF,#fff 70%) !important}
-html.theme-pawa .plast.b .plr b{color:#12964A}html.theme-pawa .plast.s .plr b{color:#C98A00}html.theme-pawa .plast.o .plr b{color:#E53935}html.theme-pawa .plast.h .plr b{color:#1E6FD0}
-html.theme-pawa .plr small,html.theme-pawa .pkm b,html.theme-pawa .pkm small{color:#13264A}
-html.theme-pawa .pmid{background:#EAF4FF;border-color:#DCE7F5}
-html.theme-pawa .pinn b,html.theme-pawa .pinn span,html.theme-pawa .bso3 span{color:#13264A}
-html.theme-pawa .bso3 i{background:#C9D6E8}
-html.theme-pawa .fwrap{background:linear-gradient(180deg,#8CD0FA,#D8F0FF) !important}
-html.theme-pawa .fld .bs{fill:#fff;stroke:#1D3E7C;stroke-width:1}
-html.theme-pawa .pvs3{background:#DCE7F5;border-color:#DCE7F5}
-html.theme-pawa .pc3{background:linear-gradient(160deg,color-mix(in srgb,var(--tc) 22%,#fff) 0%,#fff 60%) !important}
-html.theme-pawa .pc3 *{color:#13264A}
-html.theme-pawa .pc3 .hd{color:#fff !important}
-html.theme-pawa .pc3 .wm{color:rgba(19,38,74,.08) !important}
-html.theme-pawa .pr3,html.theme-pawa .pg3 span,html.theme-pawa .pnx3{color:#4A6390 !important}
-html.theme-pawa .pg3 div{border-color:#DCE7F5}
-html.theme-pawa .pr3 .abt{color:#C98A00 !important}
-html.theme-pawa .pnx3.up{background:#FFF3C4;color:#8A5A00 !important}html.theme-pawa .pnx3.up b{color:#13264A !important}
-html.theme-pawa .plist3{border-color:#DCE7F5}
-html.theme-pawa .pl3{border-color:#EDF2FA}
-html.theme-pawa .pl3 .pty{color:#13264A}
-html.theme-pawa .pbar{background:#EDF2FA}
-html.theme-pawa .pbar b{color:#13264A}
-html.theme-pawa .pl3.b .prs{color:#12964A}
-html.theme-pawa .pl3.s .prs{color:#C98A00}
-html.theme-pawa .flow{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 16%,#fff),#fff 70%) !important;border-color:var(--tc)}
-html.theme-pawa .flow *{color:#13264A}
-html.theme-pawa .flow .rc,html.theme-pawa .flow .frun{color:#fff !important}
-html.theme-pawa .fs{border-color:#EDF2FA}
-html.theme-pawa .fs.sc{background:#FFE9E9}
-html.theme-pawa .bso3 i.b{background:#2ECC71}html.theme-pawa .bso3 i.s{background:#FFC400}html.theme-pawa .bso3 i.o{background:#FF3B3B}
-html.theme-pawa .bo i.on{background:#FF3B3B}
-html.theme-pawa .fld .bs.on{fill:#FF3B3B;stroke:#B71C1C}
-html.theme-pawa .ls td.scd{color:#C98A00}
-html.theme-pawa .ls td.scd.on{background:#FFE680 !important;color:#13264A}
-html.theme-pawa .ls td.cur{box-shadow:inset 0 0 0 2px #E53935}
-html.theme-pawa .skel .sk{background:linear-gradient(90deg,#E6EEF8 0%,#F6FAFF 40%,#E6EEF8 80%);background-size:300% 100%}
-html.theme-pawa .day,html.theme-pawa .day .dn,html.theme-pawa .day .mu,html.theme-pawa .day .res,html.theme-pawa .day .tx,html.theme-pawa .day .rs{color:#13264A !important}
-html.theme-pawa .day .res.w,html.theme-pawa .day .rs.w{color:#E53935 !important}
-html.theme-pawa .day .res.l,html.theme-pawa .day .rs.l{color:#1E6FD0 !important}
-html.theme-pawa .day.sat .dn,html.theme-pawa .day .dn.sat{color:#1E6FD0 !important}
-html.theme-pawa .day.sun .dn,html.theme-pawa .day .dn.sun{color:#E53935 !important}
-html.theme-pawa .day.today{box-shadow:inset 0 0 0 3px #E53935}
-html.theme-pawa .day.sel{box-shadow:inset 0 0 0 3px #1D3E7C}
-html.theme-pawa #detail *{color:#13264A}
-html.theme-pawa .race td,html.theme-pawa .race td:first-child{color:#13264A !important;background:#fff}
-html.theme-pawa .race .rcC td{background:#DDE7F4 !important}
-html.theme-pawa .race .rcR th{background:color-mix(in srgb,var(--tc) 30%,#fff) !important;color:#13264A !important}
-html.theme-pawa .race td.pace{background:#FFF3C4 !important}
-html.theme-pawa .race td.clinch,html.theme-pawa .race td.clinch:first-child{color:#E53935 !important}
-html.theme-pawa .rnote .k2{color:#8A5A00;background:#FFE680}
-html.theme-pawa .songhead{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 35%,#fff),#fff 70%) !important}
-html.theme-pawa .songhead *{color:#13264A}
-html.theme-pawa .songhead .sh{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 35%,#fff),#fff 70%) !important}
-html.theme-pawa .srow{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 18%,#fff),#fff 60%) !important}
-html.theme-pawa .songhead a,html.theme-pawa .sof{background:linear-gradient(180deg,#FFFFFF,#D9EBFF) !important;color:#1D3E7C !important;border:2px solid #1D3E7C !important}
-html.theme-pawa .sgo,html.theme-pawa .sbtn.go{background:linear-gradient(180deg,#62D873,#1FA83A) !important;color:#fff !important;border:2px solid #0E6B22 !important}
-html.theme-pawa .sgrp{border:0 !important;box-shadow:none !important;background:transparent !important}
-html.theme-pawa .sgrp > *:first-child{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35)}
-html.theme-pawa .scount,html.theme-pawa .sgt{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35)}
-/* 設定シートは読みやすさ優先で今のまま（暗いガラス） */
 </style>
 </head>
 <body>
@@ -1701,6 +1689,15 @@ html.theme-pawa .scount,html.theme-pawa .sgt{color:#fff;text-shadow:0 1px 2px rg
     <div class="sheet-head"><b>あなたは誰？</b><button type="button" class="sheet-x" data-meclose aria-label="閉じる">×</button></div>
     <p class="me-lead">選ぶと、あなたの球団の状況が戦況タブの一番上に出て、順位表や試合でも目立つようになります。あとからいつでも変えられます。</p>
     <div class="me-pick" id="mePick"></div>
+  </div>
+</div>
+
+<div class="sheet" id="songSheet" hidden>
+  <div class="sheet-bg" data-songclose></div>
+  <div class="sheet-card" role="dialog" aria-label="応援歌">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head"><b>応援歌</b><button type="button" class="sheet-x" data-songclose aria-label="閉じる">×</button></div>
+    <div id="songPick"></div>
   </div>
 </div>
 
@@ -3286,6 +3283,19 @@ const songLink = (t, x) => SONG_ONE[t] ? SONG_ONE[t](x) : SONG_PAGE[t] ? jump(t,
 const songLabel = () => "公式";
 S.songTeam = store("songTeam") || "T"; S.songQ = "";
 const ytUrl = (t, n) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(`${TEAM[t].n} ${n.replace(/\s+/g, "")} 応援歌`);
+document.addEventListener("click", e => {
+  const b = e.target.closest(".ptile[data-song]");
+  if (b) {
+    const [no, n] = b.dataset.song.split("|"), t = S.songTeam;
+    const x = ((DATA.rosters || {})[t] || []).find(r => r.no === no && r.n === n) || { no, n };
+    const of = songLink(t, x);
+    $("songPick").innerHTML = `<div class="sp-h" style="${tv(t)}"><span class="badge">${sn(t)}</span><b>${esc(n)}</b><small class="num">#${esc(no)}</small></div>
+      <div class="sp-b">${of ? `<a class="sof" href="${of}" target="_blank" rel="noopener">${songLabel(t)}</a>` : ""}<a class="sgo" href="${ytUrl(t, n)}" target="_blank" rel="noopener">聴く</a></div>`;
+    $("songSheet").hidden = false; requestAnimationFrame(() => $("songSheet").classList.add("open"));
+    return;
+  }
+  if (e.target.closest("[data-songclose]") || e.target.closest("#songPick a")) { $("songSheet").classList.remove("open"); setTimeout(() => ($("songSheet").hidden = true), 280); }
+});
 function renderSong() {
   const t = S.songTeam;
   $("songTeams").innerHTML = calOrder().map(k => `<button class="tbtn" type="button" data-t="${k}" style="${tv(k)}" aria-pressed="${k === t}"><span class="badge">${sn(k)}</span>${fn(k)}</button>`).join("");
@@ -3302,13 +3312,17 @@ function renderSong() {
   const row = x => `<div class="srow" style="${tv(t)}">
       <span class="sno num">${esc(x.no)}</span><span class="snm">${esc(x.n)}</span>
       <span class="sbtn">${songLink(t, x) ? `<a class="sof" href="${songLink(t, x)}" target="_blank" rel="noopener">${songLabel(t)}</a>` : ""}<a class="sgo" href="${ytUrl(t, x.n)}" target="_blank" rel="noopener">聴く</a></span></div>`;
+  const pawa = document.documentElement.classList.contains("theme-pawa");
+  const POSC = { "投手": "pp", "捕手": "pc", "内野手": "pi", "外野手": "po" };
+  const tile = x => { const sur = x.n.split(/\s+/)[0]; return `<button type="button" class="ptile ${POSC[x.p] || "pp"}${sur.length <= 2 ? " sp" : sur.length >= 5 ? " lg" : ""}" data-song="${esc(x.no)}|${esc(x.n)}"><small class="num">${esc(x.no)}</small><b>${esc(sur)}</b></button>`; };
   let html = "";
   for (const [pos, dev] of groups) {
     const list = all.filter(x => x.dev === dev && (dev || x.p === pos) && hit(x)).sort((a, b) => Number(a.no) - Number(b.no) || a.no.length - b.no.length);
     if (!list.length) continue;
     const ttl = dev ? "育成選手" : pos;
-    html += dev && !q ? `<details class="sgrp"><summary>${ttl}<small>${list.length}人</small></summary>${list.map(row).join("")}</details>`
-      : `<div class="sgrp"><div class="sgt">${ttl}<small>${list.length}人</small></div>${list.map(row).join("")}</div>`;
+    const body = pawa ? `<div class="ptiles">${list.map(tile).join("")}</div>` : list.map(row).join("");
+    html += dev && !q ? `<details class="sgrp"><summary>${ttl}<small>${list.length}人</small></summary>${body}</details>`
+      : `<div class="sgrp"><div class="sgt">${ttl}<small>${list.length}人</small></div>${body}</div>`;
   }
   const ch = (CHANCE[t] || []).filter(([n]) => !q || n.replace(/\s+/g, "").includes(q));
   if (ch.length) {
@@ -3474,8 +3488,18 @@ function renderStats(fromLive) {
     return rs.dir === "asc" ? d : -d;
   });
   const arrow = by => sortIco(rs.by === by ? rs.dir : "none");
+  // パワプロ風：選手名を守備位置の色のタイルに（名簿から球団と名字で守備位置を探す。投手部門はピンク）
+  const pawaT = document.documentElement.classList.contains("theme-pawa");
+  const POSC = { "投手": "pp", "捕手": "pc", "内野手": "pi", "外野手": "po" };
+  const rkTile = r => {
+    const ro = ((DATA.rosters || {})[r.t] || []).filter(x => x.n.split(/\s+/)[0] === r.n.replace(/\s+/g, "") || x.n.replace(/\s+/g, "") === r.n.replace(/\s+/g, ""));
+    const bat = ro.find(x => x.p !== "投手");
+    const c = S.rkKind === "pit" ? "pp" : POSC[(bat || ro[0] || {}).p] || "pi";
+    const nm = r.n;
+    return `<span class="ptile ${c}${nm.length <= 2 ? " sp" : nm.length >= 5 ? " lg" : ""}"><b>${esc(nm)}</b></span>`;
+  };
   $("rankList").innerHTML = rows.length ? `<div class="ywrap"><table class="ytab rtab"><thead><tr><th>順位</th><th class="tnm">選手名</th><th class="tnm srt${rs.by === "t" ? " on" : ""}" data-by="t">チーム${arrow("t")}</th><th class="srt${rs.by === "v" ? " on" : ""}" data-by="v">${lbl ? lbl[1] : ""}${arrow("v")}</th></tr></thead><tbody>` +
-    view.map(r => `<tr class="${r.r === 1 ? "lead" : ""}" style="${tv(r.t)}"><td class="num">${r.r}</td><td class="pnm">${esc(r.n)}</td><td class="tnm">${fn(r.t)}</td><td class="num v">${esc(r.v)}</td></tr>`).join("") +
+    view.map(r => `<tr class="${r.r === 1 ? "lead" : ""}" style="${tv(r.t)}"><td class="num"><span class="rkm r${r.r <= 3 ? r.r : 0}">${r.r}</span></td><td class="pnm">${pawaT ? rkTile(r) : esc(r.n)}</td><td class="tnm">${fn(r.t)}</td><td class="num v">${esc(r.v)}</td></tr>`).join("") +
     `</tbody></table></div>${QUAL.has(S.cat) ? `<p class="qnote">${S.rkKind === "bat" ? "規定打席" : "規定投球回"}以上の選手が対象</p>` : ""}` : `<div class="rempty">この項目のデータは、次の自動更新のあとに表示されます。</div>`;
   $("rankList").querySelectorAll("th.srt").forEach(th => (th.onclick = () => {
     const by = th.dataset.by;
