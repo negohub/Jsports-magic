@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927152523">
+<meta name="build" content="20260927153205">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1477,6 +1477,99 @@ html.theme-pawa .rleg{border-color:#E3ECF7}
 /* 応援歌 */
 html.theme-pawa .srow *{color:#13264A}
 html.theme-pawa .songq,html.theme-pawa #songQ{background:#fff !important;color:#13264A !important;border:3px solid #1D3E7C !important}
+/* ===== パワプロ風：細部（消えないよう独立したまとまりにしておく） ===== */
+/* 確定の条件と残り試合・計算のルール */
+html.theme-pawa .conds *,html.theme-pawa .rules *{color:#13264A}
+html.theme-pawa .conds .badge,html.theme-pawa .rules .badge{color:var(--ti,#000) !important}
+html.theme-pawa .conds .vs{background:#EAF2FB !important;color:#1D3E7C !important}
+html.theme-pawa .conds small,html.theme-pawa .rules small{color:#4A6390}
+/* 日程のマス */
+html.theme-pawa .day,html.theme-pawa .day .dn,html.theme-pawa .day .mu,html.theme-pawa .day .res,html.theme-pawa .day .tx,html.theme-pawa .day .rs{color:#13264A !important}
+html.theme-pawa .day .res.w,html.theme-pawa .day .rs.w{color:#E53935 !important}
+html.theme-pawa .day .res.l,html.theme-pawa .day .rs.l{color:#1E6FD0 !important}
+html.theme-pawa .day.sat .dn,html.theme-pawa .day .dn.sat{color:#1E6FD0 !important}
+html.theme-pawa .day.sun .dn,html.theme-pawa .day .dn.sun{color:#E53935 !important}
+html.theme-pawa .day.today{box-shadow:inset 0 0 0 3px #E53935}
+html.theme-pawa .day.sel{box-shadow:inset 0 0 0 3px #1D3E7C}
+html.theme-pawa #detail *{color:#13264A}
+/* 優勝ライン */
+html.theme-pawa .race td,html.theme-pawa .race td:first-child{color:#13264A !important;background:#fff}
+html.theme-pawa .race .rcC td,html.theme-pawa .race .rcC td:first-child{background:#DDE7F4 !important}
+html.theme-pawa .race .rcR th{background:color-mix(in srgb,var(--tc) 30%,#fff) !important;color:#13264A !important}
+html.theme-pawa .race td.pace,html.theme-pawa .race td.pace:first-child{background:#FFF3C4 !important}
+html.theme-pawa .race td.clinch,html.theme-pawa .race td.clinch:first-child{color:#E53935 !important}
+html.theme-pawa .rnote .k2{color:#8A5A00;background:#FFE680}
+/* 応援歌 */
+html.theme-pawa .songhead{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 35%,#fff),#fff 70%) !important}
+html.theme-pawa .songhead *{color:#13264A}
+html.theme-pawa .songhead .sh{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 35%,#fff),#fff 70%) !important}
+html.theme-pawa .srow{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 18%,#fff),#fff 60%) !important}
+html.theme-pawa .songhead a,html.theme-pawa .sof{background:linear-gradient(180deg,#FFFFFF,#D9EBFF) !important;color:#1D3E7C !important;border:2px solid #1D3E7C !important}
+html.theme-pawa .sgo,html.theme-pawa .sbtn.go{background:linear-gradient(180deg,#62D873,#1FA83A) !important;color:#fff !important;border:2px solid #0E6B22 !important}
+html.theme-pawa .sgrp{border:0 !important;box-shadow:none !important;background:transparent !important}
+html.theme-pawa .sgrp > *:first-child{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+html.theme-pawa .scount,html.theme-pawa .sgt{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+/* 試合タブ：スコアバグ */
+html.theme-pawa .bug{background:#fff !important;border:2px solid #1D3E7C !important}
+html.theme-pawa .bt{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 32%,#fff) 0%,#fff 65%) !important}
+html.theme-pawa .bt+.bt{border-top:2px solid #DCE7F5}
+html.theme-pawa .bt .bn,html.theme-pawa .bt .bs2{color:#13264A !important}
+html.theme-pawa .bt .bk{color:var(--ti) !important}
+html.theme-pawa .bt.atk::after{border-left-color:#13264A}
+html.theme-pawa .bi{background:linear-gradient(180deg,#4DA3F2,#1E6FD0) !important;border-left:2px solid #1D3E7C}
+html.theme-pawa .bi,html.theme-pawa .bi *{color:#fff !important}
+html.theme-pawa .bi .ic{stroke:#FFE14A !important}
+html.theme-pawa .bo i{background:rgba(255,255,255,.35)}
+html.theme-pawa .bo i.on{background:#FF3B3B}
+/* 試合タブ：一球速報 */
+html.theme-pawa .pbox{background:#fff !important;border:3px solid #1D3E7C !important;border-radius:16px !important;box-shadow:0 4px 0 rgba(19,38,74,.28)}
+html.theme-pawa .plast{background:#F4F9FF !important}
+html.theme-pawa .plast.b{background:linear-gradient(90deg,#DFF7E7,#fff 70%) !important}
+html.theme-pawa .plast.s{background:linear-gradient(90deg,#FFF3C4,#fff 70%) !important}
+html.theme-pawa .plast.o{background:linear-gradient(90deg,#FFE0E0,#fff 70%) !important}
+html.theme-pawa .plast.h{background:linear-gradient(90deg,#DCEBFF,#fff 70%) !important}
+html.theme-pawa .plast.b .plr b{color:#12964A}
+html.theme-pawa .plast.s .plr b{color:#C98A00}
+html.theme-pawa .plast.o .plr b{color:#E53935}
+html.theme-pawa .plast.h .plr b{color:#1E6FD0}
+html.theme-pawa .plr small,html.theme-pawa .pkm b,html.theme-pawa .pkm small{color:#13264A}
+html.theme-pawa .pmid{background:#EAF4FF;border-color:#DCE7F5}
+html.theme-pawa .pinn b,html.theme-pawa .pinn span,html.theme-pawa .bso3 span{color:#13264A}
+html.theme-pawa .bso3 i{background:#C9D6E8}
+html.theme-pawa .bso3 i.b{background:#2ECC71}
+html.theme-pawa .bso3 i.s{background:#FFC400}
+html.theme-pawa .bso3 i.o{background:#FF3B3B}
+html.theme-pawa .fwrap{background:linear-gradient(180deg,#8CD0FA,#D8F0FF) !important}
+html.theme-pawa .fld .bs{fill:#fff;stroke:#1D3E7C;stroke-width:1}
+html.theme-pawa .fld .bs.on{fill:#FF3B3B;stroke:#B71C1C}
+html.theme-pawa .pvs3{background:#DCE7F5;border-color:#DCE7F5}
+html.theme-pawa .pc3{background:linear-gradient(160deg,color-mix(in srgb,var(--tc) 22%,#fff) 0%,#fff 60%) !important}
+html.theme-pawa .pc3 *{color:#13264A}
+html.theme-pawa .pc3 .hd{color:#fff !important}
+html.theme-pawa .pc3 .wm{color:rgba(19,38,74,.08) !important}
+html.theme-pawa .pr3,html.theme-pawa .pg3 span,html.theme-pawa .pnx3{color:#4A6390 !important}
+html.theme-pawa .pg3 div{border-color:#DCE7F5}
+html.theme-pawa .pr3 .abt{color:#C98A00 !important}
+html.theme-pawa .pnx3.up{background:#FFF3C4;color:#8A5A00 !important}
+html.theme-pawa .pnx3.up b{color:#13264A !important}
+html.theme-pawa .plist3{border-color:#DCE7F5}
+html.theme-pawa .pl3{border-color:#EDF2FA}
+html.theme-pawa .pl3 .pty{color:#13264A}
+html.theme-pawa .pbar{background:#EDF2FA}
+html.theme-pawa .pbar b{color:#13264A}
+html.theme-pawa .pl3.b .prs{color:#12964A}
+html.theme-pawa .pl3.s .prs{color:#C98A00}
+/* 試合タブ：スコア表・得点の流れ・読み込み中 */
+html.theme-pawa .ls td.scd{color:#C98A00}
+html.theme-pawa .ls td.scd.on{background:#FFE680 !important;color:#13264A}
+html.theme-pawa .ls td.cur{box-shadow:inset 0 0 0 2px #E53935}
+html.theme-pawa .flow{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 16%,#fff),#fff 70%) !important;border-color:var(--tc)}
+html.theme-pawa .flow *{color:#13264A}
+html.theme-pawa .flow .rc,html.theme-pawa .flow .frun{color:#fff !important}
+html.theme-pawa .fs{border-color:#EDF2FA}
+html.theme-pawa .fs.sc{background:#FFE9E9}
+html.theme-pawa .skel .sk{background:linear-gradient(90deg,#E6EEF8 0%,#F6FAFF 40%,#E6EEF8 80%);background-size:300% 100%}
+
 /* 下のタブバー・上の小さいバー・右上のボタン：明るい空に合う白いLiquid Glass */
 html.theme-pawa .tabbar{background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.22) 55%,rgba(255,255,255,.34)),rgba(200,230,255,.18);
   -webkit-backdrop-filter:blur(26px) saturate(200%) brightness(1.06);backdrop-filter:blur(26px) saturate(200%) brightness(1.06);
