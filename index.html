@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927121246">
+<meta name="build" content="20260927122348">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -783,7 +783,7 @@ h2{font-weight:700;margin-top:30px}
 .fwrap{padding:12px 14px 6px;background:radial-gradient(ellipse at 50% 100%,rgba(47,122,51,.18),transparent 70%),#030303}
 .fld{display:block;width:100%;height:auto;max-width:380px;margin:0 auto}
 .fld .bs{fill:#F2F2F2}
-.fld .bs.on{fill:#FFD21F}
+.fld .bs.on{fill:#FF3B3B}
 .pvs3{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#1A1A1A;border-top:1px solid #1A1A1A}
 .pc3{position:relative;overflow:hidden;padding:12px 12px 12px;background:linear-gradient(160deg,color-mix(in srgb,var(--tc) 26%,#0A0A0A) 0%,#0A0A0A 55%)}
 .pc3::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--tc)}
@@ -1246,6 +1246,8 @@ h2::before{transform:none;width:5px;height:18px;border-radius:3px;background:lin
 .rleg .rbl{background:#1FA842;color:#fff}
 /* 得点の流れのタグも同じ色に */
 .fs .fr{color:#fff !important}
+/* 走者のいる塁は赤 */
+.fld .bs.on{fill:#FF3B3B;stroke:#FF8A8A;stroke-width:1}
 /* ページ切り替え・開閉をなめらかに */
 @media (prefers-reduced-motion:no-preference){
   .view:not([hidden]){animation:vin .35s cubic-bezier(.22,1,.36,1)}
@@ -2020,11 +2022,12 @@ function resCls(x) {
   if (/失|野選/.test(x)) return "e";                   // 失策・野選
   return "o";                                          // 凡打
 }
-// 打席結果のタグ（パワプロの試合別記録ふう）＋打点の緑の数字
-function rcChip(x, rbi) {
-  return `<span class="rcw"><span class="rc ${resCls(x)}">${esc(x)}</span>${rbi ? `<i class="rbi num">${rbi}</i>` : ""}</span>`;
+// 打席結果のタグ（パワプロの試合別記録ふう）
+// 打席ごとの打点はスポナビに正確な数が載っていないため出さない（打点は合計を打者カードの「点」で表示）
+function rcChip(x) {
+  return `<span class="rcw"><span class="rc ${resCls(x)}">${esc(x)}</span></span>`;
 }
-const RES_LEGEND = `<div class="rleg"><span class="h">安打・本塁打</span><span class="bb">四死球・犠打飛</span><span class="o">凡打・三振</span><span class="e">失策</span><span class="rbl">打点</span></div>`;
+const RES_LEGEND = `<div class="rleg"><span class="h">安打・本塁打</span><span class="bb">四死球・犠打飛</span><span class="o">凡打・三振</span><span class="e">失策</span></div>`;
 
 /* ---------- アイコン（線画・サイト共通） ---------- */
 const IC = {
@@ -3036,7 +3039,8 @@ function renderAll() {
   CONFIG.prevOrder = calOrder(); // 同率時の最後の決め手（前年度順位）
   const u = DATA.updated ? new Date(DATA.updated) : null;
   renderUpd();
-  $("stripe").innerHTML = CL.filter(t => !CONFIG.excluded.includes(t)).map(t => `<i style="${tv(t)}"></i>`).join("");
+  // ヘッダーの色の帯：前年の順位順（広島を除く）
+  $("stripe").innerHTML = calOrder().filter(t => !CONFIG.excluded.includes(t)).map(t => `<i style="${tv(t)}"></i>`).join("");
   renderMagic(); renderGame(); renderCal(); renderStd(); renderStats(); renderSong();
   renderHealth();
   $("note").textContent = fromSnap ? "自動更新データを読み込めなかったため、ページ内に保存したデータを表示しています。" : "";
