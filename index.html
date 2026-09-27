@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927062516">
+<meta name="build" content="20260927063505">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -555,7 +555,7 @@ a.tn .nmx{border-bottom:1px solid rgba(255,255,255,.28)}
 .plays .pt{font-size:12px;color:var(--muted);font-weight:800;margin-bottom:4px}
 .pl{display:grid;grid-template-columns:44px 1fr auto;gap:2px 8px;align-items:baseline;padding:6px 0;border-top:1px solid #1E1E1E;font-size:13.5px}
 .pl .ph{color:var(--muted);font-weight:800;font-size:12px}
-.pl .pn{font-weight:800}
+.pl .pnm2{font-weight:800}
 .pl .pk{grid-column:2;font-size:11.5px;font-weight:900;color:#000;background:#FFD21F;padding:0 6px;justify-self:start}
 .pl .ps{grid-column:3;grid-row:1 / span 2;font-weight:900;font-size:14px;align-self:center}
 .pbp{display:block;text-align:center;border:1px solid #333;color:#fff;text-decoration:none;font-size:13px;font-weight:800;padding:9px;margin-bottom:10px}
@@ -580,7 +580,7 @@ h2{font-weight:700;margin-top:30px}
 .tgo li.ok,.tgo li.ng{font-weight:600}
 .conds .main,.conds .sub2,.rules p{font-weight:400;line-height:1.8}
 .conds .main b{font-weight:700}
-.pl{font-weight:400}.pl .pn{font-weight:600}
+.pl{font-weight:400}.pl .pnm2{font-weight:600}
 .nowbat .sit{font-weight:400}
 .day .tx,.day .mu{font-weight:600}
 .chip,.tabbar button,.tbtn,.seg button,.cats button{font-weight:600}
@@ -818,6 +818,27 @@ h2{font-weight:700;margin-top:30px}
 .pl3.b .prs{color:#2ECC71}.pl3.s .prs{color:#FFD21F}.pl3.o .prs{color:#FF6B6B}.pl3.h .prs{color:#5AB0FF}.pl3.sac .prs{color:#C8C8C8}
 .pnone{font-size:12.5px;color:var(--muted);margin:0;padding:10px 14px}
 @media (max-width:374px){.pmid{padding:10px 10px}.bso3{gap:6px}.bso3 div{gap:3px}.bso3 i{width:9px;height:9px}.bso3 span{font-size:11px}.pkm b{font-size:24px}.plr b{font-size:16px}.plast{padding:12px 12px}.pl3{grid-template-columns:24px 64px 1fr 56px;gap:8px}.pc3{padding:10px}.pg3 b{font-size:14px}}
+
+/* 打順 */
+.lu{margin:0 0 12px;border:1px solid #1E1E1E;background:#080808}
+.lut{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.06em;border-bottom:1px solid #1A1A1A}
+.lutabs{display:flex;gap:4px}
+.lutabs button{border:1px solid #2A2A2A;background:#111;color:#9A9A9A;font:inherit;font-size:12px;font-weight:700;padding:4px 10px;cursor:pointer;letter-spacing:0}
+.lutabs button.on{color:#fff;border-color:var(--tc);background:color-mix(in srgb,var(--tc) 30%,#111)}
+.lutab{width:100%;border-collapse:collapse;font-size:13px}
+.lutab td{padding:7px 4px;border-bottom:1px solid #141414;vertical-align:middle}
+.lutab tr:last-child td{border-bottom:0}
+.lutab .lo{width:22px;text-align:center;color:#C8C8C8;font-weight:700}
+.lutab .lp{width:22px;text-align:center;color:var(--muted);font-size:12px}
+.lutab .ln{font-weight:700;white-space:nowrap;text-align:left}
+.lutab .la{width:40px;text-align:right;color:#BDBDBD;font-size:12px;padding-right:8px}
+.lutab .lr{text-align:right}
+.lutab .lr span{display:inline-block;font-size:11px;background:#161616;padding:1px 5px;margin:1px 0 1px 3px;color:#C8C8C8}
+.lutab .lr span.h{color:#5AB0FF}.lutab .lr span.b{color:#2ECC71}
+.lutab tr.sub .ln{font-weight:400;color:#C8C8C8;font-size:12.5px}
+.lutab tr.cur td{background:rgba(255,210,31,.10)}
+.lutab tr.cur .ln::before{content:"▶ ";color:#FFD21F;font-size:10px}
+@media (max-width:374px){.lutab{font-size:12px}.lutab .la{display:none}}
 </style>
 </head>
 <body>
@@ -1647,6 +1668,30 @@ function pitchHTML(g) {
   </div>`;
 }
 
+S.lu = {};
+function lineupHTML(g, d) {
+  const L = d.lineups || [];
+  if (L.length < 2 || !L.some(x => x.length)) return "";
+  const key = g.d + gkey(g), p = PD[key];
+  const atk = p && p.attack ? YSHORT[p.attack] : null;
+  const t = S.lu[key] || (g.st === "live" && atk ? atk : g.a);
+  const rows = t === g.h ? L[1] : L[0];
+  const sq = x => (x || "").normalize("NFKC").replace(/\s+/g, "");
+  const curName = g.st === "live" && p && p.batter && atk === t ? sq(p.batter.name) : null;
+  const res = r => r.results.map(x => `<span class="${/安|本|二|三|塁打/.test(x) && !/犠/.test(x) ? "h" : /四|死/.test(x) ? "b" : ""}">${esc(x)}</span>`).join("");
+  let prev = 0;
+  return `<div class="lu">
+    <div class="lut">打順<div class="lutabs">${[g.a, g.h].map(x => `<button type="button" data-k="${key}" data-t="${x}" class="${x === t ? "on" : ""}" style="${tv(x)}">${fn(x)}</button>`).join("")}</div></div>
+    <table class="lutab">${rows.map(r => { const first = r.order !== prev; prev = r.order;
+      return `<tr class="${r.starter ? "" : "sub"}${curName && sq(r.name) === curName ? " cur" : ""}"><td class="lo num">${first ? r.order : ""}</td><td class="lp">${esc(r.pos)}</td><td class="ln">${esc(r.name)}</td><td class="la num">${esc(r.avg || "")}</td><td class="lr">${res(r)}</td></tr>`; }).join("")}</table>
+  </div>`;
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest(".lutabs button");
+  if (!b) return;
+  S.lu[b.dataset.k] = b.dataset.t;
+  renderGame();
+});
 function detailHTML(g) {
   const d = GD[g.d + gkey(g)];
   if (!d) return "";
@@ -1659,7 +1704,8 @@ function detailHTML(g) {
   }
   if (g.st === "live" && PD[g.d + gkey(g)]) h += pitchHTML(g);
   else if (d.now && g.st === "live") h += `<div class="nowbat"><span class="lv">● ${esc(d.now.half)}</span><b>${esc(d.now.order)} ${esc(d.now.name)}</b><span class="sit">${esc(d.now.sit)}</span></div>`;
-  if (d.plays && d.plays.length) h += `<div class="plays"><div class="pt">得点シーン</div>${d.plays.map(p => `<div class="pl"><span class="ph">${esc(p.half)}</span><span class="pn">${esc(p.order)} ${esc(p.name)}</span><span class="pk">${esc(p.kind)}</span><span class="ps num">${esc(p.score)}</span></div>`).join("")}</div>`;
+  h += lineupHTML(g, d);
+  if (d.plays && d.plays.length) h += `<div class="plays"><div class="pt">得点シーン</div>${d.plays.map(p => `<div class="pl"><span class="ph">${esc(p.half)}</span><span class="pnm2">${esc(p.order)} ${esc(p.name)}</span><span class="pk">${esc(p.kind)}</span><span class="ps num">${esc(p.score)}</span></div>`).join("")}</div>`;
   return h;
 }
 
