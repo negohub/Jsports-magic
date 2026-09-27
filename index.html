@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927054018">
+<meta name="build" content="20260927060805">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1566,6 +1566,15 @@ function loadPitches() {
 }
 setInterval(() => { if (S.tab === "game" && !document.hidden) loadPitches(); }, 15 * 1000);
 const pitchCls = r => /ボール|四球|死球/.test(r) ? "b" : /空振|見逃|ファウル|ストライク|三振/.test(r) ? "s" : /犠/.test(r) ? "sac" : /安打|ヒット|二塁打|三塁打|本塁打|出塁|失策|エラー/.test(r) ? "h" : "o";
+// ランナー名は「攻撃中の球団の選手名簿にいる」かつ「その塁に走者がいる」ときだけ表示（誤読み防止）
+function runnerOK(p, b, atk, on) {
+  const name = p.runners && p.runners[b];
+  if (!name || !on({ "1": "一", "2": "二", "3": "三" }[b])) return false;
+  const sq = x => (x || "").normalize("NFKC").replace(/\s+/g, "").replace(/髙/g, "高").replace(/﨑/g, "崎");
+  const roster = ((DATA.rosters || {})[atk] || []).map(r => sq(r.n));
+  const n = sq(name);
+  return n.length >= 1 && roster.some(r => r === n || r.startsWith(n));
+}
 const YSHORT = { "DeNA": "DB", "阪神": "T", "巨人": "G", "中日": "D", "広島": "C", "ヤクルト": "S", "ソフトバンク": "H", "日本ハム": "F", "オリックス": "B", "楽天": "E", "西武": "L", "ロッテ": "M" };
 function pitchHTML(g) {
   const p = PD[g.d + gkey(g)], d = GD[g.d + gkey(g)];
@@ -1590,7 +1599,7 @@ function pitchHTML(g) {
     <rect class="bs ${on("一") ? "on" : ""}" x="206" y="105" width="14" height="14" transform="rotate(45 213 112)"/>
     <rect class="bs ${on("三") ? "on" : ""}" x="80" y="105" width="14" height="14" transform="rotate(45 87 112)"/>
     <path d="M143 172 h14 v6 l-7 6 l-7 -6 z" fill="#fff"/>
-    ${[["2", 150, 36], ["1", 236, 96], ["3", 64, 96]].map(([b, x, y]) => p.runners && p.runners[b] ? `<g><rect x="${x - 26}" y="${y - 13}" width="52" height="18" fill="rgba(0,0,0,.8)"/><text x="${x}" y="${y}" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">${esc(p.runners[b])}</text></g>` : "").join("")}
+    ${[["2", 150, 36], ["1", 236, 96], ["3", 64, 96]].map(([b, x, y]) => runnerOK(p, b, atk, on) ? `<g><rect x="${x - 26}" y="${y - 13}" width="52" height="18" fill="rgba(0,0,0,.8)"/><text x="${x}" y="${y}" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">${esc(p.runners[b])}</text></g>` : "").join("")}
   </svg>`;
   return `<div class="pbox">
     ${last ? `<div class="plast ${pitchCls(last.res)}"><span class="pn">${last.n}</span><b>${esc(last.res)}</b></div><div class="pspd num">${esc(last.speed)}　${esc(last.type)}</div>` : `<div class="plast"><b>${esc(p.half || "")}</b></div>`}
