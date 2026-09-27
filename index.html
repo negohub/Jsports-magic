@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927163701">
+<meta name="build" content="20260927164048">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -2261,14 +2261,24 @@ window.addEventListener("resize", () => moveLens(true));
   const bar = document.querySelector(".tabbar");
   let lastY = window.scrollY, mini = false;
   const set = v => { if (v !== mini) { mini = v; bar.classList.toggle("mini", v); } };
+  // 指（またはマウス・キー）でスクロールしたときだけ大きさを変える。
+  // タブの切り替え・一球速報の自動更新などで画面の長さや位置が変わっただけでは動かさない
+  let userAt = 0;
+  const touch = () => (userAt = Date.now());
+  ["touchstart", "touchmove", "wheel", "keydown"].forEach(ev => window.addEventListener(ev, touch, { passive: true }));
+  // 画面が短くてスクロールできないとき（一番上で下に引っぱった・上にホイールした）も元の大きさに戻す
+  let ty = null;
+  window.addEventListener("touchstart", e => (ty = e.touches[0].clientY), { passive: true });
+  window.addEventListener("touchmove", e => { if (ty != null && e.touches[0].clientY - ty > 12 && window.scrollY < 60) set(false); }, { passive: true });
+  window.addEventListener("wheel", e => { if (e.deltaY < 0 && window.scrollY < 60) set(false); }, { passive: true });
   window.addEventListener("scroll", () => {
     const y = window.scrollY, dy = y - lastY;
+    if (Date.now() - userAt > 700) { lastY = y; return; }
     if (y < 60) set(false);
     else if (dy > 6) set(true);
     else if (dy < -6) set(false);
     if (Math.abs(dy) > 6) lastY = y;
   }, { passive: true });
-  bar.addEventListener("click", () => set(false));
 })();
 window.addEventListener("load", () => moveLens(true));
 function setTab(t) {
