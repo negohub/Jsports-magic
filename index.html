@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927171615">
+<meta name="build" content="20260927172119">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1477,6 +1477,18 @@ html.theme-pawa .songq,html.theme-pawa #songQ{background:#fff !important;color:#
 html:not(.theme-pawa) .ptile{background:linear-gradient(180deg,#1A1A1F,#111114) !important;border:1px solid rgba(255,255,255,.08) !important;border-radius:12px;height:46px;
   color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 4px 12px rgba(0,0,0,.35)}
 html:not(.theme-pawa) .ptile::after{content:none}
+/* スタイリッシュの選手タイル：背番号の大きな透かし＋名前＋守備位置の小さな文字＋チームカラーのほのかな光 */
+html:not(.theme-pawa) .ptiles{gap:8px}
+html:not(.theme-pawa) .ptile{height:64px;flex-direction:column;align-items:flex-start;justify-content:center;padding:0 12px;overflow:hidden;
+  background:radial-gradient(90% 120% at 0% 0%,color-mix(in srgb,var(--tc) 16%,transparent),transparent 60%),linear-gradient(180deg,#18181D,#111114) !important}
+html:not(.theme-pawa) .ptile b{position:relative;z-index:1;font-size:16px;letter-spacing:.04em}
+html:not(.theme-pawa) .ptile.sp b{letter-spacing:.35em;margin-right:0}
+html:not(.theme-pawa) .ptile.lg b{font-size:13px;margin-left:0}
+html:not(.theme-pawa) .ptile small{display:none}
+html:not(.theme-pawa) .ptile .twm{position:absolute;right:-2px;bottom:-12px;font-style:normal;font-size:46px;font-weight:800;line-height:1;color:rgba(255,255,255,.07);letter-spacing:-.04em;pointer-events:none}
+html:not(.theme-pawa) .ptile .tpos{position:relative;z-index:1;display:block;margin-top:3px;font-style:normal;font-size:10.5px;font-weight:500;color:#8B8B95;letter-spacing:.04em;white-space:nowrap}
+@media (max-width:374px){html:not(.theme-pawa) .ptile{height:58px;padding:0 9px}html:not(.theme-pawa) .ptile b{font-size:14px}html:not(.theme-pawa) .ptile .twm{font-size:38px}html:not(.theme-pawa) .ptile.lg b{font-size:11.5px}}
+html.theme-pawa .ptile .twm,html.theme-pawa .ptile .tpos{display:none}
 /* 選手の成績の画面の守備位置ラベル：スタイリッシュは色なし・細い枠だけ */
 html:not(.theme-pawa) .ps-pos{background:transparent;color:#B5B5BD;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);font-weight:600}
 html:not(.theme-pawa) .ptile b{font-weight:600;color:#fff}
@@ -3703,7 +3715,8 @@ function renderSong() {
       <span class="sbtn">${songLink(t, x) ? `<a class="sof" href="${songLink(t, x)}" target="_blank" rel="noopener">${songLabel(t)}</a>` : ""}<a class="sgo" href="${ytUrl(t, x.n)}" target="_blank" rel="noopener">聴く</a></span></div>`;
   const pawa = document.documentElement.classList.contains("theme-pawa");
   const POSC = { "投手": "pp", "捕手": "pc", "内野手": "pi", "外野手": "po" };
-  const tile = x => { const sur = x.n.split(/\s+/)[0], gr = posGroups(t, x.n, x.p); return `<button type="button" class="ptile ${TILEC[gr[0]] || POSC[x.p] || "pp"}${sur.length <= 2 ? " sp" : sur.length >= 5 ? " lg" : ""}" style="${tileStyle(gr)}" data-song="${esc(x.no)}|${esc(x.n)}"><small class="num">${esc(x.no)}</small><b>${esc(sur)}</b></button>`; };
+  const PLBL = { "投": "投手", "先": "先発", "中": "中継ぎ", "抑": "抑え", "捕": "捕手", "内": "内野", "外": "外野" };
+  const tile = x => { const sur = x.n.split(/\s+/)[0], gr = posGroups(t, x.n, x.p); return `<button type="button" class="ptile ${TILEC[gr[0]] || POSC[x.p] || "pp"}${sur.length <= 2 ? " sp" : sur.length >= 5 ? " lg" : ""}" style="${tileStyle(gr)};${tv(t)}" data-song="${esc(x.no)}|${esc(x.n)}"><small class="num">${esc(x.no)}</small><i class="twm num" aria-hidden="true">${esc(x.no)}</i><b>${esc(sur)}</b><em class="tpos">${gr.map(k => PLBL[k] || k).join("・")}</em></button>`; };
   let html = "";
   for (const [pos, dev] of groups) {
     const list = all.filter(x => x.dev === dev && (dev || x.p === pos) && hit(x)).sort((a, b) => Number(a.no) - Number(b.no) || a.no.length - b.no.length);
