@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927081418">
+<meta name="build" content="20260927082007">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -975,6 +975,16 @@ body{padding-bottom:calc(98px + env(safe-area-inset-bottom,0px))}
 .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px));border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(235,235,240,.9));
   box-shadow:0 12px 30px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.9)}
 .toast button{border-radius:14px}
+
+/* 下にスクロール中の小さいタブバー：配置は変えず、縮小と透明度だけで動かす（ぬるっと） */
+.tabbar{transform-origin:50% 100%;will-change:transform;transition:transform .5s cubic-bezier(.22,1,.36,1)}
+.tabbar button .tl{display:block;transition:opacity .28s ease,transform .5s cubic-bezier(.22,1,.36,1);will-change:opacity,transform}
+.tabbar button svg{transition:transform .5s cubic-bezier(.22,1,.36,1)}
+.tabbar.mini{transform:translateY(8px) scale(.8)}
+.tabbar.mini button .tl{opacity:0;transform:translateY(6px) scale(.9)}
+.tabbar.mini button svg{transform:translateY(8px) scale(1.12)}
+.tabbar.mini button[aria-selected="true"] svg{transform:translateY(8px) scale(1.16)}
+@media (prefers-reduced-motion:reduce){.tabbar,.tabbar button .tl,.tabbar button svg{transition:none}}
 </style>
 </head>
 <body>
@@ -1091,17 +1101,17 @@ body{padding-bottom:calc(98px + env(safe-area-inset-bottom,0px))}
 <div class="tabbar">
   <nav role="tablist" aria-label="表示の切り替え"><span class="lens" id="lens" aria-hidden="true"></span>
     <button type="button" role="tab" data-tab="magic" aria-selected="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V3"/><path d="M5 4l14 4.5L5 13"/></svg>戦況</button>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V3"/><path d="M5 4l14 4.5L5 13"/></svg><span class="tl">戦況</span></button>
     <button type="button" role="tab" data-tab="game" aria-selected="false">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 9-9 9-9-9z"/><circle cx="12" cy="12" r="1.6"/></svg>試合</button>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 9-9 9-9-9z"/><circle cx="12" cy="12" r="1.6"/></svg><span class="tl">試合</span></button>
     <button type="button" role="tab" data-tab="cal" aria-selected="false">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>日程</button>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span class="tl">日程</span></button>
     <button type="button" role="tab" data-tab="std" aria-selected="false">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>順位</button>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="tl">順位</span></button>
     <button type="button" role="tab" data-tab="stats" aria-selected="false">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 5.5c1.5 2 2 4.2 2 6.5s-.5 4.5-2 6.5M15.5 5.5c-1.5 2-2 4.2-2 6.5s.5 4.5 2 6.5"/></svg>成績</button>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 5.5c1.5 2 2 4.2 2 6.5s-.5 4.5-2 6.5M15.5 5.5c-1.5 2-2 4.2-2 6.5s.5 4.5 2 6.5"/></svg><span class="tl">成績</span></button>
     <button type="button" role="tab" data-tab="song" aria-selected="false">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4h4l6 4V6L7 10H3z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>応援歌</button>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4h4l6 4V6L7 10H3z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg><span class="tl">応援歌</span></button>
   </nav>
 </div>
 
@@ -1463,6 +1473,20 @@ function moveLens(instant) {
   if (instant) requestAnimationFrame(() => (l.style.transition = ""));
 }
 window.addEventListener("resize", () => moveLens(true));
+// 下にスクロールしている間はタブバーを小さく、上に戻すと元の大きさに（iOS 26のSafariと同じ動き）
+(() => {
+  const bar = document.querySelector(".tabbar");
+  let lastY = window.scrollY, mini = false;
+  const set = v => { if (v !== mini) { mini = v; bar.classList.toggle("mini", v); } };
+  window.addEventListener("scroll", () => {
+    const y = window.scrollY, dy = y - lastY;
+    if (y < 60) set(false);
+    else if (dy > 6) set(true);
+    else if (dy < -6) set(false);
+    if (Math.abs(dy) > 6) lastY = y;
+  }, { passive: true });
+  bar.addEventListener("click", () => set(false));
+})();
 window.addEventListener("load", () => moveLens(true));
 function setTab(t) {
   S.tab = t;
