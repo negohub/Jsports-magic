@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927122348">
+<meta name="build" content="20260927122933">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1248,6 +1248,9 @@ h2::before{transform:none;width:5px;height:18px;border-radius:3px;background:lin
 .fs .fr{color:#fff !important}
 /* 走者のいる塁は赤 */
 .fld .bs.on{fill:#FF3B3B;stroke:#FF8A8A;stroke-width:1}
+/* 自力脱出の消滅 */
+.mt.mx{display:inline-block;font-size:9.5px;line-height:1.2;font-weight:700;color:#FF8A8A;letter-spacing:0;white-space:nowrap}
+.hero .hx{font-style:normal;display:inline-block;margin-left:8px;font-size:10.5px;font-weight:700;color:#fff;background:#C0392B;padding:1px 6px;border-radius:5px;vertical-align:1px}
 /* ページ切り替え・開閉をなめらかに */
 @media (prefers-reduced-motion:no-preference){
   .view:not([hidden]){animation:vin .35s cubic-bezier(.22,1,.36,1)}
@@ -1296,10 +1299,10 @@ h2::before{transform:none;width:5px;height:18px;border-radius:3px;background:lin
       <p>月度の最下位の担当者が、庄村にJ SPORTS代2,580円を支払います（担当：阪神＝根来、巨人＝池田、DeNA＝新國、中日＝庄村、ヤクルト＝今井）。</p>
       <p>対象は広島を除く5球団。3・4月と9・10月はまとめて1つの月度、それ以外は1か月ごとにリセット。交流戦も含む全公式戦の勝敗で集計します。</p>
       <p>順位は勝率（勝÷（勝＋敗）、引き分けは除外）。勝率で並んだ場合は、セ・リーグの規定どおり ①勝利数 ②当該球団間の対戦勝率 ③リーグ内対戦（交流戦を除く）の勝率 ④前年度順位 の順で決めます（月度の成績で判定）。同率で並ぶ可能性が残っているうちは、★（回避確定）も支払い確定も出しません。</p>
-      <p>M は、どの試合で勝っても最下位回避が確定する残りの勝ち数。自力で決められない球団は空欄です。★は回避確定、赤い「支払い」は最下位確定。</p>
+      <p>M は、どの試合で勝っても最下位回避が確定する残りの勝ち数。自力で決められない（残り全勝でも最下位の可能性が残る）球団は「自力消滅」と表示します。★は回避確定、赤い「支払い」は最下位確定。</p>
       <p>勝差は1位とのゲーム差。</p>
     </details>
-    <details class="howto"><summary>見方</summary><ul><li>順位表：勝差は1位とのゲーム差、残試合はこの月度の残り試合。球団名をタップすると公式サイト。</li><li>マジック：最下位を回避するまでの勝ち数。★は回避確定、赤字の「支払」は最下位確定、空欄は自力では決められない状態。</li><li>対戦成績：左の球団から見た、この月度だけの勝数-負数（引分数）。</li><li>直近の調子：○は勝ち、●は負け、△は引き分け。下の文字は対戦相手。</li><li>日程の天気は、試合開始時刻の球場の予報（約2週間先まで）。％は試合中の降水確率の最大値です。天気予報：Open-Meteo。</li><li>勝率で並んだときは、セ・リーグの規定（勝利数→当該球団間の対戦勝率→交流戦を除く勝率→前年度順位）で順位を決めます。</li><li>振替待ちは、中止になって振替日がまだ決まっていない試合です。日程に入るとマジックが変わります。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li>順位表：勝差は1位とのゲーム差、残試合はこの月度の残り試合。球団名をタップすると公式サイト。</li><li>マジック：最下位を回避するまでの勝ち数。★は回避確定、赤字の「支払」は最下位確定、「自力消滅」は、残り試合に全部勝っても、ほかの球団の結果しだいで最下位の可能性が残る状態（自力での最下位脱出ができない）。</li><li>対戦成績：左の球団から見た、この月度だけの勝数-負数（引分数）。</li><li>直近の調子：○は勝ち、●は負け、△は引き分け。下の文字は対戦相手。</li><li>日程の天気は、試合開始時刻の球場の予報（約2週間先まで）。％は試合中の降水確率の最大値です。天気予報：Open-Meteo。</li><li>勝率で並んだときは、セ・リーグの規定（勝利数→当該球団間の対戦勝率→交流戦を除く勝率→前年度順位）で順位を決めます。</li><li>振替待ちは、中止になって振替日がまだ決まっていない試合です。日程に入るとマジックが変わります。</li></ul></details>
   </section>
 
   <section class="view" id="v-cal" aria-label="日程" hidden>
@@ -1861,14 +1864,14 @@ function renderMagic() {
       $("alert").innerHTML = hero(low.t, "支払いが確定", `${low.w}勝${low.l}敗${low.d}分　勝率${pctOf(low.w, low.l)}`, "done");
     } else {
       const up = a.rows[a.rows.length - 2], g = ((up.w - low.w) + (low.l - up.l)) / 2;
-      $("alert").innerHTML = hero(low.t, "このままだと支払い", `残り${low.rem}試合・${fn(up.t)}まで${g.toFixed(1)}差`, "now");
+      $("alert").innerHTML = hero(low.t, "このままだと支払い", `残り${low.rem}試合・${fn(up.t)}まで${g.toFixed(1)}差${low.self === null ? `<em class="hx">自力脱出消滅</em>` : ""}`, "now");
     }
   }
 
   const lastIdx = a.rows.length - 1;
   $("cards").innerHTML = yTable(a.rows.map((r, i) => {
     const paid = r.eliminated || (a.finished && i === lastIdx);
-    const extra = paid ? `<span class="mt ng">支払</span>` : r.safe ? `<span class="mt">${IC.safe}</span>` : r.self === null ? "" : `<span class="mt">M${r.self}</span>`;
+    const extra = paid ? `<span class="mt ng">支払</span>` : r.safe ? `<span class="mt">${IC.safe}</span>` : r.self === null ? `<span class="mt mx">自力<br>消滅</span>` : `<span class="mt">M${r.self}</span>`;
     return { t: r.t, g: r.w + r.l + r.d, w: r.w, l: r.l, d: r.d, gb: r.gb, rem: r.rem, extra };
   }), "マジック")
 ;
@@ -2376,9 +2379,12 @@ function renderToday(a) {
     }
     const lowA = b.rows[b.rows.length - 1].t;
     if (lowA !== lowB) out.push(`<li class="ng">${IC.swap}最下位が${fn(lowA)}（${own(lowA)}）に入れ替わる</li>`);
-    for (const t of [g.h, g.a]) {
-      if (!byT[t] || !A[t] || A[t].safe || A[t].eliminated) continue;
-      if (byT[t].self !== A[t].self) out.push(`<li>${fn(t)}のマジック ${byT[t].self == null ? "なし" : "M" + byT[t].self} → ${A[t].self == null ? "なし" : "M" + A[t].self}</li>`);
+    for (const r of b.rows) {
+      const t = r.t, B = byT[t];
+      if (!B || B.safe || B.eliminated || r.safe || r.eliminated) continue;
+      if (B.self != null && r.self == null) out.push(`<li class="ng">${IC.swap}${fn(t)}（${own(t)}）の自力脱出が消滅</li>`);
+      else if (B.self == null && r.self != null) out.push(`<li class="ok">${fn(t)}（${own(t)}）の自力脱出が復活（M${r.self}）</li>`);
+      else if ((t === g.h || t === g.a) && B.self !== r.self) out.push(`<li>${fn(t)}のマジック M${B.self} → M${r.self}</li>`);
     }
     return out.length ? out.join("") : `<li class="nil">順位・マジックに大きな動きなし</li>`;
   };
@@ -2460,7 +2466,7 @@ function drawCard(a) {
     x.fillStyle = rg; x.fillRect(P, y, tW, rowH);
     x.fillStyle = col; x.fillRect(colX[1], y, 8, rowH);
     const paid = r.eliminated || (a.finished && i === rows.length - 1);
-    const mg = paid ? "支払" : r.safe ? "★" : r.self === null ? "" : "M" + r.self;
+    const mg = paid ? "支払" : r.safe ? "★" : r.self === null ? "消滅" : "M" + r.self;
     const t0 = rows[0], gbv = ((t0.w - r.w) + (r.l - t0.l)) / 2;
     const gb = i === 0 ? "-" : gbv.toFixed(1);
     const vals = [String(i + 1), "", String(r.w + r.l + r.d), String(r.w), String(r.l), String(r.d), pctOf(r.w, r.l), gb, String(r.rem)];
