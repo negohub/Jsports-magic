@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927063505">
+<meta name="build" content="20260927064202">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -839,6 +839,15 @@ h2{font-weight:700;margin-top:30px}
 .lutab tr.cur td{background:rgba(255,210,31,.10)}
 .lutab tr.cur .ln::before{content:"▶ ";color:#FFD21F;font-size:10px}
 @media (max-width:374px){.lutab{font-size:12px}.lutab .la{display:none}}
+
+/* 試合カードの開閉 */
+.tg.can{cursor:pointer}
+.tg.can .tgm{margin-bottom:6px}
+.tgx{display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0 8px;padding:8px;border:1px solid #242424;background:#0B0B0B;font-size:12.5px;color:#C8C8C8;font-weight:600}
+.tgx i{width:8px;height:8px;border-right:2px solid #8A8A8A;border-bottom:2px solid #8A8A8A;transform:rotate(45deg) translateY(-2px);display:inline-block}
+.tg.open .tgx i{transform:rotate(-135deg) translateY(-1px)}
+.tg.islive .tgx{border-color:rgba(255,59,59,.45)}
+.tgd{cursor:default}
 </style>
 </head>
 <body>
@@ -1668,7 +1677,17 @@ function pitchHTML(g) {
   </div>`;
 }
 
-S.lu = {};
+S.lu = {}; S.open = {};
+document.addEventListener("click", e => {
+  if (e.target.closest(".lutabs, .tgd a, .tgd button")) return;
+  const c = e.target.closest("[data-open]");
+  if (!c) return;
+  const k = c.dataset.open;
+  if (e.target.closest(".tgd") && !e.target.closest(".tgx")) return; // 開いた中身のタップでは閉じない
+  S.open[k] = !S.open[k];
+  renderGame();
+  if (S.open[k]) { loadDetails(true); loadPitches(); }
+});
 function lineupHTML(g, d) {
   const L = d.lineups || [];
   if (L.length < 2 || !L.some(x => x.length)) return "";
@@ -1748,9 +1767,12 @@ function renderToday(a) {
     const outs = fin ? "" : `
       <div class="tgo${lead === "h" ? " now" : ""}" style="${tv(g.h)}"><b>${fn(g.h)}が勝ったら${lead === "h" ? `<em>このまま終われば</em>` : ""}</b><ul>${effects(g, true)}</ul></div>
       <div class="tgo${lead === "a" ? " now" : ""}" style="${tv(g.a)}"><b>${fn(g.a)}が勝ったら${lead === "a" ? `<em>このまま終われば</em>` : ""}</b><ul>${effects(g, false)}</ul></div>`;
-    return `<div class="tg${live ? " islive" : ""}">
+    const k = g.d + gkey(g), canOpen = (live || fin) && CONFIG.liveApi, open = canOpen && S.open[k];
+    return `<div class="tg${live ? " islive" : ""}${canOpen ? " can" : ""}${open ? " open" : ""}"${canOpen ? ` data-open="${k}"` : ""}>
       <div class="tgh">${state}<span>${esc(g.v || "")}</span>${both ? `<span class="h2h">直接対決</span>` : ""}</div>
-      <div class="tgm"><span class="badge" style="${tv(g.h)}">${sn(g.h)}</span>${fn(g.h)}${mid}${fn(g.a)}<span class="badge" style="${tv(g.a)}">${sn(g.a)}</span></div>${detailHTML(g)}${outs}
+      <div class="tgm"><span class="badge" style="${tv(g.h)}">${sn(g.h)}</span>${fn(g.h)}${mid}${fn(g.a)}<span class="badge" style="${tv(g.a)}">${sn(g.a)}</span></div>
+      ${canOpen ? `<div class="tgx">${open ? "閉じる" : live ? "タップで一球速報・スコア・打順" : "タップでスコア・打順"}<i></i></div>` : ""}
+      ${open ? `<div class="tgd">${detailHTML(g)}</div>` : ""}${outs}
     </div>`;
   }).join("") ;
 }
