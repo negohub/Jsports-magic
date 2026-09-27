@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927060805">
+<meta name="build" content="20260927061715">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -754,57 +754,70 @@ h2{font-weight:700;margin-top:30px}
 .sc.post{font-size:15px;color:#E0E0E0;gap:8px;flex-wrap:wrap}
 .pnote{margin:8px 0 0;font-size:12px;color:var(--muted)}
 
-/* 一球速報（アプリ風） */
-.pbox{background:#050505;border:1px solid #242424;margin:0 0 10px;overflow:hidden}
-.plast{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 10px 4px}
-.plast b{font-size:22px;font-weight:700;letter-spacing:.04em}
-.pn{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#444;color:#000;font-size:15px;font-weight:700}
+/* 一球速報（中継グラフィック） */
+.pbox{background:linear-gradient(180deg,#0E0E0E,#060606);border:1px solid #1E1E1E;margin:0 0 10px;overflow:hidden}
+.pn{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#444;color:#000;font-size:15px;font-weight:700;flex:0 0 auto}
 .b .pn{background:#2ECC71}.s .pn{background:#FFD21F}.o .pn{background:#FF3B3B;color:#fff}.h .pn{background:#3D8BFF;color:#fff}.sac .pn{background:#AAA}
-.plast.b b{color:#2ECC71}.plast.s b{color:#FFD21F}.plast.o b{color:#FF6B6B}.plast.h b{color:#5AB0FF}
-.pspd{text-align:center;font-size:15px;color:#C8C8C8;padding:0 0 10px;border-bottom:1px solid #1C1C1C}
-.bso2{display:flex;justify-content:center;align-items:center;gap:6px;padding:10px 0;border-bottom:1px solid #1C1C1C;font-size:15px;font-weight:700;color:#C8C8C8}
-.bso2 span{margin-left:14px}.bso2 span:first-child{margin-left:0}
-.bso2 i{width:13px;height:13px;border-radius:50%;background:#262626;display:inline-block}
-.bso2 i.b{background:#2ECC71;box-shadow:0 0 6px rgba(46,204,113,.6)}.bso2 i.s{background:#FFD21F;box-shadow:0 0 6px rgba(255,210,31,.6)}.bso2 i.o{background:#FF3B3B;box-shadow:0 0 6px rgba(255,59,59,.6)}
-.fwrap{position:relative;padding:10px 12px 4px;background:#000}
-.fld{display:block;width:100%;height:auto;max-width:360px;margin:0 auto}
-.fld .bs{fill:#fff;stroke:#fff;stroke-width:1}
-.fld .bs.on{fill:#FFD21F;stroke:#FFD21F;filter:drop-shadow(0 0 5px rgba(255,210,31,.9))}
-.fhalf{position:absolute;left:14px;top:10px;line-height:1.2}
-.fhalf b{display:block;font-size:17px;font-weight:700}
-.fhalf small{font-size:11px;color:var(--muted)}
-.pvs2{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #1C1C1C}
-.pc{padding:0 0 10px;border-right:1px solid #1C1C1C}
-.pc:last-child{border-right:0}
-.pt2{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 55%,#000),color-mix(in srgb,var(--tc) 15%,#000));border-top:3px solid var(--tc);text-align:center;font-size:13.5px;font-weight:700;padding:6px 0}
-.pr2{font-size:11.5px;color:var(--muted);padding:8px 10px 0}
-.pnm{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:0 10px}
-.pnm b{font-size:17px;font-weight:700}
-.hd{font-style:normal;font-size:11px;font-weight:700;padding:1px 5px;color:#fff}
+.plast{display:flex;align-items:center;gap:12px;padding:14px 16px;position:relative;background:linear-gradient(90deg,rgba(255,255,255,.06),transparent 70%)}
+.plast::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:#666}
+.plast.b::before{background:#2ECC71}.plast.s::before{background:#FFD21F}.plast.o::before{background:#FF3B3B}.plast.h::before{background:#3D8BFF}
+.plast.b{background:linear-gradient(90deg,rgba(46,204,113,.16),transparent 70%)}.plast.s{background:linear-gradient(90deg,rgba(255,210,31,.14),transparent 70%)}
+.plast.o{background:linear-gradient(90deg,rgba(255,59,59,.16),transparent 70%)}.plast.h{background:linear-gradient(90deg,rgba(61,139,255,.18),transparent 70%)}
+.plr{display:flex;flex-direction:column;line-height:1.2}
+.plr b{font-size:24px;font-weight:700;letter-spacing:.03em}
+.plr small{font-size:12.5px;color:#BDBDBD}
+.plast.b .plr b{color:#2ECC71}.plast.s .plr b{color:#FFD21F}.plast.o .plr b{color:#FF6B6B}.plast.h .plr b{color:#5AB0FF}
+.pkm{margin-left:auto;text-align:right;line-height:1}
+.pkm b{font-size:40px;font-weight:700;letter-spacing:-.02em}
+.pkm small{display:block;font-size:11px;color:var(--muted);margin-top:3px;letter-spacing:.08em}
+.pmid{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid #1A1A1A;border-bottom:1px solid #1A1A1A;background:#0A0A0A}
+.pinn{display:flex;flex-direction:column;gap:2px;white-space:nowrap}
+.pinn b{font-size:17px;font-weight:700;line-height:1.1}
+.pinn span{font-size:11px;color:#C8C8C8;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.pinn span i{width:8px;height:8px;background:var(--tc);display:inline-block;transform:skewX(-15deg)}
+.bso3{display:flex;gap:10px;white-space:nowrap}
+.bso3 div{display:flex;align-items:center;gap:4px}
+.bso3 span{font-size:12px;font-weight:700;color:#8A8A8A;margin-right:2px}
+.bso3 i{width:11px;height:11px;border-radius:50%;background:#262626;display:inline-block}
+.bso3 i.b{background:#2ECC71;box-shadow:0 0 8px rgba(46,204,113,.7)}.bso3 i.s{background:#FFD21F;box-shadow:0 0 8px rgba(255,210,31,.7)}.bso3 i.o{background:#FF3B3B;box-shadow:0 0 8px rgba(255,59,59,.7)}
+.fwrap{padding:12px 14px 6px;background:radial-gradient(ellipse at 50% 100%,rgba(47,122,51,.18),transparent 70%),#030303}
+.fld{display:block;width:100%;height:auto;max-width:380px;margin:0 auto}
+.fld .bs{fill:#F2F2F2}
+.fld .bs.on{fill:#FFD21F}
+.pvs3{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#1A1A1A;border-top:1px solid #1A1A1A}
+.pc3{position:relative;overflow:hidden;padding:12px 12px 12px;background:linear-gradient(160deg,color-mix(in srgb,var(--tc) 26%,#0A0A0A) 0%,#0A0A0A 55%)}
+.pc3::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--tc)}
+.pc3 .wm{position:absolute;right:-4px;top:-6px;font-size:64px;font-weight:700;color:rgba(255,255,255,.06);line-height:1;letter-spacing:-.04em;pointer-events:none}
+.pr3{font-size:10px;letter-spacing:.14em;color:#8A8A8A;font-weight:700;display:flex;gap:8px;align-items:baseline}
+.pr3 em{font-style:normal;letter-spacing:0;font-size:11px;color:#BDBDBD}
+.pn3{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:4px 0 8px;position:relative}
+.pn3 b{font-size:17px;font-weight:700;line-height:1.25}
+.hd{font-style:normal;font-size:10.5px;font-weight:700;padding:1px 5px;color:#fff}
 .hd.l{background:#1E6FD9}.hd.r{background:#C2185B}
-.pst{display:none;grid-template-columns:auto 1fr;gap:4px 8px;padding:8px 10px 0;font-size:13px;align-items:baseline}
-.pst span{color:var(--muted);font-size:12px}
-.pst b{font-weight:700}
-.pnx{padding:8px 10px 0;font-size:11.5px;color:var(--muted)}
-.plist{border-top:1px solid #1C1C1C;padding:4px 10px 8px}
-.pli{display:grid;grid-template-columns:28px 1fr auto auto;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid #151515;font-size:13.5px}
-.pli:last-child{border-bottom:0}
-.pli .pn{width:22px;height:22px;font-size:12px}
-.pli .psp{color:#C8C8C8}
-.pli .prs{font-weight:700;min-width:56px;text-align:right}
-.pli.b .prs{color:#2ECC71}.pli.s .prs{color:#FFD21F}.pli.o .prs{color:#FF6B6B}.pli.h .prs{color:#5AB0FF}.pli.sac .prs{color:#C8C8C8}
-.pnone{font-size:12.5px;color:var(--muted);margin:0;padding:10px}
-
-/* 一球速報：成績のマス */
-.pgrid{display:grid;grid-template-columns:repeat(2,1fr);margin:8px 0 0;border-top:1px solid #1C1C1C}
-.pgrid div{display:flex;align-items:baseline;gap:8px;padding:6px 10px;border-bottom:1px solid #1C1C1C}
-.pgrid div:nth-child(odd){border-right:1px solid #1C1C1C}
-.pgrid span{font-size:11.5px;color:var(--muted);width:14px}
-.pgrid b{font-size:15px;font-weight:700}
-.pres{display:flex;flex-wrap:wrap;gap:4px;padding:8px 10px 0}
-.pres span{font-size:12px;background:#161616;padding:3px 7px;display:inline-flex;gap:5px;align-items:baseline}
-.pres span em{font-style:normal;color:var(--muted);font-size:10.5px}
-.pres span.h{color:#5AB0FF}.pres span.b{color:#2ECC71}
+.pg3{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;position:relative}
+.pg3 div{display:flex;align-items:baseline;gap:6px;border-bottom:1px solid rgba(255,255,255,.06);padding:3px 0}
+.pg3 span{font-size:11px;color:#8A8A8A;width:12px}
+.pg3 b{font-size:15px;font-weight:700}
+.pres3{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.pres3 span{font-size:11.5px;background:rgba(255,255,255,.07);padding:2px 6px;display:inline-flex;gap:4px;align-items:baseline}
+.pres3 span em{font-style:normal;color:#8A8A8A;font-size:10px}
+.pres3 span.h{color:#5AB0FF}.pres3 span.b{color:#2ECC71}
+.pnx3{margin-top:8px;font-size:10px;letter-spacing:.14em;color:#8A8A8A;font-weight:700;display:flex;gap:8px;align-items:baseline}
+.pnx3 b{letter-spacing:0;font-size:12.5px;color:#DADADA}
+.plist3{padding:6px 12px 10px;border-top:1px solid #1A1A1A}
+.pl3{display:grid;grid-template-columns:26px 80px 1fr 64px;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid #141414;font-size:13px}
+.pl3:last-child{border-bottom:0}
+.pl3 .pn{width:22px;height:22px;font-size:12px}
+.pl3 .pty{color:#DADADA;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pbar{position:relative;height:16px;background:#141414;display:flex;align-items:center}
+.pbar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,rgba(255,255,255,.08),rgba(255,255,255,.28))}
+.b .pbar i{background:linear-gradient(90deg,rgba(46,204,113,.12),rgba(46,204,113,.55))}.s .pbar i{background:linear-gradient(90deg,rgba(255,210,31,.12),rgba(255,210,31,.55))}
+.o .pbar i{background:linear-gradient(90deg,rgba(255,59,59,.12),rgba(255,59,59,.55))}.h .pbar i{background:linear-gradient(90deg,rgba(61,139,255,.12),rgba(61,139,255,.6))}
+.pbar b{position:relative;margin-left:auto;padding-right:6px;font-size:12px;font-weight:700}
+.pl3 .prs{font-weight:700;text-align:right}
+.pl3.b .prs{color:#2ECC71}.pl3.s .prs{color:#FFD21F}.pl3.o .prs{color:#FF6B6B}.pl3.h .prs{color:#5AB0FF}.pl3.sac .prs{color:#C8C8C8}
+.pnone{font-size:12.5px;color:var(--muted);margin:0;padding:10px 14px}
+@media (max-width:374px){.pmid{padding:10px 10px}.bso3{gap:6px}.bso3 div{gap:3px}.bso3 i{width:9px;height:9px}.bso3 span{font-size:11px}.pkm b{font-size:34px}.plr b{font-size:20px}.plast{padding:12px 12px}.pl3{grid-template-columns:24px 64px 1fr 56px;gap:8px}.pc3{padding:10px}.pg3 b{font-size:14px}}
 </style>
 </head>
 <body>
@@ -1587,36 +1600,50 @@ function pitchHTML(g) {
   const atk = YSHORT[p.attack] || (p.half && p.half.includes("表") ? g.a : g.h);
   const def = atk === g.h ? g.a : g.h;
   const hand = h => `<em class="hd ${/左/.test(h) ? "l" : "r"}">${esc(h)}</em>`;
-  const field = `<svg class="fld" viewBox="0 0 300 186" aria-label="走者">
-    <defs><radialGradient id="gr" cx="50%" cy="100%" r="100%"><stop offset="0" stop-color="#3B8F3E"/><stop offset="1" stop-color="#23622A"/></radialGradient></defs>
-    <path d="M150 184 L12 76 A176 176 0 0 1 288 76 Z" fill="url(#gr)" stroke="#C9A227" stroke-width="2"/>
-    <path d="M150 184 L22 84 A164 164 0 0 1 278 84 Z" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10"/>
-    <polygon points="150,180 80,112 150,42 220,112" fill="#B8925A"/>
-    <polygon points="150,160 100,112 150,62 200,112" fill="#3E8E41"/>
-    <circle cx="150" cy="112" r="9" fill="#B8925A"/>
-    <line x1="150" y1="180" x2="12" y2="76" stroke="rgba(255,255,255,.55)" stroke-width="1.2"/><line x1="150" y1="180" x2="288" y2="76" stroke="rgba(255,255,255,.55)" stroke-width="1.2"/>
-    <rect class="bs ${on("二") ? "on" : ""}" x="143" y="47" width="14" height="14" transform="rotate(45 150 54)"/>
-    <rect class="bs ${on("一") ? "on" : ""}" x="206" y="105" width="14" height="14" transform="rotate(45 213 112)"/>
-    <rect class="bs ${on("三") ? "on" : ""}" x="80" y="105" width="14" height="14" transform="rotate(45 87 112)"/>
-    <path d="M143 172 h14 v6 l-7 6 l-7 -6 z" fill="#fff"/>
-    ${[["2", 150, 36], ["1", 236, 96], ["3", 64, 96]].map(([b, x, y]) => runnerOK(p, b, atk, on) ? `<g><rect x="${x - 26}" y="${y - 13}" width="52" height="18" fill="rgba(0,0,0,.8)"/><text x="${x}" y="${y}" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">${esc(p.runners[b])}</text></g>` : "").join("")}
+  const kmh = x => parseInt(x, 10) || 0;
+  const spd = sp => Math.max(6, Math.min(100, ((kmh(sp) - 90) / 70) * 100));
+  const field = `<svg class="fld" viewBox="0 0 300 190" aria-label="走者">
+    <defs>
+      <radialGradient id="gr" cx="50%" cy="100%" r="95%"><stop offset="0" stop-color="#2F7A33"/><stop offset="1" stop-color="#16461A"/></radialGradient>
+      <pattern id="mow" width="18" height="18" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="9" height="18" fill="rgba(255,255,255,.035)"/></pattern>
+      <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <path d="M150 186 L10 78 A178 178 0 0 1 290 78 Z" fill="url(#gr)"/>
+    <path d="M150 186 L10 78 A178 178 0 0 1 290 78 Z" fill="url(#mow)"/>
+    <path d="M10 78 A178 178 0 0 1 290 78" fill="none" stroke="#8C6E3C" stroke-width="7" opacity=".9"/>
+    <polygon points="150,182 78,112 150,40 222,112" fill="#A9824B"/>
+    <polygon points="150,162 99,112 150,61 201,112" fill="#2F7A33"/>
+    <polygon points="150,162 99,112 150,61 201,112" fill="url(#mow)"/>
+    <circle cx="150" cy="112" r="9" fill="#A9824B"/>
+    <line x1="150" y1="182" x2="10" y2="78" stroke="rgba(255,255,255,.7)" stroke-width="1.2"/><line x1="150" y1="182" x2="290" y2="78" stroke="rgba(255,255,255,.7)" stroke-width="1.2"/>
+    ${[["2", 150, 54], ["1", 213, 112], ["3", 87, 112]].map(([b, x, y]) => `<rect class="bs ${on({ "1": "一", "2": "二", "3": "三" }[b]) ? "on" : ""}" ${on({ "1": "一", "2": "二", "3": "三" }[b]) ? 'filter="url(#glow)"' : ""} x="${x - 7}" y="${y - 7}" width="14" height="14" transform="rotate(45 ${x} ${y})"/>`).join("")}
+    <path d="M143 174 h14 v6 l-7 6 l-7 -6 z" fill="#fff"/>
+    ${[["2", 150, 34], ["1", 238, 96], ["3", 62, 96]].map(([b, x, y]) => runnerOK(p, b, atk, on) ? `<g><rect x="${x - 26}" y="${y - 13}" width="52" height="18" fill="rgba(0,0,0,.85)"/><text x="${x}" y="${y}" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">${esc(p.runners[b])}</text></g>` : "").join("")}
   </svg>`;
+  const pcell = (k, v) => v != null && v !== "" ? `<div><span>${k}</span><b class="num">${esc(String(v))}</b></div>` : "";
+  const pg = p.pitcher && p.pitcher.game, bg = p.batter && p.batter.game;
   return `<div class="pbox">
-    ${last ? `<div class="plast ${pitchCls(last.res)}"><span class="pn">${last.n}</span><b>${esc(last.res)}</b></div><div class="pspd num">${esc(last.speed)}　${esc(last.type)}</div>` : `<div class="plast"><b>${esc(p.half || "")}</b></div>`}
-    <div class="bso2"><span>B</span>${lamp(p.b || 0, 3, "b")}<span>S</span>${lamp(p.s || 0, 2, "s")}<span>O</span>${lamp(p.o || 0, 2, "o")}</div>
-    <div class="fwrap">${field}<div class="fhalf"><b>${esc(p.half || "")}</b><small>${fn(atk)}の攻撃</small></div></div>
-    <div class="pvs2">
-      <div class="pc" style="${tv(def)}"><div class="pt2">${fn(def)}</div>${p.pitcher ? `<div class="pr2">投手 ${esc(p.pitcher.no)}</div><div class="pnm"><b>${esc(p.pitcher.name)}</b>${hand(p.pitcher.hand)}</div>
-        ${(() => { const x = p.pitcher.game;
-          const cells = [["防", p.pitcher.era], ["球", x ? x.np : p.pitcher.np], ["回", x && x.ip], ["打", x ? x.bf : p.pitcher.bf], ["安", x && x.h], ["振", x && x.so], ["四", x && x.bb], ["失", x && x.r]].filter(c => c[1] != null && c[1] !== "");
-          return `<div class="pgrid">${cells.map(([k, v]) => `<div><span>${k}</span><b class="num">${esc(String(v))}</b></div>`).join("")}</div>`; })()}` : ""}</div>
-      <div class="pc" style="${tv(atk)}"><div class="pt2">${fn(atk)}</div>${p.batter ? `<div class="pr2">打者 ${esc(p.batter.no)}</div><div class="pnm"><b>${esc(p.batter.name)}</b>${hand(p.batter.hand)}</div>
-        ${(() => { const x = p.batter.game;
-          const cells = [["率", p.batter.avg], ["打", x && x.ab], ["安", x && x.hit], ["点", x && x.rbi], ["本", x && x.hr], ["四", x && x.bb]].filter(c => c[1] != null && c[1] !== "");
-          return `<div class="pgrid">${cells.map(([k, v]) => `<div><span>${k}</span><b class="num">${esc(String(v))}</b></div>`).join("")}</div>` +
-            (x && x.results && x.results.length ? `<div class="pres">${x.results.map((r, i) => `<span class="${/安|本|二|三|塁打/.test(r) && !/犠/.test(r) ? "h" : /四|死/.test(r) ? "b" : ""}"><em>${i + 1}</em>${esc(r)}</span>`).join("")}</div>` : ""); })()}` : ""}${p.next ? `<div class="pnx">次打者 ${esc(p.next)}</div>` : ""}</div>
+    ${last ? `<div class="plast ${pitchCls(last.res)}"><span class="pn">${last.n}</span><div class="plr"><b>${esc(last.res)}</b><small>${esc(last.type)}</small></div><div class="pkm num"><b>${kmh(last.speed) || "-"}</b><small>km/h</small></div></div>` : ""}
+    <div class="pmid">
+      <div class="pinn"><b>${esc(p.half || "")}</b><span style="${tv(atk)}"><i></i>${fn(atk)}攻撃</span></div>
+      <div class="bso3"><div><span>B</span>${lamp(p.b || 0, 3, "b")}</div><div><span>S</span>${lamp(p.s || 0, 2, "s")}</div><div><span>O</span>${lamp(p.o || 0, 2, "o")}</div></div>
     </div>
-    ${list.length ? `<div class="plist">${list.map(x => `<div class="pli ${pitchCls(x.res)}"><span class="pn">${x.n}</span><span class="pty">${esc(x.type)}</span><span class="psp num">${esc(x.speed)}</span><span class="prs">${esc(x.res)}</span></div>`).join("")}</div>` : `<p class="pnone">この打席はまだ投球がありません</p>`}
+    <div class="fwrap">${field}</div>
+    <div class="pvs3">
+      <div class="pc3" style="${tv(def)}"><span class="wm num">${esc(p.pitcher ? p.pitcher.no : "")}</span>
+        <div class="pr3">PITCHER<em>${fn(def)}</em></div>
+        ${p.pitcher ? `<div class="pn3"><b>${esc(p.pitcher.name)}</b>${hand(p.pitcher.hand)}</div>
+        <div class="pg3">${pcell("防", p.pitcher.era)}${pcell("球", pg ? pg.np : p.pitcher.np)}${pcell("回", pg && pg.ip)}${pcell("安", pg && pg.h)}${pcell("振", pg && pg.so)}${pcell("四", pg && pg.bb)}${pcell("失", pg && pg.r)}${pcell("打", pg ? pg.bf : p.pitcher.bf)}</div>` : ""}
+      </div>
+      <div class="pc3" style="${tv(atk)}"><span class="wm num">${esc(p.batter ? p.batter.no : "")}</span>
+        <div class="pr3">BATTER<em>${fn(atk)}</em></div>
+        ${p.batter ? `<div class="pn3"><b>${esc(p.batter.name)}</b>${hand(p.batter.hand)}</div>
+        <div class="pg3">${pcell("率", p.batter.avg)}${pcell("打", bg && bg.ab)}${pcell("安", bg && bg.hit)}${pcell("点", bg && bg.rbi)}${pcell("本", bg && bg.hr)}${pcell("四", bg && bg.bb)}</div>
+        ${bg && bg.results && bg.results.length ? `<div class="pres3">${bg.results.map((r, i) => `<span class="${/安|本|二|三|塁打/.test(r) && !/犠/.test(r) ? "h" : /四|死/.test(r) ? "b" : ""}"><em>${i + 1}</em>${esc(r)}</span>`).join("")}</div>` : ""}` : ""}
+        ${p.next ? `<div class="pnx3">NEXT<b>${esc(p.next)}</b></div>` : ""}
+      </div>
+    </div>
+    ${list.length ? `<div class="plist3">${list.map(x => `<div class="pl3 ${pitchCls(x.res)}"><span class="pn">${x.n}</span><span class="pty">${esc(x.type)}</span><span class="pbar"><i style="width:${spd(x.speed)}%"></i><b class="num">${kmh(x.speed) || ""}</b></span><span class="prs">${esc(x.res)}</span></div>`).join("")}</div>` : `<p class="pnone">この打席はまだ投球がありません</p>`}
   </div>`;
 }
 
