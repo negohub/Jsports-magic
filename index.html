@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927100049">
+<meta name="build" content="20260927100751">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -709,8 +709,8 @@ h2{font-weight:700;margin-top:30px}
 .ftab td.fr small{display:block;font-size:10px;color:var(--muted);font-weight:400}
 .ftab td.fr.w b{color:#fff}
 .ftab td.fr.l b{color:#666}
-.ftab td.fs{text-align:center;font-weight:700;font-size:13px}
-.ftab td.fs.w{color:#fff}.ftab td.fs.l{color:var(--ng)}
+.ftab td.fsk{text-align:center;font-weight:700;font-size:13px}
+.ftab td.fsk.w{color:#fff}.ftab td.fsk.l{color:var(--ng)}
 .ftab th{text-align:center}
 
 /* 小さいヘッダー */
@@ -1141,6 +1141,15 @@ h2::before{transform:none;width:5px;height:18px;border-radius:3px;background:lin
 #detail{border-radius:var(--r-md);overflow:hidden}
 #detail .dd,#detail .sc{border-radius:0}
 .sheet-card,.minibar,.tabbar{border-radius:28px}
+/* 直近の調子：列の幅をそろえる（チーム名・5試合・連続） */
+.ftab{table-layout:fixed;width:100%}
+.ftab th.tnm,.ftab td.tnm{width:92px}
+.ftab th:last-child,.ftab td.fsk{width:64px}
+.ftab td.fr{width:auto}
+.ftab td.fsk{text-align:center !important;padding:0 4px;white-space:nowrap}
+@media (max-width:374px){.ftab th.tnm,.ftab td.tnm{width:80px}.ftab th:last-child,.ftab td.fsk{width:56px}.ftab td.fsk{font-size:12px}}
+/* 順位の推移のグラフも丸い枠に */
+.trend{border-radius:var(--r-md);border:1px solid var(--soft-line);background:var(--card);overflow:hidden}
 /* ページ切り替え・開閉をなめらかに */
 @media (prefers-reduced-motion:no-preference){
   .view:not([hidden]){animation:vin .35s cubic-bezier(.22,1,.36,1)}
@@ -2428,7 +2437,7 @@ function renderForm() {
     rows.map(x => `<tr style="${tv(x.t)}"><td class="tnm"><a href="${TEAM_URL[x.t]}" target="_blank" rel="noopener">${fn(x.t)}</a></td>${[0, 1, 2, 3, 4].map(k => {
       const v = x.last[x.last.length - 5 + k];
       return v ? `<td class="fr ${v.r}"><b>${v.r === "w" ? "○" : v.r === "l" ? "●" : "△"}</b><small>${calSn(v.o)}</small></td>` : `<td class="fr"></td>`;
-    }).join("")}<td class="fs ${x.kind || ""}">${x.streak ? `${x.streak}${x.kind === "w" ? "連勝" : "連敗"}` : "-"}</td></tr>`).join("") + `</tbody></table></div>`;
+    }).join("")}<td class="fsk ${x.kind || ""}">${x.streak ? `${x.streak}${x.kind === "w" ? "連勝" : "連敗"}` : "-"}</td></tr>`).join("") + `</tbody></table></div>`;
 }
 
 /* ---------- 日程カレンダー ---------- */
