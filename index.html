@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927130627">
+<meta name="build" content="20260927131103">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1281,6 +1281,27 @@ th.srt .sic{width:7px;height:11px;margin-left:4px;vertical-align:-1px;display:in
 th.srt .sic path{fill:rgba(255,255,255,.22);transition:fill .2s ease}
 th.srt .sic.asc .u,th.srt .sic.desc .d{fill:#FFD21F}
 th.srt.on{color:#fff}
+/* ===== 担当者ごとの年間成績：バランスを整える ===== */
+.ytbl.ytab{table-layout:fixed;width:100%}
+.ytbl.ytab col.cn{width:31%}.ytbl.ytab col.cp{width:19%}.ytbl.ytab col.cm{width:auto}
+.ytbl.ytab th,.ytbl.ytab td{border:0 !important;border-bottom:1px solid var(--soft-line) !important;padding:9px 2px !important;vertical-align:middle}
+.ytbl.ytab tbody tr:last-child td{border-bottom:0 !important}
+.ytbl.ytab thead th{font-size:10.5px !important;font-weight:600 !important;color:var(--muted);white-space:nowrap !important;letter-spacing:-.02em;padding:9px 0 !important;text-align:center}
+.ytbl.ytab thead th.cur{color:#fff}
+.ytbl.ytab th.yn{text-align:left !important;padding-left:12px !important}
+.ytbl.ytab th.ya{text-align:right !important;padding-right:12px !important}
+.ytbl.ytab td.yn{padding-left:10px !important;text-align:left !important;white-space:nowrap}
+.ytbl.ytab td.yn .badge{display:inline-grid !important;width:22px;height:22px;font-size:11px;border-radius:6px;margin-right:8px;vertical-align:middle}
+.ytbl.ytab .ynm{display:inline-flex;flex-direction:column;align-items:flex-start;vertical-align:middle;line-height:1.25}
+.ytbl.ytab .ynm b{font-size:14px;font-weight:700;display:flex;align-items:center;gap:4px}
+.ytbl.ytab .ynm small{font-size:10px;font-weight:500;color:var(--muted)}
+.ytbl.ytab .ytag{font-size:8.5px;padding:1px 4px;margin-left:0;vertical-align:0;font-weight:700;border-radius:4px}
+.ytbl.ytab td.yc2{padding:9px 0 !important}
+.ytbl.ytab td.yc2 b{width:24px;height:24px;font-size:13px;font-weight:700;border-radius:6px}
+.ytbl.ytab td.ya{padding-right:12px !important;text-align:right !important;white-space:nowrap}
+.ytbl.ytab td.ya b{font-size:13.5px;font-weight:700}
+.ytbl.ytab td.ya small{font-size:10px;font-weight:500;display:inline-flex;align-items:center;gap:3px;justify-content:flex-end;white-space:nowrap}
+@media (max-width:374px){.ytbl.ytab col.cn{width:29%}.ytbl.ytab col.cp{width:20%}.ytbl.ytab td.yn .badge{display:none !important}.ytbl.ytab td.yc2 b{width:20px;height:20px;font-size:11.5px}.ytbl.ytab td.ya b{font-size:12px}}
 /* ページ切り替え・開閉をなめらかに */
 @media (prefers-reduced-motion:no-preference){
   .view:not([hidden]){animation:vin .35s cubic-bezier(.22,1,.36,1)}
@@ -2848,7 +2869,7 @@ function renderStd() {
   }).sort((x, y) => (x.n - y.n) || (x.avg - y.avg));
   const best = people[0], maxN = Math.max(...people.map(x => x.n));
   const short = lbl => lbl.replace("月度", "");
-  $("tot").innerHTML = `<div class="ywrap"><table class="ytbl ytab"><thead><tr><th class="yn">担当</th>${per.map(({ p, a }) => `<th class="${a.finished ? "" : "cur"}">${short(p.label)}</th>`).join("")}<th class="ya">支払い</th></tr></thead><tbody>` +
+  $("tot").innerHTML = `<div class="ywrap"><table class="ytbl ytab"><colgroup><col class="cn">${per.map(() => `<col class="cm">`).join("")}<col class="cp"></colgroup><thead><tr><th class="yn">担当</th>${per.map(({ p, a }) => `<th class="${a.finished ? "" : "cur"}">${short(p.label)}</th>`).join("")}<th class="ya">支払い</th></tr></thead><tbody>` +
     people.map(x => `<tr style="${tv(x.t)}">
       <td class="yn"><span class="badge">${sn(x.t)}</span><span class="ynm"><b>${own(x.t)}${x === best ? `<span class="ytag mvp">MVP</span>` : ""}</b><small class="num">平均${x.avg < 9 ? x.avg.toFixed(1) : "-"}位</small></span></td>
       ${x.ranks.map(v => `<td class="yc2${v.done && v.r === 1 ? " first" : ""}${v.done && v.r === 5 ? " last" : ""}${v.done ? "" : " now"}"><b class="num">${v.r}</b></td>`).join("")}
