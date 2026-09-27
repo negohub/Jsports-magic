@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927113819">
+<meta name="build" content="20260927114940">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1191,7 +1191,7 @@ h2::before{transform:none;width:5px;height:18px;border-radius:3px;background:lin
 .putab td{padding:8px 2px;text-align:center;border-bottom:1px solid #141414;font-weight:600}
 .putab tr:last-child td{border-bottom:0}
 .putab .pnx{text-align:left;padding-left:10px;width:34%}
-.putab td.pnx b{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.putab td.pnx b{color:#fff;display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .putab td.pnx small{display:block;font-size:10.5px;color:var(--muted);font-weight:400}
 .putab td.er{color:#FF8A8A}
 .putab tr.cur td{background:rgba(255,210,31,.10)}
@@ -1206,6 +1206,9 @@ h2::before{transform:none;width:5px;height:18px;border-radius:3px;background:lin
 .pnx3.up{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pr3.done{overflow:hidden}
 @media (max-width:374px){.pr3.done em{display:none}.pnx3.up{font-size:9.5px;padding:7px 8px;white-space:normal;flex-direction:column;align-items:flex-start;gap:2px}.pnx3.up b{font-size:12.5px}}
+/* 投手成績の勝敗マーク */
+.putab .dec{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:5px;font-style:normal;font-size:10.5px;font-weight:700;margin-right:6px;vertical-align:1px;color:#fff;background:#444}
+.putab .dec.dw{background:#D6246E}.putab .dec.dl{background:#1E6FD9}.putab .dec.ds{background:#C9A227;color:#000}.putab .dec.dh{background:#1E8E4E}
 /* ページ切り替え・開閉をなめらかに */
 @media (prefers-reduced-motion:no-preference){
   .view:not([hidden]){animation:vin .35s cubic-bezier(.22,1,.36,1)}
@@ -2267,7 +2270,7 @@ function pitchingHTML(g, d) {
   const c = v => esc(v == null || v === "" ? "-" : v);
   return `<div class="lu pu">
     <div class="lut">投手成績<div class="lutabs">${[g.a, g.h].map(x => `<button type="button" data-pk="${key}" data-t="${x}" class="${x === t ? "on" : ""}" style="${tv(x)}">${fn(x)}</button>`).join("")}</div></div>
-    <div class="puw"><table class="putab num"><thead><tr><th class="pnx">投手</th><th>回</th><th>球数</th><th>安</th><th>本</th><th>振</th><th>四</th><th>失</th><th>責</th></tr></thead><tbody>${rows.map((r, i) => `<tr class="${curName && sq(r.name) === curName ? "cur" : ""}"><td class="pnx"><b>${esc(r.name)}</b><small>防 ${c(r.era)}</small></td><td>${c(r.ip)}</td><td>${c(r.np)}</td><td>${c(r.h)}</td><td>${c(r.hr)}</td><td>${c(r.so)}</td><td>${c(r.bb)}</td><td>${c(r.r)}</td><td class="er">${c(r.er)}</td></tr>`).join("")}</tbody></table></div>
+    <div class="puw"><table class="putab num"><thead><tr><th class="pnx">投手</th><th>回</th><th>球数</th><th>安</th><th>本</th><th>振</th><th>四</th><th>失</th><th>責</th></tr></thead><tbody>${rows.map((r, i) => `<tr class="${curName && sq(r.name) === curName ? "cur" : ""}"><td class="pnx"><b>${r.dec ? `<i class="dec d${{ "勝": "w", "敗": "l", "S": "s", "H": "h" }[r.dec] || ""}">${esc(r.dec)}</i>` : ""}${esc(r.name)}</b><small>防 ${c(r.era)}</small></td><td>${c(r.ip)}</td><td>${c(r.np)}</td><td>${c(r.h)}</td><td>${c(r.hr)}</td><td>${c(r.so)}</td><td>${c(r.bb)}</td><td>${c(r.r)}</td><td class="er">${c(r.er)}</td></tr>`).join("")}</tbody></table></div>
   </div>`;
 }
 document.addEventListener("click", e => {
