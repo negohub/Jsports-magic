@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927170600">
+<meta name="build" content="20260927171615">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1476,7 +1476,9 @@ html.theme-pawa .songq,html.theme-pawa #songQ{background:#fff !important;color:#
 /* 応援歌の選手タイル：スタイリッシュ（黒いカード＋下に守備位置の色のライン） */
 html:not(.theme-pawa) .ptile{background:linear-gradient(180deg,#1A1A1F,#111114) !important;border:1px solid rgba(255,255,255,.08) !important;border-radius:12px;height:46px;
   color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 4px 12px rgba(0,0,0,.35)}
-html:not(.theme-pawa) .ptile::after{content:"";position:absolute;left:12px;right:12px;bottom:0;height:3px;border-radius:3px 3px 0 0;background:var(--acc,#666)}
+html:not(.theme-pawa) .ptile::after{content:none}
+/* 選手の成績の画面の守備位置ラベル：スタイリッシュは色なし・細い枠だけ */
+html:not(.theme-pawa) .ps-pos{background:transparent;color:#B5B5BD;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);font-weight:600}
 html:not(.theme-pawa) .ptile b{font-weight:600;color:#fff}
 html:not(.theme-pawa) .ptile small{color:#6E6E78}
 html:not(.theme-pawa) .ptile:active{background:#222228 !important}
