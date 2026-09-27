@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927174510">
+<meta name="build" content="20260927180847">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -2269,7 +2269,8 @@ const CONFIG = {
   excluded: ["C"],        // 対象外の球団
   owners: { D: "庄村", T: "根来", G: "池田", S: "今井", DB: "新國" }, // 担当
   payee: "庄村",          // 受け取る人
-  ownerPos: { S: "内", D: "捕", DB: "外", G: "外", T: "内" }, // パワプロ風テーマの名前タイルの色（今井＝内野手、庄村＝捕手、新國・池田＝外野手、根来＝内野手）
+  ownerPos: { S: "内", D: "捕", DB: "外", G: "外", T: "内" },
+  nameShort: { "佐藤輝明": "佐藤輝" }, // 呼び名を個別に決める選手（フルネームは空白なしで書く） // パワプロ風テーマの名前タイルの色（今井＝内野手、庄村＝捕手、新國・池田＝外野手、根来＝内野手）
   fee: 2580,              // 1月度あたりの支払い額
   liveApi: "https://jsports-live.kazushi-negoro.workers.dev/", // Cloudflare WorkerのURL（空ならライブ更新はしない）
   tieIsSafe: false,       // 最下位タイを回避扱いにするなら true
@@ -3574,6 +3575,24 @@ const songLink = (t, x) => SONG_ONE[t] ? SONG_ONE[t](x) : SONG_PAGE[t] ? jump(t,
 const songLabel = () => "公式";
 S.songTeam = store("songTeam") || "T"; S.songQ = "";
 const ytUrl = (t, n) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(`${TEAM[t].n} ${n.replace(/\s+/g, "")} 応援歌`);
+// 選手の呼び名（タイル・ランキング用）
+function shortName(t, full) {
+  const k = String(full || "").normalize("NFKC").replace(/[\s*＊+＋]/g, "");
+  const ov = (CONFIG.nameShort || {})[k];
+  if (ov) return ov;
+  const parts = String(full || "").trim().split(/\s+/);
+  if (parts.length < 2) return parts[0] || "";
+  const sur = parts[0];
+  const dup = ((DATA.rosters || {})[t] || []).filter(x => x.n.trim().split(/\s+/)[0] === sur).length > 1;
+  return dup ? sur + parts[1].slice(0, 1) : sur;
+}
+// ランキングの名前（スポナビの名字表記）を名簿で探して呼び名にする
+function rankName(t, n) {
+  const k = String(n || "").normalize("NFKC").replace(/\s+/g, "");
+  const ro = ((DATA.rosters || {})[t] || []).filter(x => !x.dev);
+  const hit = ro.filter(x => x.n.replace(/\s+/g, "").startsWith(k));
+  return hit.length === 1 ? shortName(t, hit[0].n) : n;
+}
 // 選手タイルの色：今季守ったポジションの試合数が多い順（3試合以上のもの。最大3色）。データがなければ名簿の守備位置
 const PCOL = { "投": "#F9B3C7", "先": "#F58A7C", "中": "#F9B3C7", "抑": "#F9B3C7", "捕": "#6FD3F0", "内": "#F9D564", "外": "#84D877" };
 const PKEY = { "投手": "投", "捕手": "捕", "内野手": "内", "外野手": "外" };
@@ -3737,7 +3756,7 @@ function renderSong() {
   const pawa = document.documentElement.classList.contains("theme-pawa");
   const POSC = { "投手": "pp", "捕手": "pc", "内野手": "pi", "外野手": "po" };
   const PLBL = { "投": "投手", "先": "先発", "中": "中継ぎ", "抑": "抑え", "捕": "捕手", "内": "内野", "外": "外野" };
-  const tile = x => { const sur = x.n.split(/\s+/)[0], gr = posGroups(t, x.n, x.p); return `<button type="button" class="ptile ${TILEC[gr[0]] || POSC[x.p] || "pp"}${sur.length <= 2 ? " sp" : sur.length >= 5 ? " lg" : ""}" style="${tileStyle(gr)};${tv(t)}" data-song="${esc(x.no)}|${esc(x.n)}"><small class="num">${esc(x.no)}</small><i class="twm num" aria-hidden="true">${esc(x.no)}</i><b>${esc(sur)}</b><em class="tpos">${gr.map(k => PLBL[k] || k).join("・")}</em></button>`; };
+  const tile = x => { const sur = shortName(t, x.n), gr = posGroups(t, x.n, x.p); return `<button type="button" class="ptile ${TILEC[gr[0]] || POSC[x.p] || "pp"}${sur.length <= 2 ? " sp" : sur.length >= 5 ? " lg" : ""}" style="${tileStyle(gr)};${tv(t)}" data-song="${esc(x.no)}|${esc(x.n)}"><small class="num">${esc(x.no)}</small><i class="twm num" aria-hidden="true">${esc(x.no)}</i><b>${esc(sur)}</b><em class="tpos">${gr.map(k => PLBL[k] || k).join("・")}</em></button>`; };
   let html = "";
   for (const [pos, dev] of groups) {
     const list = all.filter(x => x.dev === dev && (dev || x.p === pos) && hit(x)).sort((a, b) => Number(a.no) - Number(b.no) || a.no.length - b.no.length);
@@ -3922,11 +3941,11 @@ function renderStats(fromLive) {
     const PIT = ["投", "先", "中", "抑"];
     if (S.rkKind === "pit") { const pg = gr.filter(k => PIT.includes(k)); gr = pg.length ? pg : ["投"]; } // 投手部門は投手の色（役割つき）
     else { const bg = gr.filter(k => !PIT.includes(k)); gr = bg.length ? bg : gr; }
-    const nm = r.n;
+    const nm = rankName(r.t, r.n);
     return `<span class="ptile ${TILEC[gr[0]] || "pi"}${nm.length <= 2 ? " sp" : nm.length >= 5 ? " lg" : ""}" style="${tileStyle(gr)}"><b>${esc(nm)}</b></span>`;
   };
   $("rankList").innerHTML = rows.length ? `<div class="ywrap"><table class="ytab rtab"><thead><tr><th>順位</th><th class="tnm">選手名</th><th class="tnm srt${rs.by === "t" ? " on" : ""}" data-by="t">チーム${arrow("t")}</th><th class="srt${rs.by === "v" ? " on" : ""}" data-by="v">${lbl ? lbl[1] : ""}${arrow("v")}</th></tr></thead><tbody>` +
-    view.map(r => `<tr class="${r.r === 1 ? "lead" : ""}" style="${tv(r.t)}"><td class="num"><span class="rkm r${r.r <= 3 ? r.r : 0}">${r.r}</span></td><td class="pnm" data-pl="${r.t}|${esc(r.n)}|${S.rkKind}">${pawaT ? rkTile(r) : esc(r.n)}</td><td class="tnm">${fn(r.t)}</td><td class="num v">${esc(r.v)}</td></tr>`).join("") +
+    view.map(r => `<tr class="${r.r === 1 ? "lead" : ""}" style="${tv(r.t)}"><td class="num"><span class="rkm r${r.r <= 3 ? r.r : 0}">${r.r}</span></td><td class="pnm" data-pl="${r.t}|${esc(r.n)}|${S.rkKind}">${pawaT ? rkTile(r) : esc(rankName(r.t, r.n))}</td><td class="tnm">${fn(r.t)}</td><td class="num v">${esc(r.v)}</td></tr>`).join("") +
     `</tbody></table></div>${QUAL.has(S.cat) ? `<p class="qnote">${S.rkKind === "bat" ? "規定打席" : "規定投球回"}以上の選手が対象</p>` : ""}` : `<div class="rempty">この項目のデータは、次の自動更新のあとに表示されます。</div>`;
   $("rankList").querySelectorAll("th.srt").forEach(th => (th.onclick = () => {
     const by = th.dataset.by;
