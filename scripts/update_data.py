@@ -361,6 +361,46 @@ def mark_songs(t, rows):
     return n
 
 
+FPOS_GROUP = {"一塁手": "内", "二塁手": "内", "三塁手": "内", "遊撃手": "内", "外野手": "外", "捕手": "捕", "投手": "投"}
+
+
+def fetch_fpos(season, old):
+    """各球団の個人守備成績から、選手ごとに今季守ったポジション（投・捕・内・外）と試合数を取る（1日1回）"""
+    today = datetime.now(JST).strftime("%Y-%m-%d")
+    prev = (old or {}).get("fpos") or {}
+    if prev.get("date") == today and prev.get("season") == season and len(prev.get("teams", {})) == 6:
+        return prev
+    teams = dict(prev.get("teams", {})) if prev.get("season") == season else {}
+    for t, code in ROSTER_CODE.items():
+        html = fetch(f"https://npb.jp/bis/{season}/stats/idf1_{code}.html")
+        if not html:
+            print(f"[守備位置] {t} 読み取れず（前回の値を使用）")
+            continue
+        soup = BeautifulSoup(html, "html.parser")
+        out = {}
+        for table in soup.find_all("table"):
+            h = table.find_previous(["h5", "h4", "h3"])
+            grp = FPOS_GROUP.get(clean(h.get_text()) if h else "")
+            if not grp:
+                continue
+            for tr in table.find_all("tr")[1:]:
+                c = [norm(x.get_text(" ", strip=True)) for x in tr.find_all(["td", "th"])]
+                if len(c) < 2 or not c[1].isdigit():
+                    continue
+                name = re.sub(r"[\s*＊]", "", c[0])
+                if not name:
+                    continue
+                d = out.setdefault(name, {})
+                d[grp] = d.get(grp, 0) + int(c[1])
+        if out:
+            teams[t] = out
+            time.sleep(1)
+        else:
+            print(f"[守備位置] {t} 表が見つからず（前回の値を使用）")
+    print(f"[守備位置] {sum(len(v) for v in teams.values())}人（{len(teams)}球団）")
+    return {"season": season, "date": today, "teams": teams}
+
+
 def fetch_rosters(old):
     """各球団の選手一覧（1日1回だけ取りに行く）"""
     now = datetime.now(JST)
@@ -524,9 +564,10 @@ def main():
     prev_order = fetch_prev_order(season, old)
     rosters, roster_date = fetch_rosters(old)
     post = fetch_post(season, old)
+    fpos = fetch_fpos(season, old)
     if (old and old_games == all_games and old_stats == stats and old.get("prev_order") == prev_order
             and old.get("checked") == month and old.get("rosters") == rosters and old.get("song_rev") == SONG_REV
-            and old.get("post") == post):
+            and old.get("post") == post and old.get("fpos") == fpos):
         print("変化なし")
         return
     data = {
@@ -540,6 +581,7 @@ def main():
         "roster_date": roster_date,
         "song_rev": SONG_REV,
         "post": post,
+        "fpos": fpos,
     }
     write_json(data)
     print(f"保存しました: {len(all_games)}試合")
