@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927153205">
+<meta name="build" content="20260927153835">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1477,6 +1477,25 @@ html.theme-pawa .rleg{border-color:#E3ECF7}
 /* 応援歌 */
 html.theme-pawa .srow *{color:#13264A}
 html.theme-pawa .songq,html.theme-pawa #songQ{background:#fff !important;color:#13264A !important;border:3px solid #1D3E7C !important}
+/* 担当者の名前タイル（パワプロ風） */
+.ptile.otile{display:inline-flex;height:auto;min-width:64px;padding:3px 12px;vertical-align:middle;cursor:default;border-radius:8px}
+.ptile.otile b{font-size:inherit;font-weight:700;letter-spacing:.06em}
+.ptile.otile.sp b{letter-spacing:.5em;margin-right:-.5em}
+html.theme-pawa .hero .hn .otile{font-size:22px;padding:2px 14px}
+html.theme-pawa .me-pick .otile{font-size:14px;min-width:58px;padding:3px 8px}
+html.theme-pawa .me-pick button small{white-space:nowrap;font-size:10.5px}
+html.theme-pawa .me-pick button{gap:6px;padding:9px 10px}
+html.theme-pawa .ytbl td.yn .badge{display:none !important}
+html.theme-pawa .ytbl.ytab col.cn{width:30%}
+html.theme-pawa .ytbl td.yc2 b{background:#E3ECF7;color:#13264A}
+html.theme-pawa .ytbl td.yc2.first b{background:linear-gradient(180deg,#FFE680,#F2B600);color:#13264A;box-shadow:0 2px 0 #B98A00}
+html.theme-pawa .ytbl td.yc2.last b{background:#E53935;color:#fff}
+html.theme-pawa .ytbl td.yc2.now b{background:transparent;outline-color:#7F93B5}
+html.theme-pawa .ytbl .ytag.mvp{background:#13264A;color:#FFE14A}
+html.theme-pawa .ytbl .ynm .otile{font-size:13px;min-width:56px;padding:2px 8px}
+html.theme-pawa .ytbl .ynm .otile.sp b{letter-spacing:.3em;margin-right:-.3em}
+html.theme-pawa .hist td.tnm .otile{font-size:13px;min-width:56px;padding:2px 8px}
+html.theme-pawa .se-box .otile{font-size:20px}
 /* ===== パワプロ風：細部（消えないよう独立したまとまりにしておく） ===== */
 /* 確定の条件と残り試合・計算のルール */
 html.theme-pawa .conds *,html.theme-pawa .rules *{color:#13264A}
@@ -2096,6 +2115,7 @@ const CONFIG = {
   excluded: ["C"],        // 対象外の球団
   owners: { D: "庄村", T: "根来", G: "池田", S: "今井", DB: "新國" }, // 担当
   payee: "庄村",          // 受け取る人
+  ownerPos: { S: "内", D: "捕", DB: "外", G: "外", T: "内" }, // パワプロ風テーマの名前タイルの色（今井＝内野手、庄村＝捕手、新國・池田＝外野手、根来＝内野手）
   fee: 2580,              // 1月度あたりの支払い額
   liveApi: "https://jsports-live.kazushi-negoro.workers.dev/", // Cloudflare WorkerのURL（空ならライブ更新はしない）
   tieIsSafe: false,       // 最下位タイを回避扱いにするなら true
@@ -2143,6 +2163,13 @@ const fn = t => (TEAM[t] ? TEAM[t].n : t);
 const pctOf = (w, l) => fmtPct(w, l);
 const own = t => (CONFIG.owners[t] || fn(t));
 const yen = n => n.toLocaleString("ja-JP") + "円";
+// 担当者の名前：パワプロ風テーマのときは守備位置の色のタイル
+const isPawa = () => document.documentElement.classList.contains("theme-pawa");
+const ownT = t => {
+  if (!isPawa() || !own(t)) return own(t);
+  const c = { "投": "pp", "捕": "pc", "内": "pi", "外": "po" }[(CONFIG.ownerPos || {})[t]] || "pi";
+  return `<span class="ptile otile ${c}${own(t).length <= 2 ? " sp" : ""}"><b>${own(t)}</b></span>`;
+};
 const payLine = t => own(t) === CONFIG.payee ? `${own(t)}が ${yen(CONFIG.fee)} 支払い` : `${own(t)} → ${CONFIG.payee}へ ${yen(CONFIG.fee)}`;
 function jst() { const n = new Date(Date.now() + 9 * 3600e3); return { y: n.getUTCFullYear(), m: n.getUTCMonth() + 1, d: n.getUTCDate(), iso: n.toISOString().slice(0, 10) }; }
 function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { return null; } }
@@ -2154,7 +2181,7 @@ const S = { tab: "magic", period: null, periodPicked: false, calTeam: store("cal
 S.me = store("me");
 const ME = () => (S.me && S.me !== "none" && CONFIG.owners[S.me] ? S.me : null);
 function openMePick() {
-  $("mePick").innerHTML = calOrder().filter(t => CONFIG.owners[t]).map(t => `<button type="button" class="${ME() === t ? "on" : ""}" data-me="${t}" style="${tv(t)}"><span class="badge">${sn(t)}</span><b>${own(t)}</b><small>${fn(t)}</small></button>`).join("")
+  $("mePick").innerHTML = calOrder().filter(t => CONFIG.owners[t]).map(t => `<button type="button" class="${ME() === t ? "on" : ""}" data-me="${t}" style="${tv(t)}"><span class="badge">${sn(t)}</span><b>${ownT(t)}</b><small>${fn(t)}</small></button>`).join("")
     + `<button type="button" class="none${S.me === "none" ? " on" : ""}" data-me="none"><b>選ばない</b><small>みんな共通の画面で見る</small></button>`;
   $("meSheet").hidden = false; requestAnimationFrame(() => $("meSheet").classList.add("open"));
 }
@@ -2271,7 +2298,7 @@ function renderSeasonEnd() {
   const total = Object.values(paid).reduce((s, n) => s + n, 0) * CONFIG.fee;
   const year = DATA.season || new Date().getFullYear();
   $("seasonEnd").innerHTML = `<div class="se-grid">
-      <div class="se-box" style="${tv(people[0].t)}"><span class="se-l">年間MVP</span><b>${own(people[0].t)}</b><small>${fn(people[0].t)}・支払い${people[0].n}回・平均${people[0].avg.toFixed(1)}位</small></div>
+      <div class="se-box" style="${tv(people[0].t)}"><span class="se-l">年間MVP</span><b>${ownT(people[0].t)}</b><small>${fn(people[0].t)}・支払い${people[0].n}回・平均${people[0].avg.toFixed(1)}位</small></div>
       <div class="se-box" style="${tv(champ.t)}"><span class="se-l">セ・リーグ優勝</span><b>${fn(champ.t)}</b><small>${champ.w}勝${champ.l}敗${champ.d}分</small></div>
     </div>
     <div class="ywrap"><table class="ytab se-tab"><thead><tr><th>順位</th><th class="tnm">担当</th><th>支払い</th><th>金額</th></tr></thead><tbody>${people.map((x, i) => `<tr style="${tv(x.t)}"><td class="num">${i + 1}</td><td class="tnm">${own(x.t)}<small>${fn(x.t)}</small></td><td class="num">${x.n}回</td><td class="num">${x.n ? yen(x.n * CONFIG.fee) : "-"}</td></tr>`).join("")}</tbody></table></div>
@@ -2304,7 +2331,7 @@ function renderMagic() {
     const toPayee = own(t) === CONFIG.payee ? "支払い" : `→ ${CONFIG.payee}`;
     return `<div class="hero ${state}" style="${tv(t)}">
       <span class="hb">${sn(t)}</span>
-      <div class="hm"><div class="hl">${lbl}</div><div class="hn"><b>${own(t)}</b><span>${fn(t)}</span></div>${sub ? `<div class="hs num">${sub}</div>` : ""}</div>
+      <div class="hm"><div class="hl">${lbl}</div><div class="hn"><b>${ownT(t)}</b><span>${fn(t)}</span></div>${sub ? `<div class="hs num">${sub}</div>` : ""}</div>
       <div class="hp num"><b>${yen(CONFIG.fee)}</b><small>${toPayee}</small></div>
     </div>`;
   };
@@ -3310,7 +3337,7 @@ function renderStd() {
     if (a.finished) paid[low.t] = (paid[low.t] || 0) + 1;
     const ranks = a.played ? a.rows.map((r, i) => `<span class="badge${a.finished && i === a.rows.length - 1 ? " last" : ""}" style="${tv(r.t)}">${sn(r.t)}</span>`).join("") : "";
     return `<tr${a.finished ? ` style="${tv(low.t)}"` : ""}><td class="mo">${p.label.replace("月度", "")}</td><td class="rk5">${ranks}</td>
-      <td class="tnm">${!a.played ? "—" : a.finished ? own(low.t) : `<span class="muted">集計中</span>`}</td><td class="num">${a.finished ? yen(CONFIG.fee) : "-"}</td></tr>`;
+      <td class="tnm">${!a.played ? "—" : a.finished ? ownT(low.t) : `<span class="muted">集計中</span>`}</td><td class="num">${a.finished ? yen(CONFIG.fee) : "-"}</td></tr>`;
   }).join("") + `</tbody></table></div>`;
   const per = list.map(p => ({ p, a: analyze(DATA.games, p, CONFIG) })).filter(x => x.a.played);
   const people = Object.keys(CONFIG.owners).map(t => {
@@ -3322,7 +3349,7 @@ function renderStd() {
   const short = lbl => lbl.replace("月度", "");
   $("tot").innerHTML = `<div class="ywrap"><table class="ytbl ytab"><colgroup><col class="cn">${per.map(() => `<col class="cm">`).join("")}<col class="cp"></colgroup><thead><tr><th class="yn">担当</th>${per.map(({ p, a }) => `<th class="${a.finished ? "" : "cur"}">${short(p.label)}</th>`).join("")}<th class="ya">支払い</th></tr></thead><tbody>` +
     people.map(x => `<tr style="${tv(x.t)}">
-      <td class="yn"><span class="badge">${sn(x.t)}</span><span class="ynm"><b>${own(x.t)}${x === best ? `<span class="ytag mvp">MVP</span>` : ""}</b><small class="num">平均${x.avg < 9 ? x.avg.toFixed(1) : "-"}位</small></span></td>
+      <td class="yn"><span class="badge">${sn(x.t)}</span><span class="ynm"><b>${ownT(x.t)}${x === best ? `<span class="ytag mvp">MVP</span>` : ""}</b><small class="num">平均${x.avg < 9 ? x.avg.toFixed(1) : "-"}位</small></span></td>
       ${x.ranks.map(v => `<td class="yc2${v.done && v.r === 1 ? " first" : ""}${v.done && v.r === 5 ? " last" : ""}${v.done ? "" : " now"}"><b class="num">${v.r}</b></td>`).join("")}
       <td class="ya num">${x.n ? `<b>${yen(x.n * CONFIG.fee)}</b><small>${x.n}回${maxN > 0 && x.n === maxN ? `<span class="ytag bad">最多</span>` : ""}</small>` : `<small>なし</small>`}</td>
     </tr>`).join("") + `</tbody></table></div>`;
