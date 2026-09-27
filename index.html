@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927104759">
+<meta name="build" content="20260927110103">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -2074,38 +2074,42 @@ function loadPitches() {
 }
 setInterval(() => { if (S.tab === "game" && !document.hidden) loadPitches(); }, 15 * 1000);
 const pitchCls = r => /ボール|四球|死球/.test(r) ? "b" : /空振|見逃|ファウル|ストライク|三振/.test(r) ? "s" : /犠/.test(r) ? "sac" : /安打|ヒット|二塁打|三塁打|本塁打|出塁|失策|エラー/.test(r) ? "h" : "o";
-// その回の打席の流れから、今どの塁に誰がいるかを割り出す（出塁した順に並べ、実際に走者がいる塁へ当てはめる）
-function runnerNames(p, d, g, on) {
+// その回の打席結果（出場成績）から、今どの塁に誰がいるかを割り出す。
+// 公式記録の略号で進塁を決め、スコア表のその回の得点と合わない分は、先の走者が生還したものとして取り除く
+function simRunners(p, d, g) {
   const cur = d && d.cur;
   if (!cur || !p || cur.half !== p.half) return {};
-  let rs = []; // {name, order, base}
-  const adv = n => { rs.forEach(r => (r.base += n)); rs = rs.filter(r => r.base <= 3); };
-  const force = () => { // 押し出し：詰まっている分だけ進む
-    const occ = b => rs.some(r => r.base === b);
-    if (occ(1)) { if (occ(2)) { if (occ(3)) rs = rs.filter(r => r.base !== 3); rs.filter(r => r.base === 2).forEach(r => (r.base = 3)); } rs.filter(r => r.base === 1).forEach(r => (r.base = 2)); }
+  let rs = [], scored = 0;
+  const home = () => { const n = rs.filter(r => r.base > 3).length; scored += n; rs = rs.filter(r => r.base <= 3); };
+  const adv = n => { rs.forEach(r => (r.base += n)); home(); };
+  const force = () => { // 押し出し・野選など：詰まっている分だけ進む
+    const at = b => rs.find(r => r.base === b);
+    if (at(1)) { if (at(2)) { if (at(3)) at(3).base = 4; at(2).base = 3; } at(1).base = 2; }
+    home();
   };
   for (const st of cur.steps) {
-    const x = st.res || "", me = { name: st.name, order: parseInt(st.order, 10) };
-    if (/本/.test(x)) { rs = []; continue; }
-    if (/3|三塁打/.test(x) && !/三振|三ゴロ|三飛|三直|三邪/.test(x)) { rs = []; rs.push({ ...me, base: 3 }); continue; }
-    if (/2|二塁打/.test(x) && !/二ゴロ|二飛|二直|二邪/.test(x)) { adv(2); rs.push({ ...me, base: 2 }); continue; }
-    if (/四球|死球|打妨/.test(x)) { force(); rs.push({ ...me, base: 1 }); continue; }
-    if (/安|失|野選|振逃/.test(x)) { adv(1); rs.push({ ...me, base: 1 }); continue; }
+    const x = String(st.res || "").normalize("NFKC"), me = { name: st.name, order: parseInt(st.order, 10) };
+    const cls = resCls(x);
+    if (cls === "hr") { scored += rs.length + 1; rs = []; continue; }
+    if (cls === "h" && /3$|三塁打/.test(x)) { scored += rs.length; rs = [{ ...me, base: 3 }]; continue; }
+    if (cls === "h" && /2$|二塁打/.test(x)) { adv(2); rs.push({ ...me, base: 2 }); continue; }
+    if (cls === "h") { rs.forEach(r => (r.base += r.base >= 2 ? 2 : 1)); home(); rs.push({ ...me, base: 1 }); continue; } // 単打：二塁・三塁の走者は生還、一塁の走者は二塁へ
+    if (cls === "bb" || cls === "e" || /振逃/.test(x)) { force(); rs.push({ ...me, base: 1 }); continue; }
+    if (/犠飛/.test(x)) { const t = rs.find(r => r.base === 3); if (t) { t.base = 4; home(); } continue; }
     if (/犠/.test(x)) { adv(1); continue; }
     if (/併/.test(x)) { rs = rs.filter(r => r.base !== 1); continue; }
   }
-  const occupied = ["1", "2", "3"].filter(b => on({ "1": "一", "2": "二", "3": "三" }[b]));
-  if (!occupied.length || !rs.length) return {};
-  rs.sort((a, b) => a.base - b.base);
-  const side = cur.half.includes("表") ? 0 : 1, lu = (d.lineups || [])[side] || [];
+  // スコア表のその回の得点と合わせる（盗塁・暴投・タイムリーで多く返った分など）
+  const inn = parseInt(p.half, 10), top = /表/.test(p.half);
+  const L = d.line, cell = L && (top ? L.away : L.home) && (top ? L.away : L.home).inn[inn - 1];
+  const actual = /^\d+$/.test(cell || "") ? +cell : null;
+  if (actual != null && actual > scored) { rs.sort((a, b) => b.base - a.base); rs.splice(0, Math.min(rs.length, actual - scored)); }
+  // 代走が出ていれば、その選手に置き換える
+  const side = top ? 0 : 1, lu = (d.lineups || [])[side] || [];
   const out = {};
-  occupied.forEach((b, i) => {
-    const r = rs[i];
-    if (!r) return;
-    // 代走が出ていれば、その選手に置き換える
+  rs.forEach(r => {
     const subs = lu.filter(x => x.order === r.order && !x.starter && /^走/.test(x.pos));
-    const nm = subs.length ? subs[subs.length - 1].name : r.name;
-    out[b] = nm.split(" ")[0];
+    out[String(r.base)] = (subs.length ? subs[subs.length - 1].name : r.name).split(" ")[0];
   });
   return out;
 }
@@ -2134,13 +2138,17 @@ function pitchHTML(g) {
   const lamp = (n, max, cls) => Array.from({ length: max }, (_, i) => `<i class="${i < n ? cls : ""}"></i>`).join("");
   const sit = (d && d.now && d.now.sit) || "";
   const bmap = { "一": "1", "二": "2", "三": "3" };
-  const on = k => sit ? (sit.includes("満塁") || sit.includes(k)) : !!(p.bases && p.bases[bmap[k]]);
+  const SIM = simRunners(p, d, g);
+  const hasBases = p.bases && Object.keys(p.bases).length;
+  const on = k => sit ? (sit.includes("満塁") || sit.includes(k)) : hasBases ? !!p.bases[bmap[k]] : !!SIM[bmap[k]];
   const atk = YSHORT[p.attack] || (p.half && p.half.includes("表") ? g.a : g.h);
   const def = atk === g.h ? g.a : g.h;
   const hand = h => `<em class="hd ${/左/.test(h) ? "l" : "r"}">${esc(h)}</em>`;
   const kmh = x => parseInt(x, 10) || 0;
   const spd = sp => Math.max(6, Math.min(100, ((kmh(sp) - 90) / 70) * 100));
-  const RN = runnerNames(p, d, g, on);
+  // 名前：実際にランナーがいる塁に、割り出した走者を下の塁から順に当てはめる
+  const RN = (() => { const occ = ["1", "2", "3"].filter(b => on({ "1": "一", "2": "二", "3": "三" }[b])), names = ["1", "2", "3"].map(b => SIM[b]).filter(Boolean), o = {};
+    occ.forEach((b, i) => { if (names[i]) o[b] = names[i]; }); return o; })();
   const field = `<svg class="fld" viewBox="0 0 300 190" aria-label="走者">
     <defs>
       <radialGradient id="gr" cx="50%" cy="100%" r="95%"><stop offset="0" stop-color="#2F7A33"/><stop offset="1" stop-color="#16461A"/></radialGradient>
@@ -2157,6 +2165,7 @@ function pitchHTML(g) {
     <line x1="150" y1="182" x2="10" y2="78" stroke="rgba(255,255,255,.7)" stroke-width="1.2"/><line x1="150" y1="182" x2="290" y2="78" stroke="rgba(255,255,255,.7)" stroke-width="1.2"/>
     ${[["2", 150, 54], ["1", 213, 112], ["3", 87, 112]].map(([b, x, y]) => `<rect class="bs ${on({ "1": "一", "2": "二", "3": "三" }[b]) ? "on" : ""}" ${on({ "1": "一", "2": "二", "3": "三" }[b]) ? 'filter="url(#glow)"' : ""} x="${x - 7}" y="${y - 7}" width="14" height="14" transform="rotate(45 ${x} ${y})"/>`).join("")}
     <path d="M143 174 h14 v6 l-7 6 l-7 -6 z" fill="#fff"/>
+    <g class="blab" font-size="9.5" font-weight="700" fill="rgba(255,255,255,.55)" text-anchor="middle"><text x="196" y="132">一塁</text><text x="150" y="79">二塁</text><text x="104" y="132">三塁</text></g>
     ${[["2", 150, 34], ["1", 238, 96], ["3", 62, 96]].map(([b, x, y]) => { const nm = runnerOK(p, b, atk, on) ? p.runners[b].split(" ")[0] : RN[b]; return nm ? `<g><rect x="${x - 30}" y="${y - 13}" width="60" height="19" rx="2" fill="rgba(0,0,0,.85)"/><text x="${x}" y="${y + 1}" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff">${esc(nm)}</text></g>` : ""; }).join("")}
   </svg>`;
   const pcell = (k, v) => v != null && v !== "" ? `<div><span>${k}</span><b class="num">${esc(String(v))}</b></div>` : "";
