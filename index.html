@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927155852">
+<meta name="build" content="20260927161356">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -148,7 +148,6 @@ h2 small{font-size:12.5px;color:var(--muted);font-weight:600;font-style:normal;m
 .day .rs.w{color:#fff} .day .rs.l{color:#555} .day .rs.d{color:var(--muted);font-size:18px}
 .day .tx{font-size:11px;color:var(--muted);font-weight:700}
 .day.today{background:#161616}
-.day.sel{box-shadow:inset 0 0 0 2px #fff}
 .detail{margin-top:12px;border-left:4px solid #fff;background:var(--p1);padding:12px 16px;min-height:62px}
 .detail .dd{font-size:12.5px;color:var(--muted);font-weight:700}
 .detail .sc{display:flex;align-items:center;gap:10px;margin-top:4px;font-size:17px;font-weight:900;flex-wrap:wrap}
@@ -239,7 +238,6 @@ td.pc{font-weight:900}
 .tabbar nav{display:grid;grid-template-columns:repeat(6,1fr);width:100%;max-width:480px}
 .tabbar button{background:none;border:0;cursor:pointer;padding:8px 0 6px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:800;color:var(--dim);position:relative}
 .tabbar button svg{width:23px;height:23px}
-.tabbar button[aria-selected="true"]{color:#fff}
 .tabbar button[aria-selected="true"]::before{content:"";position:absolute;top:-5px;left:30%;right:30%;height:3px;background:#fff}
 .note{font-size:12px;color:var(--dim);text-align:center;margin-top:18px}
 @media (max-width:374px){
@@ -400,7 +398,6 @@ h2 small{font-weight:600}
 .day.win{background:color-mix(in srgb,var(--tc) 24%,#000)}
 .day.win .rs.w{color:#fff}
 .day.today{box-shadow:inset 0 -3px 0 #fff}
-.day.sel{box-shadow:inset 0 0 0 2px #fff}
 
 /* ===== 色と見やすさの仕上げ ===== */
 :root{--p1:#111;--p2:#1B1B1B;--line:#262626;--line2:#1C1C1C;--muted:#9A9A9A}
@@ -878,7 +875,6 @@ h2{font-weight:700;margin-top:30px}
 
 /* スコア表の得点マス */
 .ls td.scd{cursor:pointer;color:#FFD21F;box-shadow:inset 0 -2px 0 #FFD21F}
-.ls td.scd.on{background:#3A2E06}
 
 /* ===== スコアバグ ===== */
 .bug{display:flex;align-items:stretch;background:#050505;border:1px solid #242424;margin:0 0 8px;overflow:hidden}
@@ -1049,7 +1045,7 @@ body{padding-bottom:calc(98px + env(safe-area-inset-bottom,0px))}
 .themeSeg button{border:0;border-radius:11px;padding:10px;font:inherit;font-size:13.5px;font-weight:700;color:#BDBDBD;background:none;cursor:pointer}
 .themeSeg button[aria-pressed="true"]{background:#fff;color:#000}
 .sh-note{font-size:11.5px;color:var(--muted);margin:10px 0 0;line-height:1.6}
-.hi{display:grid;grid-template-columns:12px 112px 1fr;align-items:baseline;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
+.hi{display:grid;grid-template-columns:12px 104px 1fr;align-items:baseline;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
 .hi i{width:9px;height:9px;border-radius:50%;background:#2ECC71;align-self:center}
 .hi.warn i{background:#FFB020}.hi.ng i{background:#FF3B3B}.hi.off i{background:#555}
 .hi b{font-weight:700}.hi span{color:#C8C8C8}
@@ -1509,6 +1505,21 @@ html.theme-pawa .ytbl .ynm .otile.sp b{letter-spacing:.3em;margin-right:-.3em}
 html.theme-pawa .hist td.tnm .otile{font-size:13px;min-width:56px;padding:2px 8px}
 html.theme-pawa .se-box .otile{font-size:20px}
 /* ===== パワプロ風：細部（消えないよう独立したまとまりにしておく） ===== */
+/* 日程：月の成績の行 */
+html.theme-pawa #mRec,html.theme-pawa #mRec *{color:#13264A !important}
+/* 試合タブ：投手成績の名前 */
+html.theme-pawa .putab td.pnx b{color:#13264A !important}
+html.theme-pawa .putab td.pnx small{color:#4A6390}
+/* シーズン終了後：年間MVP・優勝・月ごとの支払い者 */
+html.theme-pawa .se-box{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 30%,#fff),#fff 70%) !important}
+html.theme-pawa .se-box,html.theme-pawa .se-box b,html.theme-pawa .se-box small{color:#13264A !important}
+html.theme-pawa .se-box .se-l{color:#C98A00 !important}
+html.theme-pawa .se-foot span{background:#fff;color:#13264A;border:2px solid #1D3E7C;border-left:5px solid var(--tc);border-radius:8px}
+html.theme-pawa .se-foot em{color:#4A6390}
+html.theme-pawa .se-tab td b,html.theme-pawa .se-tab td{color:#13264A !important}
+html.theme-pawa .se-sum,html.theme-pawa .se-sum b{color:#13264A !important}
+/* 日程の試合の詳細：チーム名は球団色の文字だと黄色などが読めないので、紺の文字に球団色の下線 */
+html.theme-pawa #detail .dtm{color:#13264A !important;box-shadow:inset 0 -5px 0 var(--tcol);padding:0 2px}
 /* 確定の条件と残り試合・計算のルール */
 html.theme-pawa .conds *,html.theme-pawa .rules *{color:#13264A}
 html.theme-pawa .conds .badge,html.theme-pawa .rules .badge{color:var(--ti,#000) !important}
@@ -2628,14 +2639,15 @@ function postCard(g) {
   </div>`;
 }
 const GD = {}; // 試合詳細（スコア表・得点シーン）
+const HF = { detail: 0, pitch: 0 }; // 続けて失敗した回数（データの状態に出す）
 const gkey = g => `${g.h}-${g.a}`;
 async function loadDetail(g) {
   if (!CONFIG.liveApi) return;
   try {
     const r = await fetch(`${CONFIG.liveApi}?game=${gkey(g)}&t=${Date.now()}`, { cache: "no-store" });
     const d = await r.json();
-    if (d && !d.error) { GD[g.d + gkey(g)] = d; if (S.tab === "game") renderGame(); }
-  } catch {}
+    if (d && !d.error) { GD[g.d + gkey(g)] = d; HF.detail = 0; if (S.tab === "game") renderGame(); } else HF.detail++;
+  } catch { HF.detail++; }
 }
 function loadDetails(force) {
   const today = jst().iso;
@@ -2648,8 +2660,9 @@ async function loadPitch(g) {
   try {
     const r = await fetch(`${CONFIG.liveApi}?pitch=${gkey(g)}&t=${Date.now()}`, { cache: "no-store" });
     const d = await r.json();
-    if (d && !d.error && d.half) { const k = g.d + gkey(g), old = JSON.stringify(PD[k]); PD[k] = d; if (S.tab === "game" && old !== JSON.stringify(d)) renderGame(); }
-  } catch {}
+    if (d && !d.error && d.half) { HF.pitch = 0; const k = g.d + gkey(g), old = JSON.stringify(PD[k]); PD[k] = d; if (S.tab === "game" && old !== JSON.stringify(d)) renderGame(); }
+    else HF.pitch++;
+  } catch { HF.pitch++; }
 }
 function loadPitches() {
   const today = jst().iso;
@@ -3309,7 +3322,7 @@ function renderCal() {
     const res = g.st === "final" && (g.h === t || g.a === t) ? (() => { const r = resultOf(g, t); return `<span class="res ${r}">${r === "w" ? "勝ち" : r === "l" ? "負け" : "引き分け"}</span>`; })() : `<span class="res num">${esc(g.t || "")}</span>`;
     const score = g.st === "final" ? `<span class="n num">${g.hs}</span><span style="color:var(--muted)">-</span><span class="n num">${g.as}</span>` : `<span style="color:var(--muted)">vs</span>`;
     $("detail").innerHTML = `<div class="dd">${mm}/${d2}（${WD[new Date(yy, mm - 1, d2).getDay()]}）${STAGE[g.stage][1]} 第${g.no}戦</div>` +
-      (mine ? `<div class="sc"><span style="color:${tc(g.h)}">${fn(g.h)}</span>${score}<span style="color:${tc(g.a)}">${fn(g.a)}</span>${res}</div>` : `<div class="sc post">${g.h ? `<span style="color:${tc(g.h)}">${fn(g.h)}</span><span style="color:var(--muted)">vs</span><span>${g.a ? fn(g.a) : "ファーストステージ勝者"}</span>` : `<span>${postPlace(g)}</span>`}</div>`) +
+      (mine ? `<div class="sc"><span class="dtm" style="color:${tc(g.h)};--tcol:${tc(g.h)}">${fn(g.h)}</span>${score}<span class="dtm" style="color:${tc(g.a)};--tcol:${tc(g.a)}">${fn(g.a)}</span>${res}</div>` : `<div class="sc post">${g.h ? `<span class="dtm" style="color:${tc(g.h)};--tcol:${tc(g.h)}">${fn(g.h)}</span><span style="color:var(--muted)">vs</span><span>${g.a ? fn(g.a) : "ファーストステージ勝者"}</span>` : `<span>${postPlace(g)}</span>`}</div>`) +
       `<p class="pnote">ポストシーズンは戦況（マジック・支払い）には関係ありません。</p>`;
     return;
   }
@@ -3327,7 +3340,7 @@ function renderCal() {
     const w = g.st === "sched" ? wxFor(g) : null;
     const wxRow = w ? `<div class="wxd">${wxIcon(w.code)}<b>${wxKind(w.code)[1]}</b><span class="num">${w.temp}℃</span>${w.pop != null ? `<span class="num${w.pop >= 60 ? " hi" : ""}">降水確率 ${w.pop}%</span>` : ""}${w.dome ? `<em>ドーム（天気の影響なし）</em>` : ""}</div>` : "";
     return `<div class="dd">${mm}/${d2}（${WD[new Date(yy, mm - 1, d2).getDay()]}）${esc(g.v || "")}</div>${wxRow}
-      <div class="sc"><span style="color:${tc(g.h)}">${fn(g.h)}</span>${score}<span style="color:${tc(g.a)}">${fn(g.a)}</span>${res}</div>`;
+      <div class="sc"><span class="dtm" style="color:${tc(g.h)};--tcol:${tc(g.h)}">${fn(g.h)}</span>${score}<span class="dtm" style="color:${tc(g.a)};--tcol:${tc(g.a)}">${fn(g.a)}</span>${res}</div>`;
   }).join("");
 }
 
@@ -3709,6 +3722,20 @@ function healthItems() {
   out.push(!asof ? { lv: "warn", k: "成績", v: "まだ取得できていません" }
     : lagDays > 2 ? { lv: "warn", k: "成績", v: `${st.asof} から更新されていません` }
     : { lv: "ok", k: "成績", v: `最新（${st.asof} 時点）` });
+  // 試合の詳細（スコア表・打順）と一球速報：続けて失敗していないか
+  const anyLive = DATA.games.some(g => g.d === today && g.st === "live");
+  out.push(HF.detail >= 3 ? { lv: "warn", k: "スコア・打順", v: "中継プログラムから取れていません（スポナビのページが変わった可能性）" }
+    : { lv: "ok", k: "スコア・打順", v: Object.keys(GD).length ? "OK" : "試合を開くと取得します" });
+  out.push(HF.pitch >= 3 && anyLive ? { lv: "warn", k: "一球速報", v: "取れていません（スポナビのページが変わった可能性）" }
+    : { lv: "ok", k: "一球速報", v: Object.keys(PD).length ? "OK" : "試合中に取得します" });
+  // 守備位置・投手の役割（1日1回）と選手一覧
+  const ageDays = s2 => s2 ? (new Date(today) - new Date(s2)) / 864e5 : 99;
+  const fp = DATA.fpos || {}, inSeason = DATA.games.some(g => g.st === "sched" || g.st === "live");
+  out.push(!fp.date ? { lv: "warn", k: "守備位置", v: "まだ取り込まれていません（選手タイルは名簿の守備位置の1色）" }
+    : inSeason && ageDays(fp.date) > 3 ? { lv: "warn", k: "守備位置", v: `${fp.date.slice(5).replace("-", "/")} から更新されていません` }
+    : { lv: "ok", k: "守備位置", v: `最新（${fp.date.slice(5).replace("-", "/")}）` });
+  const rosterN = Object.values(DATA.rosters || {}).reduce((a, v) => a + v.length, 0);
+  out.push(rosterN < 100 ? { lv: "warn", k: "選手一覧", v: "一部の球団が取り込めていません" } : { lv: "ok", k: "選手一覧", v: `${rosterN}人` });
   // 自動更新データの読み込み
   out.push(fromSnap ? { lv: "warn", k: "自動更新データ", v: "読み込めていません。サイト内の控えのデータを表示しています。" } : { lv: "ok", k: "自動更新データ", v: "読み込みOK" });
   // ライブ速報
