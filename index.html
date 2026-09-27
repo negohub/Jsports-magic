@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927164427">
+<meta name="build" content="20260927165731">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1409,7 +1409,7 @@ html.theme-pawa .howto li,html.theme-pawa .rules p,html.theme-pawa .foot,html.th
 html.theme-pawa .ytab thead th,html.theme-pawa .putab th,html.theme-pawa .race .rcH th{background:linear-gradient(180deg,#4DA3F2,#1E6FD0) !important;color:#fff !important;font-weight:700 !important;text-shadow:0 1px 0 rgba(0,0,0,.25)}
 html.theme-pawa .ytab tbody td,html.theme-pawa .ytab tbody th{background:#EFF9F0 !important;color:#13264A !important;border-color:#CFE5D3 !important}
 html.theme-pawa .ytab tbody tr:nth-child(even) td{background:#FFFFFF !important}
-html.theme-pawa .ytab td.tnm{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 28%,#fff),#fff 75%) !important;box-shadow:inset 5px 0 0 var(--tc)}
+html.theme-pawa .ytab td.tnm,html.theme-pawa .ytab tbody tr:nth-child(n) td.tnm{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 28%,#fff),#fff 75%) !important;box-shadow:inset 5px 0 0 var(--tc)}
 html.theme-pawa .ytab td.tnm a,html.theme-pawa .ytab td.pnm{color:#13264A !important}
 html.theme-pawa .ytab td.tnm small{color:#4A6390}
 html.theme-pawa .ytab tr.ex td{opacity:.5}
@@ -1496,6 +1496,34 @@ html.theme-pawa .htab td.rk5 .badge{margin:3px 2px}
 html.theme-pawa .hero .hb{border-radius:50% !important;clip-path:none !important;aspect-ratio:1/1;
   background:radial-gradient(circle at 32% 26%,rgba(255,255,255,.6),rgba(255,255,255,0) 42%),radial-gradient(circle at 50% 120%,rgba(0,0,0,.22),rgba(0,0,0,0) 55%),var(--tc) !important;
   color:var(--ti,#fff) !important;box-shadow:0 0 0 3px #fff,0 0 0 5px #13264A,0 4px 6px rgba(19,38,74,.3) !important;margin:5px}
+/* ===== 選手の成績の画面 ===== */
+#songSheet .sheet-card{max-height:86vh;overflow:auto}
+.ps-poss{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+.ps-pos{font-style:normal;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px;color:#0A0A0C;background:var(--c)}
+.ps-body{margin-top:10px}
+.ps-load{padding:18px 4px;text-align:center;color:var(--muted);font-size:13px}
+.ps-sec{margin-top:10px}
+.ps-t{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.06em;margin:0 2px 6px}
+.ps-main{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ps-main div{padding:10px 4px;border-radius:12px;text-align:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)}
+.ps-main small{display:block;font-size:10.5px;color:var(--muted)}
+.ps-main b{display:block;font-size:20px;font-weight:700;margin-top:2px;color:#fff}
+.ps-sub{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:8px;border-top:1px solid rgba(255,255,255,.08)}
+.ps-sub div{display:flex;justify-content:space-between;align-items:baseline;padding:8px 6px;border-bottom:1px solid rgba(255,255,255,.06)}
+.ps-sub small{font-size:11px;color:var(--muted)}
+.ps-sub span{font-size:14px;font-weight:600;color:#E8E8EC}
+.ps-note{font-size:10.5px;color:var(--muted);margin:10px 2px 2px;line-height:1.6}
+[data-pl]{cursor:pointer}
+.lnm[data-pl] span,.putab td.pnx[data-pl] b{text-decoration:underline;text-decoration-color:rgba(255,255,255,.18);text-underline-offset:3px}
+#songSheet .sp-b{margin-top:14px}
+html.theme-pawa .ps-main div{background:linear-gradient(180deg,#FFFFFF,#EAF4FF);border:2px solid #1D3E7C;box-shadow:0 2px 0 rgba(19,38,74,.2)}
+html.theme-pawa .ps-main b{color:#13264A}
+html.theme-pawa .ps-sub{border-top-color:#DCE7F5}
+html.theme-pawa .ps-sub div{border-bottom-color:#E3ECF7}
+html.theme-pawa .ps-sub span{color:#13264A}
+html.theme-pawa .ps-pos{box-shadow:inset 0 -2px 0 rgba(0,0,0,.12),0 0 0 1px rgba(0,0,0,.15)}
+html.theme-pawa .lnm[data-pl] span,html.theme-pawa .putab td.pnx[data-pl] b{text-decoration-color:rgba(19,38,74,.25)}
+@media (max-width:374px){.ps-main b{font-size:17px}.ps-sub{grid-template-columns:repeat(2,1fr)}}
 /* 担当者の名前タイル（パワプロ風） */
 .ptile.otile{display:inline-flex;height:auto;min-width:64px;padding:3px 12px;vertical-align:middle;cursor:default;border-radius:8px}
 .ptile.otile b{font-size:inherit;font-weight:700;letter-spacing:.06em}
@@ -2928,7 +2956,7 @@ function lineupHTML(g, d) {
   return `<div class="lu">
     <div class="lut">打順<div class="lutabs">${[g.a, g.h].map(x => `<button type="button" data-k="${key}" data-t="${x}" class="${x === t ? "on" : ""}" style="${tv(x)}">${fn(x)}</button>`).join("")}</div></div>
     ${RES_LEGEND}<table class="lutab">${rows.map(r => { const first = r.order !== prev; prev = r.order;
-      return `<tr class="${r.starter ? "" : "sub"}${curName && sq(r.name) === curName ? " cur" : ""}"><td class="lo num">${first ? r.order : ""}</td><td class="lp">${esc(r.pos)}</td><td class="ln"><div class="lnm"><span>${esc(r.name)}</span><em class="la num">${esc(r.avg || "")}</em></div>${r.results.length ? `<div class="lrw">${res(r)}</div>` : ""}</td></tr>`; }).join("")}</table>
+      return `<tr class="${r.starter ? "" : "sub"}${curName && sq(r.name) === curName ? " cur" : ""}"><td class="lo num">${first ? r.order : ""}</td><td class="lp">${esc(r.pos)}</td><td class="ln"><div class="lnm" data-pl="${t}|${esc(r.name)}"><span>${esc(r.name)}</span><em class="la num">${esc(r.avg || "")}</em></div>${r.results.length ? `<div class="lrw">${res(r)}</div>` : ""}</td></tr>`; }).join("")}</table>
   </div>`;
 }
 // 投手成績（その試合に投げた投手。登板順）
@@ -2946,7 +2974,7 @@ function pitchingHTML(g, d) {
   const c = v => esc(v == null || v === "" ? "-" : v);
   return `<div class="lu pu">
     <div class="lut">投手成績<div class="lutabs">${[g.a, g.h].map(x => `<button type="button" data-pk="${key}" data-t="${x}" class="${x === t ? "on" : ""}" style="${tv(x)}">${fn(x)}</button>`).join("")}</div></div>
-    <div class="puw"><table class="putab num"><thead><tr><th class="pnx">投手</th><th>回</th><th>球数</th><th>安</th><th>本</th><th>振</th><th>四</th><th>失</th><th>責</th></tr></thead><tbody>${rows.map((r, i) => `<tr class="${curName && sq(r.name) === curName ? "cur" : ""}"><td class="pnx"><b>${r.dec ? `<i class="dec d${{ "勝": "w", "敗": "l", "S": "s", "H": "h" }[r.dec] || ""}">${esc(r.dec)}</i>` : ""}${esc(r.name)}</b><small>防 ${c(r.era)}</small></td><td>${c(r.ip)}</td><td>${c(r.np)}</td><td>${c(r.h)}</td><td>${c(r.hr)}</td><td>${c(r.so)}</td><td>${c(r.bb)}</td><td>${c(r.r)}</td><td class="er">${c(r.er)}</td></tr>`).join("")}</tbody></table></div>
+    <div class="puw"><table class="putab num"><thead><tr><th class="pnx">投手</th><th>回</th><th>球数</th><th>安</th><th>本</th><th>振</th><th>四</th><th>失</th><th>責</th></tr></thead><tbody>${rows.map((r, i) => `<tr class="${curName && sq(r.name) === curName ? "cur" : ""}"><td class="pnx" data-pl="${t}|${esc(r.name)}"><b>${r.dec ? `<i class="dec d${{ "勝": "w", "敗": "l", "S": "s", "H": "h" }[r.dec] || ""}">${esc(r.dec)}</i>` : ""}${esc(r.name)}</b><small>防 ${c(r.era)}</small></td><td>${c(r.ip)}</td><td>${c(r.np)}</td><td>${c(r.h)}</td><td>${c(r.hr)}</td><td>${c(r.so)}</td><td>${c(r.bb)}</td><td>${c(r.r)}</td><td class="er">${c(r.er)}</td></tr>`).join("")}</tbody></table></div>
   </div>`;
 }
 document.addEventListener("click", e => {
@@ -3561,14 +3589,92 @@ document.addEventListener("click", e => {
   const b = e.target.closest(".ptile[data-song]");
   if (b) {
     const [no, n] = b.dataset.song.split("|"), t = S.songTeam;
-    const x = ((DATA.rosters || {})[t] || []).find(r => r.no === no && r.n === n) || { no, n };
-    const of = songLink(t, x);
-    $("songPick").innerHTML = `<div class="sp-h" style="${tv(t)}"><span class="badge">${sn(t)}</span><b>${esc(n)}</b><small class="num">#${esc(no)}</small></div>
-      <div class="sp-b">${of ? `<a class="sof" href="${of}" target="_blank" rel="noopener">${songLabel(t)}</a>` : ""}<a class="sgo" href="${ytUrl(t, n)}" target="_blank" rel="noopener">聴く</a></div>`;
-    $("songSheet").hidden = false; requestAnimationFrame(() => $("songSheet").classList.add("open"));
+    openPlayer(t, n, { song: true, no });
     return;
   }
   if (e.target.closest("[data-songclose]") || e.target.closest("#songPick a")) { $("songSheet").classList.remove("open"); setTimeout(() => ($("songSheet").hidden = true), 280); }
+});
+// ================= 選手の今季成績（タップで下から出る画面） =================
+const PST = {}; // 球団ごとの成績（中継プログラムからNPB公式の個人成績を取る。10分使い回し）
+async function teamStats(t) {
+  const c = PST[t];
+  if (c && Date.now() - c.at < 10 * 60e3) return c.d;
+  if (!CONFIG.liveApi) return null;
+  try {
+    const r = await fetch(`${CONFIG.liveApi}?pstats=${t}`);
+    const d = await r.json();
+    if (d && (d.bat || d.pit)) { PST[t] = { at: Date.now(), d }; return d; }
+  } catch {}
+  return c ? c.d : null;
+}
+const nk = x => String(x || "").normalize("NFKC").replace(/[\s*＊+＋]/g, "");
+function findRow(tbl, name, t) {
+  if (!tbl) return null;
+  const k = nk(name);
+  if (tbl[k]) return { n: k, r: tbl[k] };
+  // 名字だけ（ランキング）のとき：その名字の選手が1人ならその人、複数なら名簿から絞る
+  const hits = Object.keys(tbl).filter(x => x.startsWith(k));
+  if (hits.length === 1) return { n: hits[0], r: tbl[hits[0]] };
+  return hits.length ? { n: hits[0], r: tbl[hits[0]], many: hits } : null;
+}
+const f3 = v => { const x = Number(v); return isFinite(x) ? x.toFixed(3).replace(/^0/, "") : "-"; };
+function ipNum(v) { const [a, b] = String(v || "0").split("."); return Number(a) + (Number(b || 0) / 3); }
+function batGrid(r) {
+  const obp = Number(r["出塁率"]), slg = Number(r["長打率"]);
+  const main = [["打率", r["打率"]], ["本塁打", r["本塁打"]], ["打点", r["打点"]], ["OPS", f3(obp + slg)]];
+  const sub = [["試合", r["試合"]], ["打席", r["打席"]], ["安打", r["安打"]], ["二塁打", r["二塁打"]], ["三塁打", r["三塁打"]], ["得点", r["得点"]],
+    ["出塁率", r["出塁率"]], ["長打率", r["長打率"]], ["盗塁", r["盗塁"]], ["四球", r["四球"]], ["死球", r["死球"]], ["三振", r["三振"]],
+    ["犠打", r["犠打"]], ["犠飛", r["犠飛"]], ["併殺打", r["併殺打"]]];
+  return statGrid("打撃成績", main, sub);
+}
+function pitGrid(r) {
+  const ip = ipNum(r["投球回"]), bb = Number(r["四球"] || 0), h = Number(r["安打"] || 0), so = Number(r["三振"] || 0);
+  const whip = ip ? ((bb + h) / ip).toFixed(2) : "-", k9 = ip ? (so * 9 / ip).toFixed(2) : "-";
+  const main = [["防御率", r["防御率"]], ["勝敗", `${r["勝利"]}-${r["敗北"]}`], ["セーブ", r["セーブ"]], ["奪三振", r["三振"]]];
+  const sub = [["登板", r["登板"]], ["投球回", r["投球回"]], ["ホールド", r["ホールド"]], ["HP", r["HP"]], ["勝率", r["勝率"]], ["完投", r["完投"]],
+    ["完封", r["完封勝"]], ["被安打", r["安打"]], ["被本塁打", r["本塁打"]], ["与四球", r["四球"]], ["与死球", r["死球"]], ["失点", r["失点"]],
+    ["自責点", r["自責点"]], ["WHIP", whip], ["奪三振率", k9]];
+  return statGrid("投手成績", main, sub);
+}
+function statGrid(title, main, sub) {
+  const c = v => esc(v == null || v === "" ? "-" : v);
+  return `<div class="ps-sec"><div class="ps-t">${title}</div>
+    <div class="ps-main">${main.map(([k, v]) => `<div><small>${k}</small><b class="num">${c(v)}</b></div>`).join("")}</div>
+    <div class="ps-sub">${sub.map(([k, v]) => `<div><small>${k}</small><span class="num">${c(v)}</span></div>`).join("")}</div></div>`;
+}
+async function openPlayer(t, name, opt = {}) {
+  const ro = ((DATA.rosters || {})[t] || []);
+  const k = nk(name);
+  const me = ro.find(x => nk(x.n) === k) || (ro.filter(x => nk(x.n).startsWith(k)).length === 1 ? ro.find(x => nk(x.n).startsWith(k)) : null);
+  const full = me ? me.n : name, no = opt.no || (me && me.no) || "";
+  const gr = posGroups(t, full, me ? me.p : (opt.kind === "pit" ? "投手" : "内野手"));
+  const chips = gr.map(g => `<i class="ps-pos" style="--c:${PCOL[g]}">${{ "投": "投手", "先": "先発", "中": "中継ぎ", "抑": "抑え", "捕": "捕手", "内": "内野手", "外": "外野手" }[g] || g}</i>`).join("");
+  const song = opt.song || (me && me.song);
+  const of = song && me ? songLink(t, me) : null;
+  const btns = song ? `<div class="sp-b">${of ? `<a class="sof" href="${of}" target="_blank" rel="noopener">${songLabel(t)}</a>` : ""}<a class="sgo" href="${ytUrl(t, full)}" target="_blank" rel="noopener">応援歌を聴く</a></div>` : "";
+  const head = `<div class="sp-h" style="${tv(t)}"><span class="badge">${sn(t)}</span><b>${esc(full)}</b>${no ? `<small class="num">#${esc(no)}</small>` : ""}<span class="ps-poss">${chips}</span></div>`;
+  $("songPick").innerHTML = head + `<div class="ps-body"><div class="ps-load">今季の成績を読み込み中…</div></div>` + btns;
+  $("songSheet").querySelector(".sheet-head b").textContent = "選手の成績";
+  $("songSheet").hidden = false; requestAnimationFrame(() => $("songSheet").classList.add("open"));
+  const d = await teamStats(t);
+  const body = $("songPick").querySelector(".ps-body");
+  if (!body) return;
+  if (!d) { body.innerHTML = `<div class="ps-load">成績を取得できませんでした。少し時間をおいてもう一度開いてください。</div>`; return; }
+  const b = findRow(d.bat, full, t), pi = findRow(d.pit, full, t);
+  const pitcherFirst = opt.kind === "pit" || (me && me.p === "投手");
+  const parts = [];
+  if (pitcherFirst && pi) parts.push(pitGrid(pi.r));
+  if (b && Number(b.r["打席"] || 0) > 0) parts.push(batGrid(b.r));
+  if (!pitcherFirst && pi) parts.push(pitGrid(pi.r));
+  body.innerHTML = parts.length
+    ? parts.join("") + `<p class="ps-note">NPB公式 ${d.asof ? d.asof + " 時点" : ""}の成績${(b && b.many) || (pi && pi.many) ? "（同じ名字の選手がいるため、名簿で一番近い選手を表示しています）" : ""}</p>`
+    : `<div class="ps-load">今季の一軍の出場記録はまだありません。</div>`;
+}
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-pl]");
+  if (!el || e.target.closest("button:not(.ptile)")) return;
+  const [t, n, kind] = el.dataset.pl.split("|");
+  if (TEAM[t]) openPlayer(t, n, { kind });
 });
 function renderSong() {
   const t = S.songTeam;
@@ -3777,7 +3883,7 @@ function renderStats(fromLive) {
     return `<span class="ptile ${TILEC[gr[0]] || "pi"}${nm.length <= 2 ? " sp" : nm.length >= 5 ? " lg" : ""}" style="${tileStyle(gr)}"><b>${esc(nm)}</b></span>`;
   };
   $("rankList").innerHTML = rows.length ? `<div class="ywrap"><table class="ytab rtab"><thead><tr><th>順位</th><th class="tnm">選手名</th><th class="tnm srt${rs.by === "t" ? " on" : ""}" data-by="t">チーム${arrow("t")}</th><th class="srt${rs.by === "v" ? " on" : ""}" data-by="v">${lbl ? lbl[1] : ""}${arrow("v")}</th></tr></thead><tbody>` +
-    view.map(r => `<tr class="${r.r === 1 ? "lead" : ""}" style="${tv(r.t)}"><td class="num"><span class="rkm r${r.r <= 3 ? r.r : 0}">${r.r}</span></td><td class="pnm">${pawaT ? rkTile(r) : esc(r.n)}</td><td class="tnm">${fn(r.t)}</td><td class="num v">${esc(r.v)}</td></tr>`).join("") +
+    view.map(r => `<tr class="${r.r === 1 ? "lead" : ""}" style="${tv(r.t)}"><td class="num"><span class="rkm r${r.r <= 3 ? r.r : 0}">${r.r}</span></td><td class="pnm" data-pl="${r.t}|${esc(r.n)}|${S.rkKind}">${pawaT ? rkTile(r) : esc(r.n)}</td><td class="tnm">${fn(r.t)}</td><td class="num v">${esc(r.v)}</td></tr>`).join("") +
     `</tbody></table></div>${QUAL.has(S.cat) ? `<p class="qnote">${S.rkKind === "bat" ? "規定打席" : "規定投球回"}以上の選手が対象</p>` : ""}` : `<div class="rempty">この項目のデータは、次の自動更新のあとに表示されます。</div>`;
   $("rankList").querySelectorAll("th.srt").forEach(th => (th.onclick = () => {
     const by = th.dataset.by;
