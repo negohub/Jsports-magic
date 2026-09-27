@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927155512">
+<meta name="build" content="20260927155852">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -3779,11 +3779,16 @@ $("toastBtn").onclick = () => {
   renderAll();
   pollLive();
 };
+// データの中身全体の目印（試合以外の名簿・守備位置・応援歌などが変わったときも気づけるように）
+const hashStr = t => { let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36) + t.length; };
+let RAWSIG = null;
 async function fetchData() {
   const r = await fetch("data/latest.json?t=" + Date.now(), { cache: "no-store" });
   if (!r.ok) throw new Error(r.status);
-  const d = await r.json();
+  const text = await r.text();
+  const d = JSON.parse(text);
   if (!d.games || !d.games.length) throw new Error("empty");
+  Object.defineProperty(d, "_sig", { value: hashStr(text), enumerable: false });
   return d;
 }
 // 前回のデータを端末に保存しておき、開いた瞬間はそれですぐ描く → 裏で最新を取って静かに差し替える
@@ -3791,19 +3796,20 @@ const CACHE_KEY = "jsp-data-v1";
 function readCache() {
   try { const d = JSON.parse(localStorage.getItem(CACHE_KEY) || "null"); return d && d.games && d.games.length ? d : null; } catch { return null; }
 }
-function writeCache(d) { try { localStorage.setItem(CACHE_KEY, JSON.stringify(d)); } catch {} }
+function writeCache(d) { try { localStorage.setItem(CACHE_KEY, JSON.stringify(d)); if (d._sig) localStorage.setItem(CACHE_KEY + "-sig", d._sig); } catch {} }
 function askMeOnce() { if (S.me == null) setTimeout(openMePick, 600); }
 async function load() {
   const cached = readCache();
   const first = cached && (!SNAP.updated || new Date(cached.updated) >= new Date(SNAP.updated)) ? cached : SNAP;
   DATA = first; fromSnap = false;
+  try { RAWSIG = first === cached ? localStorage.getItem(CACHE_KEY + "-sig") : null; } catch { RAWSIG = null; }
   renderAll();
   requestAnimationFrame(() => moveLens(true));
   askMeOnce();
   try {
     const d = await fetchData();
     writeCache(d);
-    if (sig(d) !== sig(DATA)) { DATA = d; renderAll(); }
+    if (d._sig !== RAWSIG || sig(d) !== sig(DATA)) { DATA = d; RAWSIG = d._sig; renderAll(); }
   } catch {
     if (DATA === SNAP) { fromSnap = true; renderAll(); }
   }
@@ -3826,9 +3832,9 @@ async function check(force) {
   try {
     const d = await fetchData();
     // 新しい結果が届いたら、通知なしでそのまま反映する（見ている月度・開いているカードはそのまま）
-    if (fromSnap || sig(d) !== sig(DATA)) {
+    if (fromSnap || d._sig !== RAWSIG) {
       const y = window.scrollY;
-      DATA = d; fromSnap = false; pending = null; writeCache(d);
+      DATA = d; RAWSIG = d._sig; fromSnap = false; pending = null; writeCache(d);
       if (!S.periodPicked) S.period = null;
       renderAll();
       window.scrollTo(0, y);
