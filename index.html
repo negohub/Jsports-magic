@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927143804">
+<meta name="build" content="20260927144907">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -2121,6 +2121,7 @@ window.addEventListener("resize", () => moveLens(true));
 window.addEventListener("load", () => moveLens(true));
 function setTab(t) {
   S.tab = t;
+  if (t === "stats") setTimeout(() => liveStats(S.cat), 0);
   $("kicker").textContent = TAB_TITLE[t][0];
   $("ttl").textContent = TAB_TITLE[t][1];
   requestAnimationFrame(() => moveLens());
@@ -3384,7 +3385,40 @@ function renderRace() {
 }
 // 並べ替えの印（none／asc／desc）：上下2つの小さな三角で、今の向きだけ色が付く
 const sortIco = st => `<svg class="sic ${st}" viewBox="0 0 8 12" aria-hidden="true"><path class="u" d="M4 1 7 4.6H1z"/><path class="d" d="M4 11 1 7.4h6z"/></svg>`;
-function renderStats() {
+// 成績をスポナビから直接取る（中継プログラム経由、10分使い回し）。GitHubの自動更新より新しければ差し替える
+const asofVal = a => { const m = String(a || "").match(/(\d+)\/(\d+)\s+(\d+):(\d+)/); return m ? ((+m[1] * 100 + +m[2]) * 100 + +m[3]) * 100 + +m[4] : 0; };
+const liveStatAt = {};
+async function liveStats(key) {
+  if (!CONFIG.liveApi || !DATA) return;
+  const now = Date.now(), jobs = [];
+  if (!liveStatAt.team || now - liveStatAt.team > 5 * 60e3) {
+    liveStatAt.team = now;
+    jobs.push(fetch(`${CONFIG.liveApi}?stats=team`).then(r => r.json()).then(j => {
+      if (!j.team || Object.keys(j.team).length < 6) return false;
+      const st = DATA.stats || (DATA.stats = { team: {}, leaders: {} });
+      if (st.asof && asofVal(j.asof) < asofVal(st.asof)) return false;
+      for (const t in j.team) st.team[t] = { ...(st.team[t] || {}), ...j.team[t] };
+      if (j.asof) st.asof = j.asof;
+      return true;
+    }).catch(() => false));
+  }
+  if (key && (!liveStatAt[key] || now - liveStatAt[key] > 5 * 60e3)) {
+    liveStatAt[key] = now;
+    jobs.push(fetch(`${CONFIG.liveApi}?rank=${key}`).then(r => r.json()).then(j => {
+      if (!j.rows || !j.rows.length) return false;
+      const st = DATA.stats || (DATA.stats = { team: {}, leaders: {} });
+      st.leaders = st.leaders || {};
+      st.leaders[key] = j.rows;
+      if (j.asof && asofVal(j.asof) > asofVal(st.asof)) st.asof = j.asof;
+      return true;
+    }).catch(() => false));
+  }
+  if (!jobs.length) return;
+  const res = await Promise.all(jobs);
+  if (res.some(Boolean) && S.tab === "stats") renderStats(true);
+}
+function renderStats(fromLive) {
+  if (!fromLive && S.tab === "stats") setTimeout(() => liveStats(S.cat), 0);
   const st = statsData();
   if (!st) { $("tmTbl").innerHTML = ""; $("rankList").innerHTML = `<div class="rempty">成績データはまだありません。自動更新のあとに表示されます。</div>`; return; }
   $("stAsof").textContent = st.asof ? `${st.asof} 更新` : "";
