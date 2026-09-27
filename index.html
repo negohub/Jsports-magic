@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927151323">
+<meta name="build" content="20260927152523">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1500,10 +1500,11 @@ html.theme-pawa .gear{color:#13264A;background:linear-gradient(180deg,rgba(255,2
 .ptile b{font-size:15px;font-weight:700;letter-spacing:.08em;white-space:nowrap}
 .ptile.sp b{letter-spacing:.7em;margin-right:-.7em}
 .ptile small{position:absolute;left:5px;top:3px;font-size:9px;font-weight:700;color:rgba(31,42,68,.55);letter-spacing:0}
-.ptile.pp{background:linear-gradient(180deg,#FFC2D0,#F58FA6);border-color:#D9687F}
+.ptile.pp{background:linear-gradient(180deg,#FFD3DF,#F7A9BE);border-color:#DB7F97}
 .ptile.pc{background:linear-gradient(180deg,#A6ECFB,#4FC8EC);border-color:#2FA3C8}
 .ptile.pi{background:linear-gradient(180deg,#FFEB9A,#F7C948);border-color:#D6A21E}
 .ptile.po{background:linear-gradient(180deg,#B5EDA8,#63CC5E);border-color:#3FA43A}
+.ptile.ps{background:linear-gradient(180deg,#FFAE9F,#F07A69);border-color:#CF5A4A}
 .ptile:active{transform:translateY(1px)}
 .ptile.lg b{font-size:12.5px;letter-spacing:0;margin-left:8px}
 html.theme-pawa .srow .sgo{background:linear-gradient(180deg,#62D873,#1FA83A) !important;color:#fff !important;border:2px solid #0E6B22 !important}
@@ -3284,7 +3285,7 @@ const songLabel = () => "公式";
 S.songTeam = store("songTeam") || "T"; S.songQ = "";
 const ytUrl = (t, n) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(`${TEAM[t].n} ${n.replace(/\s+/g, "")} 応援歌`);
 // 選手タイルの色：今季守ったポジションの試合数が多い順（3試合以上のもの。最大3色）。データがなければ名簿の守備位置
-const PCOL = { "投": "#F8A0B6", "捕": "#6FD3F0", "内": "#F9D564", "外": "#84D877" };
+const PCOL = { "投": "#F9B3C7", "先": "#F58A7C", "中": "#F9B3C7", "抑": "#F9B3C7", "捕": "#6FD3F0", "内": "#F9D564", "外": "#84D877" };
 const PKEY = { "投手": "投", "捕手": "捕", "内野手": "内", "外野手": "外" };
 function posGroups(t, name, fallback) {
   const T = ((DATA.fpos || {}).teams || {})[t] || {};
@@ -3294,7 +3295,13 @@ function posGroups(t, name, fallback) {
   const g = d ? Object.entries(d).filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1]).map(([k]) => k) : [];
   if (!g.length && d) { const top = Object.entries(d).sort((a, b) => b[1] - a[1])[0]; if (top) g.push(top[0]); }
   if (!g.length) g.push(PKEY[fallback] || fallback || "内");
-  return g.slice(0, 3);
+  // 投手は役割（先発・中継ぎ・抑え）の色に置き換える
+  const R = (((DATA.fpos || {}).roles || {})[t] || {});
+  let role = R[key];
+  if (!role) { const hits = Object.keys(R).filter(k => k.startsWith(key)); if (hits.length === 1) role = R[hits[0]]; }
+  const out = [];
+  for (const k of g) { if (k === "投" && role && role.length) out.push(...role.map(r => (r === "抑" ? "中" : r))); else out.push(k); } // 抑えは中継ぎと同じ色
+  return [...new Set(out)].slice(0, 3);
 }
 function tileStyle(groups) {
   if (groups.length < 2) return "";
@@ -3302,7 +3309,7 @@ function tileStyle(groups) {
   const stops = c.map((col, i) => `${col} ${i === 0 ? 0 : i * w + 3}%,${col} ${i === n - 1 ? 100 : (i + 1) * w - 3}%`).join(",");
   return `background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0) 55%),linear-gradient(105deg,${stops});border-color:rgba(0,0,0,.2)`;
 }
-const TILEC = { "投": "pp", "捕": "pc", "内": "pi", "外": "po" };
+const TILEC = { "投": "pp", "先": "ps", "中": "pp", "抑": "pp", "捕": "pc", "内": "pi", "外": "po" };
 document.addEventListener("click", e => {
   const b = e.target.closest(".ptile[data-song]");
   if (b) {
@@ -3516,8 +3523,9 @@ function renderStats(fromLive) {
     const bat = ro.find(x => x.p !== "投手");
     const who = S.rkKind === "pit" ? (ro.find(x => x.p === "投手") || ro[0]) : (bat || ro[0]);
     let gr = posGroups(r.t, who ? who.n : r.n, S.rkKind === "pit" ? "投手" : (who || {}).p || "内野手");
-    if (S.rkKind === "pit" && !gr.includes("投")) gr = ["投"]; // 投手部門は投手の色
-    if (S.rkKind !== "pit") gr = gr.filter(k => k !== "投").length ? gr.filter(k => k !== "投") : gr;
+    const PIT = ["投", "先", "中", "抑"];
+    if (S.rkKind === "pit") { const pg = gr.filter(k => PIT.includes(k)); gr = pg.length ? pg : ["投"]; } // 投手部門は投手の色（役割つき）
+    else { const bg = gr.filter(k => !PIT.includes(k)); gr = bg.length ? bg : gr; }
     const nm = r.n;
     return `<span class="ptile ${TILEC[gr[0]] || "pi"}${nm.length <= 2 ? " sp" : nm.length >= 5 ? " lg" : ""}" style="${tileStyle(gr)}"><b>${esc(nm)}</b></span>`;
   };
