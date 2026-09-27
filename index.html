@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927125538">
+<meta name="build" content="20260927130239">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1277,9 +1277,10 @@ h2::before{transform:none;width:5px;height:18px;border-radius:3px;background:lin
 .rtab tr.lead td.pnm{color:#FFD21F !important;font-weight:700}
 /* 並べ替えできる見出し */
 th.srt{cursor:pointer;user-select:none;-webkit-user-select:none;white-space:nowrap}
-th.srt i{font-style:normal;font-size:9px;margin-left:3px;color:#6A6A6A;vertical-align:1px}
+th.srt .sic{width:7px;height:11px;margin-left:4px;vertical-align:-1px;display:inline-block}
+th.srt .sic path{fill:rgba(255,255,255,.22);transition:fill .2s ease}
+th.srt .sic.asc .u,th.srt .sic.desc .d{fill:#FFD21F}
 th.srt.on{color:#fff}
-th.srt.on i{color:#FFD21F}
 /* ページ切り替え・開閉をなめらかに */
 @media (prefers-reduced-motion:no-preference){
   .view:not([hidden]){animation:vin .35s cubic-bezier(.22,1,.36,1)}
@@ -1385,7 +1386,7 @@ th.srt.on i{color:#FFD21F}
       <label class="catsel"><select id="catSel" aria-label="項目"></select></label></div>
     <div class="chips2 quick" id="catQuick"></div>
     <div id="rankList"></div>
-    <details class="howto"><summary>見方</summary><ul><li>並べ替え：チーム成績・個人ランキングは、見出し（↕の付いた項目）をタップするとその項目で並べ替え、もう一度タップすると昇順／降順が入れ替わります。</li><li>チーム成績：黄色の太字が各項目のリーグトップ。得点・失点・得失点差は試合結果からすぐに計算しています。</li><li>個人ランキング：スポーツナビの個人成績と同じ全項目（打者24・投手27）。右上のメニューで項目を選べます。打率・出塁率・長打率・OPS・得点圏打率は規定打席以上、防御率・勝率・奪三振率・被打率・K/BB・WHIPは規定投球回以上の選手が対象。各項目の上位10人。出典：スポーツナビ。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li>並べ替え：チーム成績・個人ランキングは、見出し（小さな上下の三角が付いた項目）をタップするとその項目で並べ替え、もう一度タップすると昇順／降順が入れ替わります。</li><li>チーム成績：黄色の太字が各項目のリーグトップ。得点・失点・得失点差は試合結果からすぐに計算しています。</li><li>個人ランキング：スポーツナビの個人成績と同じ全項目（打者24・投手27）。右上のメニューで項目を選べます。打率・出塁率・長打率・OPS・得点圏打率は規定打席以上、防御率・勝率・奪三振率・被打率・K/BB・WHIPは規定投球回以上の選手が対象。各項目の上位10人。出典：スポーツナビ。</li></ul></details>
   </section>
   <p class="note" id="note"></p>
 </main>
@@ -3001,6 +3002,8 @@ function renderRace() {
     </table></div>
     <p class="rnote"><span class="k1">赤字</span>${fn(X.t)}がこの成績以上なら、ほかの結果に関係なく優勝（優勝マジック${clinchW != null ? ` M${clinchW}` : ""}）　<span class="k2">黄色</span>今の勝率のペースを保った場合</p>`;
 }
+// 並べ替えの印（none／asc／desc）：上下2つの小さな三角で、今の向きだけ色が付く
+const sortIco = st => `<svg class="sic ${st}" viewBox="0 0 8 12" aria-hidden="true"><path class="u" d="M4 1 7 4.6H1z"/><path class="d" d="M4 11 1 7.4h6z"/></svg>`;
 function renderStats() {
   const st = statsData();
   if (!st) { $("tmTbl").innerHTML = ""; $("rankList").innerHTML = `<div class="rempty">成績データはまだありません。自動更新のあとに表示されます。</div>`; return; }
@@ -3024,7 +3027,7 @@ function renderStats() {
   const sc = cols[sk.col];
   teams.sort((a, b) => { const x = num(sc[1](a)), y = num(sc[1](b)); if (x == null) return 1; if (y == null) return -1; return sk.dir === "desc" ? y - x : x - y; });
   const best = cols.map(c => { const vs = teams.map(t => num(c[1](t))).filter(v => v != null); return vs.length ? (c[2] === "hi" ? Math.max(...vs) : Math.min(...vs)) : null; });
-  $("tmTbl").innerHTML = `<thead><tr><th>順位</th><th class="tnm">チーム名</th>${cols.map((c, j) => `<th class="srt${j === sk.col ? " on" : ""}" data-col="${j}">${c[0]}<i>${j === sk.col ? (sk.dir === "desc" ? "▼" : "▲") : "↕"}</i></th>`).join("")}</tr></thead><tbody>` +
+  $("tmTbl").innerHTML = `<thead><tr><th>順位</th><th class="tnm">チーム名</th>${cols.map((c, j) => `<th class="srt${j === sk.col ? " on" : ""}" data-col="${j}">${c[0]}${sortIco(j === sk.col ? sk.dir : "none")}</th>`).join("")}</tr></thead><tbody>` +
     teams.map((t, i) => `<tr style="${tv(t)}"><td class="num">${i + 1}</td><td class="tnm"><a href="${TEAM_URL[t]}" target="_blank" rel="noopener">${fn(t)}</a></td>${cols.map((c, j) => {
       const v = c[1](t); const isB = v != null && best[j] != null && num(v) === best[j];
       return `<td class="num v${isB ? " best" : ""}">${v == null ? "-" : esc(v)}</td>`;
@@ -3056,8 +3059,8 @@ function renderStats() {
       : rs.by === "v" ? ((num(a.v) ?? 0) - (num(b.v) ?? 0)) || (a.r - b.r) : a.r - b.r;
     return rs.dir === "asc" ? d : -d;
   });
-  const arrow = by => (rs.by === by ? (rs.dir === "asc" ? "▲" : "▼") : "↕");
-  $("rankList").innerHTML = rows.length ? `<div class="ywrap"><table class="ytab rtab"><thead><tr><th class="srt${rs.by === "r" ? " on" : ""}" data-by="r">順位<i>${arrow("r")}</i></th><th class="tnm">選手名</th><th class="tnm srt${rs.by === "t" ? " on" : ""}" data-by="t">チーム<i>${arrow("t")}</i></th><th class="srt${rs.by === "v" ? " on" : ""}" data-by="v">${lbl ? lbl[1] : ""}<i>${arrow("v")}</i></th></tr></thead><tbody>` +
+  const arrow = by => sortIco(rs.by === by ? rs.dir : "none");
+  $("rankList").innerHTML = rows.length ? `<div class="ywrap"><table class="ytab rtab"><thead><tr><th class="srt${rs.by === "r" ? " on" : ""}" data-by="r">順位${arrow("r")}</th><th class="tnm">選手名</th><th class="tnm srt${rs.by === "t" ? " on" : ""}" data-by="t">チーム${arrow("t")}</th><th class="srt${rs.by === "v" ? " on" : ""}" data-by="v">${lbl ? lbl[1] : ""}${arrow("v")}</th></tr></thead><tbody>` +
     view.map(r => `<tr class="${r.r === 1 ? "lead" : ""}" style="${tv(r.t)}"><td class="num">${r.r}</td><td class="pnm">${esc(r.n)}</td><td class="tnm">${fn(r.t)}</td><td class="num v">${esc(r.v)}</td></tr>`).join("") +
     `</tbody></table></div>${QUAL.has(S.cat) ? `<p class="qnote">${S.rkKind === "bat" ? "規定打席" : "規定投球回"}以上の選手が対象</p>` : ""}` : `<div class="rempty">この項目のデータは、次の自動更新のあとに表示されます。</div>`;
   $("rankList").querySelectorAll("th.srt").forEach(th => (th.onclick = () => {
