@@ -130,7 +130,7 @@ CHECK_JS = r"""
     if (!own) return;
     const cs = getComputedStyle(el);
     if (cs.visibility === 'hidden' || cs.textShadow !== 'none') return;
-    if (el.closest('.wm')) return; // 背番号の透かしはわざと薄くしている
+    if (el.closest('.wm, .twm')) return; // 背番号の透かしはわざと薄くしている
     let op = 1; for (let e = el; e; e = e.parentElement) op *= +getComputedStyle(e).opacity;
     if (op < .5) return; // 参考表示（広島など）はわざと薄くしている
     const fg = parse(cs.color); if (!fg) return;
