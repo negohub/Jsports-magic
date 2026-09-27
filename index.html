@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927052935">
+<meta name="build" content="20260927053600">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -754,32 +754,46 @@ h2{font-weight:700;margin-top:30px}
 .sc.post{font-size:15px;color:#E0E0E0;gap:8px;flex-wrap:wrap}
 .pnote{margin:8px 0 0;font-size:12px;color:var(--muted)}
 
-/* 一球速報 */
-.pbox{background:#0B0B0B;border:1px solid #2A2A2A;padding:12px;margin:0 0 10px}
-.ptop{display:flex;align-items:center;gap:14px}
-.bso{display:grid;gap:5px;font-size:12px;font-weight:700;color:#A8A8A8}
-.bso div{display:flex;align-items:center;gap:5px}
-.bso span{width:12px}
-.bso i{width:12px;height:12px;border-radius:50%;background:#2A2A2A;display:inline-block}
-.bso i.b{background:#2ECC71}.bso i.s{background:#FFD21F}.bso i.o{background:#FF3B3B}
-.dia{width:60px;height:44px}
-.dia rect{fill:#2A2A2A;stroke:#555;stroke-width:1}
-.dia rect.on{fill:#FFD21F;stroke:#FFD21F}
-.phalf{margin-left:auto;text-align:right;font-size:17px;font-weight:700;line-height:1.2}
-.phalf small{display:block;font-size:11px;color:var(--muted);font-weight:400}
-.pvs{margin:10px 0 8px;display:grid;gap:6px}
-.pvs div{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
-.pvs .pl2{font-size:11px;color:#000;background:#C8C8C8;padding:0 5px;font-weight:700}
-.pvs b{font-size:15px}
-.pvs small{font-size:11.5px;color:var(--muted)}
-.ptab{width:100%;border-collapse:collapse;font-size:13px}
-.ptab td{border-top:1px solid #222;padding:6px 4px}
-.ptab td:first-child{width:24px;color:var(--muted);text-align:center}
-.ptab td.pr{text-align:right;font-weight:700}
-.ptab tr.b td.pr{color:#2ECC71}.ptab tr.s td.pr{color:#FFD21F}.ptab tr.o td.pr{color:#FF6B6B}.ptab tr.h td.pr{color:#5AB0FF}.ptab tr.sac td.pr{color:#C8C8C8}
-.pnone{font-size:12.5px;color:var(--muted);margin:6px 0}
-.pnext{font-size:12.5px;color:#C8C8C8;margin:8px 0 10px}
-.pbox .pbp{margin:0}
+/* 一球速報（アプリ風） */
+.pbox{background:#050505;border:1px solid #242424;margin:0 0 10px;overflow:hidden}
+.plast{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 10px 4px}
+.plast b{font-size:22px;font-weight:700;letter-spacing:.04em}
+.pn{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#444;color:#000;font-size:15px;font-weight:700}
+.b .pn{background:#2ECC71}.s .pn{background:#FFD21F}.o .pn{background:#FF3B3B;color:#fff}.h .pn{background:#3D8BFF;color:#fff}.sac .pn{background:#AAA}
+.plast.b b{color:#2ECC71}.plast.s b{color:#FFD21F}.plast.o b{color:#FF6B6B}.plast.h b{color:#5AB0FF}
+.pspd{text-align:center;font-size:15px;color:#C8C8C8;padding:0 0 10px;border-bottom:1px solid #1C1C1C}
+.bso2{display:flex;justify-content:center;align-items:center;gap:6px;padding:10px 0;border-bottom:1px solid #1C1C1C;font-size:15px;font-weight:700;color:#C8C8C8}
+.bso2 span{margin-left:14px}.bso2 span:first-child{margin-left:0}
+.bso2 i{width:13px;height:13px;border-radius:50%;background:#262626;display:inline-block}
+.bso2 i.b{background:#2ECC71;box-shadow:0 0 6px rgba(46,204,113,.6)}.bso2 i.s{background:#FFD21F;box-shadow:0 0 6px rgba(255,210,31,.6)}.bso2 i.o{background:#FF3B3B;box-shadow:0 0 6px rgba(255,59,59,.6)}
+.fwrap{position:relative;padding:10px 12px 4px;background:#000}
+.fld{display:block;width:100%;height:auto;max-width:360px;margin:0 auto}
+.fld .bs{fill:#fff;stroke:#fff;stroke-width:1}
+.fld .bs.on{fill:#FFD21F;stroke:#FFD21F;filter:drop-shadow(0 0 5px rgba(255,210,31,.9))}
+.fhalf{position:absolute;left:14px;top:10px;line-height:1.2}
+.fhalf b{display:block;font-size:17px;font-weight:700}
+.fhalf small{font-size:11px;color:var(--muted)}
+.pvs2{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #1C1C1C}
+.pc{padding:0 0 10px;border-right:1px solid #1C1C1C}
+.pc:last-child{border-right:0}
+.pt2{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 55%,#000),color-mix(in srgb,var(--tc) 15%,#000));border-top:3px solid var(--tc);text-align:center;font-size:13.5px;font-weight:700;padding:6px 0}
+.pr2{font-size:11.5px;color:var(--muted);padding:8px 10px 0}
+.pnm{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:0 10px}
+.pnm b{font-size:17px;font-weight:700}
+.hd{font-style:normal;font-size:11px;font-weight:700;padding:1px 5px;color:#fff}
+.hd.l{background:#1E6FD9}.hd.r{background:#C2185B}
+.pst{display:grid;grid-template-columns:auto 1fr;gap:4px 8px;padding:8px 10px 0;font-size:13px;align-items:baseline}
+.pst span{color:var(--muted);font-size:12px}
+.pst b{font-weight:700}
+.pnx{padding:8px 10px 0;font-size:11.5px;color:var(--muted)}
+.plist{border-top:1px solid #1C1C1C;padding:4px 10px 8px}
+.pli{display:grid;grid-template-columns:28px 1fr auto auto;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid #151515;font-size:13.5px}
+.pli:last-child{border-bottom:0}
+.pli .pn{width:22px;height:22px;font-size:12px}
+.pli .psp{color:#C8C8C8}
+.pli .prs{font-weight:700;min-width:56px;text-align:right}
+.pli.b .prs{color:#2ECC71}.pli.s .prs{color:#FFD21F}.pli.o .prs{color:#FF6B6B}.pli.h .prs{color:#5AB0FF}.pli.sac .prs{color:#C8C8C8}
+.pnone{font-size:12.5px;color:var(--muted);margin:0;padding:10px}
 </style>
 </head>
 <body>
@@ -854,7 +868,7 @@ h2{font-weight:700;margin-top:30px}
       <div id="today"></div>
     </section>
     <div class="rempty" id="noGame" hidden>対象の球団の試合はしばらくありません。</div>
-    <details class="howto"><summary>見方</summary><ul><li>「勝ったら」は、その試合の結果だけで見た場合の変化です（同じ日のほかの試合は考えていません）。</li><li>試合中は30秒ごとに自動で更新します。スコア表・得点シーンはスポーツナビのテキスト速報から作っています。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li>「勝ったら」は、その試合の結果だけで見た場合の変化です（同じ日のほかの試合は考えていません）。</li><li>試合中は自動で更新します（スコアは30秒、一球速報は15秒ごと）。スコア表・得点シーン・一球速報のデータはスポーツナビから取得しています。</li></ul></details>
   </section>
 
   <section class="view" id="v-song" aria-label="応援歌" hidden>
@@ -1541,27 +1555,45 @@ function loadPitches() {
 }
 setInterval(() => { if (S.tab === "game" && !document.hidden) loadPitches(); }, 15 * 1000);
 const pitchCls = r => /ボール|四球|死球/.test(r) ? "b" : /空振|見逃|ファウル|ストライク|三振/.test(r) ? "s" : /犠/.test(r) ? "sac" : /安打|ヒット|二塁打|三塁打|本塁打|出塁|失策|エラー/.test(r) ? "h" : "o";
+const YSHORT = { "DeNA": "DB", "阪神": "T", "巨人": "G", "中日": "D", "広島": "C", "ヤクルト": "S", "ソフトバンク": "H", "日本ハム": "F", "オリックス": "B", "楽天": "E", "西武": "L", "ロッテ": "M" };
 function pitchHTML(g) {
   const p = PD[g.d + gkey(g)], d = GD[g.d + gkey(g)];
   if (!p || g.st !== "live") return "";
-  const dots = (n, max, cls) => Array.from({ length: max }, (_, i) => `<i class="${i < n ? cls : ""}"></i>`).join("");
+  const list = (p.pitches || []).slice().sort((x, y) => x.n - y.n);
+  const last = list[list.length - 1];
+  const lamp = (n, max, cls) => Array.from({ length: max }, (_, i) => `<i class="${i < n ? cls : ""}"></i>`).join("");
   const sit = (d && d.now && d.now.sit) || "";
   const on = k => sit.includes("満塁") || sit.includes(k);
+  const atk = YSHORT[p.attack] || (p.half && p.half.includes("表") ? g.a : g.h);
+  const def = atk === g.h ? g.a : g.h;
+  const hand = h => `<em class="hd ${/左/.test(h) ? "l" : "r"}">${esc(h)}</em>`;
+  const field = `<svg class="fld" viewBox="0 0 300 186" aria-label="走者">
+    <defs><radialGradient id="gr" cx="50%" cy="100%" r="100%"><stop offset="0" stop-color="#3B8F3E"/><stop offset="1" stop-color="#23622A"/></radialGradient></defs>
+    <path d="M150 184 L12 76 A176 176 0 0 1 288 76 Z" fill="url(#gr)" stroke="#C9A227" stroke-width="2"/>
+    <path d="M150 184 L22 84 A164 164 0 0 1 278 84 Z" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10"/>
+    <polygon points="150,180 80,112 150,42 220,112" fill="#B8925A"/>
+    <polygon points="150,160 100,112 150,62 200,112" fill="#3E8E41"/>
+    <circle cx="150" cy="112" r="9" fill="#B8925A"/>
+    <line x1="150" y1="180" x2="12" y2="76" stroke="rgba(255,255,255,.55)" stroke-width="1.2"/><line x1="150" y1="180" x2="288" y2="76" stroke="rgba(255,255,255,.55)" stroke-width="1.2"/>
+    <rect class="bs ${on("二") ? "on" : ""}" x="143" y="47" width="14" height="14" transform="rotate(45 150 54)"/>
+    <rect class="bs ${on("一") ? "on" : ""}" x="206" y="105" width="14" height="14" transform="rotate(45 213 112)"/>
+    <rect class="bs ${on("三") ? "on" : ""}" x="80" y="105" width="14" height="14" transform="rotate(45 87 112)"/>
+    <path d="M143 172 h14 v6 l-7 6 l-7 -6 z" fill="#fff"/>
+  </svg>`;
   return `<div class="pbox">
-    <div class="ptop">
-      <div class="bso"><div><span>B</span>${dots(p.b || 0, 3, "b")}</div><div><span>S</span>${dots(p.s || 0, 2, "s")}</div><div><span>O</span>${dots(p.o || 0, 2, "o")}</div></div>
-      <svg class="dia" viewBox="0 0 60 44" aria-label="走者"><rect x="24" y="2" width="12" height="12" transform="rotate(45 30 8)" class="${on("二") ? "on" : ""}"/><rect x="42" y="18" width="12" height="12" transform="rotate(45 48 24)" class="${on("一") ? "on" : ""}"/><rect x="6" y="18" width="12" height="12" transform="rotate(45 12 24)" class="${on("三") ? "on" : ""}"/></svg>
-      <div class="phalf">${esc(p.half || "")}<small>${esc(p.attack ? p.attack + "の攻撃" : "")}</small></div>
+    ${last ? `<div class="plast ${pitchCls(last.res)}"><span class="pn">${last.n}</span><b>${esc(last.res)}</b></div><div class="pspd num">${esc(last.speed)}　${esc(last.type)}</div>` : `<div class="plast"><b>${esc(p.half || "")}</b></div>`}
+    <div class="bso2"><span>B</span>${lamp(p.b || 0, 3, "b")}<span>S</span>${lamp(p.s || 0, 2, "s")}<span>O</span>${lamp(p.o || 0, 2, "o")}</div>
+    <div class="fwrap">${field}<div class="fhalf"><b>${esc(p.half || "")}</b><small>${fn(atk)}の攻撃</small></div></div>
+    <div class="pvs2">
+      <div class="pc" style="${tv(def)}"><div class="pt2">${fn(def)}</div>${p.pitcher ? `<div class="pr2">投手 ${esc(p.pitcher.no)}</div><div class="pnm"><b>${esc(p.pitcher.name)}</b>${hand(p.pitcher.hand)}</div>
+        <div class="pst"><span>防</span><b class="num">${esc(p.pitcher.era)}</b><span>球</span><b class="num">${p.pitcher.np}</b><span>打</span><b class="num">${p.pitcher.bf}</b></div>` : ""}</div>
+      <div class="pc" style="${tv(atk)}"><div class="pt2">${fn(atk)}</div>${p.batter ? `<div class="pr2">打者 ${esc(p.batter.no)}</div><div class="pnm"><b>${esc(p.batter.name)}</b>${hand(p.batter.hand)}</div>
+        <div class="pst"><span>率</span><b class="num">${esc(p.batter.avg)}</b></div>` : ""}${p.next ? `<div class="pnx">次打者 ${esc(p.next)}</div>` : ""}</div>
     </div>
-    <div class="pvs">
-      ${p.pitcher ? `<div><span class="pl2">投手</span><b>${esc(p.pitcher.name)}</b><small>#${esc(p.pitcher.no)} ${esc(p.pitcher.hand)}　${p.pitcher.np}球　防御率${esc(p.pitcher.era)}</small></div>` : ""}
-      ${p.batter ? `<div><span class="pl2">打者</span><b>${esc(p.batter.name)}</b><small>#${esc(p.batter.no)} ${esc(p.batter.hand)}　打率${esc(p.batter.avg)}</small></div>` : ""}
-    </div>
-    ${p.pitches && p.pitches.length ? `<table class="ptab num">${p.pitches.slice().sort((x, y) => x.n - y.n).map(x => `<tr class="${pitchCls(x.res)}"><td>${x.n}</td><td>${esc(x.type)}</td><td>${esc(x.speed)}</td><td class="pr">${esc(x.res)}</td></tr>`).join("")}</table>` : `<p class="pnone">この打席はまだ投球がありません</p>`}
-    ${p.next ? `<p class="pnext">次の打者　${esc(p.next)}</p>` : ""}
-    <a class="pbp" href="${p.url}" target="_blank" rel="noopener">スポナビの一球速報を見る</a>
+    ${list.length ? `<div class="plist">${list.map(x => `<div class="pli ${pitchCls(x.res)}"><span class="pn">${x.n}</span><span class="pty">${esc(x.type)}</span><span class="psp num">${esc(x.speed)}</span><span class="prs">${esc(x.res)}</span></div>`).join("")}</div>` : `<p class="pnone">この打席はまだ投球がありません</p>`}
   </div>`;
 }
+
 function detailHTML(g) {
   const d = GD[g.d + gkey(g)];
   if (!d) return "";
@@ -1575,7 +1607,6 @@ function detailHTML(g) {
   if (g.st === "live" && PD[g.d + gkey(g)]) h += pitchHTML(g);
   else if (d.now && g.st === "live") h += `<div class="nowbat"><span class="lv">● ${esc(d.now.half)}</span><b>${esc(d.now.order)} ${esc(d.now.name)}</b><span class="sit">${esc(d.now.sit)}</span></div>`;
   if (d.plays && d.plays.length) h += `<div class="plays"><div class="pt">得点シーン</div>${d.plays.map(p => `<div class="pl"><span class="ph">${esc(p.half)}</span><span class="pn">${esc(p.order)} ${esc(p.name)}</span><span class="pk">${esc(p.kind)}</span><span class="ps num">${esc(p.score)}</span></div>`).join("")}</div>`;
-  if (d.url) h += `<a class="pbp" href="${d.url}" target="_blank" rel="noopener">スポナビで経過を見る</a>`;
   return h;
 }
 
