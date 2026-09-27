@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927134853">
+<meta name="build" content="20260927135249">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1303,6 +1303,7 @@ th.srt.on{color:#fff}
 .ytbl.ytab td.ya small{font-size:10px;font-weight:500;display:inline-flex;align-items:center;gap:3px;justify-content:flex-end;white-space:nowrap}
 @media (max-width:374px){.ytbl.ytab col.cn{width:29%}.ytbl.ytab col.cp{width:20%}.ytbl.ytab td.yn .badge{display:none !important}.ytbl.ytab td.yc2 b{width:20px;height:20px;font-size:11.5px}.ytbl.ytab td.ya b{font-size:12px}}
 /* 対象外の球団（広島）の行：参考として薄く */
+.h2h tr.ex td,.h2h tr.ex th,.ftab tr.ex td{opacity:.45}
 .ytab tr.ex td{opacity:.45}
 .ytab tr.ex td.tnm small{display:inline-block;font-size:9.5px;font-weight:600;color:#BDBDBD;border:1px solid #444;border-radius:4px;padding:0 4px;margin-left:6px;opacity:1}
 .ytab tr.ex{background:none !important}
@@ -1346,7 +1347,7 @@ th.srt.on{color:#fff}
       <div class="trend" id="trend"></div>
     </section>
     <section class="blk" id="formBlk">
-      <h2>直近の調子</h2>
+      <h2>直近の勝敗</h2>
       <div class="form" id="form"></div>
     </section>
     <details class="rules conds" id="conds"><summary>確定の条件と残り試合</summary><div id="condBody"></div></details>
@@ -1358,7 +1359,7 @@ th.srt.on{color:#fff}
       <p>M は、どの試合で勝っても最下位回避が確定する残りの勝ち数。自力で決められない（残り全勝でも最下位の可能性が残る）球団は「自力消滅」と表示します。★は回避確定、赤い「支払い」は最下位確定。</p>
       <p>勝差は1位とのゲーム差。</p>
     </details>
-    <details class="howto"><summary>見方</summary><ul><li>順位表：勝差は1位とのゲーム差、残試合はこの月度の残り試合。広島は参考として薄く表示（対象外なので順位・マジック・支払いは広島を除く5球団で計算）。球団名をタップすると公式サイト。</li><li>マジック：最下位を回避するまでの勝ち数。★は回避確定、赤字の「支払」は最下位確定、「自力消滅」は、残り試合に全部勝っても、ほかの球団の結果しだいで最下位の可能性が残る状態（自力での最下位脱出ができない）。</li><li>対戦成績：左の球団から見た、この月度だけの勝数-負数（引分数）。</li><li>直近の調子：○は勝ち、●は負け、△は引き分け。下の文字は対戦相手。</li><li>日程の天気は、試合開始時刻の球場の予報（約2週間先まで）。％は試合中の降水確率の最大値です。天気予報：Open-Meteo。</li><li>勝率で並んだときは、セ・リーグの規定（勝利数→当該球団間の対戦勝率→交流戦を除く勝率→前年度順位）で順位を決めます。</li><li>振替待ちは、中止になって振替日がまだ決まっていない試合です。日程に入るとマジックが変わります。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li>順位表：勝差は1位とのゲーム差、残試合はこの月度の残り試合。広島は参考として薄く表示（対象外なので順位・マジック・支払いは広島を除く5球団で計算）。球団名をタップすると公式サイト。</li><li>マジック：最下位を回避するまでの勝ち数。★は回避確定、赤字の「支払」は最下位確定、「自力消滅」は、残り試合に全部勝っても、ほかの球団の結果しだいで最下位の可能性が残る状態（自力での最下位脱出ができない）。</li><li>対戦成績：左の球団から見た、この月度だけの勝数-負数（引分数）。広島は参考として薄く表示。</li><li>順位の推移：広島（参考）は、5球団の勝率のあいだの位置に点線で表示（5球団の順位には関係しません）。</li><li>直近の勝敗：○は勝ち、●は負け、△は引き分け。下の文字は対戦相手。</li><li>日程の天気は、試合開始時刻の球場の予報（約2週間先まで）。％は試合中の降水確率の最大値です。天気予報：Open-Meteo。</li><li>勝率で並んだときは、セ・リーグの規定（勝利数→当該球団間の対戦勝率→交流戦を除く勝率→前年度順位）で順位を決めます。</li><li>振替待ちは、中止になって振替日がまだ決まっていない試合です。日程に入るとマジックが変わります。</li></ul></details>
   </section>
 
   <section class="view" id="v-cal" aria-label="日程" hidden>
@@ -1948,8 +1949,8 @@ function renderMagic() {
 
   const isCur = S.period.id === defaultPeriod(periods()).id;
   $("cards").insertAdjacentHTML("beforeend", isCur && !a.finished ? pendingHTML(a.rows.map(r => r.t)) : "");
-  const tOrder = a.rows.map(r => r.t);
-  $("mh2h").innerHTML = h2hTable(tOrder, [...tOrder, ...CONFIG.excluded], g => S.period.months.includes(monthOf(g.d)));
+  const tOrder = tRows.map(r => r.t); // 広島（参考）も勝率の位置に入った並び
+  $("mh2h").innerHTML = h2hTable(tOrder, tOrder, g => S.period.months.includes(monthOf(g.d)));
   $("mh2hNote").textContent = `${S.period.label}　勝数-負数（引分数）`;
   renderTrend(a); renderForm();
   // 確定の条件（まとめて1か所）
@@ -2055,7 +2056,7 @@ function h2hTable(rowsT, colsT, filter) {
     return `<td class="num"><b>${w} - ${l}</b><small>(${d})</small></td>`;
   };
   return `<div class="ywrap"><table class="ytab h2h"><thead><tr><th class="rh"></th>${colsT.map(t => `<th>${calSn(t)}</th>`).join("")}</tr></thead><tbody>` +
-    rowsT.map(t => `<tr style="${tv(t)}"><th class="rh">${calSn(t)}</th>${colsT.map(o => cell(t, o)).join("")}</tr>`).join("") + `</tbody></table></div>`;
+    rowsT.map(t => `<tr class="${CONFIG.excluded.includes(t) ? "ex" : ""}" style="${tv(t)}"><th class="rh">${calSn(t)}</th>${colsT.map(o => cell(t, o)).join("")}</tr>`).join("") + `</tbody></table></div>`;
 }
 function renderH2H(order) { $("h2h").innerHTML = h2hTable(order, order); }
 
@@ -2581,13 +2582,15 @@ $("shotShare").onclick = async () => {
 /* ---------- 順位の推移 ---------- */
 function renderTrend(a) {
   const targets = CL.filter(t => !CONFIG.excluded.includes(t));
-  const gs = DATA.games.filter(g => g.st === "final" && S.period.months.includes(monthOf(g.d)) && (targets.includes(g.h) || targets.includes(g.a)))
+  const exT = CONFIG.excluded.filter(t => CL.includes(t));
+  const gs = DATA.games.filter(g => g.st === "final" && S.period.months.includes(monthOf(g.d)) && ([...targets, ...exT].includes(g.h) || [...targets, ...exT].includes(g.a)))
     .sort((x, y) => x.d < y.d ? -1 : 1);
   const days = [...new Set(gs.map(g => g.d))];
   $("trendBlk").hidden = days.length < 2;
   if (days.length < 2) return;
   const W = {}, L = {};
-  targets.forEach(t => { W[t] = 0; L[t] = 0; });
+  [...targets, ...exT].forEach(t => { W[t] = 0; L[t] = 0; });
+  const exHist = {}; exT.forEach(t => (exHist[t] = []));
   let prev = targets.slice();
   const hist = [];
   let k = 0;
@@ -2602,8 +2605,15 @@ function renderTrend(a) {
     const order = targets.slice().sort((x, y) => { const c = cmp(W[y], L[y], W[x], L[x]); return c !== 0 ? c : (W[y] - W[x]) || (prev.indexOf(x) - prev.indexOf(y)); });
     prev = order;
     hist.push(order);
+    // 広島：5球団の勝率のあいだの位置（例：3位と4位のあいだ＝3.5位の高さ）
+    for (const x of exT) {
+      const p = W[x] + L[x] ? W[x] / (W[x] + L[x]) : 0;
+      let at = order.findIndex(t => (W[t] + L[t] ? W[t] / (W[t] + L[t]) : 0) < p);
+      if (at < 0) at = order.length;
+      exHist[x].push(at - 0.5);
+    }
   }
-  const VW = 358, VH = 214, pl = 26, pr = 40, pt = 12, pb = 26;
+  const VW = 358, VH = 226, pl = 26, pr = 40, pt = 18, pb = 32;
   const pw = VW - pl - pr, ph = VH - pt - pb, n = hist.length;
   const X = i => pl + (n === 1 ? pw / 2 : (i * pw) / (n - 1));
   const Y = r => pt + (r * ph) / (targets.length - 1);
@@ -2614,6 +2624,13 @@ function renderTrend(a) {
     svg += `<line x1="${pl}" x2="${pl + pw}" y1="${Y(r)}" y2="${Y(r)}" stroke="#222" stroke-width="1"/>`;
     svg += `<text x="${pl - 12}" y="${Y(r) + 4}" text-anchor="end" font-size="12" font-weight="900" fill="${r === targets.length - 1 ? "#FF2B2B" : "#777"}">${r + 1}</text>`;
   });
+  // 広島（参考）の点線
+  for (const x of exT) {
+    const pts = exHist[x].map((r, i) => `${X(i).toFixed(1)},${Y(Math.max(-0.5, Math.min(targets.length - 0.5, r))).toFixed(1)}`).join(" ");
+    svg += `<polyline points="${pts}" fill="none" stroke="${tc(x)}" stroke-width="1.6" stroke-dasharray="3 4" stroke-linejoin="round" stroke-linecap="round" opacity=".45"/>`;
+    const y = Y(Math.max(-0.5, Math.min(targets.length - 0.5, exHist[x][n - 1])));
+    svg += `<rect x="${X(n - 1) + 9}" y="${y - 9}" width="18" height="18" rx="4" fill="${tc(x)}" opacity=".6"/><text x="${X(n - 1) + 18}" y="${y + 4}" text-anchor="middle" font-size="10.5" font-weight="900" fill="#fff" opacity=".9">${sn(x)}</text>`;
+  }
   const low = a.rows[a.rows.length - 1].t;
   const drawOrder = targets.slice().sort((x, y) => (x === low) - (y === low));
   for (const t of drawOrder) {
@@ -2630,12 +2647,12 @@ function renderTrend(a) {
   ticks.forEach((i, j) => svg += `<text x="${X(i)}" y="${VH - 6}" text-anchor="${j === 0 ? "start" : j === ticks.length - 1 ? "end" : "middle"}" font-size="11" font-weight="700" fill="#777">${md(days[i])}</text>`);
   svg += `</svg>`;
   $("trend").innerHTML = svg;
-  $("trendNote").textContent = `${S.period.label}　赤い帯が最下位`;
+  $("trendNote").textContent = `${S.period.label}　赤い帯が最下位${exT.length ? "・点線は広島（参考）" : ""}`;
 }
 
 /* ---------- 直近の調子 ---------- */
 function renderForm() {
-  const targets = CL.filter(t => !CONFIG.excluded.includes(t));
+  const targets = CL.slice(); // 広島も参考として入れる（行は薄く）
   const fin = DATA.games.filter(g => g.st === "final").sort((x, y) => x.d < y.d ? -1 : 1);
   const rows = targets.map(t => {
     const mine = fin.filter(g => g.h === t || g.a === t);
@@ -2652,7 +2669,7 @@ function renderForm() {
   });
   rows.sort((x, y) => (y.kind === "w" ? y.streak : -y.streak) - (x.kind === "w" ? x.streak : -x.streak));
   $("form").innerHTML = `<div class="ywrap"><table class="ytab ftab"><thead><tr><th class="tnm">チーム名</th><th colspan="5">最近5試合（右が最新）</th><th>連続</th></tr></thead><tbody>` +
-    rows.map(x => `<tr style="${tv(x.t)}"><td class="tnm"><a href="${TEAM_URL[x.t]}" target="_blank" rel="noopener">${fn(x.t)}</a></td>${[0, 1, 2, 3, 4].map(k => {
+    rows.map(x => `<tr class="${CONFIG.excluded.includes(x.t) ? "ex" : ""}" style="${tv(x.t)}"><td class="tnm"><a href="${TEAM_URL[x.t]}" target="_blank" rel="noopener">${fn(x.t)}</a></td>${[0, 1, 2, 3, 4].map(k => {
       const v = x.last[x.last.length - 5 + k];
       return v ? `<td class="fr ${v.r}"><b>${v.r === "w" ? "○" : v.r === "l" ? "●" : "△"}</b><small>${calSn(v.o)}</small></td>` : `<td class="fr"></td>`;
     }).join("")}<td class="fsk ${x.kind || ""}">${x.streak ? `${x.streak}${x.kind === "w" ? "連勝" : "連敗"}` : "-"}</td></tr>`).join("") + `</tbody></table></div>`;
