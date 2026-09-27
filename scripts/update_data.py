@@ -607,11 +607,20 @@ def main():
 
     all_games.sort(key=lambda g: (g["d"], g["h"]))
     old_stats = old.get("stats") if old and old.get("season") == season else None
-    stats = fetch_stats(season, old_stats)
-    prev_order = fetch_prev_order(season, old)
-    rosters, roster_date = fetch_rosters(old)
-    post = fetch_post(season, old)
-    fpos = fetch_fpos(season, old)
+
+    # 試合結果以外の取り込みは、1つが失敗しても前回の値を使って続ける（試合結果の更新まで止めない）
+    def safe(label, fn, fallback):
+        try:
+            return fn()
+        except Exception as e:  # noqa: BLE001
+            print(f"[{label}] 取り込みでエラー（前回の値を使います）: {type(e).__name__}: {e}")
+            return fallback
+
+    stats = safe("成績", lambda: fetch_stats(season, old_stats), old_stats)
+    prev_order = safe("前年の順位", lambda: fetch_prev_order(season, old), (old or {}).get("prev_order"))
+    rosters, roster_date = safe("選手一覧", lambda: fetch_rosters(old), ((old or {}).get("rosters") or {}, (old or {}).get("roster_date")))
+    post = safe("ポストシーズン", lambda: fetch_post(season, old), (old or {}).get("post"))
+    fpos = safe("守備位置", lambda: fetch_fpos(season, old), (old or {}).get("fpos"))
     if (old and old_games == all_games and old_stats == stats and old.get("prev_order") == prev_order
             and old.get("checked") == month and old.get("rosters") == rosters and old.get("song_rev") == SONG_REV
             and old.get("post") == post and old.get("fpos") == fpos):
