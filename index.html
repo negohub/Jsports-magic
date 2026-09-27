@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260926211353">
+<meta name="build" content="20260927050456">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -753,6 +753,33 @@ h2{font-weight:700;margin-top:30px}
 .day .ps{font-size:9.5px;font-weight:700;color:#FFD21F;letter-spacing:0;line-height:1.1;white-space:nowrap}
 .sc.post{font-size:15px;color:#E0E0E0;gap:8px;flex-wrap:wrap}
 .pnote{margin:8px 0 0;font-size:12px;color:var(--muted)}
+
+/* 一球速報 */
+.pbox{background:#0B0B0B;border:1px solid #2A2A2A;padding:12px;margin:0 0 10px}
+.ptop{display:flex;align-items:center;gap:14px}
+.bso{display:grid;gap:5px;font-size:12px;font-weight:700;color:#A8A8A8}
+.bso div{display:flex;align-items:center;gap:5px}
+.bso span{width:12px}
+.bso i{width:12px;height:12px;border-radius:50%;background:#2A2A2A;display:inline-block}
+.bso i.b{background:#2ECC71}.bso i.s{background:#FFD21F}.bso i.o{background:#FF3B3B}
+.dia{width:60px;height:44px}
+.dia rect{fill:#2A2A2A;stroke:#555;stroke-width:1}
+.dia rect.on{fill:#FFD21F;stroke:#FFD21F}
+.phalf{margin-left:auto;text-align:right;font-size:17px;font-weight:700;line-height:1.2}
+.phalf small{display:block;font-size:11px;color:var(--muted);font-weight:400}
+.pvs{margin:10px 0 8px;display:grid;gap:6px}
+.pvs div{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.pvs .pl2{font-size:11px;color:#000;background:#C8C8C8;padding:0 5px;font-weight:700}
+.pvs b{font-size:15px}
+.pvs small{font-size:11.5px;color:var(--muted)}
+.ptab{width:100%;border-collapse:collapse;font-size:13px}
+.ptab td{border-top:1px solid #222;padding:6px 4px}
+.ptab td:first-child{width:24px;color:var(--muted);text-align:center}
+.ptab td.pr{text-align:right;font-weight:700}
+.ptab tr.b td.pr{color:#2ECC71}.ptab tr.s td.pr{color:#FFD21F}.ptab tr.o td.pr{color:#FF6B6B}.ptab tr.h td.pr{color:#5AB0FF}.ptab tr.sac td.pr{color:#C8C8C8}
+.pnone{font-size:12.5px;color:var(--muted);margin:6px 0}
+.pnext{font-size:12.5px;color:#C8C8C8;margin:8px 0 10px}
+.pbox .pbp{margin:0}
 </style>
 </head>
 <body>
@@ -1237,7 +1264,7 @@ function setTab(t) {
   $("kicker").textContent = TAB_TITLE[t][0];
   $("ttl").textContent = TAB_TITLE[t][1];
   magicTitle();
-  if (t === "game") loadDetails();
+  if (t === "game") { loadDetails(); loadPitches(); }
   document.title = t === "magic" ? "J SPORTS ペナントレース" : `${TAB_TITLE[t][1]}｜J SPORTS ペナントレース`;
   document.querySelectorAll(".tabbar button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === t)));
   ["magic", "game", "cal", "std", "song", "stats"].forEach(k => ($("v-" + k).hidden = k !== t));
@@ -1413,7 +1440,7 @@ async function pollLive() {
     }
     liveAt = new Date();
     if (changed) renderAll(); else renderUpd();
-    if (S.tab === "game") loadDetails(changed);
+    if (S.tab === "game") { loadDetails(changed); loadPitches(); }
   } catch {}
 }
 
@@ -1499,6 +1526,42 @@ function loadDetails(force) {
   DATA.games.filter(g => g.d === today && (g.st === "live" || g.st === "final") && (TEAM[g.h] || TEAM[g.a]))
     .forEach(g => { const k = g.d + gkey(g); if (force || g.st === "live" || !GD[k]) loadDetail(g); });
 }
+const PD = {}; // 一球速報
+async function loadPitch(g) {
+  if (!CONFIG.liveApi) return;
+  try {
+    const r = await fetch(`${CONFIG.liveApi}?pitch=${gkey(g)}&t=${Date.now()}`, { cache: "no-store" });
+    const d = await r.json();
+    if (d && !d.error && d.half) { const k = g.d + gkey(g), old = JSON.stringify(PD[k]); PD[k] = d; if (S.tab === "game" && old !== JSON.stringify(d)) renderGame(); }
+  } catch {}
+}
+function loadPitches() {
+  const today = jst().iso;
+  DATA.games.filter(g => g.d === today && g.st === "live").forEach(loadPitch);
+}
+setInterval(() => { if (S.tab === "game" && !document.hidden) loadPitches(); }, 15 * 1000);
+const pitchCls = r => /ボール|四球|死球/.test(r) ? "b" : /空振|見逃|ファウル|ストライク|三振/.test(r) ? "s" : /犠/.test(r) ? "sac" : /安打|ヒット|二塁打|三塁打|本塁打|出塁|失策|エラー/.test(r) ? "h" : "o";
+function pitchHTML(g) {
+  const p = PD[g.d + gkey(g)], d = GD[g.d + gkey(g)];
+  if (!p || g.st !== "live") return "";
+  const dots = (n, max, cls) => Array.from({ length: max }, (_, i) => `<i class="${i < n ? cls : ""}"></i>`).join("");
+  const sit = (d && d.now && d.now.sit) || "";
+  const on = k => sit.includes("満塁") || sit.includes(k);
+  return `<div class="pbox">
+    <div class="ptop">
+      <div class="bso"><div><span>B</span>${dots(p.b || 0, 3, "b")}</div><div><span>S</span>${dots(p.s || 0, 2, "s")}</div><div><span>O</span>${dots(p.o || 0, 2, "o")}</div></div>
+      <svg class="dia" viewBox="0 0 60 44" aria-label="走者"><rect x="24" y="2" width="12" height="12" transform="rotate(45 30 8)" class="${on("二") ? "on" : ""}"/><rect x="42" y="18" width="12" height="12" transform="rotate(45 48 24)" class="${on("一") ? "on" : ""}"/><rect x="6" y="18" width="12" height="12" transform="rotate(45 12 24)" class="${on("三") ? "on" : ""}"/></svg>
+      <div class="phalf">${esc(p.half || "")}<small>${esc(p.attack ? p.attack + "の攻撃" : "")}</small></div>
+    </div>
+    <div class="pvs">
+      ${p.pitcher ? `<div><span class="pl2">投手</span><b>${esc(p.pitcher.name)}</b><small>#${esc(p.pitcher.no)} ${esc(p.pitcher.hand)}　${p.pitcher.np}球　防御率${esc(p.pitcher.era)}</small></div>` : ""}
+      ${p.batter ? `<div><span class="pl2">打者</span><b>${esc(p.batter.name)}</b><small>#${esc(p.batter.no)} ${esc(p.batter.hand)}　打率${esc(p.batter.avg)}</small></div>` : ""}
+    </div>
+    ${p.pitches && p.pitches.length ? `<table class="ptab num">${p.pitches.map(x => `<tr class="${pitchCls(x.res)}"><td>${x.n}</td><td>${esc(x.type)}</td><td>${esc(x.speed)}</td><td class="pr">${esc(x.res)}</td></tr>`).join("")}</table>` : `<p class="pnone">この打席はまだ投球がありません</p>`}
+    ${p.next ? `<p class="pnext">次の打者　${esc(p.next)}</p>` : ""}
+    <a class="pbp" href="${p.url}" target="_blank" rel="noopener">スポナビの一球速報を見る</a>
+  </div>`;
+}
 function detailHTML(g) {
   const d = GD[g.d + gkey(g)];
   if (!d) return "";
@@ -1509,7 +1572,8 @@ function detailHTML(g) {
     const row = (x, t) => `<tr><th style="${tv(t)}"><span class="badge">${calSn(t)}</span></th>${x.inn.map((v, i) => `<td class="${curInn === i + 1 ? "cur" : ""}">${esc(v)}</td>`).join("")}<td class="tot">${esc(x.r)}</td><td class="sub">${esc(x.h)}</td><td class="sub">${esc(x.e)}</td></tr>`;
     h += `<div class="lswrap"><table class="ls num"><thead><tr><th></th>${L.innings.map((c, i) => `<th class="${curInn === i + 1 ? "cur" : ""}">${esc(c)}</th>`).join("")}<th>計</th><th>安</th><th>失</th></tr></thead><tbody>${row(L.away, g.a)}${row(L.home, g.h)}</tbody></table></div>`;
   }
-  if (d.now && g.st === "live") h += `<div class="nowbat"><span class="lv">● ${esc(d.now.half)}</span><b>${esc(d.now.order)} ${esc(d.now.name)}</b><span class="sit">${esc(d.now.sit)}</span></div>`;
+  if (g.st === "live" && PD[g.d + gkey(g)]) h += pitchHTML(g);
+  else if (d.now && g.st === "live") h += `<div class="nowbat"><span class="lv">● ${esc(d.now.half)}</span><b>${esc(d.now.order)} ${esc(d.now.name)}</b><span class="sit">${esc(d.now.sit)}</span></div>`;
   if (d.plays && d.plays.length) h += `<div class="plays"><div class="pt">得点シーン</div>${d.plays.map(p => `<div class="pl"><span class="ph">${esc(p.half)}</span><span class="pn">${esc(p.order)} ${esc(p.name)}</span><span class="pk">${esc(p.kind)}</span><span class="ps num">${esc(p.score)}</span></div>`).join("")}</div>`;
   if (d.url) h += `<a class="pbp" href="${d.url}" target="_blank" rel="noopener">スポナビで経過を見る</a>`;
   return h;
