@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927114940">
+<meta name="build" content="20260927115549">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1209,6 +1209,19 @@ h2::before{transform:none;width:5px;height:18px;border-radius:3px;background:lin
 /* 投手成績の勝敗マーク */
 .putab .dec{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:5px;font-style:normal;font-size:10.5px;font-weight:700;margin-right:6px;vertical-align:1px;color:#fff;background:#444}
 .putab .dec.dw{background:#D6246E}.putab .dec.dl{background:#1E6FD9}.putab .dec.ds{background:#C9A227;color:#000}.putab .dec.dh{background:#1E8E4E}
+/* 打順・投手成績：太字をやめて、文字を控えめに */
+.lnm span{font-weight:500 !important;font-size:14px}
+.lutab tr.sub .lnm span{font-weight:400 !important;font-size:13px}
+.lutab .lo{font-weight:600 !important;font-size:15px;color:#BDBDBD}
+.lnm .la{font-weight:400}
+.lrw .rc{font-weight:500 !important;font-size:11px;padding:2px 6px}
+.putab{font-size:12.5px !important}
+.putab td{font-weight:400 !important;padding:7px 2px}
+.putab td.pnx b{font-weight:500 !important;font-size:13.5px}
+.putab td.pnx small{font-size:10px}
+.putab th{font-size:10.5px}
+.putab .dec{width:16px;height:16px;font-size:9.5px;font-weight:600;margin-right:5px}
+@media (max-width:374px){.putab{font-size:11.5px !important}.putab td.pnx b{font-size:12.5px}}
 /* ページ切り替え・開閉をなめらかに */
 @media (prefers-reduced-motion:no-preference){
   .view:not([hidden]){animation:vin .35s cubic-bezier(.22,1,.36,1)}
