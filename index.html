@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927092139">
+<meta name="build" content="20260927092711">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1013,6 +1013,12 @@ body{padding-bottom:calc(98px + env(safe-area-inset-bottom,0px))}
 .wxd b{font-weight:700}
 .wxd span.hi{color:#5AB0FF;font-weight:700}
 .wxd em{font-style:normal;font-size:11.5px;color:var(--muted);border:1px solid #2A2A2A;padding:0 6px}
+
+/* 天気は時刻の下の行に（重ならないように） */
+.wxr{display:flex;align-items:center;justify-content:center;gap:2px;margin-top:1px;line-height:1}
+.wxr .wxi{width:14px;height:14px}
+.wxr small{font-size:9.5px;font-weight:700;color:#BFD9FF;letter-spacing:0}
+.wxr small.hi{color:#fff;background:#1E6FD9;padding:1px 3px;border-radius:2px}
 </style>
 </head>
 <body>
@@ -2433,7 +2439,7 @@ function renderCal() {
       else if (g.st === "final") { const r = resultOf(g, t); inner += `<span class="rs ${r}">${r === "w" ? "○" : r === "l" ? "×" : "△"}</span>`; }
       else if (g.st === "live") { const me = g.h === t ? g.hs : g.as, op = g.h === t ? g.as : g.hs; inner += `<span class="tx lvc num">${me}-${op}</span><span class="tx lvc">${esc((g.inn || "").replace("回", ""))}</span>`; }
       else inner += `<span class="tx num">${esc(g.t || "")}</span>`;
-      if (g.st === "sched") { const w = wxFor(g); if (w && !w.dome) inner += `<span class="wxc">${wxIcon(w.code)}${w.pop != null && w.pop >= 30 ? `<small class="num${w.pop >= 60 ? " hi" : ""}">${w.pop}%</small>` : ""}</span>`; }
+      if (g.st === "sched") { const w = wxFor(g); if (w && !w.dome) inner += `<span class="wxr">${wxIcon(w.code)}${w.pop != null && w.pop >= 30 ? `<small class="num${w.pop >= 60 ? " hi" : ""}">${w.pop}%</small>` : ""}</span>`; }
     }
     const pg = !g && postByDay[iso];
     if (pg) {
