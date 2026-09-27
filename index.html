@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927153835">
+<meta name="build" content="20260927155512">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1477,6 +1477,18 @@ html.theme-pawa .rleg{border-color:#E3ECF7}
 /* 応援歌 */
 html.theme-pawa .srow *{color:#13264A}
 html.theme-pawa .songq,html.theme-pawa #songQ{background:#fff !important;color:#13264A !important;border:3px solid #1D3E7C !important}
+/* 応援歌の選手タイル：スタイリッシュ（黒いカード＋下に守備位置の色のライン） */
+html:not(.theme-pawa) .ptile{background:linear-gradient(180deg,#1A1A1F,#111114) !important;border:1px solid rgba(255,255,255,.08) !important;border-radius:12px;height:46px;
+  color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 4px 12px rgba(0,0,0,.35)}
+html:not(.theme-pawa) .ptile::after{content:"";position:absolute;left:12px;right:12px;bottom:0;height:3px;border-radius:3px 3px 0 0;background:var(--acc,#666)}
+html:not(.theme-pawa) .ptile b{font-weight:600;color:#fff}
+html:not(.theme-pawa) .ptile small{color:#6E6E78}
+html:not(.theme-pawa) .ptile:active{background:#222228 !important}
+html:not(.theme-pawa) .sp-h{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 28%,#141418),#141418 75%)}
+html:not(.theme-pawa) .sp-h b{color:#fff}
+html:not(.theme-pawa) .sp-h small{color:#9A9AA5}
+html:not(.theme-pawa) .sp-b .sof{background:rgba(255,255,255,.06);color:#fff;border:1px solid rgba(255,255,255,.2)}
+html:not(.theme-pawa) .sp-b .sgo{background:#fff;color:#000;border:0}
 /* 担当者の名前タイル（パワプロ風） */
 .ptile.otile{display:inline-flex;height:auto;min-width:64px;padding:3px 12px;vertical-align:middle;cursor:default;border-radius:8px}
 .ptile.otile b{font-size:inherit;font-weight:700;letter-spacing:.06em}
@@ -3424,6 +3436,12 @@ function posGroups(t, name, fallback) {
   return [...new Set(out)].slice(0, 3);
 }
 function tileStyle(groups) {
+  if (!document.documentElement.classList.contains("theme-pawa")) {
+    const c = groups.map(k => PCOL[k]);
+    if (c.length < 2) return `--acc:${c[0] || "#888"}`;
+    const w = 100 / c.length;
+    return `--acc:linear-gradient(90deg,${c.map((col, i) => `${col} ${i * w}%,${col} ${(i + 1) * w}%`).join(",")})`;
+  }
   if (groups.length < 2) return "";
   const c = groups.map(k => PCOL[k]), n = c.length, w = 100 / n;
   const stops = c.map((col, i) => `${col} ${i === 0 ? 0 : i * w + 3}%,${col} ${i === n - 1 ? 100 : (i + 1) * w - 3}%`).join(",");
@@ -3467,7 +3485,7 @@ function renderSong() {
     const list = all.filter(x => x.dev === dev && (dev || x.p === pos) && hit(x)).sort((a, b) => Number(a.no) - Number(b.no) || a.no.length - b.no.length);
     if (!list.length) continue;
     const ttl = dev ? "育成選手" : pos;
-    const body = pawa ? `<div class="ptiles">${list.map(tile).join("")}</div>` : list.map(row).join("");
+    const body = `<div class="ptiles">${list.map(tile).join("")}</div>`;
     html += dev && !q ? `<details class="sgrp"><summary>${ttl}<small>${list.length}人</small></summary>${body}</details>`
       : `<div class="sgrp"><div class="sgt">${ttl}<small>${list.length}人</small></div>${body}</div>`;
   }
