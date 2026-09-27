@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ペナントレース">
 <link rel="icon" type="image/png" href="favicon.png">
+<meta name="robots" content="noindex, nofollow, noarchive">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="J SPORTS ペナントレース">
@@ -23,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927122933">
+<meta name="build" content="20260927124934">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1251,6 +1252,26 @@ h2::before{transform:none;width:5px;height:18px;border-radius:3px;background:lin
 /* 自力脱出の消滅 */
 .mt.mx{display:inline-block;font-size:9.5px;line-height:1.2;font-weight:700;color:#FF8A8A;letter-spacing:0;white-space:nowrap}
 .hero .hx{font-style:normal;display:inline-block;margin-left:8px;font-size:10.5px;font-weight:700;color:#fff;background:#C0392B;padding:1px 6px;border-radius:5px;vertical-align:1px}
+/* 優勝ライン */
+#raceBox h2{margin-top:34px}
+.race{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13.5px}
+.race th,.race td{white-space:nowrap}
+.race th,.race td{text-align:center;padding:7px 2px;border-bottom:1px solid var(--soft-line)}
+.race .rcT{background:var(--tc);color:var(--ti,#000);font-size:15px;font-weight:700;padding:8px 2px}
+.race .rcR th{background:color-mix(in srgb,var(--tc) 30%,#111);color:#fff;font-size:12px;font-weight:600}
+.race .rcH th{font-size:11.5px;color:var(--muted);font-weight:600}
+.race .rcC td{background:rgba(255,255,255,.08);font-weight:700}
+.race .rcP{border-right:1px solid var(--soft-line)}
+.race tr > :last-child{border-right:0}
+.race td.pace{background:rgba(255,210,31,.14)}
+.race td,.race td:first-child{font-size:inherit !important;color:#fff !important;font-weight:400 !important;text-align:center !important}
+.race .rcC td,.race .rcC td:first-child{font-weight:700 !important}
+.race td.clinch,.race td.clinch:first-child{color:#FF5A5A !important;font-weight:700 !important}
+.race tbody tr:last-child td{border-bottom:0}
+.rnote{font-size:11.5px;color:var(--muted);margin:8px 2px 0;line-height:1.7}
+.rnote .k1{color:#FF5A5A;font-weight:700;margin-right:4px}
+.rnote .k2{background:rgba(255,210,31,.2);color:#FFD21F;padding:0 5px;border-radius:4px;margin-right:4px;font-weight:700}
+@media (max-width:374px){.race{font-size:12px}.race .rcT{font-size:13.5px}}
 /* ページ切り替え・開閉をなめらかに */
 @media (prefers-reduced-motion:no-preference){
   .view:not([hidden]){animation:vin .35s cubic-bezier(.22,1,.36,1)}
@@ -1321,13 +1342,14 @@ h2::before{transform:none;width:5px;height:18px;border-radius:3px;background:lin
   <section class="view" id="v-std" aria-label="順位" hidden>
     <h2>セ・リーグ順位表<small id="stdNote"></small></h2>
     <div id="std"></div>
+    <div id="raceBox"></div>
     <h2>対戦成績<small>勝-敗（引分）</small></h2>
     <div id="h2h"></div>
     <h2>月度ごとの支払い</h2>
     <div class="hist" id="hist"></div>
     <h2>担当者ごとの年間成績</h2>
     <div class="tot" id="tot"></div>
-    <details class="howto"><summary>見方</summary><ul><li>順位表：勝差は1位とのゲーム差。1位の勝差の欄は優勝マジック。</li><li>対戦成績：左の球団から見た勝数-負数（引分数）。例：神の行・巨の列＝阪神の巨人戦。</li><li>月度ごとの支払い：順位は左から1位。赤枠が最下位（支払い）。広島は対象外。</li><li>担当者ごとの年間成績：数字は各月度の順位（白＝1位、赤＝最下位、点線＝集計中）。支払いの少ない順、同じなら平均順位の順。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li>順位表：勝差は1位とのゲーム差。1位の勝差の欄は優勝マジック。</li><li>優勝ライン：首位と、まだ優勝の可能性がある球団の、残り試合の勝敗ごとの最終勝率。赤字は首位がこの成績以上なら優勝（優勝マジックと同じ）、黄色は今の勝率のペースを保った場合。優勝が決まると表示されなくなります。</li><li>対戦成績：左の球団から見た勝数-負数（引分数）。例：神の行・巨の列＝阪神の巨人戦。</li><li>月度ごとの支払い：順位は左から1位。赤枠が最下位（支払い）。広島は対象外。</li><li>担当者ごとの年間成績：数字は各月度の順位（白＝1位、赤＝最下位、点線＝集計中）。支払いの少ない順、同じなら平均順位の順。</li></ul></details>
   </section>
   <section class="view" id="v-game" aria-label="今日の試合" hidden>
     <section class="blk" id="todayBlk">
@@ -2791,6 +2813,7 @@ function renderCal() {
 
 /* ---------- 順位 ---------- */
 function renderStd() {
+  renderRace();
   const rows = seasonTable(DATA.games, calOrder());
   const remS = {};
   DATA.games.forEach(g => { if (g.st === "sched" || g.st === "live") { remS[g.h] = (remS[g.h] || 0) + 1; remS[g.a] = (remS[g.a] || 0) + 1; } });
@@ -2927,6 +2950,49 @@ const UNIT = { hr: "本", rbi: "打点", h: "安打", sb: "盗塁", w: "勝", so
 S.tmKind = "bat"; S.cat = "b_avg"; S.rkKind = "bat";
 function statsData() { return DATA.stats || (SNAP && SNAP.stats) || null; }
 const num = v => { const x = parseFloat(String(v ?? "").replace(/^\./, "0.")); return isNaN(x) ? null : x; };
+// 優勝ライン：首位と、まだ優勝の可能性がある球団の「残り試合の勝敗ごとの勝率」を並べる
+function renderRace() {
+  const box = $("raceBox");
+  const rows = seasonTable(DATA.games, calOrder());
+  const X = rows[0];
+  const pct = (w, l) => (w + l ? w / (w + l) : 0);
+  const f3 = v => v.toFixed(3).replace(/^0/, "");
+  // まだ優勝の可能性がある球団（残り全勝なら首位の残り全敗を上回れる）
+  const rivals = rows.slice(1).filter(Y => cmp(Y.w + Y.rem, Y.l, X.w, X.l + X.rem) > 0).slice(0, 2);
+  if (!X.rem && !rivals.length || !rivals.length) { box.innerHTML = ""; return; }
+  const teams = [X, ...rivals];
+  // 各球団の「残りの勝敗 → 勝率」（勝ちが多い順）
+  const lines = teams.map(T => Array.from({ length: T.rem + 1 }, (_, i) => { const w = T.rem - i, l = i; return { w, l, p: pct(T.w + w, T.l + l) }; }));
+  // 行をそろえる：首位の列を基準に、追う球団は「首位の勝率が自分より低くなる行」から並べる
+  const pos = lines.map((L, ti) => {
+    if (ti === 0) return L.map((_, i) => i);
+    let prev = -1;
+    return L.map(e => { let r = lines[0].findIndex(x => x.p < e.p); if (r < 0) r = lines[0].length; r = Math.max(r, prev + 1); prev = r; return r; });
+  });
+  const nRows = Math.max(...pos.map(p => (p.length ? p[p.length - 1] + 1 : 0)));
+  // 赤字：優勝マジック（首位がこの勝ち数以上なら優勝）。薄い黄色：今の勝率のペース
+  const clinchW = X.magic;
+  const paceW = T => Math.round(T.rem * pct(T.w, T.l));
+  const cells = (ti, r) => {
+    const i = pos[ti].indexOf(r);
+    if (i < 0) return `<td></td><td></td><td class="rcP"></td>`;
+    const e = lines[ti][i], T = teams[ti];
+    const cls = (ti === 0 && clinchW != null && e.w === clinchW ? " clinch" : "") + (e.w === paceW(T) ? " pace" : "");
+    return `<td class="num${cls}">${e.w}</td><td class="num${cls}">${e.l}</td><td class="num rcP${cls}">${f3(e.p)}</td>`;
+  };
+  const u = DATA.updated ? new Date(DATA.updated) : null;
+  box.innerHTML = `<h2>優勝ライン<small>${u ? `${u.getMonth() + 1}月${u.getDate()}日時点` : ""}</small></h2>
+    <div class="ywrap"><table class="race num"><colgroup>${teams.map(() => `<col style="width:${(100 / teams.length) * 0.3}%"><col style="width:${(100 / teams.length) * 0.3}%"><col style="width:${(100 / teams.length) * 0.4}%">`).join("")}</colgroup>
+      <thead>
+        <tr>${teams.map(T => `<th colspan="3" class="rcT" style="${tv(T.t)}">${fn(T.t)}</th>`).join("")}</tr>
+        <tr class="rcR">${teams.map(T => `<th colspan="2" style="${tv(T.t)}">残り試合</th><th class="rcP" style="${tv(T.t)}">${T.rem}</th>`).join("")}</tr>
+        <tr class="rcH">${teams.map(() => `<th>勝</th><th>敗</th><th class="rcP">勝率</th>`).join("")}</tr>
+        <tr class="rcC">${teams.map(T => `<td>${T.w}</td><td>${T.l}</td><td class="rcP">${f3(pct(T.w, T.l))}</td>`).join("")}</tr>
+      </thead>
+      <tbody>${Array.from({ length: nRows }, (_, r) => `<tr>${teams.map((_, ti) => cells(ti, r)).join("")}</tr>`).join("")}</tbody>
+    </table></div>
+    <p class="rnote"><span class="k1">赤字</span>${fn(X.t)}がこの成績以上なら、ほかの結果に関係なく優勝（優勝マジック${clinchW != null ? ` M${clinchW}` : ""}）　<span class="k2">黄色</span>今の勝率のペースを保った場合</p>`;
+}
 function renderStats() {
   const st = statsData();
   if (!st) { $("tmTbl").innerHTML = ""; $("rankList").innerHTML = `<div class="rempty">成績データはまだありません。自動更新のあとに表示されます。</div>`; return; }
