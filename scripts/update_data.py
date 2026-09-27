@@ -398,7 +398,54 @@ def fetch_fpos(season, old):
         else:
             print(f"[守備位置] {t} 表が見つからず（前回の値を使用）")
     print(f"[守備位置] {sum(len(v) for v in teams.values())}人（{len(teams)}球団）")
-    return {"season": season, "date": today, "teams": teams}
+    # 投手の役割（先発・中継ぎ・抑え）：個人投手成績の「1登板あたりの投球回」と「セーブ・ホールド」から判定
+    roles = dict(prev.get("roles", {})) if prev.get("season") == season else {}
+    for t, code in ROSTER_CODE.items():
+        html = fetch(f"https://npb.jp/bis/{season}/stats/idp1_{code}.html")
+        if not html:
+            continue
+        soup = BeautifulSoup(html, "html.parser")
+        out = {}
+        for table in soup.find_all("table"):
+            rows = table.find_all("tr")
+            if not rows:
+                continue
+            head = [clean(x.get_text()) for x in rows[0].find_all(["th", "td"])]
+            if "登板" not in head or "投球回" not in head or "セーブ" not in head:
+                continue
+            ix = {k: head.index(k) for k in ("登板", "投球回", "セーブ", "ホールド") if k in head}
+            for tr in rows[1:]:
+                c = [norm(x.get_text(" ", strip=True)) for x in tr.find_all(["td", "th"])]
+                if len(c) < len(head):
+                    continue
+                name = re.sub(r"[\s*＊]", "", c[0])
+                try:
+                    g = int(c[ix["登板"]])
+                    ipt = c[ix["投球回"]].split(".")
+                    ip = int(ipt[0] or 0) + (int(ipt[1]) / 3 if len(ipt) > 1 and ipt[1] else 0)
+                    sv = int(c[ix["セーブ"]] or 0)
+                    hd = int(c[ix["ホールド"]] or 0) if "ホールド" in ix else 0
+                except (ValueError, KeyError):
+                    continue
+                if not name or g <= 0:
+                    continue
+                per = ip / g
+                if sv >= 10:
+                    r = ["抑"] + (["中"] if hd >= 5 else [])
+                elif per >= 4:
+                    r = ["先"]
+                elif per >= 3.25:
+                    r = ["先", "中"]
+                elif per >= 2.5:
+                    r = ["中", "先"]
+                else:
+                    r = ["中"] + (["抑"] if sv >= 3 else [])
+                out[name] = r
+        if out:
+            roles[t] = out
+            time.sleep(1)
+    print(f"[投手の役割] {sum(len(v) for v in roles.values())}人（{len(roles)}球団）")
+    return {"season": season, "date": today, "teams": teams, "roles": roles}
 
 
 def fetch_rosters(old):
