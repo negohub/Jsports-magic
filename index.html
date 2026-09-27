@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927150726">
+<meta name="build" content="20260927151323">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -3283,6 +3283,26 @@ const songLink = (t, x) => SONG_ONE[t] ? SONG_ONE[t](x) : SONG_PAGE[t] ? jump(t,
 const songLabel = () => "公式";
 S.songTeam = store("songTeam") || "T"; S.songQ = "";
 const ytUrl = (t, n) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(`${TEAM[t].n} ${n.replace(/\s+/g, "")} 応援歌`);
+// 選手タイルの色：今季守ったポジションの試合数が多い順（3試合以上のもの。最大3色）。データがなければ名簿の守備位置
+const PCOL = { "投": "#F8A0B6", "捕": "#6FD3F0", "内": "#F9D564", "外": "#84D877" };
+const PKEY = { "投手": "投", "捕手": "捕", "内野手": "内", "外野手": "外" };
+function posGroups(t, name, fallback) {
+  const T = ((DATA.fpos || {}).teams || {})[t] || {};
+  const key = String(name || "").replace(/[\s*＊]/g, "");
+  let d = T[key];
+  if (!d) { const hits = Object.keys(T).filter(k => k.startsWith(key)); if (hits.length === 1) d = T[hits[0]]; }
+  const g = d ? Object.entries(d).filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1]).map(([k]) => k) : [];
+  if (!g.length && d) { const top = Object.entries(d).sort((a, b) => b[1] - a[1])[0]; if (top) g.push(top[0]); }
+  if (!g.length) g.push(PKEY[fallback] || fallback || "内");
+  return g.slice(0, 3);
+}
+function tileStyle(groups) {
+  if (groups.length < 2) return "";
+  const c = groups.map(k => PCOL[k]), n = c.length, w = 100 / n;
+  const stops = c.map((col, i) => `${col} ${i === 0 ? 0 : i * w + 3}%,${col} ${i === n - 1 ? 100 : (i + 1) * w - 3}%`).join(",");
+  return `background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0) 55%),linear-gradient(105deg,${stops});border-color:rgba(0,0,0,.2)`;
+}
+const TILEC = { "投": "pp", "捕": "pc", "内": "pi", "外": "po" };
 document.addEventListener("click", e => {
   const b = e.target.closest(".ptile[data-song]");
   if (b) {
@@ -3314,7 +3334,7 @@ function renderSong() {
       <span class="sbtn">${songLink(t, x) ? `<a class="sof" href="${songLink(t, x)}" target="_blank" rel="noopener">${songLabel(t)}</a>` : ""}<a class="sgo" href="${ytUrl(t, x.n)}" target="_blank" rel="noopener">聴く</a></span></div>`;
   const pawa = document.documentElement.classList.contains("theme-pawa");
   const POSC = { "投手": "pp", "捕手": "pc", "内野手": "pi", "外野手": "po" };
-  const tile = x => { const sur = x.n.split(/\s+/)[0]; return `<button type="button" class="ptile ${POSC[x.p] || "pp"}${sur.length <= 2 ? " sp" : sur.length >= 5 ? " lg" : ""}" data-song="${esc(x.no)}|${esc(x.n)}"><small class="num">${esc(x.no)}</small><b>${esc(sur)}</b></button>`; };
+  const tile = x => { const sur = x.n.split(/\s+/)[0], gr = posGroups(t, x.n, x.p); return `<button type="button" class="ptile ${TILEC[gr[0]] || POSC[x.p] || "pp"}${sur.length <= 2 ? " sp" : sur.length >= 5 ? " lg" : ""}" style="${tileStyle(gr)}" data-song="${esc(x.no)}|${esc(x.n)}"><small class="num">${esc(x.no)}</small><b>${esc(sur)}</b></button>`; };
   let html = "";
   for (const [pos, dev] of groups) {
     const list = all.filter(x => x.dev === dev && (dev || x.p === pos) && hit(x)).sort((a, b) => Number(a.no) - Number(b.no) || a.no.length - b.no.length);
@@ -3494,9 +3514,12 @@ function renderStats(fromLive) {
   const rkTile = r => {
     const ro = ((DATA.rosters || {})[r.t] || []).filter(x => x.n.split(/\s+/)[0] === r.n.replace(/\s+/g, "") || x.n.replace(/\s+/g, "") === r.n.replace(/\s+/g, ""));
     const bat = ro.find(x => x.p !== "投手");
-    const c = S.rkKind === "pit" ? "pp" : POSC[(bat || ro[0] || {}).p] || "pi";
+    const who = S.rkKind === "pit" ? (ro.find(x => x.p === "投手") || ro[0]) : (bat || ro[0]);
+    let gr = posGroups(r.t, who ? who.n : r.n, S.rkKind === "pit" ? "投手" : (who || {}).p || "内野手");
+    if (S.rkKind === "pit" && !gr.includes("投")) gr = ["投"]; // 投手部門は投手の色
+    if (S.rkKind !== "pit") gr = gr.filter(k => k !== "投").length ? gr.filter(k => k !== "投") : gr;
     const nm = r.n;
-    return `<span class="ptile ${c}${nm.length <= 2 ? " sp" : nm.length >= 5 ? " lg" : ""}"><b>${esc(nm)}</b></span>`;
+    return `<span class="ptile ${TILEC[gr[0]] || "pi"}${nm.length <= 2 ? " sp" : nm.length >= 5 ? " lg" : ""}" style="${tileStyle(gr)}"><b>${esc(nm)}</b></span>`;
   };
   $("rankList").innerHTML = rows.length ? `<div class="ywrap"><table class="ytab rtab"><thead><tr><th>順位</th><th class="tnm">選手名</th><th class="tnm srt${rs.by === "t" ? " on" : ""}" data-by="t">チーム${arrow("t")}</th><th class="srt${rs.by === "v" ? " on" : ""}" data-by="v">${lbl ? lbl[1] : ""}${arrow("v")}</th></tr></thead><tbody>` +
     view.map(r => `<tr class="${r.r === 1 ? "lead" : ""}" style="${tv(r.t)}"><td class="num"><span class="rkm r${r.r <= 3 ? r.r : 0}">${r.r}</span></td><td class="pnm">${pawaT ? rkTile(r) : esc(r.n)}</td><td class="tnm">${fn(r.t)}</td><td class="num v">${esc(r.v)}</td></tr>`).join("") +
