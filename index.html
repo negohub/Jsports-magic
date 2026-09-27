@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927130239">
+<meta name="build" content="20260927130627">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -3060,7 +3060,7 @@ function renderStats() {
     return rs.dir === "asc" ? d : -d;
   });
   const arrow = by => sortIco(rs.by === by ? rs.dir : "none");
-  $("rankList").innerHTML = rows.length ? `<div class="ywrap"><table class="ytab rtab"><thead><tr><th class="srt${rs.by === "r" ? " on" : ""}" data-by="r">順位${arrow("r")}</th><th class="tnm">選手名</th><th class="tnm srt${rs.by === "t" ? " on" : ""}" data-by="t">チーム${arrow("t")}</th><th class="srt${rs.by === "v" ? " on" : ""}" data-by="v">${lbl ? lbl[1] : ""}${arrow("v")}</th></tr></thead><tbody>` +
+  $("rankList").innerHTML = rows.length ? `<div class="ywrap"><table class="ytab rtab"><thead><tr><th>順位</th><th class="tnm">選手名</th><th class="tnm srt${rs.by === "t" ? " on" : ""}" data-by="t">チーム${arrow("t")}</th><th class="srt${rs.by === "v" ? " on" : ""}" data-by="v">${lbl ? lbl[1] : ""}${arrow("v")}</th></tr></thead><tbody>` +
     view.map(r => `<tr class="${r.r === 1 ? "lead" : ""}" style="${tv(r.t)}"><td class="num">${r.r}</td><td class="pnm">${esc(r.n)}</td><td class="tnm">${fn(r.t)}</td><td class="num v">${esc(r.v)}</td></tr>`).join("") +
     `</tbody></table></div>${QUAL.has(S.cat) ? `<p class="qnote">${S.rkKind === "bat" ? "規定打席" : "規定投球回"}以上の選手が対象</p>` : ""}` : `<div class="rempty">この項目のデータは、次の自動更新のあとに表示されます。</div>`;
   $("rankList").querySelectorAll("th.srt").forEach(th => (th.onclick = () => {
