@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927080706">
+<meta name="build" content="20260927081418">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -944,6 +944,37 @@ h2{font-weight:700;margin-top:30px}
 .tabbar button[aria-selected="true"]{background:rgba(255,255,255,.1);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
 .tabbar button[aria-selected="true"]::before{display:none}
 .tabbar button[aria-selected="true"] svg{filter:drop-shadow(0 0 6px rgba(255,255,255,.35))}
+
+/* ===== Liquid Glass（iOS 26風） ===== */
+body{padding-bottom:calc(98px + env(safe-area-inset-bottom,0px))}
+.tabbar{left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));max-width:520px;margin:0 auto;padding:0;border-radius:30px;border:0;overflow:hidden;
+  background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04) 55%,rgba(255,255,255,.07)),rgba(22,22,24,.38);
+  -webkit-backdrop-filter:blur(26px) saturate(190%) brightness(1.08);backdrop-filter:blur(26px) saturate(190%) brightness(1.08);
+  box-shadow:0 14px 34px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.42),inset 0 -1px 0 rgba(255,255,255,.08),inset 0 0 0 1px rgba(255,255,255,.12)}
+.tabbar::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(120% 70% at 18% -10%,rgba(255,255,255,.28),transparent 55%),radial-gradient(90% 60% at 100% 120%,rgba(255,255,255,.10),transparent 60%)}
+.tabbar nav{position:relative;padding:6px;max-width:none;display:grid;grid-template-columns:repeat(6,1fr)}
+.tabbar button{position:relative;z-index:1;border-radius:24px;margin:0;padding:8px 0 7px;color:rgba(255,255,255,.62);font-size:10.5px;font-weight:700;background:none;box-shadow:none;transition:color .25s ease}
+.tabbar button[aria-selected="true"]{background:none;box-shadow:none;color:#fff}
+.tabbar button[aria-selected="true"] svg{filter:none}
+.tabbar button svg{width:22px;height:22px;transition:transform .35s cubic-bezier(.3,1.5,.5,1)}
+.tabbar button[aria-selected="true"] svg{transform:scale(1.08)}
+.tabbar .lens{position:absolute;left:0;top:6px;bottom:6px;width:0;border-radius:24px;pointer-events:none;
+  background:radial-gradient(120% 90% at 50% 0%,rgba(255,255,255,.34),rgba(255,255,255,.10) 60%,rgba(255,255,255,.06));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(255,255,255,.12),inset 0 0 0 1px rgba(255,255,255,.14),0 4px 14px rgba(0,0,0,.35);
+  transition:transform .55s cubic-bezier(.3,1.35,.45,1),width .55s cubic-bezier(.3,1.35,.45,1)}
+@media (prefers-reduced-motion:reduce){.tabbar .lens,.tabbar button svg{transition:none}}
+/* 上に出る小さいヘッダーもガラスのカプセルに */
+.minibar{left:10px;right:10px;top:calc(6px + env(safe-area-inset-top,0px));padding:8px 16px;border-radius:22px;border:0;max-width:540px;margin:0 auto;
+  background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04)),rgba(22,22,24,.42);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);
+  box-shadow:0 10px 26px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.38),inset 0 0 0 1px rgba(255,255,255,.1)}
+.minibar::after{display:none}
+.minibar.show{transform:none}
+/* お知らせもガラスに */
+.toast{bottom:calc(92px + env(safe-area-inset-bottom,0px));border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(235,235,240,.9));
+  box-shadow:0 12px 30px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.9)}
+.toast button{border-radius:14px}
 </style>
 </head>
 <body>
@@ -1058,7 +1089,7 @@ h2{font-weight:700;margin-top:30px}
 </div>
 
 <div class="tabbar">
-  <nav role="tablist" aria-label="表示の切り替え">
+  <nav role="tablist" aria-label="表示の切り替え"><span class="lens" id="lens" aria-hidden="true"></span>
     <button type="button" role="tab" data-tab="magic" aria-selected="true">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V3"/><path d="M5 4l14 4.5L5 13"/></svg>戦況</button>
     <button type="button" role="tab" data-tab="game" aria-selected="false">
@@ -1423,10 +1454,21 @@ const TAB_TITLE = {
   song: ["J SPORTS ペナントレース", "応援歌"],
   stats: ["J SPORTS ペナントレース", "成績"],
 };
+function moveLens(instant) {
+  const b = document.querySelector('.tabbar button[aria-selected="true"]'), l = $("lens");
+  if (!b || !l) return;
+  if (instant) l.style.transition = "none";
+  l.style.width = b.offsetWidth + "px";
+  l.style.transform = `translateX(${b.offsetLeft}px)`;
+  if (instant) requestAnimationFrame(() => (l.style.transition = ""));
+}
+window.addEventListener("resize", () => moveLens(true));
+window.addEventListener("load", () => moveLens(true));
 function setTab(t) {
   S.tab = t;
   $("kicker").textContent = TAB_TITLE[t][0];
   $("ttl").textContent = TAB_TITLE[t][1];
+  requestAnimationFrame(() => moveLens());
   magicTitle();
   if (t === "game") { loadDetails(); loadPitches(); }
   document.title = t === "magic" ? "J SPORTS ペナントレース" : `${TAB_TITLE[t][1]}｜J SPORTS ペナントレース`;
