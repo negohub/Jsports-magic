@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927140302">
+<meta name="build" content="20260927142705">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1056,6 +1056,10 @@ body{padding-bottom:calc(98px + env(safe-area-inset-bottom,0px))}
 .sheet-head b{font-size:17px}
 .sheet-x{width:32px;height:32px;border-radius:50%;border:0;background:rgba(255,255,255,.1);color:#fff;font-size:20px;line-height:1;cursor:pointer}
 .sh-sec{margin-top:14px}
+.sh-lab{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.06em;margin:0 0 8px}
+.themeSeg{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:4px;border-radius:14px;background:rgba(255,255,255,.06)}
+.themeSeg button{border:0;border-radius:11px;padding:10px;font:inherit;font-size:13.5px;font-weight:700;color:#BDBDBD;background:none;cursor:pointer}
+.themeSeg button[aria-pressed="true"]{background:#fff;color:#000}
 .sh-note{font-size:11.5px;color:var(--muted);margin:10px 0 0;line-height:1.6}
 .hi{display:grid;grid-template-columns:12px 112px 1fr;align-items:baseline;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
 .hi i{width:9px;height:9px;border-radius:50%;background:#2ECC71;align-self:center}
@@ -1314,6 +1318,33 @@ th.srt.on{color:#fff}
 .ftab td.fr.l b{color:#A8A8A8 !important}
 .ftab td.fr.d b{color:#DADADA !important}
 .ftab td.fr small{font-size:10.5px !important;color:#BDBDBD !important;font-weight:500 !important;margin-top:1px}
+/* ===== あなたの担当 ===== */
+.mecard{display:flex;align-items:center;gap:12px;margin-top:10px;padding:12px 14px;border-radius:var(--r-lg);border:1px solid var(--soft-line);
+  background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 22%,var(--card)),var(--card) 70%);box-shadow:inset 3px 0 0 var(--tc)}
+.mecard .badge{width:34px;height:34px;font-size:17px;border-radius:9px;flex:0 0 auto}
+.me-m{flex:1;min-width:0;line-height:1.35}
+.me-m small{display:block;font-size:11px;color:var(--muted)}
+.me-s{display:flex;align-items:baseline;gap:8px;font-size:15px;font-weight:700;flex-wrap:wrap}
+.me-s b{font-size:17px}.me-s b.ok{color:#5BE08F}.me-s b.ng{color:#FF6B6B}
+.me-s span{font-size:12px;color:#C8C8C8;font-weight:500}
+.me-s .me-rk{font-style:normal;font-size:15px;color:#fff}
+.me-m .me-sub{margin-top:2px;font-size:11px}
+.me-ch{flex:0 0 auto;border:0;border-radius:999px;background:rgba(255,255,255,.08);color:#DADADA;font:inherit;font-size:12px;font-weight:600;padding:6px 12px;cursor:pointer}
+.mecard.pick{width:100%;justify-content:space-between;color:#C8C8C8;font:inherit;font-size:13px;cursor:pointer;background:var(--card);box-shadow:none}
+.mecard.pick i{width:8px;height:8px;border-right:2px solid #8A8A8A;border-top:2px solid #8A8A8A;transform:rotate(45deg)}
+.me-lead{font-size:12.5px;color:#C8C8C8;line-height:1.7;margin:2px 0 12px}
+.me-pick{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.me-pick button{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:14px;border:1px solid var(--soft-line);background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 18%,#141414),#141414);color:#fff;font:inherit;cursor:pointer;text-align:left}
+.me-pick button .badge{width:26px;height:26px;font-size:13px;border-radius:7px}
+.me-pick button b{font-size:15px;font-weight:700}
+.me-pick button small{margin-left:auto;font-size:11px;color:var(--muted)}
+.me-pick button.on{border-color:var(--tc);box-shadow:0 0 0 1px var(--tc)}
+.me-pick button.none{grid-column:1 / -1;background:#141414;justify-content:space-between}
+.me-pick button.none.on{border-color:#fff;box-shadow:0 0 0 1px #fff}
+.me-row{width:100%;display:flex;justify-content:space-between;align-items:center;border:0;border-radius:14px;background:rgba(255,255,255,.06);color:#fff;font:inherit;font-size:14px;font-weight:600;padding:12px 14px;cursor:pointer}
+.me-row span{color:#FFD21F;font-weight:600}
+.ytab tr.me td{background-color:rgba(255,210,31,.06)}
+.ytab tr.me td.tnm a::after{content:"あなた";display:inline-block;margin-left:6px;font-size:9px;font-weight:700;color:#000;background:#FFD21F;padding:1px 5px;border-radius:4px;vertical-align:2px}
 /* ページ切り替え・開閉をなめらかに */
 @media (prefers-reduced-motion:no-preference){
   .view:not([hidden]){animation:vin .35s cubic-bezier(.22,1,.36,1)}
@@ -1322,12 +1353,140 @@ th.srt.on{color:#fff}
   .chip,.tbtn,.tgx,.seg button{transition:background .25s ease,color .25s ease,box-shadow .25s ease,transform .15s ease}
   .chip:active,.tbtn:active,.tgx:active,.shot:active{transform:scale(.97)}
 }
+
+/* =====================================================================
+   パワプロ風テーマ（設定で切り替え）：青空の背景、白いパネル＋紺のふち、
+   緑の見出し帯、青い表の見出し、ツヤのあるボタン。キャラクターやロゴは使わない
+   ===================================================================== */
+html.theme-pawa{--bg:transparent;--p1:#fff;--p2:#EAF4FF;--line:#C9DDF5;--line2:#DCEBFA;--text:#13264A;--muted:#4A6390;--dim:#7F93B5;
+  --card:#fff;--card2:#F4F9FF;--soft-line:rgba(29,62,124,.16);color-scheme:light}
+html.theme-pawa body{color:#13264A;background:
+  radial-gradient(30% 7% at 18% 9%,rgba(255,255,255,.95),rgba(255,255,255,0) 70%),
+  radial-gradient(22% 5% at 30% 11%,rgba(255,255,255,.9),rgba(255,255,255,0) 70%),
+  radial-gradient(26% 6% at 82% 16%,rgba(255,255,255,.9),rgba(255,255,255,0) 70%),
+  linear-gradient(180deg,#2A7FE0 0%,#4FA9F2 22%,#8CD0FA 48%,#CDEBFF 72%,#E9F7FF 90%,#B6E28A 100%) fixed}
+/* ヘッダー：白い太字に紺のふちどり */
+html.theme-pawa .top{background:transparent}
+html.theme-pawa .top::after,html.theme-pawa .top::before{opacity:.12}
+html.theme-pawa #kicker,html.theme-pawa #ttl{color:#fff;text-shadow:0 2px 0 #163A78,2px 0 0 #163A78,-2px 0 0 #163A78,0 -2px 0 #163A78,2px 2px 0 #163A78,-2px 2px 0 #163A78,0 4px 6px rgba(0,0,0,.25)}
+html.theme-pawa #upd{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+html.theme-pawa #upd b{color:#FFE14A}
+/* 見出し：緑の帯 */
+html.theme-pawa h2{display:inline-flex;align-items:center;background:linear-gradient(180deg,#62D873,#1FA83A);color:#fff;padding:6px 16px 6px 14px;border-radius:12px;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.55),0 3px 0 #0E6B22;text-shadow:0 1px 0 #0E6B22,1px 0 0 #0E6B22,-1px 0 0 #0E6B22,0 -1px 0 #0E6B22;font-size:17px}
+html.theme-pawa h2::before{display:none}
+html.theme-pawa h2 small{color:#EFFFF0;text-shadow:none;opacity:.95}
+/* パネル：白地＋紺のふち＋下に影 */
+html.theme-pawa .ywrap,html.theme-pawa .tg,html.theme-pawa .trend,html.theme-pawa .lu,html.theme-pawa .howto,html.theme-pawa .rules,html.theme-pawa .conds,
+html.theme-pawa .mecard,html.theme-pawa #detail,html.theme-pawa .se-box,html.theme-pawa .pend,html.theme-pawa .srow,html.theme-pawa .songhead,html.theme-pawa .sgrp{
+  background:#fff !important;border:3px solid #1D3E7C !important;border-radius:16px !important;box-shadow:0 4px 0 rgba(19,38,74,.28) !important;color:#13264A}
+html.theme-pawa .ywrap{overflow:hidden}
+html.theme-pawa .howto summary,html.theme-pawa .rules summary{color:#13264A}
+html.theme-pawa .howto li,html.theme-pawa .rules p,html.theme-pawa .foot,html.theme-pawa .rnote,html.theme-pawa .qnote,html.theme-pawa #note{color:#3B5480}
+/* 表：青い見出し、ミントの行 */
+html.theme-pawa .ytab thead th,html.theme-pawa .putab th,html.theme-pawa .race .rcH th{background:linear-gradient(180deg,#4DA3F2,#1E6FD0) !important;color:#fff !important;font-weight:700 !important;text-shadow:0 1px 0 rgba(0,0,0,.25)}
+html.theme-pawa .ytab tbody td,html.theme-pawa .ytab tbody th{background:#EFF9F0 !important;color:#13264A !important;border-color:#CFE5D3 !important}
+html.theme-pawa .ytab tbody tr:nth-child(even) td{background:#FFFFFF !important}
+html.theme-pawa .ytab td.tnm{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 28%,#fff),#fff 75%) !important;box-shadow:inset 5px 0 0 var(--tc)}
+html.theme-pawa .ytab td.tnm a,html.theme-pawa .ytab td.pnm{color:#13264A !important}
+html.theme-pawa .ytab td.tnm small{color:#4A6390}
+html.theme-pawa .ytab tr.ex td{opacity:.5}
+html.theme-pawa .ytab .mt{color:#13264A}
+html.theme-pawa .ytab .mt.ng{color:#fff;background:#E53935}
+html.theme-pawa .ytab .mt.mx{color:#E53935}
+html.theme-pawa .ytab .mt .ic-safe{color:#E0A100 !important}
+html.theme-pawa #tmTbl td.best,html.theme-pawa .rtab tr.lead td.v,html.theme-pawa .rtab tr.lead td.pnm{color:#E06A00 !important}
+html.theme-pawa .h2h td b{color:#13264A}.html.theme-pawa .h2h td small{color:#4A6390}
+html.theme-pawa .h2h td.self{background:#DDE7F4 !important;color:#8497B8 !important}
+html.theme-pawa .ftab td.fr.w b{color:#E53935 !important}
+html.theme-pawa .ftab td.fr.l b{color:#1E6FD0 !important}
+html.theme-pawa .ftab td.fr small{color:#4A6390 !important}
+html.theme-pawa .ftab td.fsk.w{color:#E53935}.html.theme-pawa .ftab td.fsk.l{color:#1E6FD0}
+html.theme-pawa .trend{background:#fff !important}
+/* ボタン類：ツヤのある白〜水色、押すと黄色 */
+html.theme-pawa .chip,html.theme-pawa .seg button,html.theme-pawa .chips2 button,html.theme-pawa .lutabs button,html.theme-pawa .tgx,html.theme-pawa #mPrev,html.theme-pawa #mNext{
+  background:linear-gradient(180deg,#FFFFFF,#D9EBFF) !important;color:#1D3E7C !important;border:2px solid #1D3E7C !important;box-shadow:inset 0 2px 0 #fff,0 3px 0 rgba(19,38,74,.3) !important;font-weight:700}
+html.theme-pawa .chip[aria-pressed="true"],html.theme-pawa .seg button[aria-pressed="true"],html.theme-pawa .chips2 button[aria-pressed="true"],html.theme-pawa .lutabs button.on{
+  background:linear-gradient(180deg,#FFE680,#FFB300) !important;color:#13264A !important}
+html.theme-pawa .seg{background:transparent;border:0;padding:0;gap:6px;display:inline-flex}
+html.theme-pawa .shot{background:linear-gradient(180deg,#62D873,#1FA83A);color:#fff;border:3px solid #0E6B22;box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 4px 0 #0E6B22;text-shadow:0 1px 0 #0E6B22}
+html.theme-pawa .catsel select{background:linear-gradient(180deg,#FFFFFF,#D9EBFF);color:#1D3E7C;border:2px solid #1D3E7C}
+html.theme-pawa .catsel::after{border-color:#1D3E7C}
+/* 戦況の帯とあなたのカード */
+html.theme-pawa .hero{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 35%,#fff),#fff 70%) !important;border:3px solid #1D3E7C !important;border-radius:16px !important;box-shadow:0 4px 0 rgba(19,38,74,.28),inset 6px 0 0 var(--tc) !important}
+html.theme-pawa .hero *{color:#13264A}
+html.theme-pawa .hero .hl,html.theme-pawa .hero .lbl{color:#E53935 !important}
+html.theme-pawa .mecard *{color:#13264A}
+html.theme-pawa .mecard .me-s b.ok{color:#1FA83A}.html.theme-pawa .mecard .me-s b.ng{color:#E53935}
+html.theme-pawa .me-ch{background:linear-gradient(180deg,#FFFFFF,#D9EBFF);border:2px solid #1D3E7C}
+/* 日程 */
+html.theme-pawa .day{background:#fff !important;color:#13264A;box-shadow:inset 0 0 0 2px #CFE3FA}
+html.theme-pawa .day.win{background:color-mix(in srgb,var(--tc) 30%,#fff) !important}
+html.theme-pawa .day.blank{background:transparent !important;box-shadow:none}
+html.theme-pawa .wd{background:linear-gradient(180deg,#4DA3F2,#1E6FD0) !important;color:#fff !important}
+html.theme-pawa .tbtn{background:#fff;color:#13264A;border:2px solid #1D3E7C}
+html.theme-pawa .tbtn[aria-pressed="true"]{background:linear-gradient(180deg,#FFE680,#FFB300)}
+html.theme-pawa #mTitle,html.theme-pawa .msum{color:#13264A}
+/* 試合タブ：カードは白、中の一球速報とスコアバグは「画面」として濃いまま */
+html.theme-pawa .tg{padding:14px 12px}
+html.theme-pawa .btag{color:#3B5480}
+html.theme-pawa .tgo{background:#F4F9FF !important;color:#13264A}
+html.theme-pawa .tgo *{color:#13264A}
+html.theme-pawa .tgo li.ok{color:#1FA83A}.html.theme-pawa .tgo li.ng{color:#E53935}
+html.theme-pawa .ls td{background:#EAF2FB;color:#13264A}
+html.theme-pawa .ls td.tot{background:#1D3E7C;color:#fff}
+html.theme-pawa .ls th{color:#3B5480}
+html.theme-pawa .lu,html.theme-pawa .pu{background:#fff !important}
+html.theme-pawa .lut{color:#13264A;border-color:#DCE7F5}
+html.theme-pawa .lutab td,html.theme-pawa .putab td{color:#13264A;border-color:#E3ECF7}
+html.theme-pawa .lnm span{color:#13264A}
+html.theme-pawa .rleg{border-color:#E3ECF7}
+/* 応援歌 */
+html.theme-pawa .srow *{color:#13264A}
+html.theme-pawa .songq,html.theme-pawa #songQ{background:#fff !important;color:#13264A !important;border:3px solid #1D3E7C !important}
+/* 下のタブバー・上の小さいバー：白いガラス */
+html.theme-pawa .tabbar{background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(235,245,255,.85)),rgba(255,255,255,.6);box-shadow:0 10px 26px rgba(19,38,74,.35),inset 0 0 0 2px #1D3E7C}
+html.theme-pawa .tabbar button{color:#4A6390}
+html.theme-pawa .tabbar button[aria-selected="true"]{color:#13264A}
+html.theme-pawa .tabbar .lens{background:linear-gradient(180deg,#FFE680,#FFB300);box-shadow:inset 0 2px 0 rgba(255,255,255,.6),0 2px 0 rgba(19,38,74,.25)}
+html.theme-pawa .minibar{background:rgba(255,255,255,.9);box-shadow:0 8px 20px rgba(19,38,74,.3),inset 0 0 0 2px #1D3E7C}
+html.theme-pawa .minibar *{color:#13264A}
+html.theme-pawa .gear{color:#1D3E7C;background:linear-gradient(180deg,#FFFFFF,#D9EBFF);box-shadow:0 3px 0 rgba(19,38,74,.3),inset 0 0 0 2px #1D3E7C}
+
+/* パワプロ風：細部の直し */
+html.theme-pawa .bug,html.theme-pawa .bug *{color:#fff !important}
+html.theme-pawa .bug .bi.pre b,html.theme-pawa .bug .bi small{color:#fff !important}
+html.theme-pawa .bug{border:2px solid #1D3E7C !important}
+html.theme-pawa .day,html.theme-pawa .day .dn,html.theme-pawa .day .mu,html.theme-pawa .day .res,html.theme-pawa .day .tx,html.theme-pawa .day .rs{color:#13264A !important}
+html.theme-pawa .day .res.w,html.theme-pawa .day .rs.w{color:#E53935 !important}
+html.theme-pawa .day .res.l,html.theme-pawa .day .rs.l{color:#1E6FD0 !important}
+html.theme-pawa .day.sat .dn,html.theme-pawa .day .dn.sat{color:#1E6FD0 !important}
+html.theme-pawa .day.sun .dn,html.theme-pawa .day .dn.sun{color:#E53935 !important}
+html.theme-pawa .day.today{box-shadow:inset 0 0 0 3px #E53935}
+html.theme-pawa .day.sel{box-shadow:inset 0 0 0 3px #1D3E7C}
+html.theme-pawa #detail *{color:#13264A}
+html.theme-pawa .race td,html.theme-pawa .race td:first-child{color:#13264A !important;background:#fff}
+html.theme-pawa .race .rcC td{background:#DDE7F4 !important}
+html.theme-pawa .race .rcR th{background:color-mix(in srgb,var(--tc) 30%,#fff) !important;color:#13264A !important}
+html.theme-pawa .race td.pace{background:#FFF3C4 !important}
+html.theme-pawa .race td.clinch,html.theme-pawa .race td.clinch:first-child{color:#E53935 !important}
+html.theme-pawa .rnote .k2{color:#8A5A00;background:#FFE680}
+html.theme-pawa .songhead{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 35%,#fff),#fff 70%) !important}
+html.theme-pawa .songhead *{color:#13264A}
+html.theme-pawa .songhead .sh{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 35%,#fff),#fff 70%) !important}
+html.theme-pawa .srow{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 18%,#fff),#fff 60%) !important}
+html.theme-pawa .songhead a,html.theme-pawa .sof{background:linear-gradient(180deg,#FFFFFF,#D9EBFF) !important;color:#1D3E7C !important;border:2px solid #1D3E7C !important}
+html.theme-pawa .sgo,html.theme-pawa .sbtn.go{background:linear-gradient(180deg,#62D873,#1FA83A) !important;color:#fff !important;border:2px solid #0E6B22 !important}
+html.theme-pawa .sgrp{border:0 !important;box-shadow:none !important;background:transparent !important}
+html.theme-pawa .sgrp > *:first-child{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+html.theme-pawa .scount,html.theme-pawa .sgt{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+/* 設定シートは読みやすさ優先で今のまま（暗いガラス） */
 </style>
 </head>
 <body>
 <header class="top">
   <div class="brand">
-    <button type="button" class="gear" id="gearBtn" aria-label="データの状態"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg><i class="gdot" id="gearDot" hidden></i></button>
+    <button type="button" class="gear" id="gearBtn" aria-label="設定"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><i class="gdot" id="gearDot" hidden></i></button>
     <button type="button" class="hwarn" id="hWarn" hidden></button>
     <div class="j" id="kicker">J SPORTS ペナントレース</div>
     <h1 id="ttl">今月の戦況</h1>
@@ -1341,6 +1500,7 @@ th.srt.on{color:#fff}
     <section class="season-end" id="seasonEnd" hidden></section>
     <div class="chips" id="chips" role="tablist" aria-label="月度"></div>
     <div id="alert"></div>
+    <div id="meCard"></div>
     <div class="cards" id="cards"></div>
     <div class="excl" id="excl"></div>
     <button class="shot" id="shotBtn" type="button">画像にしてLINEで送る</button>
@@ -1434,13 +1594,31 @@ th.srt.on{color:#fff}
 
 <div class="sheet" id="sheet" hidden>
   <div class="sheet-bg" data-close></div>
-  <div class="sheet-card" role="dialog" aria-label="データの状態">
+  <div class="sheet-card" role="dialog" aria-label="設定">
     <div class="sheet-grip"></div>
-    <div class="sheet-head"><b>データの状態</b><button type="button" class="sheet-x" data-close aria-label="閉じる">×</button></div>
+    <div class="sheet-head"><b>設定</b><button type="button" class="sheet-x" data-close aria-label="閉じる">×</button></div>
     <section class="sh-sec">
+      <button type="button" class="me-row" data-mepick>あなたの担当<span id="meNow"></span></button>
+    </section>
+    <section class="sh-sec">
+      <div class="sh-lab">テーマ</div>
+      <div class="themeSeg" id="themeSeg"><button type="button" data-theme="">スタイリッシュ</button><button type="button" data-theme="pawa">パワプロ風</button></div>
+    </section>
+    <section class="sh-sec">
+      <div class="sh-lab">データの状態</div>
       <div id="healthBox"></div>
       <p class="sh-note">緑は正常、黄は注意、赤は自動更新が止まっている可能性があります。</p>
     </section>
+  </div>
+</div>
+
+<div class="sheet" id="meSheet" hidden>
+  <div class="sheet-bg" data-meclose></div>
+  <div class="sheet-card" role="dialog" aria-label="あなたの担当">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head"><b>あなたは誰？</b><button type="button" class="sheet-x" data-meclose aria-label="閉じる">×</button></div>
+    <p class="me-lead">選ぶと、あなたの球団の状況が戦況タブの一番上に出て、順位表や試合でも目立つようになります。あとからいつでも変えられます。</p>
+    <div class="me-pick" id="mePick"></div>
   </div>
 </div>
 
@@ -1799,6 +1977,24 @@ function store(k, v) { try { if (v === undefined) return localStorage.getItem(k)
 let DATA = null, fromSnap = false;
 const SNAP = JSON.parse(document.getElementById("snap").textContent);
 const S = { tab: "magic", period: null, periodPicked: false, calTeam: store("calTeam") || "T", calMonth: null, calSel: null };
+// あなたの担当（球団の記号。"none"＝選ばない、null＝まだ聞いていない）
+S.me = store("me");
+const ME = () => (S.me && S.me !== "none" && CONFIG.owners[S.me] ? S.me : null);
+function openMePick() {
+  $("mePick").innerHTML = calOrder().filter(t => CONFIG.owners[t]).map(t => `<button type="button" class="${ME() === t ? "on" : ""}" data-me="${t}" style="${tv(t)}"><span class="badge">${sn(t)}</span><b>${own(t)}</b><small>${fn(t)}</small></button>`).join("")
+    + `<button type="button" class="none${S.me === "none" ? " on" : ""}" data-me="none"><b>選ばない</b><small>みんな共通の画面で見る</small></button>`;
+  $("meSheet").hidden = false; requestAnimationFrame(() => $("meSheet").classList.add("open"));
+}
+function closeMePick() { $("meSheet").classList.remove("open"); setTimeout(() => ($("meSheet").hidden = true), 280); if (S.me == null) { S.me = "none"; store("me", "none"); } }
+$("meSheet").addEventListener("click", e => {
+  const b = e.target.closest("[data-me]");
+  if (b) {
+    S.me = b.dataset.me; store("me", S.me);
+    if (ME()) { S.calTeam = ME(); store("calTeam", S.calTeam); S.songTeam = ME(); store("songTeam", S.songTeam); S.calSel = null; }
+    closeMePick(); renderAll(); return;
+  }
+  if (e.target.closest("[data-meclose]")) closeMePick();
+});
 
 /* ---------- 共通 ---------- */
 function periods() {
@@ -1853,7 +2049,27 @@ function setTab(t) {
   ["magic", "game", "cal", "std", "song", "stats"].forEach(k => ($("v-" + k).hidden = k !== t));
   window.scrollTo({ top: 0 });
 }
-document.querySelectorAll(".tabbar button").forEach(b => (b.onclick = () => setTab(b.dataset.tab)));
+let autoGame = true;
+document.querySelectorAll(".tabbar button").forEach(b => (b.onclick = () => { autoGame = false; setTab(b.dataset.tab); }));
+document.addEventListener("click", e => { if (e.target.closest("[data-mepick]")) openMePick(); });
+function maybeAutoGame() {
+  if (!autoGame || !DATA) return;
+  const today = jst().iso, me = ME();
+  if (!me) return; // 担当を選んでいる人だけ（自分の球団の試合中）
+  const live = DATA.games.filter(g => g.d === today && g.st === "live" && (g.h === me || g.a === me));
+  if (!live.length) return;
+  autoGame = false;
+  const g = live[0];
+  S.open[g.d + gkey(g)] = true;
+  setTab("game");
+  window.scrollTo(0, 0);
+  loadDetails(true); loadPitches();
+}
+let hiddenAt = 0;
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) hiddenAt = Date.now();
+  else if (hiddenAt && Date.now() - hiddenAt > 10 * 60 * 1000) autoGame = true; // しばらくぶりに開いたら、また試合中なら試合タブへ
+});
 
 /* ---------- マジック ---------- */
 function lampHTML(r) {
@@ -1933,6 +2149,21 @@ function renderMagic() {
   }
 
   const lastIdx = a.rows.length - 1;
+  // あなたの状況
+  const me = ME();
+  if (!me) $("meCard").innerHTML = S.me === "none" ? "" : `<button type="button" class="mecard pick" data-mepick>あなたの担当を選ぶと、自分の状況がここに出ます<i></i></button>`;
+  else {
+    const i = a.rows.findIndex(r => r.t === me), r = a.rows[i];
+    const paid = r.eliminated || (a.finished && i === lastIdx);
+    const st = paid ? `<b class="ng">支払いが確定</b>` : r.safe ? `<b class="ok">★ 最下位回避が確定</b>`
+      : r.self != null ? `<b>M${r.self}</b><span>あと${r.self}勝で回避確定</span>` : `<b class="ng">自力脱出消滅</b><span>ほかの球団の結果しだい</span>`;
+    const low = a.rows[lastIdx], gapLow = ((r.w - low.w) + (low.l - r.l)) / 2;
+    const up = i > 0 ? a.rows[i - 1] : null, gapUp = up ? ((up.w - r.w) + (r.l - up.l)) / 2 : null;
+    const sub = i === lastIdx && !paid ? `今は最下位・${fn(a.rows[lastIdx - 1].t)}まで${gapUp.toFixed(1)}差` : !r.safe && !paid ? `最下位の${fn(low.t)}と${gapLow.toFixed(1)}差` : "";
+    $("meCard").innerHTML = `<div class="mecard" style="${tv(me)}"><span class="badge">${sn(me)}</span>
+      <div class="me-m"><small>あなた：${own(me)}（${fn(me)}）</small><div class="me-s"><em class="me-rk">${i + 1}位</em>${st}</div>${sub ? `<small class="me-sub">${sub}</small>` : ""}</div>
+      <button type="button" class="me-ch" data-mepick>変更</button></div>`;
+  }
   const tRows = a.rows.map((r, i) => {
     const paid = r.eliminated || (a.finished && i === lastIdx);
     const extra = paid ? `<span class="mt ng">支払</span>` : r.safe ? `<span class="mt">${IC.safe}</span>` : r.self === null ? `<span class="mt mx">自力<br>消滅</span>` : `<span class="mt">M${r.self}</span>`;
@@ -2041,6 +2272,7 @@ async function pollLive() {
       }
     }
     liveAt = new Date(); liveFail = 0;
+    maybeAutoGame();
     if (changed) renderAll(); else { renderUpd(); renderHealth(); }
     if (S.tab === "game") { loadDetails(changed); loadPitches(); }
   } catch { liveFail++; renderHealth(); }
@@ -2126,7 +2358,7 @@ function yTable(rows, extraHead) {
   const top = rows.find(x => !x.ex) || rows[0];
   let rk = 0;
   return `<div class="ywrap"><table class="ytab"><thead><tr>${head.map((h, i) => `<th class="${i === 1 ? "tnm" : ""}">${i === 1 ? h : v(h)}</th>`).join("")}${extraHead ? `<th class="xc">${v(extraHead)}</th>` : ""}</tr></thead><tbody>` +
-    rows.map((r, i) => `<tr class="${r.cls || ""}${r.ex ? " ex" : ""}" style="${tv(r.t)}">
+    rows.map((r, i) => `<tr class="${r.cls || ""}${r.ex ? " ex" : ""}${r.t === ME() ? " me" : ""}" style="${tv(r.t)}">
       <td class="num">${r.ex ? "-" : ++rk}</td>
       <td class="tnm"><a href="${TEAM_URL[r.t]}" target="_blank" rel="noopener">${fn(r.t)}</a>${r.sub ? `<small>${r.sub}</small>` : ""}${liveMini(r.t)}</td>
       <td class="num">${r.g}</td><td class="num">${r.w}</td><td class="num">${r.l}</td><td class="num">${r.d}</td>
@@ -2468,7 +2700,7 @@ function renderToday(a) {
     return out.length ? out.join("") : `<li class="nil">順位・マジックに大きな動きなし</li>`;
   };
   // 試合中 → これから → 終わった試合 → 中止 の順。同じ中では開始時刻順
-  const stRank = g => ({ live: 0, sched: 1, final: 2, canc: 3 }[g.st] ?? 1);
+  const stRank = g => ((ME() && (g.h === ME() || g.a === ME()) && g.st !== "final" && g.st !== "canc") ? -1 : ({ live: 0, sched: 1, final: 2, canc: 3 }[g.st] ?? 1));
   const list = (day === today ? todays : rem.filter(g => g.d === day)).slice()
     .sort((x, y) => stRank(x) - stRank(y) || ((x.t || "") < (y.t || "") ? -1 : (x.t || "") > (y.t || "") ? 1 : 0));
   $("today").innerHTML = list.map(g => {
@@ -3188,11 +3420,19 @@ function renderHealth() {
   $("healthBox").innerHTML = items.map(x => `<div class="hi ${x.lv}"><i></i><b>${x.k}</b><span>${esc(x.v)}</span></div>`).join("");
 }
 
-function openSheet() { $("sheet").hidden = false; requestAnimationFrame(() => $("sheet").classList.add("open")); renderHealth(); }
+// テーマ（""＝スタイリッシュ、"pawa"＝パワプロ風）
+function applyTheme(t) {
+  document.documentElement.classList.toggle("theme-pawa", t === "pawa");
+  document.querySelector('meta[name="theme-color"]') && document.querySelector('meta[name="theme-color"]').setAttribute("content", t === "pawa" ? "#2F8BE8" : "#000000");
+  document.querySelectorAll("#themeSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.theme === t)));
+}
+applyTheme(store("theme") || "");
+document.querySelectorAll("#themeSeg button").forEach(b => (b.onclick = () => { store("theme", b.dataset.theme); applyTheme(b.dataset.theme); renderAll(); }));
+function openSheet() { $("meNow").textContent = ME() ? `${own(ME())}（${fn(ME())}）` : "選んでいない"; $("sheet").hidden = false; requestAnimationFrame(() => $("sheet").classList.add("open")); renderHealth(); }
 function closeSheet() { $("sheet").classList.remove("open"); setTimeout(() => ($("sheet").hidden = true), 280); }
 $("gearBtn").onclick = openSheet;
 $("hWarn").onclick = openSheet;
-$("sheet").addEventListener("click", e => { if (e.target.closest("[data-close]")) closeSheet(); });
+$("sheet").addEventListener("click", e => { if (e.target.closest("[data-close]") || e.target.closest("[data-mepick]")) closeSheet(); });
 
 /* ---------- 読み込み ---------- */
 function renderUpd() {
@@ -3242,12 +3482,14 @@ function readCache() {
   try { const d = JSON.parse(localStorage.getItem(CACHE_KEY) || "null"); return d && d.games && d.games.length ? d : null; } catch { return null; }
 }
 function writeCache(d) { try { localStorage.setItem(CACHE_KEY, JSON.stringify(d)); } catch {} }
+function askMeOnce() { if (S.me == null) setTimeout(openMePick, 600); }
 async function load() {
   const cached = readCache();
   const first = cached && (!SNAP.updated || new Date(cached.updated) >= new Date(SNAP.updated)) ? cached : SNAP;
   DATA = first; fromSnap = false;
   renderAll();
   requestAnimationFrame(() => moveLens(true));
+  askMeOnce();
   try {
     const d = await fetchData();
     writeCache(d);
