@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927135249">
+<meta name="build" content="20260927140302">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1308,6 +1308,12 @@ th.srt.on{color:#fff}
 .ytab tr.ex td.tnm small{display:inline-block;font-size:9.5px;font-weight:600;color:#BDBDBD;border:1px solid #444;border-radius:4px;padding:0 4px;margin-left:6px;opacity:1}
 .ytab tr.ex{background:none !important}
 .ytab tr.ex td.tnm{box-shadow:inset 3px 0 0 color-mix(in srgb,var(--tc) 45%,#000)}
+/* 直近の勝敗：○●を少し大きく、はっきりした色に */
+.ftab td.fr b{font-size:17px !important;line-height:1.1;font-weight:700}
+.ftab td.fr.w b{color:#fff !important}
+.ftab td.fr.l b{color:#A8A8A8 !important}
+.ftab td.fr.d b{color:#DADADA !important}
+.ftab td.fr small{font-size:10.5px !important;color:#BDBDBD !important;font-weight:500 !important;margin-top:1px}
 /* ページ切り替え・開閉をなめらかに */
 @media (prefers-reduced-motion:no-preference){
   .view:not([hidden]){animation:vin .35s cubic-bezier(.22,1,.36,1)}
@@ -1359,7 +1365,7 @@ th.srt.on{color:#fff}
       <p>M は、どの試合で勝っても最下位回避が確定する残りの勝ち数。自力で決められない（残り全勝でも最下位の可能性が残る）球団は「自力消滅」と表示します。★は回避確定、赤い「支払い」は最下位確定。</p>
       <p>勝差は1位とのゲーム差。</p>
     </details>
-    <details class="howto"><summary>見方</summary><ul><li>順位表：勝差は1位とのゲーム差、残試合はこの月度の残り試合。広島は参考として薄く表示（対象外なので順位・マジック・支払いは広島を除く5球団で計算）。球団名をタップすると公式サイト。</li><li>マジック：最下位を回避するまでの勝ち数。★は回避確定、赤字の「支払」は最下位確定、「自力消滅」は、残り試合に全部勝っても、ほかの球団の結果しだいで最下位の可能性が残る状態（自力での最下位脱出ができない）。</li><li>対戦成績：左の球団から見た、この月度だけの勝数-負数（引分数）。広島は参考として薄く表示。</li><li>順位の推移：広島（参考）は、5球団の勝率のあいだの位置に点線で表示（5球団の順位には関係しません）。</li><li>直近の勝敗：○は勝ち、●は負け、△は引き分け。下の文字は対戦相手。</li><li>日程の天気は、試合開始時刻の球場の予報（約2週間先まで）。％は試合中の降水確率の最大値です。天気予報：Open-Meteo。</li><li>勝率で並んだときは、セ・リーグの規定（勝利数→当該球団間の対戦勝率→交流戦を除く勝率→前年度順位）で順位を決めます。</li><li>振替待ちは、中止になって振替日がまだ決まっていない試合です。日程に入るとマジックが変わります。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li>順位表：勝差は1位とのゲーム差、残試合はこの月度の残り試合。広島は参考として薄く表示（対象外なので順位・マジック・支払いは広島を除く5球団で計算）。球団名をタップすると公式サイト。</li><li>マジック：最下位を回避するまでの勝ち数。★は回避確定、赤字の「支払」は最下位確定、「自力消滅」は、残り試合に全部勝っても、ほかの球団の結果しだいで最下位の可能性が残る状態（自力での最下位脱出ができない）。</li><li>対戦成績：左の球団から見た、この月度だけの勝数-負数（引分数）。広島は参考として薄く表示。</li><li>順位の推移：広島（参考）は、5球団の勝率のあいだの位置に点線で表示（5球団の順位には関係しません）。</li><li>直近の勝敗：○は勝ち、●は負け、△は引き分け。下の文字は対戦相手。右が最新。並びは前年の順位順。</li><li>日程の天気は、試合開始時刻の球場の予報（約2週間先まで）。％は試合中の降水確率の最大値です。天気予報：Open-Meteo。</li><li>勝率で並んだときは、セ・リーグの規定（勝利数→当該球団間の対戦勝率→交流戦を除く勝率→前年度順位）で順位を決めます。</li><li>振替待ちは、中止になって振替日がまだ決まっていない試合です。日程に入るとマジックが変わります。</li></ul></details>
   </section>
 
   <section class="view" id="v-cal" aria-label="日程" hidden>
@@ -1949,7 +1955,7 @@ function renderMagic() {
 
   const isCur = S.period.id === defaultPeriod(periods()).id;
   $("cards").insertAdjacentHTML("beforeend", isCur && !a.finished ? pendingHTML(a.rows.map(r => r.t)) : "");
-  const tOrder = tRows.map(r => r.t); // 広島（参考）も勝率の位置に入った並び
+  const tOrder = calOrder(); // 前年の順位順（広島も参考として含む）
   $("mh2h").innerHTML = h2hTable(tOrder, tOrder, g => S.period.months.includes(monthOf(g.d)));
   $("mh2hNote").textContent = `${S.period.label}　勝数-負数（引分数）`;
   renderTrend(a); renderForm();
@@ -2667,7 +2673,8 @@ function renderForm() {
     }
     return { t, last: res.slice(-5), streak, kind };
   });
-  rows.sort((x, y) => (y.kind === "w" ? y.streak : -y.streak) - (x.kind === "w" ? x.streak : -x.streak));
+  const ord = calOrder();
+  rows.sort((x, y) => ord.indexOf(x.t) - ord.indexOf(y.t)); // 前年の順位順
   $("form").innerHTML = `<div class="ywrap"><table class="ytab ftab"><thead><tr><th class="tnm">チーム名</th><th colspan="5">最近5試合（右が最新）</th><th>連続</th></tr></thead><tbody>` +
     rows.map(x => `<tr class="${CONFIG.excluded.includes(x.t) ? "ex" : ""}" style="${tv(x.t)}"><td class="tnm"><a href="${TEAM_URL[x.t]}" target="_blank" rel="noopener">${fn(x.t)}</a></td>${[0, 1, 2, 3, 4].map(k => {
       const v = x.last[x.last.length - 5 + k];
