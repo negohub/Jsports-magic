@@ -444,6 +444,46 @@ def fetch_fpos(season, old):
         if out:
             roles[t] = out
             time.sleep(1)
+    # スポナビの球団別投手成績に「登板」「先発」があるので、取れた球団はそれで上書きする
+    # （先発＝先発した試合数、中継ぎ＝登板−先発。セーブ10以上の投手の救援は「抑」）
+    YID = {"T": 5, "G": 1, "DB": 3, "D": 4, "C": 6, "S": 2}
+    for t, yid in YID.items():
+        html = fetch(f"https://baseball.yahoo.co.jp/npb/teams/{yid}/pitchingstats")
+        if not html:
+            continue
+        soup = BeautifulSoup(html, "html.parser")
+        out = {}
+        for table in soup.find_all("table"):
+            rows = table.find_all("tr")
+            if not rows:
+                continue
+            head = [re.sub(r"\s+", "", clean(x.get_text())) for x in rows[0].find_all(["th", "td"])]
+            if "先発" not in head or "登板" not in head or "選手名" not in head:
+                continue
+            ix = {k: head.index(k) for k in ("選手名", "登板", "先発", "セーブ") if k in head}
+            for tr in rows[1:]:
+                c = [norm(x.get_text(" ", strip=True)) for x in tr.find_all(["td", "th"])]
+                if len(c) < len(head):
+                    continue
+                name = re.sub(r"[\s*＊]", "", c[ix["選手名"]])
+                try:
+                    g, gs = int(c[ix["登板"]]), int(c[ix["先発"]])
+                    sv = int(c[ix["セーブ"]]) if "セーブ" in ix else 0
+                except ValueError:
+                    continue  # 一軍登板なし（「-」）
+                if not name or g <= 0:
+                    continue
+                rel = g - gs
+                d = {}
+                if gs > 0:
+                    d["先"] = gs
+                if rel > 0:
+                    d["抑" if sv >= 10 else "中"] = rel
+                out[name] = d
+            break
+        if out:
+            roles[t] = out
+            time.sleep(1)
     print(f"[投手の役割] {sum(len(v) for v in roles.values())}人（{len(roles)}球団）")
     return {"season": season, "date": today, "teams": teams, "roles": roles}
 
