@@ -139,8 +139,14 @@ def fetch(url):
 
 # ---------- 成績（スポーツナビ） ----------
 YAHOO = "https://baseball.yahoo.co.jp/npb"
-BAT_CATS = {"avg": "打率", "hr": "本塁打", "rbi": "打点", "h": "安打", "sb": "盗塁", "ops": "OPS"}
-PIT_CATS = {"era": "防御率", "w": "勝利", "so": "奪三振", "sv": "セーブ", "hldp": "HP"}
+# スポナビの個人成績の全項目（type= の値 → 表の見出し）
+BAT_CATS = {"avg": "打率", "g": "試合", "pa": "打席", "ab": "打数", "h": "安打", "h2b": "二塁打", "h3b": "三塁打", "hr": "本塁打",
+            "tb": "塁打", "rbi": "打点", "r": "得点", "so": "三振", "bb": "四球", "hbp": "死球", "sh": "犠打", "sf": "犠飛",
+            "sb": "盗塁", "cs": "盗塁死", "gidp": "併殺打", "obp": "出塁率", "slg": "長打率", "ops": "OPS", "risp": "得点圏", "e": "失策"}
+PIT_CATS = {"era": "防御率", "g": "登板", "gs": "先発", "cg": "完投", "sho": "完封", "qs": "QS", "w": "勝利", "l": "敗戦",
+            "hld": "ホールド", "hldp": "HP", "sv": "セーブ", "wpct": "勝率", "ip": "投球回", "h": "被安打", "hr": "被本塁打",
+            "so": "奪三振", "k9": "奪三振率", "bb": "与四球", "hbp": "与死球", "wp": "暴投", "bk": "ボーク", "r": "失点",
+            "er": "自責点", "avg": "被打率", "kbb": "K/BB", "qs_pct": "QS率", "whip": "WHIP"}
 TEAM_KEYS = ["打率", "本塁打", "得点", "盗塁", "防御率", "失点", "失策"]
 STAMP_RE = re.compile(r"(\d{4})/(\d{1,2})/(\d{1,2})\s+(\d{1,2}):(\d{2})")
 
@@ -226,16 +232,30 @@ def fetch_stats(season, old_stats):
         print("[成績] チーム成績 OK")
     else:
         print("[成績] チーム成績 読み取れず（前回の値を使用）")
-    for kind, cats in (("batter", BAT_CATS), ("pitcher", PIT_CATS)):
-        for key, label in cats.items():
-            html = fetch(f"{YAHOO}/stats/{kind}?gameKindId=1&type={key}")
-            rows = parse_yahoo_rank(html, label) if html else None
-            if rows:
-                st["leaders"][key] = rows
-                stamps.append(stamp_of(html))
-            else:
-                print(f"[成績] ランキング {label} 読み取れず（前回の値を使用）")
-            time.sleep(1)
+    # 個人ランキング：スポナビの成績の更新時刻が前回と同じなら、全項目の取り直しはしない（負担を減らす）
+    probe = fetch(f"{YAHOO}/stats/batter?gameKindId=1&type=avg")
+    probe_stamp = stamp_of(probe) if probe else None
+    want = [f"b_{k}" for k in BAT_CATS] + [f"p_{k}" for k in PIT_CATS]
+    have_all = all(k in st["leaders"] for k in want)
+    if probe_stamp and have_all and st.get("rank_stamp") == list(probe_stamp):
+        print("[成績] 個人ランキングは前回から更新なし（取り直さない）")
+        stamps.append(probe_stamp)
+    else:
+        leaders = {k: v for k, v in st["leaders"].items() if k in want}
+        for kind, pre, cats in (("batter", "b_", BAT_CATS), ("pitcher", "p_", PIT_CATS)):
+            for key, label in cats.items():
+                html = probe if (kind == "batter" and key == "avg") else fetch(f"{YAHOO}/stats/{kind}?gameKindId=1&type={key}")
+                rows = parse_yahoo_rank(html, label) if html else None
+                if rows:
+                    leaders[pre + key] = rows
+                    stamps.append(stamp_of(html))
+                else:
+                    print(f"[成績] ランキング {label} 読み取れず（前回の値を使用）")
+                if not (kind == "batter" and key == "avg"):
+                    time.sleep(1)
+        st["leaders"] = leaders
+        if probe_stamp:
+            st["rank_stamp"] = list(probe_stamp)
     stamps = [x for x in stamps if x]
     if stamps:
         y, mo, d, h, mi = max(stamps)
