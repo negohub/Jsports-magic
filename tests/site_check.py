@@ -72,6 +72,9 @@ async def route_live(route):
         body = {}
     elif "rank=" in u:
         body = {}
+    elif "pstats=" in u:
+        body = {"asof": "9/26", "bat": {"丸山和郁": {"試合": "100", "打席": "350", "打率": ".262", "本塁打": "3", "打点": "25", "安打": "80", "出塁率": ".330", "長打率": ".350"}},
+                "pit": {"山﨑伊織": {"登板": "24", "勝利": "10", "敗北": "5", "セーブ": "0", "投球回": "150.1", "三振": "120", "四球": "30", "安打": "120", "防御率": "2.41"}}}
     else:
         body = {"games": [{"d": GAME["d"], "h": GAME["h"], "a": GAME["a"], "st": "live", "hs": 2, "as": 1, "inn": "6回表"}]
                 + ([{"d": GAME["d"], "h": GAME["h2"], "a": GAME["a2"], "st": "final", "hs": 3, "as": 5}] if GAME.get("h2") else [])}
@@ -221,6 +224,18 @@ async def game_live(pg, label):
     for sel, name in [(".tg.islive .ls", "スコア表"), (".tg.islive .pbox", "一球速報"), (".tg.islive .lu", "打順"), (".tg.islive .pu", "投手成績"), (".tg.islive .bug", "スコアバグ")]:
         if not await pg.query_selector(sel):
             bad(f"{label}: 試合中の{name}が出ない")
+    # 打順の選手名をタップ → 選手の成績の画面が出るか
+    name = await pg.query_selector(".tg.islive .lnm[data-pl]")
+    if not name:
+        bad(f"{label}: 打順の選手名がタップできる形になっていない")
+    else:
+        await name.click()
+        await pg.wait_for_timeout(600)
+        txt = await pg.evaluate("document.getElementById('songSheet').hidden ? '' : document.getElementById('songPick').innerText")
+        if "打撃成績" not in txt and "投手成績" not in txt and "出場記録" not in txt:
+            bad(f"{label}: 選手名をタップしても成績が出ない")
+        r = await pg.evaluate(CHECK_JS, "game")
+        await pg.evaluate("document.getElementById('songSheet').classList.remove('open'); document.getElementById('songSheet').hidden = true")
     runners = await pg.evaluate("document.querySelectorAll('.tg.islive .fld .bs.on').length")
     if runners != 2:
         bad(f"{label}: ランナーの塁の数が想定と違う（{runners}）")
