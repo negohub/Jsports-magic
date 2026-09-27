@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927101331">
+<meta name="build" content="20260927104759">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1168,6 +1168,35 @@ h2::before{transform:none;width:5px;height:18px;border-radius:3px;background:lin
   .pbar b{font-size:11px;padding-right:4px}
   .rleg{gap:3px}.rleg span{padding:1px 3px;font-size:9.5px}
 }
+/* スコア表の得点マス：下線はなし（黄色い数字だけでタップできることを示す） */
+.ls td.scd{box-shadow:none !important}
+.ls td.scd.on{background:#3A2E06}
+/* 打順：打席結果は名前の下に、折り返して並べる */
+.lutab{table-layout:fixed}
+.lutab .lo{width:26px;vertical-align:top;padding-top:9px}
+.lutab .lp{width:30px;vertical-align:top;padding-top:10px}
+.lutab td.ln{white-space:normal;padding:8px 10px 8px 4px}
+.lnm{display:flex;align-items:baseline;gap:10px}
+.lnm span{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lnm .la{font-style:normal;margin-left:auto;font-size:12px;color:#9A9A9A;flex:0 0 auto}
+.lutab tr.sub .lnm span{font-weight:400;color:#C8C8C8;font-size:12.5px}
+.lrw{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.lrw .rc{font-size:11.5px;padding:2px 7px;margin:0}
+.lutab tr.cur .lnm span::before{content:"▶ ";color:#FFD21F;font-size:10px}
+.lutab tr.cur .ln::before{content:none}
+/* 投手成績 */
+.puw{overflow-x:auto}
+.putab{width:100%;border-collapse:collapse;font-size:13px}
+.putab th{font-size:11px;color:var(--muted);font-weight:600;padding:7px 2px;text-align:center;border-bottom:1px solid #1A1A1A}
+.putab td{padding:8px 2px;text-align:center;border-bottom:1px solid #141414;font-weight:600}
+.putab tr:last-child td{border-bottom:0}
+.putab .pnx{text-align:left;padding-left:10px;width:34%}
+.putab td.pnx b{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.putab td.pnx small{display:block;font-size:10.5px;color:var(--muted);font-weight:400}
+.putab td.er{color:#FF8A8A}
+.putab tr.cur td{background:rgba(255,210,31,.10)}
+.putab tr.cur td.pnx b::before{content:"▶ ";color:#FFD21F;font-size:10px}
+@media (max-width:374px){.putab{font-size:12px}.putab .pnx{width:30%}}
 /* ページ切り替え・開閉をなめらかに */
 @media (prefers-reduced-motion:no-preference){
   .view:not([hidden]){animation:vin .35s cubic-bezier(.22,1,.36,1)}
@@ -2200,11 +2229,35 @@ function lineupHTML(g, d) {
   return `<div class="lu">
     <div class="lut">打順<div class="lutabs">${[g.a, g.h].map(x => `<button type="button" data-k="${key}" data-t="${x}" class="${x === t ? "on" : ""}" style="${tv(x)}">${fn(x)}</button>`).join("")}</div></div>
     ${RES_LEGEND}<table class="lutab">${rows.map(r => { const first = r.order !== prev; prev = r.order;
-      return `<tr class="${r.starter ? "" : "sub"}${curName && sq(r.name) === curName ? " cur" : ""}"><td class="lo num">${first ? r.order : ""}</td><td class="lp">${esc(r.pos)}</td><td class="ln">${esc(r.name)}</td><td class="la num">${esc(r.avg || "")}</td><td class="lr">${res(r)}</td></tr>`; }).join("")}</table>
+      return `<tr class="${r.starter ? "" : "sub"}${curName && sq(r.name) === curName ? " cur" : ""}"><td class="lo num">${first ? r.order : ""}</td><td class="lp">${esc(r.pos)}</td><td class="ln"><div class="lnm"><span>${esc(r.name)}</span><em class="la num">${esc(r.avg || "")}</em></div>${r.results.length ? `<div class="lrw">${res(r)}</div>` : ""}</td></tr>`; }).join("")}</table>
+  </div>`;
+}
+// 投手成績（その試合に投げた投手。登板順）
+S.pu = {};
+function pitchingHTML(g, d) {
+  const P = d.pitchers || [];
+  if (P.length < 2 || !P.some(x => x.length)) return "";
+  const key = g.d + gkey(g), p = PD[key];
+  const atk = p && p.attack ? YSHORT[p.attack] : null;
+  const def = atk ? (atk === g.h ? g.a : g.h) : null;
+  const t = S.pu[key] || (g.st === "live" && def ? def : g.h);
+  const rows = t === g.h ? P[1] : P[0];
+  const sq = x => (x || "").normalize("NFKC").replace(/\s+/g, "");
+  const curName = g.st === "live" && p && p.pitcher && def === t ? sq(p.pitcher.name) : null;
+  const c = v => esc(v == null || v === "" ? "-" : v);
+  return `<div class="lu pu">
+    <div class="lut">投手成績<div class="lutabs">${[g.a, g.h].map(x => `<button type="button" data-pk="${key}" data-t="${x}" class="${x === t ? "on" : ""}" style="${tv(x)}">${fn(x)}</button>`).join("")}</div></div>
+    <div class="puw"><table class="putab num"><thead><tr><th class="pnx">投手</th><th>回</th><th>球数</th><th>安</th><th>本</th><th>振</th><th>四</th><th>失</th><th>責</th></tr></thead><tbody>${rows.map((r, i) => `<tr class="${curName && sq(r.name) === curName ? "cur" : ""}"><td class="pnx"><b>${esc(r.name)}</b><small>防 ${c(r.era)}</small></td><td>${c(r.ip)}</td><td>${c(r.np)}</td><td>${c(r.h)}</td><td>${c(r.hr)}</td><td>${c(r.so)}</td><td>${c(r.bb)}</td><td>${c(r.r)}</td><td class="er">${c(r.er)}</td></tr>`).join("")}</tbody></table></div>
   </div>`;
 }
 document.addEventListener("click", e => {
-  const b = e.target.closest(".lutabs button");
+  const b = e.target.closest(".lutabs button[data-pk]");
+  if (!b) return;
+  S.pu[b.dataset.pk] = b.dataset.t;
+  renderGame();
+});
+document.addEventListener("click", e => {
+  const b = e.target.closest(".lutabs button[data-k]");
   if (!b) return;
   S.lu[b.dataset.k] = b.dataset.t;
   renderGame();
@@ -2227,6 +2280,7 @@ function detailHTML(g) {
   if (g.st === "live" && PD[g.d + gkey(g)]) h += pitchHTML(g);
   else if (d.now && g.st === "live") h += `<div class="nowbat"><span class="lv">● ${esc(d.now.half)}</span><b>${esc(d.now.order)} ${esc(d.now.name)}</b><span class="sit">${esc(d.now.sit)}</span></div>`;
   h += lineupHTML(g, d);
+  h += pitchingHTML(g, d);
   // 得点シーンの一覧は出さない（スコア表の得点マスをタップすると、その回の流れが開く）
   return h;
 }
