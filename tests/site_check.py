@@ -479,6 +479,69 @@ async def starter_order_check(browser):
     await pg.close()
 
 
+async def wording_check(browser):
+    """説明文と実際の見た目・リーグが合っているか
+    1) パ・リーグ表示で、セ・リーグだけの言葉（支払・広島・担当など）が出ていないか（逆も）
+    2) 「白枠」「青い枠」「黄色」「オレンジ」「白」「金色」などの色の説明が、そのテーマの実際の色と合っているか"""
+    NG = {"P": ["支払", "広島", "担当", "セ・リーグ", "5球団", "神の行", "巨の列"], "C": ["パ・リーグ", "6球団", "ソの行"]}
+    OK_P = "担当者・支払いはセ・リーグだけの遊びです"
+    for theme in ["", "pawa"]:
+        for lg in ["C", "P"]:
+            label = f"[説明文 {'パワプロ風' if theme else 'スタイリッシュ'} {lg}]"
+            pg, errs = await open_page(browser, 390, theme)
+            if lg == "P":
+                await pg.evaluate("switchLeague('P')")
+                await pg.wait_for_timeout(200)
+            for tab in ["magic", "game", "cal", "std", "stats", "song"]:
+                txt = await pg.evaluate("""(tab) => { setTab(tab); const v = document.getElementById('v-' + tab); v.querySelectorAll('details').forEach(d => d.open = true); return v.innerText; }""", tab)
+                for line in txt.split("\n"):
+                    if lg == "P" and OK_P in line:
+                        continue
+                    for w in NG[lg]:
+                        if w in line:
+                            bad(f"{label} [{tab}] リーグに合わない言葉「{w}」: {line.strip()[:80]}")
+                            break
+            # 色の説明と実際の色
+            r = await pg.evaluate("""() => {
+              const ng = [], rgb = s => (s.match(/\\d+(\\.\\d+)?/g) || []).map(Number);
+              const vis = el => el && el.offsetParent !== null;
+              // 画面に見えている文字（テーマで隠れている言葉は含まない）から、書いてある色を読む
+              const said = (root, words) => { const t = root.innerText; return words.find(w => t.includes(w)) || null; };
+              const isWhite = c => { const [r, g, b] = rgb(c); return r > 230 && g > 230 && b > 230; };
+              const isBlue = c => { const [r, g, b] = rgb(c); return b > 90 && b > r + 40; };
+              setTab('magic');
+              const lab = [...document.querySelectorAll('#condBody .lab')].find(l => l.textContent.includes('直接対決'));
+              const vs = document.querySelector('#condBody .left span.vs'), nv = document.querySelector('#condBody .left span:not(.vs)');
+              if (lab && vs) {
+                const w = said(lab, ['白枠', '青い枠']), bc = getComputedStyle(vs).borderTopColor;
+                if (!w) ng.push('直接対決の説明に色が書かれていない');
+                if (w === '白枠' && !isWhite(bc)) ng.push(`直接対決は「白枠」と書いているのに枠の色が ${bc}`);
+                if (w === '青い枠' && !isBlue(bc)) ng.push(`直接対決は「青い枠」と書いているのに枠の色が ${bc}`);
+                if (nv && getComputedStyle(nv).borderTopColor === bc) ng.push('直接対決とほかの試合の枠の色が同じ');
+              }
+              setTab('stats');
+              const best = document.querySelector('#tmTbl td.best'), li = [...document.querySelectorAll('#v-stats .howto li')].find(l => l.textContent.includes('リーグトップ'));
+              if (best && li) {
+                const w = said(li, ['黄色', 'オレンジ']), c = rgb(getComputedStyle(best).color);
+                if (w === '黄色' && !(c[0] > 200 && c[1] > 170 && c[2] < 120)) ng.push(`チーム成績のトップは「黄色」と書いているのに ${c}`);
+                if (w === 'オレンジ' && !(c[0] > 190 && c[1] > 60 && c[1] < 170 && c[2] < 80)) ng.push(`チーム成績のトップは「オレンジ」と書いているのに ${c}`);
+              }
+              setTab('std');
+              const first = document.querySelector('.ytbl td.yc2.first b'), li2 = [...document.querySelectorAll('#v-std .howto li')].find(l => l.textContent.includes('年間成績'));
+              if (first && li2 && vis(li2)) {
+                const w = said(li2, ['白＝', '金色＝']), cs = getComputedStyle(first);
+                if (w === '白＝' && !isWhite(cs.backgroundColor)) ng.push(`年間成績の1位は「白」と書いているのに ${cs.backgroundColor}`);
+                if (w === '金色＝' && !/255, 230, 128|242, 182, 0/.test(cs.backgroundImage + cs.backgroundColor)) ng.push(`年間成績の1位は「金色」と書いているのに ${cs.backgroundImage}`);
+              }
+              return ng;
+            }""")
+            for m in r:
+                bad(f"{label} {m}")
+            for e in errs:
+                bad(f"{label}: 画面のエラー {e}")
+            await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -529,6 +592,7 @@ async def main():
         await song_link_check(browser)
         await team_in_check(browser)
         await starter_order_check(browser)
+        await wording_check(browser)
         await browser.close()
     print()
     if PROBLEMS:
