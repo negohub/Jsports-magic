@@ -248,6 +248,14 @@ async def game_live(pg, label):
     for c in clipped:
         bad(f"{label}: 試合中の一球速報で「{c}」が切れている")
     runners = await pg.evaluate("document.querySelectorAll('.tg.islive .fld .bs.on').length")
+    if await pg.evaluate("document.documentElement.classList.contains('theme-pawa')"):
+        r = await pg.evaluate("[document.querySelectorAll('.tg.islive .rtile').length, document.querySelectorAll('.tg.islive .fld g[data-pl]').length]")
+        if r[0] < 1 or r[1] > 0:
+            bad(f"{label}: パワプロ風でランナーが選手タイルになっていない（タイル{r[0]}・黒い札{r[1]}）")
+    if await pg.evaluate("document.documentElement.classList.contains('theme-pawa')"):
+        tiles = await pg.evaluate("document.querySelectorAll('.tg.islive .fldw .rtile').length")
+        if tiles != runners:
+            bad(f"{label}: パワプロ風のランナーの札が選手タイルになっていない（札{tiles}／ランナー{runners}）")
     if runners != 2:
         bad(f"{label}: ランナーの塁の数が想定と違う（{runners}）")
     r = await pg.evaluate(CHECK_JS, "game")
@@ -276,7 +284,7 @@ async def cal_weather(pg, label):
 
 async def starters_check(pg, label):
     """予告先発が分かっている試合前の試合で、日程の詳細に予告先発が出るか"""
-    r = await pg.evaluate("""(() => {
+    r = await pg.evaluate(r"""(() => {
       const g = DATA.games.find(x => x.st === 'sched' && TEAM[x.h] && TEAM[x.a]);
       if (!g) return 'skip';
       YK = { [`${g.d}|${g.h}|${g.a}`]: { h: 'テスト太郎', a: null } };
