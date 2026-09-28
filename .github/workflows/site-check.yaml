@@ -8,7 +8,7 @@ on:
       - "index.html"
       - "tests/**"
       - "scripts/core.js"
-      - ".github/workflows/site-check.yml"
+      - ".github/workflows/site-check.yaml"
   schedule:
     - cron: "30 3 * * *"   # 毎日 JST 12:30
   workflow_dispatch:
