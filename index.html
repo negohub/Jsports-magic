@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260928170549">
+<meta name="build" content="20260928171822">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1912,20 +1912,35 @@ button:active,.chip:active,.tbtn:active,.ptile:active,.tgx:active,.shot:active{t
 /* ===== チーム内の成績 ===== */
 #ptTeams{margin-top:10px}
 #ptSeg{margin-top:10px}
-#ptTbl td.pnm{width:auto;white-space:nowrap}
-/* 長い名前（外国人選手など）は途中で「…」にして、表が横にはみ出さないように */
-#ptTbl .ptn{display:block;max-width:92px;overflow:hidden;text-overflow:ellipsis}
+/* どの球団でも同じ幅：列の幅を固定（名前の列＋数字5列は均等） */
+#ptTbl{table-layout:fixed;width:100%}
+#ptTbl col.pc-n{width:30%}
+#ptTbl td.pnm{width:auto;white-space:normal}
+#ptTbl td.num,#ptTbl th{white-space:nowrap}
+/* 長い名前（外国人選手など）も省略せず、小さめの文字で、入りきらなければ2行に */
+#ptTbl .ptn{display:block;line-height:1.25;overflow-wrap:anywhere;word-break:break-all}
+#ptTbl .ptn.n5{font-size:13px}
+#ptTbl .ptn.n7{font-size:11.5px;letter-spacing:-.02em}
 #ptTbl td.v{font-weight:600}
 .ptmore{display:block;width:100%;margin:10px 0 0;padding:11px 0;border-radius:12px;border:1px solid var(--soft-line,#2A2A2A);background:rgba(255,255,255,.04);color:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
 html.theme-pawa .ptmore{background:#fff;color:#13264A;border:2px solid #1D3E7C}
-html.theme-pawa #ptTbl td.pnm .ptile{max-width:84px}
-html.theme-pawa #ptTbl td.pnm .ptile b{font-size:13px}
-@media (max-width:374px){html.theme-pawa #ptTbl td.pnm{padding:5px 3px 5px 4px !important}html.theme-pawa #ptTbl td.pnm .ptile{max-width:60px;height:30px}html.theme-pawa #ptTbl td.pnm .ptile b{font-size:12px}}
+html.theme-pawa #ptTbl td.pnm .ptile{max-width:none;width:100%;height:auto;min-height:32px;padding:3px 4px}
+html.theme-pawa #ptTbl td.pnm .ptile b{font-size:13px;white-space:normal;line-height:1.2;text-align:center;overflow-wrap:anywhere;word-break:break-all;margin:0}
+html.theme-pawa #ptTbl td.pnm .ptile.n5 b{font-size:12px;letter-spacing:0}
+html.theme-pawa #ptTbl td.pnm .ptile.n7 b{font-size:10.5px;letter-spacing:-.03em}
+/* パワプロ風は見出しが太字なので、3文字＋並べ替えの印が入りきるよう少し小さく */
+html.theme-pawa #ptTbl thead th{font-size:11px !important;letter-spacing:-.03em !important;padding-left:2px !important;padding-right:2px !important}
+html.theme-pawa #ptTbl th.srt .sic{width:6px;margin-left:1px}
+@media (max-width:374px){html.theme-pawa #ptTbl thead th{font-size:9.5px !important;letter-spacing:-.05em !important;padding-left:1px !important;padding-right:1px !important}html.theme-pawa #ptTbl th.srt .sic{width:5px;margin-left:0}}
+@media (max-width:374px){html.theme-pawa #ptTbl td.pnm{padding:5px 3px 5px 4px !important}html.theme-pawa #ptTbl td.pnm .ptile{min-height:30px}html.theme-pawa #ptTbl td.pnm .ptile b{font-size:12px}html.theme-pawa #ptTbl td.pnm .ptile.n5 b{font-size:11px}html.theme-pawa #ptTbl td.pnm .ptile.n7 b{font-size:10px}}
 html.lg-p #ptTeams .tbtn{font-size:8.5px;letter-spacing:-.04em;white-space:nowrap;overflow:hidden}
 @media (max-width:374px){
   #ptTbl th,#ptTbl td{padding-left:2px !important;padding-right:2px !important}
   #ptTbl td.pnm{padding-left:7px !important}
-  #ptTbl .ptn{max-width:68px;font-size:13px}
+  #ptTbl col.pc-n{width:29%}
+  #ptTbl .ptn{font-size:13px}
+  #ptTbl .ptn.n5{font-size:12px}
+  #ptTbl .ptn.n7{font-size:10.5px}
   #ptTbl thead th{font-size:10.5px !important;letter-spacing:0 !important}
   #ptTbl th.srt .sic{width:6px;margin-left:1px}
 }
@@ -3012,12 +3027,11 @@ async function loadStarters(force) {
   } catch {} finally { ykBusy = false; }
 }
 const ykOf = g => YK[`${g.d}|${g.h}|${g.a}`] || null;
-// 予告先発の行（ビジター→ホームの順。スコアバグの並びと同じ）
-function ykHTML(g, homeFirst) {
+// 予告先発の行（どの画面でもホームが左。「阪神 vs ヤクルト」の対戦カードの順）
+function ykHTML(g, homeFirst = true) {
   const y = ykOf(g);
   if (!y || g.st !== "sched") return "";
   const one = (t, n) => n ? `<span class="ykp" data-pl="${t}|${esc(n)}|pit" style="${tv(t)}"><i class="ykb">${sn(t)}</i>${pwName(t, n, "投手")}</span>` : `<span class="ykp none" style="${tv(t)}"><i class="ykb">${sn(t)}</i>未発表</span>`;
-  // 試合タブはスコア表示（上がビジター）の順、日程の詳細は「阪神 vs ヤクルト」の対戦カードの順（ホームが先）
   return homeFirst
     ? `<div class="yk"><span class="ykl">予告先発</span>${one(g.h, y.h)}<span class="ykv">vs</span>${one(g.a, y.a)}</div>`
     : `<div class="yk"><span class="ykl">予告先発</span>${one(g.a, y.a)}<span class="ykv">vs</span>${one(g.h, y.h)}</div>`;
@@ -4270,11 +4284,13 @@ function drawTeamIn(t, d) {
     if (kind === "pit") { const pg = gr.filter(k => PIT.includes(k)); gr = pg.length ? pg : ["投"]; }
     else { const bg = gr.filter(k => !PIT.includes(k)); gr = bg.length ? bg : gr; }
     const nm = rankName(t, n);
-    return `<span class="ptile ${TILEC[gr[0]] || "pi"}${nm.length <= 2 ? " sp" : nm.length >= 5 ? " lg" : ""}" style="${tileStyle(gr)}"><b>${esc(nm)}</b></span>`;
+    return `<span class="ptile ${TILEC[gr[0]] || "pi"}${nm.length <= 2 ? " sp" : ""}${lenC(nm)}" style="${tileStyle(gr)}"><b>${esc(nm)}</b></span>`;
   };
+  // 名前の長さで文字の大きさを変える（長い名前も省略せず、必要なら2行に折り返す）
+  function lenC(nm) { const n = [...nm].length; return n >= 7 ? " n7" : n >= 5 ? " n5" : ""; }
   const cell = v => esc(v == null || v === "" ? "-" : v);
-  $("ptList").innerHTML = `<div class="ywrap"><table class="ytab rtab tst" id="ptTbl"><thead><tr><th class="tnm">選手名</th>${cols.map((c, j) => `<th class="srt${sk && j === sk.col ? " on" : ""}" data-col="${j}">${c[0]}${sortIco(sk && j === sk.col ? sk.dir : "none")}</th>`).join("")}</tr></thead><tbody>` +
-    view.map(x => `<tr style="${tv(t)}"><td class="pnm" data-pl="${t}|${esc(x.n)}|${kind}">${pawaT ? tile(x.n) : `<span class="ptn">${esc(rankName(t, x.n))}</span>`}</td>${cols.map(c => `<td class="num v">${cell(c[1](x.r))}</td>`).join("")}</tr>`).join("") +
+  $("ptList").innerHTML = `<div class="ywrap"><table class="ytab rtab tst" id="ptTbl"><colgroup><col class="pc-n">${cols.map(() => "<col>").join("")}</colgroup><thead><tr><th class="tnm">選手名</th>${cols.map((c, j) => `<th class="srt${sk && j === sk.col ? " on" : ""}" data-col="${j}">${c[0]}${sortIco(sk && j === sk.col ? sk.dir : "none")}</th>`).join("")}</tr></thead><tbody>` +
+    view.map(x => `<tr style="${tv(t)}"><td class="pnm" data-pl="${t}|${esc(x.n)}|${kind}">${pawaT ? tile(x.n) : `<span class="ptn${lenC(rankName(t, x.n))}">${esc(rankName(t, x.n))}</span>`}</td>${cols.map(c => `<td class="num v">${cell(c[1](x.r))}</td>`).join("")}</tr>`).join("") +
     `</tbody></table></div>` + (rows.length > N ? `<button type="button" class="ptmore" id="ptMore">${S.ptAll ? "上位だけ表示" : `全員を表示（${rows.length}人）`}</button>` : "");
   $("ptList").querySelectorAll("th.srt").forEach(th => (th.onclick = () => {
     const j = +th.dataset.col, c = cols[j], first = c[2] === "era" ? "asc" : "desc";
