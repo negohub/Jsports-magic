@@ -384,6 +384,26 @@ async def calc_cache(browser):
         await pg.close()
 
 
+async def song_link_check(browser):
+    """選手ごとの応援歌ページ（su）：あればそれを開く・おかしなURLは使わない"""
+    pg, errs = await open_page(browser, 390, "")
+    r = await pg.evaluate("""() => {
+      const ng = [], L = (DATA.rosters || {}).L || [], a = L.find(x => x.song), b = L.filter(x => x.song)[1];
+      if (!a || !b) return ng;
+      const oa = a.su, ob = b.su;
+      a.su = "https://www.yakyu-ouen.net/test-player/"; b.su = "javascript:alert(1)";
+      if (songLink("L", a) !== a.su) ng.push("選手ごとのページが使われない");
+      if (/^javascript/.test(songLink("L", b) || "")) ng.push("おかしなURLがそのまま使われる");
+      a.su = oa; b.su = ob;
+      return ng;
+    }""")
+    for m in r:
+        bad(f"[応援歌のリンク] {m}")
+    for e in errs:
+        bad(f"[応援歌のリンク]: 画面のエラー {e}")
+    await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -431,6 +451,7 @@ async def main():
             await pg.close()
         await data_refresh(browser)
         await calc_cache(browser)
+        await song_link_check(browser)
         await browser.close()
     print()
     if PROBLEMS:
