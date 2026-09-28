@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260927180847">
+<meta name="build" content="20260928035001">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1538,6 +1538,9 @@ html.theme-pawa .ps-sub span{color:#13264A}
 html.theme-pawa .ps-pos{box-shadow:inset 0 -2px 0 rgba(0,0,0,.12),0 0 0 1px rgba(0,0,0,.15)}
 html.theme-pawa .lnm[data-pl] span,html.theme-pawa .putab td.pnx[data-pl] b{text-decoration-color:rgba(19,38,74,.25)}
 @media (max-width:374px){.ps-main b{font-size:17px}.ps-sub{grid-template-columns:repeat(2,1fr)}}
+/* 選手の成績の画面の名前（パワプロ風のタイル） */
+html.theme-pawa .sp-h .pstile{display:inline-flex;height:36px;min-width:120px;padding:0 16px;cursor:default;flex:0 1 auto}
+html.theme-pawa .sp-h .pstile b{font-size:17px;letter-spacing:.08em;color:#1F2A44}
 /* 担当者の名前タイル（パワプロ風） */
 .ptile.otile{display:inline-flex;height:auto;min-width:64px;padding:3px 12px;vertical-align:middle;cursor:default;border-radius:8px}
 .ptile.otile b{font-size:inherit;font-weight:700;letter-spacing:.06em}
@@ -3713,7 +3716,11 @@ async function openPlayer(t, name, opt = {}) {
   const song = opt.song || (me && me.song);
   const of = song && me ? songLink(t, me) : null;
   const btns = song ? `<div class="sp-b">${of ? `<a class="sof" href="${of}" target="_blank" rel="noopener">${songLabel(t)}</a>` : ""}<a class="sgo" href="${ytUrl(t, full)}" target="_blank" rel="noopener">応援歌を聴く</a></div>` : "";
-  const head = `<div class="sp-h" style="${tv(t)}"><span class="badge">${sn(t)}</span><b>${esc(full)}</b>${no ? `<small class="num">#${esc(no)}</small>` : ""}<span class="ps-poss">${chips}</span></div>`;
+  // パワプロ風：名前も守備位置の色のタイル（2つ以上守る選手は塗り分け）
+  const nameHtml = isPawa()
+    ? `<span class="ptile pstile ${TILEC[gr[0]] || "pi"}" style="${tileStyle(gr)}"><b>${esc(full)}</b></span>`
+    : `<b>${esc(full)}</b>`;
+  const head = `<div class="sp-h" style="${tv(t)}"><span class="badge">${sn(t)}</span>${nameHtml}${no ? `<small class="num">#${esc(no)}</small>` : ""}<span class="ps-poss">${chips}</span></div>`;
   $("songPick").innerHTML = head + `<div class="ps-body"><div class="ps-load">今季の成績を読み込み中…</div></div>` + btns;
   $("songSheet").querySelector(".sheet-head b").textContent = "選手の成績";
   $("songSheet").hidden = false; requestAnimationFrame(() => $("songSheet").classList.add("open"));
