@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260928100517">
+<meta name="build" content="20260928102730">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1541,6 +1541,13 @@ html.theme-pawa .lnm[data-pl] span,html.theme-pawa .putab td.pnx[data-pl] b{text
 /* 選手の成績の画面の名前（パワプロ風のタイル） */
 html.theme-pawa .sp-h .pstile{display:inline-flex;height:36px;min-width:120px;padding:0 16px;cursor:default;flex:0 1 auto}
 html.theme-pawa .sp-h .pstile b{font-size:17px;letter-spacing:.08em;color:#1F2A44}
+/* 速報の選手名のタイル（パワプロ風） */
+html.theme-pawa .ptile.sptile{display:inline-flex;height:28px;padding:0 10px;min-width:0;vertical-align:middle;cursor:default;border-radius:7px}
+html.theme-pawa .ptile.sptile b{font-size:13.5px;letter-spacing:.04em;color:#1F2A44 !important;white-space:nowrap}
+html.theme-pawa .flow .fb b .sptile{margin-left:4px}
+html.theme-pawa .pn3 .sptile{height:32px;padding:0 12px}
+html.theme-pawa .pn3 .sptile b{font-size:15px}
+@media (max-width:374px){html.theme-pawa .ptile.sptile{padding:0 7px}html.theme-pawa .ptile.sptile b{font-size:12.5px}html.theme-pawa .pn3 .sptile b{font-size:13.5px}}
 /* 担当者の名前タイル（パワプロ風） */
 .ptile.otile{display:inline-flex;height:auto;min-width:64px;padding:3px 12px;vertical-align:middle;cursor:default;border-radius:8px}
 .ptile.otile b{font-size:inherit;font-weight:700;letter-spacing:.06em}
@@ -2932,12 +2939,12 @@ function pitchHTML(g) {
     <div class="pvs3">
       <div class="pc3" style="${tv(def)}"><span class="wm num">${esc(p.pitcher ? p.pitcher.no : "")}</span>
         <div class="pr3">PITCHER<em>${fn(def)}</em></div>
-        ${p.pitcher ? `<div class="pn3"><b>${esc(p.pitcher.name)}</b>${hand(p.pitcher.hand)}</div>
+        ${p.pitcher ? `<div class="pn3"><b>${pwName(def, p.pitcher.name, "投手")}</b>${hand(p.pitcher.hand)}</div>
         <div class="pg3">${pcell("防", p.pitcher.era)}${pcell("球", pg ? pg.np : p.pitcher.np)}${pcell("回", pg && pg.ip)}${pcell("安", pg && pg.h)}${pcell("振", pg && pg.so)}${pcell("四", pg && pg.bb)}${pcell("失", pg && pg.r)}${pcell("打", pg ? pg.bf : p.pitcher.bf)}</div>` : ""}
       </div>
       <div class="pc3" style="${tv(atk)}"><span class="wm num">${esc(p.batter ? p.batter.no : "")}</span>
         <div class="pr3${abDone ? " done" : ""}">${abDone ? `<span class="abt">打席終了</span><span class="abd rc ${resCls(lastRes)}">${esc(lastRes)}</span>` : "BATTER"}<em>${fn(atk)}</em></div>
-        ${p.batter ? `<div class="pn3"><b>${esc(p.batter.name)}</b>${hand(p.batter.hand)}</div>
+        ${p.batter ? `<div class="pn3"><b>${pwName(atk, p.batter.name)}</b>${hand(p.batter.hand)}</div>
         <div class="pg3">${pcell("率", p.batter.avg)}${pcell("打", bg && bg.ab)}${pcell("安", bg && bg.hit)}${pcell("点", bg && bg.rbi)}${pcell("本", bg && bg.hr)}${pcell("四", bg && bg.bb)}</div>
         ${bg && bg.results && bg.results.length ? `<div class="pres3">${bg.results.map((r, i) => rcChip(r, (bg.rbis || [])[i])).join("")}</div>` : ""}` : ""}
         ${p.next ? `<div class="pnx3${abDone ? " up" : ""}">${abDone ? "次の打者" : "NEXT"}<b>${esc(p.next)}</b></div>` : ""}
@@ -2948,12 +2955,21 @@ function pitchHTML(g) {
 }
 
 S.lu = {}; S.open = {}; S.flow = {}; S.flowAt = {};
+// 速報の選手名：パワプロ風のときは守備位置の色のタイル（名簿で守備位置を探す。見つからなければ fallback）
+function pwName(t, name, fallback) {
+  if (!isPawa() || !name) return esc(name || "");
+  const ro = (DATA.rosters || {})[t] || [];
+  const k = nk(name);
+  const me = ro.find(x => nk(x.n) === k) || (ro.filter(x => nk(x.n).startsWith(k)).length === 1 ? ro.find(x => nk(x.n).startsWith(k)) : null);
+  const gr = posGroups(t, me ? me.n : name, me ? me.p : (fallback || "内野手"));
+  return `<span class="ptile sptile ${TILEC[gr[0]] || "pi"}" style="${tileStyle(gr)}"><b>${esc(name)}</b></span>`;
+}
 function flowHTML(f, atk) {
   if (!f) return `<div class="flow"><p class="fnone">この回の流れはまだ取得できていません</p></div>`;
   const hitc = r => "rc " + resCls(r);
   return `<div class="flow" style="${tv(atk)}"><div class="fh">${esc(f.half)}　${fn(atk)}の攻撃${f.runs ? `<b class="frun">${f.runs}点</b>` : ""}</div>${f.steps.map((st, i) => `<div class="fs${st.score ? " sc" : ""}">
       <span class="fi num">${i + 1}</span>
-      <span class="fb"><b>${esc(st.order)} ${esc(st.name)}</b>${st.sit ? `<small>${esc(st.sit)}</small>` : ""}</span>
+      <span class="fb"><b>${esc(st.order)} ${pwName(atk, st.name)}</b>${st.sit ? `<small>${esc(st.sit)}</small>` : ""}</span>
       <span class="fr ${hitc(st.res)}">${esc(st.res || "-")}</span>
       ${st.score ? `<span class="fsc num">${esc(st.score)}</span>` : ""}</div>`).join("")}</div>`;
 }
