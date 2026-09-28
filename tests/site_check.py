@@ -54,7 +54,7 @@ DETAIL = {
 PITCH = {"half": "6回表", "attack": "ヤクルト", "b": 2, "s": 1, "o": 1, "bases": {}, "runners": {},
          "batter": {"name": "オスナ", "no": "13", "hand": "右打", "avg": ".271", "game": {"ab": "2", "hit": "1", "rbi": "1", "hr": "0", "bb": "0", "results": ["中安", "遊ゴロ"]}},
          "pitcher": {"name": "山﨑 伊織", "no": "19", "hand": "右投", "era": "2.41", "game": {"ip": "5.1", "np": "88", "bf": "24", "h": "4", "so": "6", "bb": "2", "r": "1"}},
-         "next": "村上 宗隆",
+         "next": "エンカーナシオン",  # 長い名前でも切れないかを見るため
          "pitches": [{"n": 1, "type": "ストレート", "speed": "148km/h", "res": "ボール"}, {"n": 2, "type": "フォーク", "speed": "136km/h", "res": "空振り"},
                      {"n": 3, "type": "スライダー", "speed": "131km/h", "res": "ファウル"}]}
 
@@ -236,6 +236,13 @@ async def game_live(pg, label):
             bad(f"{label}: 選手名をタップしても成績が出ない")
         r = await pg.evaluate(CHECK_JS, "game")
         await pg.evaluate("document.getElementById('songSheet').classList.remove('open'); document.getElementById('songSheet').hidden = true")
+    clipped = await pg.evaluate("""(() => { const out = [];
+      for (const sel of ['.tg.islive .pnx3 b', '.tg.islive .pr3 > *', '.tg.islive .pn3 b']) document.querySelectorAll(sel).forEach(e => {
+        const box = e.closest('.pc3') || e.parentElement, r = e.getBoundingClientRect(), c = box.getBoundingClientRect();
+        if (r.right > c.right + 1 || e.scrollWidth > e.clientWidth + 1) out.push(e.textContent.trim()); });
+      return out; })()""")
+    for c in clipped:
+        bad(f"{label}: 試合中の一球速報で「{c}」が切れている")
     runners = await pg.evaluate("document.querySelectorAll('.tg.islive .fld .bs.on').length")
     if runners != 2:
         bad(f"{label}: ランナーの塁の数が想定と違う（{runners}）")
