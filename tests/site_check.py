@@ -29,6 +29,9 @@ PROBLEMS = []
 def bad(msg):
     PROBLEMS.append(msg)
     print("  ✕", msg)
+    # GitHub Actions で動いているときは、Actions の画面の「Annotations」にも出す（ログを開かなくても原因が見える）
+    if os.environ.get("GITHUB_ACTIONS"):
+        print("::error title=サイト検査::" + str(msg).replace("\n", " ").replace("%", "%25"))
 
 
 # ---------- 中継プログラムの代わり（試合中の一球速報・打順・投手成績など） ----------
@@ -848,6 +851,11 @@ async def main():
         await home_screen_check(browser)
         await browser.close()
     print()
+    # Actions の実行結果のページ（Summary）にも一覧を書く
+    summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary:
+        with open(summary, "a", encoding="utf-8") as f:
+            f.write("## サイト検査\n\n" + ("すべて問題なし\n" if not PROBLEMS else f"問題 {len(PROBLEMS)} 件\n\n" + "\n".join(f"- {m}" for m in PROBLEMS[:100]) + "\n"))
     if PROBLEMS:
         print(f"問題 {len(PROBLEMS)} 件")
         sys.exit(1)

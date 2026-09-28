@@ -57,7 +57,12 @@ for (const lg of ["C","P"]) {
         const selfBB = safeB ? null : selfB;
         checked++;
         if (safeB !== r.safe || elimB !== r.eliminated || (!r.safe && !r.eliminated && selfA !== selfBB)) {
-          bad++; if (bad <= 15) console.log(`NG ${lg} ${p.months} ${D} ${t}: safe ${r.safe}/${safeB} elim ${r.eliminated}/${elimB} self ${selfA}/${selfBB} rem ${n}`);
+          bad++;
+          if (bad <= 15) {
+            const msg = `NG ${lg} ${p.months} ${D} ${t}: safe ${r.safe}/${safeB} elim ${r.eliminated}/${elimB} self ${selfA}/${selfBB} rem ${n}`;
+            console.log(msg);
+            if (process.env.GITHUB_ACTIONS) console.log(`::error title=マジック検証::${msg}`);   // Actions の画面に出す
+          }
         }
       }
     }
