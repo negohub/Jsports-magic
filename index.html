@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260928142000">
+<meta name="build" content="20260928143854">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -900,13 +900,13 @@ h2{font-weight:700;margin-top:30px}
 .btag .lv{display:inline-flex;align-items:center;gap:6px;color:#FF3B3B;font-weight:700;letter-spacing:.06em}
 .btag .vsb{margin-left:auto;font-size:11px;color:#000;background:#fff;padding:2px 8px;font-weight:700}
 .btag .stg{margin-left:0}
-.ldot{width:7px;height:7px;border-radius:50%;background:#FF3B3B;display:inline-block;box-shadow:0 0 0 0 rgba(255,59,59,.6)}
+.ldot{width:7px;height:7px;border-radius:50%;background:#FF3B3B;display:inline-block;position:relative}
 .tg .tgh{display:none}
 /* 得点の瞬間 */
 .bt .gl{font-style:normal;font-size:11px;font-weight:700;background:#FFD21F;color:#000;padding:1px 6px;margin-left:4px}
 @media (prefers-reduced-motion:no-preference){
-  .ldot{animation:ldot 1.6s ease-out infinite}
-  @keyframes ldot{0%{box-shadow:0 0 0 0 rgba(255,59,59,.6)}100%{box-shadow:0 0 0 8px rgba(255,59,59,0)}}
+  .ldot::after{content:"";position:absolute;inset:0;border-radius:50%;background:#FF3B3B;animation:ldot 1.6s ease-out infinite;pointer-events:none}
+  @keyframes ldot{0%{transform:scale(1);opacity:.6}100%{transform:scale(3.3);opacity:0}}
   .bt.flash{animation:bflash 1.2s ease-out 3}
   @keyframes bflash{0%{background:color-mix(in srgb,var(--tc) 80%,#fff)}100%{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 34%,#0A0A0A) 0%,#0A0A0A 62%)}}
   .bt.flash .bs2{animation:bpop .6s cubic-bezier(.2,1.6,.4,1) 2}
@@ -1901,7 +1901,7 @@ html.theme-pawa{background:#CDEBFF}
 .tabbar .lens{transition:transform .55s cubic-bezier(.3,1.35,.45,1),width .55s cubic-bezier(.3,1.35,.45,1)}
 /* 画面の切り替え：少し浮き上がりながらふわっと */
 .view:not([hidden]){animation:vin2 .45s cubic-bezier(.2,1,.3,1)}
-@keyframes vin2{0%{opacity:0;transform:translate3d(0,10px,0) scale(.985)}100%{opacity:1;transform:none}}
+@keyframes vin2{0%{opacity:0;transform:translate3d(0,10px,0)}100%{opacity:1;transform:none}}
 /* ボタン：押した瞬間にほんの少し沈む */
 button,.chip,.tbtn,.ptile,.tgx,.shot{transition:transform .25s cubic-bezier(.2,1.4,.4,1)}
 button:active,.chip:active,.tbtn:active,.ptile:active,.tgx:active,.shot:active{transform:scale(.96)}
@@ -1909,6 +1909,8 @@ button:active,.chip:active,.tbtn:active,.ptile:active,.tgx:active,.shot:active{t
 /* 下から出る画面：ばねの動きで */
 .sheet-card{transition:transform .5s cubic-bezier(.2,1.15,.35,1)}
 @media (prefers-reduced-motion:reduce){.tabbar,.tabbar button .tl,.tabbar button svg,.tabbar .lens,.sheet-card,button{transition:none!important}.view:not([hidden]){animation:none}}
+/* 帯の登場の動き：自動更新で描き直したときは動かさない */
+.hero.hstill{animation:none !important}
 /* ===== チーム成績の表：狭い画面（幅374px以下）でパの長い球団名（ソフトバンクなど）が入りきるように ===== */
 @media (max-width:374px){
   #tmTbl th,#tmTbl td{padding-left:2px !important;padding-right:2px !important}
@@ -2146,7 +2148,21 @@ function clSort(rows, games, inScope, prevOrder) {
   return rows;
 }
 
+// ===== 計算結果の使い回し（同じデータ・同じ月度なら計算し直さない。画面の再描画を軽くしてカクつきを防ぐ） =====
+// 鍵：リーグ・月度・設定・その月度の試合の中身。試合が1つでも変われば計算し直す
+const __anMemo = new Map();
 function analyze(games, period, cfg) {
+  let sig = LEAGUE + "|" + CL.join(",") + "|" + period.id + "|" + period.months.join(",") + "|" + (cfg.excluded || []).join(",") + "|" + !!cfg.tieIsSafe + "|" + (cfg.prevOrder || []).join(",");
+  for (const g of games) if (period.months.includes(monthOf(g.d))) sig += "|" + g.d + g.h + g.a + g.st + g.hs + "-" + g.as;
+  const hit = __anMemo.get(sig);
+  if (hit) return __clone(hit);
+  const res = analyzeRaw(games, period, cfg);
+  if (__anMemo.size > 80) __anMemo.clear();
+  __anMemo.set(sig, __clone(res));
+  return res;
+}
+function __clone(o) { return typeof structuredClone === "function" ? structuredClone(o) : JSON.parse(JSON.stringify(o)); }
+function analyzeRaw(games, period, cfg) {
   const targets = CL.filter(t => !cfg.excluded.includes(t));
   const R = {};
   CL.forEach(t => (R[t] = { w: 0, l: 0, d: 0, left: [] }));
@@ -2438,7 +2454,9 @@ const ownT = t => {
   return `<span class="ptile otile ${c}${own(t).length <= 2 ? " sp" : ""}"><b>${own(t)}</b></span>`;
 };
 const payLine = t => own(t) === CONFIG.payee ? `${own(t)}が ${yen(CONFIG.fee)} 支払い` : `${own(t)} → ${CONFIG.payee}へ ${yen(CONFIG.fee)}`;
-function jst() { const n = new Date(Date.now() + 9 * 3600e3); return { y: n.getUTCFullYear(), m: n.getUTCMonth() + 1, d: n.getUTCDate(), iso: n.toISOString().slice(0, 10) }; }
+// 日本時間の今日（1秒間は同じ結果を使い回す：描画中に何百回も呼ばれるため）
+let __jstAt = 0, __jst = null;
+function jst() { const now = Date.now(); if (__jst && now - __jstAt < 1000) return { ...__jst }; const n = new Date(now + 9 * 3600e3); __jstAt = now; __jst = { y: n.getUTCFullYear(), m: n.getUTCMonth() + 1, d: n.getUTCDate(), iso: n.toISOString().slice(0, 10) }; return { ...__jst }; }
 function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { return null; } }
 
 let DATA = null, fromSnap = false;
@@ -2563,6 +2581,7 @@ window.addEventListener("load", () => moveLens(true));
       if (lock === "y") { view = null; return; }
     }
     e.preventDefault();
+    if (!view.style.willChange) view.style.willChange = "transform,opacity";
     const tabs = order(), i = tabs.indexOf(S.tab), edge = (mx > 0 && i === 0) || (mx < 0 && i === tabs.length - 1);
     dx = mx;
     view.style.transition = "none";
@@ -2577,6 +2596,7 @@ window.addEventListener("load", () => moveLens(true));
     const next = (Math.abs(dx) > 70 || fast) ? tabs[i + (dx < 0 ? 1 : -1)] : null;
     v.style.transition = "transform .35s cubic-bezier(.2,1,.3,1),opacity .35s ease";
     v.style.transform = ""; v.style.opacity = "";
+    setTimeout(() => { if (view !== v) { v.style.willChange = ""; v.style.transition = ""; } }, 400);   // 動き終わったら元に戻す（また指で動かしている最中なら触らない）
     if (!next) return;
     autoGame = false;
     setTab(next);
@@ -2671,7 +2691,12 @@ function magicTitle() {
   const cur = defaultPeriod(periods());
   $("ttl").textContent = seasonOver() && S.period.id === cur.id ? `${DATA.season || ""}シーズン最終結果` : S.period.id === cur.id ? "今月の戦況" : `${S.period.label}の戦況`;
 }
+// 「このままだと支払い」の帯の登場の動きは、最初の表示と月度を切り替えたときだけ（自動更新のたびに動くとカクついて見えるため）
+// 動きの途中で描き直したときは、続きから動かす（最初からやり直すと一瞬消えて見える）
+let heroAt = 0;
 function renderMagic() {
+  const now = Date.now(); if (!heroAt) heroAt = now;
+  const el = now - heroAt, hs = el > 700 ? " hstill" : "", hd = el > 700 || el === 0 ? "" : `;animation-delay:-${el}ms`;
   const list = periods();
   if (!S.period || !list.some(p => p.id === S.period.id)) S.period = defaultPeriod(list);
   magicTitle();
@@ -2682,22 +2707,22 @@ function renderMagic() {
     const done = results[p.id].finished;
     return `<button class="chip" role="tab" type="button" data-id="${p.id}" aria-pressed="${p.id === S.period.id}">${p.label}${done ? "" : `<span class="dot" title="集計中"></span>`}</button>`;
   }).join("");
-  $("chips").querySelectorAll(".chip").forEach(b => (b.onclick = () => { S.period = CONFIG.periods.find(p => p.id === b.dataset.id); S.periodPicked = true; renderMagic(); }));
+  $("chips").querySelectorAll(".chip").forEach(b => (b.onclick = () => { S.period = CONFIG.periods.find(p => p.id === b.dataset.id); S.periodPicked = true; heroAt = 0; renderMagic(); }));
   const a = results[S.period.id];
   window.__last = a;
-  const on = $("chips").querySelector('[aria-pressed="true"]');
-  if (on) $("chips").scrollLeft = on.offsetLeft - ($("chips").clientWidth - on.offsetWidth) / 2;
+  // 選択中の月度ボタンを真ん中へ（寸法の読み取りは描画の途中でやると全体の再計算が起きて重いので、次の画面更新のときに）
+  requestAnimationFrame(() => { const c = $("chips"), on = c.querySelector('[aria-pressed="true"]'); if (on) c.scrollLeft = on.offsetLeft - (c.clientWidth - on.offsetWidth) / 2; });
 
   const hero = (t, lbl, sub, state) => {
     const toPayee = own(t) === CONFIG.payee ? "支払い" : `→ ${CONFIG.payee}`;
-    return `<div class="hero ${state}" style="${tv(t)}">
+    return `<div class="hero ${state}${hs}" style="${tv(t)}${hd}">
       <span class="hb">${sn(t)}</span>
       <div class="hm"><div class="hl">${lbl}</div><div class="hn"><b>${isPL() ? fn(t) : ownT(t)}</b>${isPL() ? "" : `<span>${fn(t)}</span>`}</div>${sub ? `<div class="hs num">${sub}</div>` : ""}</div>
       ${isPL() ? "" : `<div class="hp num"><b>${yen(CONFIG.fee)}</b><small>${toPayee}</small></div>`}
     </div>`;
   };
   if (!a.played) {
-    $("alert").innerHTML = `<div class="hero none"><div class="hm"><div class="hl">${S.period.label}</div><div class="hn"><span>まだ試合がありません</span></div></div></div>`;
+    $("alert").innerHTML = `<div class="hero none${hs}"${hd ? ` style="${hd.slice(1)}"` : ""}><div class="hm"><div class="hl">${S.period.label}</div><div class="hn"><span>まだ試合がありません</span></div></div></div>`;
   } else {
     const low = a.rows[a.rows.length - 1];
     if (a.finished) {
@@ -4245,15 +4270,18 @@ function renderStats(fromLive) {
 
 /* ---------- スクロールしたら小さいヘッダー ---------- */
 (() => {
-  let on = false;
+  // スクロール中は1コマに1回だけ動かし、変わったときだけ書き換える（毎回書き換えるとカクつくため）
+  let on = false, raf = 0;
   const tick = () => {
+    raf = 0;
     const h = document.querySelector(".top").offsetHeight;
     const want = window.scrollY > h - 10;
     if (want !== on) { on = want; $("minibar").classList.toggle("show", on); }
-    $("miniTtl").textContent = $("ttl").textContent;
-    $("miniLive").innerHTML = $("upd").querySelector(".lvh") ? "● LIVE" : "";
+    const tt = $("ttl").textContent, lv = $("upd").querySelector(".lvh") ? "● LIVE" : "";
+    if ($("miniTtl").textContent !== tt) $("miniTtl").textContent = tt;
+    if ($("miniLive").textContent !== lv) $("miniLive").textContent = lv;
   };
-  window.addEventListener("scroll", tick, { passive: true });
+  window.addEventListener("scroll", () => { if (!raf) raf = requestAnimationFrame(tick); }, { passive: true });
   document.addEventListener("click", () => setTimeout(tick, 0));
   tick();
 })();
