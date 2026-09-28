@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260928114656">
+<meta name="build" content="20260928121906">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1528,6 +1528,7 @@ html.theme-pawa .hero .hb{border-radius:50% !important;clip-path:none !important
 .ps-sub span{font-size:14px;font-weight:600;color:#E8E8EC}
 .ps-note{font-size:10.5px;color:var(--muted);margin:10px 2px 2px;line-height:1.6}
 [data-pl]{cursor:pointer}
+.fld g[data-pl]{cursor:pointer}
 .pn3[data-pl] > b,.pnx3 b[data-pl],.flow .fb[data-pl] > b{text-decoration:underline;text-decoration-color:rgba(255,255,255,.18);text-underline-offset:3px}
 html.theme-pawa .pn3[data-pl] > b,html.theme-pawa .flow .fb[data-pl] > b{text-decoration:none}
 html.theme-pawa .pnx3 b[data-pl]{text-decoration-color:rgba(19,38,74,.3)}
@@ -1556,6 +1557,8 @@ html.theme-pawa .lutab tr.sub .lnm .sptile{opacity:.85}
 html.theme-pawa .putab td.pnx b{display:inline-flex;align-items:center;gap:4px}
 html.theme-pawa .pn3 .sptile b{font-size:15px}
 @media (max-width:374px){html.theme-pawa .ptile.sptile{padding:0 7px}html.theme-pawa .ptile.sptile b{font-size:12.5px}html.theme-pawa .pn3 .sptile b{font-size:13.5px}}
+/* 1球ごとの一覧の球速の単位 */
+.pbar b small{font-size:.62em;font-weight:600;margin-left:1px;opacity:.75;letter-spacing:0}
 /* 予告先発 */
 .yk{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;margin:8px 0 2px;padding:9px 10px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}
 .ykl{font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin-right:2px}
@@ -2845,11 +2848,14 @@ async function loadStarters(force) {
 }
 const ykOf = g => YK[`${g.d}|${g.h}|${g.a}`] || null;
 // 予告先発の行（ビジター→ホームの順。スコアバグの並びと同じ）
-function ykHTML(g) {
+function ykHTML(g, homeFirst) {
   const y = ykOf(g);
   if (!y || g.st !== "sched") return "";
   const one = (t, n) => n ? `<span class="ykp" data-pl="${t}|${esc(n)}|pit" style="${tv(t)}"><i class="ykb">${sn(t)}</i>${pwName(t, n, "投手")}</span>` : `<span class="ykp none" style="${tv(t)}"><i class="ykb">${sn(t)}</i>未発表</span>`;
-  return `<div class="yk"><span class="ykl">予告先発</span>${one(g.a, y.a)}<span class="ykv">vs</span>${one(g.h, y.h)}</div>`;
+  // 試合タブはスコア表示（上がビジター）の順、日程の詳細は「阪神 vs ヤクルト」の対戦カードの順（ホームが先）
+  return homeFirst
+    ? `<div class="yk"><span class="ykl">予告先発</span>${one(g.h, y.h)}<span class="ykv">vs</span>${one(g.a, y.a)}</div>`
+    : `<div class="yk"><span class="ykl">予告先発</span>${one(g.a, y.a)}<span class="ykv">vs</span>${one(g.h, y.h)}</div>`;
 }
 // 中継画面のスコア表示（スコアバグ）：上がビジター、下がホーム
 const SCORE_PREV = {}, SCORE_FLASH = {};
@@ -3005,7 +3011,7 @@ function pitchHTML(g) {
     ${[["2", 150, 54], ["1", 213, 112], ["3", 87, 112]].map(([b, x, y]) => `<rect class="bs ${on({ "1": "一", "2": "二", "3": "三" }[b]) ? "on" : ""}" ${on({ "1": "一", "2": "二", "3": "三" }[b]) ? 'filter="url(#glow)"' : ""} x="${x - 7}" y="${y - 7}" width="14" height="14" transform="rotate(45 ${x} ${y})"/>`).join("")}
     <path d="M143 174 h14 v6 l-7 6 l-7 -6 z" fill="#fff"/>
     <g class="blab" font-size="9.5" font-weight="700" fill="rgba(255,255,255,.55)" text-anchor="middle"><text x="196" y="132">一塁</text><text x="150" y="79">二塁</text><text x="104" y="132">三塁</text></g>
-    ${[["2", 150, 34], ["1", 238, 96], ["3", 62, 96]].map(([b, x, y]) => { const nm = runnerOK(p, b, atk, on) ? p.runners[b].split(" ")[0] : RN[b]; return nm ? `<g><rect x="${x - 30}" y="${y - 13}" width="60" height="19" rx="2" fill="rgba(0,0,0,.85)"/><text x="${x}" y="${y + 1}" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff">${esc(nm)}</text></g>` : ""; }).join("")}
+    ${[["2", 150, 34], ["1", 238, 96], ["3", 62, 96]].map(([b, x, y]) => { const full = runnerOK(p, b, atk, on) ? p.runners[b] : RN[b]; if (!full) return ""; const nm = String(full).split(" ")[0]; return runnerTag(atk, x, y, full, nm); }).join("")}
   </svg>`;
   const pcell = (k, v) => v != null && v !== "" ? `<div><span>${k}</span><b class="num">${esc(String(v))}</b></div>` : "";
   const pg = p.pitcher && p.pitcher.game, bg = p.batter && p.batter.game;
@@ -3032,18 +3038,33 @@ function pitchHTML(g) {
         ${p.next ? `<div class="pnx3${abDone ? " up" : ""}">${abDone ? "次の打者" : "NEXT"}<b data-pl="${atk}|${esc(p.next)}">${esc(p.next)}</b></div>` : ""}
       </div>
     </div>
-    ${list.length ? `<div class="plist3">${list.map(x => `<div class="pl3 ${pitchCls(x.res)}"><span class="pn">${x.n}</span><span class="pty">${esc(x.type)}</span><span class="pbar"><i style="width:${spd(x.speed)}%"></i><b class="num">${kmh(x.speed) || ""}</b></span><span class="prs">${esc(x.res)}</span></div>`).join("")}</div>` : `<p class="pnone">この打席はまだ投球がありません</p>`}
+    ${list.length ? `<div class="plist3">${list.map(x => `<div class="pl3 ${pitchCls(x.res)}"><span class="pn">${x.n}</span><span class="pty">${esc(x.type)}</span><span class="pbar"><i style="width:${spd(x.speed)}%"></i><b class="num">${kmh(x.speed) ? `${kmh(x.speed)}<small>km</small>` : ""}</b></span><span class="prs">${esc(x.res)}</span></div>`).join("")}</div>` : `<p class="pnone">この打席はまだ投球がありません</p>`}
   </div>`;
 }
 
 S.lu = {}; S.open = {}; S.flow = {}; S.flowAt = {};
 // 速報の選手名：パワプロ風のときは守備位置の色のタイル（名簿で守備位置を探す。見つからなければ fallback）
-function pwName(t, name, fallback) {
-  if (!isPawa() || !name) return esc(name || "");
+function rosterGroups(t, name, fallback) {
   const ro = (DATA.rosters || {})[t] || [];
   const k = nk(name);
   const me = ro.find(x => nk(x.n) === k) || (ro.filter(x => nk(x.n).startsWith(k)).length === 1 ? ro.find(x => nk(x.n).startsWith(k)) : null);
-  const gr = posGroups(t, me ? me.n : name, me ? me.p : (fallback || "内野手"));
+  return posGroups(t, me ? me.n : name, me ? me.p : (fallback || "内野手"));
+}
+// ランナーの名前の札（球場の図の中）：パワプロ風は守備位置の色のタイル、スタイリッシュは黒い札
+function runnerTag(t, x, y, full, short) {
+  const w = Math.max(60, short.length * 13 + 18);
+  if (!isPawa()) return `<g data-pl="${t}|${esc(full)}"><rect x="${x - w / 2}" y="${y - 13}" width="${w}" height="19" rx="2" fill="rgba(0,0,0,.85)"/><text x="${x}" y="${y + 1}" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff">${esc(short)}</text></g>`;
+  const gr = rosterGroups(t, full), id = "rt" + t + x + y, n = gr.length;
+  const stops = gr.map((k, i) => `<stop offset="${i / n}" stop-color="${PCOL[k]}"/><stop offset="${(i + 1) / n}" stop-color="${PCOL[k]}"/>`).join("");
+  return `<g data-pl="${t}|${esc(full)}"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2=".35">${stops}</linearGradient>
+    <linearGradient id="${id}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".6"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+    <rect x="${x - w / 2}" y="${y - 14}" width="${w}" height="21" rx="5" fill="url(#${id})" stroke="#13264A" stroke-width="1.3"/>
+    <rect x="${x - w / 2 + 1}" y="${y - 13}" width="${w - 2}" height="10" rx="4" fill="url(#${id}s)"/>
+    <text x="${x}" y="${y + 1.5}" text-anchor="middle" font-size="12.5" font-weight="800" fill="#1F2A44">${esc(short)}</text></g>`;
+}
+function pwName(t, name, fallback) {
+  if (!isPawa() || !name) return esc(name || "");
+  const gr = rosterGroups(t, name, fallback);
   return `<span class="ptile sptile ${TILEC[gr[0]] || "pi"}" style="${tileStyle(gr)}"><b>${esc(name)}</b></span>`;
 }
 function flowHTML(f, atk) {
@@ -3595,7 +3616,7 @@ function renderCal() {
     const score = g.st === "final" ? `<span class="n num">${g.hs}</span><span style="color:var(--muted)">-</span><span class="n num">${g.as}</span>` : `<span style="color:var(--muted)">vs</span>`;
     const w = g.st === "sched" ? wxFor(g) : null;
     const wxRow = w ? `<div class="wxd">${wxIcon(w.code)}<b>${wxKind(w.code)[1]}</b><span class="num">${w.temp}℃</span>${w.pop != null ? `<span class="num${w.pop >= 60 ? " wxhi" : ""}">降水確率 ${w.pop}%</span>` : ""}${w.dome ? `<em>ドーム（天気の影響なし）</em>` : ""}</div>` : "";
-    return `<div class="dd">${mm}/${d2}（${WD[new Date(yy, mm - 1, d2).getDay()]}）${esc(g.v || "")}</div>${wxRow}${ykHTML(g)}
+    return `<div class="dd">${mm}/${d2}（${WD[new Date(yy, mm - 1, d2).getDay()]}）${esc(g.v || "")}</div>${wxRow}${ykHTML(g, true)}
       <div class="sc"><span class="dtm" style="color:${tc(g.h)};--tcol:${tc(g.h)}">${fn(g.h)}</span>${score}<span class="dtm" style="color:${tc(g.a)};--tcol:${tc(g.a)}">${fn(g.a)}</span>${res}</div>`;
   }).join("");
 }
