@@ -12,6 +12,7 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <meta name="robots" content="noindex, nofollow, noarchive">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="J SPORTS ペナントレース">
 <meta property="og:title" content="J SPORTS ペナントレース">
@@ -24,7 +25,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260928180124">
+<meta name="build" content="20260928184027">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1957,9 +1958,38 @@ html.lg-p #ptTeams .tbtn{font-size:8.5px;letter-spacing:-.04em;white-space:nowra
   #tmTbl thead th{font-size:10.5px !important;letter-spacing:0 !important}
   #tmTbl th.srt .sic{width:6px;margin-left:1px}
 }
+/* ===== タップしやすさ（指で押す部品は縦横44px以上） ===== */
+/* 表の球団名：リンクの見えない面をマスいっぱいに広げて、マスのどこを押しても開く */
+.ytab td.tnm{position:relative;height:44px}
+.ytab td.tnm a::before{content:"";position:absolute;inset:0;z-index:1}
+/* 6球団のボタン：幅320pxの画面でも1つ44px以上に（すき間を少し詰める） */
+@media (max-width:374px){.teams{gap:4px}}
+.sgrp summary{min-height:44px;align-items:center;box-sizing:border-box}
+.seg button,.chip,.chips2 button,.tbtn{min-height:44px}
+.me-ch{min-height:44px;padding-left:14px;padding-right:14px}
+.howto summary,.rules summary{min-height:44px;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box}
+.monthbar button{width:44px;height:44px}
+.sof,.sgo,.sh a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;box-sizing:border-box}
+th.srt{height:44px}
+/* 右上の設定ボタン：44px（真ん中の位置は今までと同じ） */
+.gear{width:44px !important;height:44px !important;margin:-2px -2px 0 0}
+
+/* ===== 引っぱって更新 ===== */
+.ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);z-index:40;transform:translate(-50%,-90px);opacity:0;display:flex;align-items:center;gap:8px;
+  padding:9px 16px;border-radius:999px;background:rgba(28,28,32,.94);color:#F2F2F4;font-size:13px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.35);pointer-events:none;white-space:nowrap}
+.ptr .ptr-ic{width:14px;height:14px;border-radius:50%;border:2px solid currentColor;border-top-color:transparent;transform:rotate(calc(var(--pp,0) * 270deg))}
+.ptr.spin .ptr-ic{animation:ptrspin .8s linear infinite}
+@keyframes ptrspin{to{transform:rotate(360deg)}}
+html.theme-pawa .ptr{background:#fff;color:#13264A;border:2px solid #1D3E7C}
+
+/* ===== 戦況：月度のスワイプの案内（最初の1回だけ） ===== */
+.swhint{margin:8px 0 0;text-align:center;font-size:12px;font-weight:700;color:var(--muted,#8B8B95);transition:opacity .5s ease}
+.swhint.off{opacity:0}
+html.theme-pawa .swhint{color:#1D3E7C}
 </style>
 </head>
 <body>
+<div class="ptr" id="ptr" aria-live="polite"><i class="ptr-ic"></i><span id="ptrTxt">引っぱって更新</span></div>
 <header class="top">
   <div class="brand">
     <button type="button" class="gear" id="gearBtn" aria-label="設定"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><i class="gdot" id="gearDot" hidden></i></button>
@@ -2003,7 +2033,7 @@ html.lg-p #ptTeams .tbtn{font-size:8.5px;letter-spacing:-.04em;white-space:nowra
       <p>M は、どの試合で勝っても最下位回避が確定する残りの勝ち数。自力で決められない（残り全勝でも最下位の可能性が残る）球団は「自力消滅」と表示します。★は回避確定、赤い「<span class="cl-only">支払</span><span class="pl-only">最下位</span>」は最下位確定。</p>
       <p>勝差は1位とのゲーム差。</p>
     </details>
-    <details class="howto"><summary>見方</summary><ul><li class="cl-only">順位表：勝差は1位とのゲーム差、残試合はこの月度の残り試合。広島は参考として薄く表示（対象外なので順位・マジック・支払いは広島を除く5球団で計算）。球団名をタップすると公式サイト。</li><li class="pl-only">順位表：勝差は1位とのゲーム差、残試合はこの月度の残り試合。球団名をタップすると公式サイト。</li><li>マジック：最下位を回避するまでの勝ち数。★は回避確定、赤い「<span class="cl-only">支払</span><span class="pl-only">最下位</span>」は最下位確定、「自力消滅」は、残り試合に全部勝っても、ほかの球団の結果しだいで最下位の可能性が残る状態（自力での最下位脱出ができない）。</li><li>確定の条件と残り試合：各球団の説明に名前が出てくる相手（いちばん抜きやすい相手）との直接対決は、残り試合の中で<span class="th-s">白枠</span><span class="th-p">青い枠</span>で表示。勝てば自分の勝ちと相手の負けで、1試合で2つ進みます。</li><li>対戦成績：左の球団から見た、この月度だけの勝数-負数（引分数）。<span class="cl-only">広島は参考として薄く表示。</span></li><li class="cl-only">順位の推移：広島（参考）は、5球団の勝率のあいだの位置に点線で表示（5球団の順位には関係しません）。</li><li>直近の勝敗：○は勝ち、●は負け、△は引き分け。下の文字は対戦相手。右が最新。並びは前年の順位順。</li><li>日程の天気は、試合開始時刻の球場の予報（約2週間先まで）。％は試合中の降水確率の最大値です。天気予報：Open-Meteo。</li><li class="cl-only">勝率で並んだときは、セ・リーグの規定（勝利数→当該球団間の対戦勝率→交流戦を除く勝率→前年度順位）で順位を決めます。</li><li class="pl-only">勝率で並んだときは、パ・リーグの規定（当該球団間の対戦勝率→交流戦を除く勝率→前年度順位）で順位を決めます。</li><li>振替待ちは、中止になって振替日がまだ決まっていない試合です。日程に入るとマジックが変わります。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li class="cl-only">順位表：勝差は1位とのゲーム差、残試合はこの月度の残り試合。広島は参考として薄く表示（対象外なので順位・マジック・支払いは広島を除く5球団で計算）。球団名をタップすると公式サイト。</li><li class="pl-only">順位表：勝差は1位とのゲーム差、残試合はこの月度の残り試合。球団名をタップすると公式サイト。</li><li>マジック：最下位を回避するまでの勝ち数。★は回避確定、赤い「<span class="cl-only">支払</span><span class="pl-only">最下位</span>」は最下位確定、「自力消滅」は、残り試合に全部勝っても、ほかの球団の結果しだいで最下位の可能性が残る状態（自力での最下位脱出ができない）。</li><li>月度の切り替え：上の月度ボタンを押すか、帯・あなたの状況・順位表のあたりを左右にスワイプ（左へで次の月度、右へで前の月度）。それ以外の場所の左右スワイプはタブの切り替えです。</li><li>確定の条件と残り試合：各球団の説明に名前が出てくる相手（いちばん抜きやすい相手）との直接対決は、残り試合の中で<span class="th-s">白枠</span><span class="th-p">青い枠</span>で表示。勝てば自分の勝ちと相手の負けで、1試合で2つ進みます。</li><li>対戦成績：左の球団から見た、この月度だけの勝数-負数（引分数）。<span class="cl-only">広島は参考として薄く表示。</span></li><li class="cl-only">順位の推移：広島（参考）は、5球団の勝率のあいだの位置に点線で表示（5球団の順位には関係しません）。</li><li>直近の勝敗：○は勝ち、●は負け、△は引き分け。下の文字は対戦相手。右が最新。並びは前年の順位順。</li><li>日程の天気は、試合開始時刻の球場の予報（約2週間先まで）。％は試合中の降水確率の最大値です。天気予報：Open-Meteo。</li><li class="cl-only">勝率で並んだときは、セ・リーグの規定（勝利数→当該球団間の対戦勝率→交流戦を除く勝率→前年度順位）で順位を決めます。</li><li class="pl-only">勝率で並んだときは、パ・リーグの規定（当該球団間の対戦勝率→交流戦を除く勝率→前年度順位）で順位を決めます。</li><li>振替待ちは、中止になって振替日がまだ決まっていない試合です。日程に入るとマジックが変わります。</li></ul></details>
   </section>
 
   <section class="view" id="v-cal" aria-label="日程" hidden>
@@ -2037,7 +2067,7 @@ html.lg-p #ptTeams .tbtn{font-size:8.5px;letter-spacing:-.04em;white-space:nowra
       <div id="today"></div>
     </section>
     <div class="rempty" id="noGame" hidden>対象の球団の試合はしばらくありません。</div>
-    <details class="howto"><summary>見方</summary><ul><li>「勝ったら」は、その試合の結果だけで見た場合の変化です（同じ日のほかの試合は考えていません）。</li><li>試合中は自動で更新します（スコアは30秒、一球速報は15秒ごと）。スコア表の点が入ったマスをタップすると、その回の流れが開きます。スコア表・流れ・一球速報のデータはスポーツナビから取得しています。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li>ホーム画面から開いているときは、いちばん上で画面を下に引っぱると、最新の結果・スコアをすぐに取り直せます。</li><li>「勝ったら」は、その試合の結果だけで見た場合の変化です（同じ日のほかの試合は考えていません）。</li><li>「負けても自力脱出が残る」：負けた側のマジックの数字が減ることがありますが、それは残り試合が1つ減っただけで、状況が良くなったわけではありません。そのため数字の変化ではなく、残り試合で何勝すればよいかを書いています。</li><li>試合中は自動で更新します（スコアは30秒、一球速報は15秒ごと）。スコア表の点が入ったマスをタップすると、その回の流れが開きます。スコア表・流れ・一球速報のデータはスポーツナビから取得しています。</li></ul></details>
   </section>
 
   <section class="view" id="v-song" aria-label="応援歌" hidden>
@@ -2197,13 +2227,42 @@ function analyze(games, period, cfg) {
   let sig = LEAGUE + "|" + CL.join(",") + "|" + period.id + "|" + period.months.join(",") + "|" + (cfg.excluded || []).join(",") + "|" + !!cfg.tieIsSafe + "|" + (cfg.prevOrder || []).join(",");
   for (const g of games) if (period.months.includes(monthOf(g.d))) sig += "|" + g.d + g.h + g.a + g.st + g.hs + "-" + g.as;
   const hit = __anMemo.get(sig);
-  if (hit) return __clone(hit);
+  if (hit) return __relink(__clone(hit), games, period);
   const res = analyzeRaw(games, period, cfg);
   if (__anMemo.size > 80) __anMemo.clear();
   __anMemo.set(sig, __clone(res));
   return res;
 }
 function __clone(o) { return typeof structuredClone === "function" ? structuredClone(o) : JSON.parse(JSON.stringify(o)); }
+// 使い回した結果の「残り試合」を、今渡された試合データそのものに付け替える
+// （画面では「この試合が勝ったら」を試合データの同一性で探すため。複製のままだと見つからない）
+function __relink(res, games, period) {
+  const pool = new Map();
+  for (const g of games) {
+    if (!period.months.includes(monthOf(g.d))) continue;
+    const k = g.d + "|" + g.h + "|" + g.a;
+    if (!pool.has(k)) pool.set(k, []);
+    pool.get(k).push(g);
+  }
+  const used = new Map();
+  const pick = x => {
+    const k = x.d + "|" + x.h + "|" + x.a, list = pool.get(k);
+    if (!list) return x;
+    // 同じ日・同じカードが2試合あるとき（ダブルヘッダー）は、開始時刻・状態が同じものを順に使う
+    const u = used.get(k) || new Set();
+    const g = list.find(y => !u.has(y) && y.t === x.t && y.st === x.st) || list.find(y => !u.has(y)) || list[0];
+    u.add(g); used.set(k, u);
+    return g;
+  };
+  res.remaining = res.remaining.map(pick);
+  // 球団ごとの残り試合も、同じ試合データを指すように
+  const byKey = new Map();
+  res.remaining.forEach(g => { const k = g.d + "|" + g.h + "|" + g.a + "|" + (g.t || ""); if (!byKey.has(k)) byKey.set(k, []); byKey.get(k).push(g); });
+  const re = arr => { const cnt = new Map(); return (arr || []).map(x => { const k = x.d + "|" + x.h + "|" + x.a + "|" + (x.t || ""), list = byKey.get(k); if (!list) return x; const i = cnt.get(k) || 0; cnt.set(k, i + 1); return list[Math.min(i, list.length - 1)]; }); };
+  for (const r of res.rows) r.left = re(r.left);
+  for (const t in res.R) res.R[t].left = re(res.R[t].left);
+  return res;
+}
 function analyzeRaw(games, period, cfg) {
   const targets = CL.filter(t => !cfg.excluded.includes(t));
   const R = {};
@@ -2611,6 +2670,7 @@ window.addEventListener("load", () => moveLens(true));
     const t = e.touches[0];
     if (t.clientX < 24 || t.clientX > innerWidth - 24) return;   // 画面の端（iPhoneの「戻る」の操作）は使わない
     if (e.target.closest(".tabbar, input, select, textarea, .fld, .fwrap") || hScrollable(e.target)) return;
+    if (S.tab === "magic" && e.target.closest(MONTH_ZONE)) return;   // 戦況の順位表のあたりは月度の切り替えに使う
     sx = t.clientX; sy = t.clientY; st = Date.now();
     view = $("v-" + S.tab);
   }, { passive: true });
@@ -2650,6 +2710,68 @@ window.addEventListener("load", () => moveLens(true));
   window.addEventListener("touchend", end, { passive: true });
   window.addEventListener("touchcancel", end, { passive: true });
 })();
+// ===== 戦況：順位表のあたり（帯・あなたの状況・順位表）を左右にスワイプすると月度を切り替える =====
+// それ以外の場所の左右スワイプは、今まで通りタブの切り替え
+const MONTH_ZONE = "#alert, #meCard, #cards";
+const anySheetOpen = () => ["sheet", "meSheet", "songSheet", "shotBox"].some(id => $(id) && !$(id).hidden);
+function pickPeriod(p) { S.period = p; S.periodPicked = true; heroAt = 0; renderMagic(); }
+(() => {
+  let sx = 0, sy = 0, st = 0, dx = 0, lock = null, on = false;
+  const els = () => [...document.querySelectorAll(MONTH_ZONE)];
+  const hScroll = el => { for (let e = el; e && e !== document.body; e = e.parentElement) { if (e.scrollWidth > e.clientWidth + 2) { const ox = getComputedStyle(e).overflowX; if (ox === "auto" || ox === "scroll") return true; } } return false; };
+  window.addEventListener("touchstart", e => {
+    on = false; lock = null; dx = 0;
+    if (S.tab !== "magic" || e.touches.length !== 1 || anySheetOpen()) return;
+    if (!e.target.closest(MONTH_ZONE) || hScroll(e.target)) return;
+    const t = e.touches[0];
+    if (t.clientX < 24 || t.clientX > innerWidth - 24) return;   // 画面の端（iPhoneの「戻る」の操作）は使わない
+    sx = t.clientX; sy = t.clientY; st = Date.now(); on = true;
+  }, { passive: true });
+  window.addEventListener("touchmove", e => {
+    if (!on) return;
+    const t = e.touches[0], mx = t.clientX - sx, my = t.clientY - sy;
+    if (!lock) {
+      if (Math.abs(mx) < 10 && Math.abs(my) < 10) return;
+      lock = Math.abs(mx) > Math.abs(my) * 1.4 ? "x" : "y";   // 斜めの動きは縦のスクロールとして扱う
+      if (lock === "y") { on = false; return; }
+    }
+    e.preventDefault();
+    const list = periods(), i = list.findIndex(p => S.period && p.id === S.period.id);
+    const edge = (mx > 0 && i <= 0) || (mx < 0 && i >= list.length - 1);
+    dx = mx;
+    els().forEach(el => { el.style.transition = "none"; el.style.willChange = "transform,opacity"; el.style.transform = `translate3d(${mx * (edge ? .18 : .5)}px,0,0)`; el.style.opacity = String(1 - Math.min(.4, Math.abs(mx) / 700)); });
+  }, { passive: false });
+  const end = () => {
+    if (!on) return;
+    on = false;
+    if (lock !== "x") return;
+    const list = periods(), i = list.findIndex(p => S.period && p.id === S.period.id), dt = Math.max(1, Date.now() - st);
+    const fast = Math.abs(dx) / dt > .45 && Math.abs(dx) > 30;
+    const next = (Math.abs(dx) > 70 || fast) && i >= 0 ? list[i + (dx < 0 ? 1 : -1)] : null;
+    els().forEach(el => { el.style.transition = "transform .3s cubic-bezier(.2,1,.3,1),opacity .3s ease"; el.style.transform = ""; el.style.opacity = ""; });
+    if (next) {
+      pickPeriod(next);
+      hideSwipeHint();
+      // 次の月度が、指を動かした向きからすべり込む
+      els().forEach(el => { el.style.transition = "none"; el.style.transform = `translate3d(${dx < 0 ? 44 : -44}px,0,0)`; el.style.opacity = ".35"; void el.offsetWidth;
+        el.style.transition = "transform .38s cubic-bezier(.2,1,.3,1),opacity .38s ease"; el.style.transform = ""; el.style.opacity = ""; });
+    }
+    setTimeout(() => els().forEach(el => { if (!on) { el.style.willChange = ""; el.style.transition = ""; } }), 460);
+  };
+  window.addEventListener("touchend", end, { passive: true });
+  window.addEventListener("touchcancel", end, { passive: true });
+})();
+// 月度のスワイプの案内：戦況を初めて開いたときに、月度ボタンの下に一度だけ出す
+function showSwipeHint() {
+  if (store("hintMonthSwipe") || $("swHint") || periods().length < 2) return;
+  $("chips").insertAdjacentHTML("afterend", `<p class="swhint" id="swHint">順位表のあたりを左右にスワイプでも月度を切り替えられます</p>`);
+  setTimeout(hideSwipeHint, 6000);
+}
+function hideSwipeHint() {
+  const h = $("swHint"); store("hintMonthSwipe", "1");
+  if (!h) return;
+  h.classList.add("off"); setTimeout(() => h.remove(), 500);
+}
 function setTab(t) {
   S.tab = t;
   if (t === "stats") setTimeout(() => { liveStats(S.cat); renderTeamIn(); }, 0);
@@ -2739,6 +2861,7 @@ let heroAt = 0;
 function renderMagic() {
   const now = Date.now(); if (!heroAt) heroAt = now;
   const el = now - heroAt, hs = el > 700 ? " hstill" : "", hd = el > 700 || el === 0 ? "" : `;animation-delay:-${el}ms`;
+  if (S.tab === "magic") setTimeout(showSwipeHint, 0);
   const list = periods();
   if (!S.period || !list.some(p => p.id === S.period.id)) S.period = defaultPeriod(list);
   magicTitle();
@@ -2749,7 +2872,7 @@ function renderMagic() {
     const done = results[p.id].finished;
     return `<button class="chip" role="tab" type="button" data-id="${p.id}" aria-pressed="${p.id === S.period.id}">${p.label}${done ? "" : `<span class="dot" title="集計中"></span>`}</button>`;
   }).join("");
-  $("chips").querySelectorAll(".chip").forEach(b => (b.onclick = () => { S.period = CONFIG.periods.find(p => p.id === b.dataset.id); S.periodPicked = true; heroAt = 0; renderMagic(); }));
+  $("chips").querySelectorAll(".chip").forEach(b => (b.onclick = () => { pickPeriod(CONFIG.periods.find(p => p.id === b.dataset.id)); }));
   const a = results[S.period.id];
   window.__last = a;
   // 選択中の月度ボタンを真ん中へ（寸法の読み取りは描画の途中でやると全体の再計算が起きて重いので、次の画面更新のときに）
@@ -3374,7 +3497,10 @@ function renderToday(a) {
   $("todayTtl").classList.toggle("same", day === today);
   const lowB = a.rows[a.rows.length - 1].t;
   const effects = (g, homeWin) => {
-    const g2 = DATA.games.map(x => x === g ? { ...x, st: "final", hs: homeWin ? 1 : 0, as: homeWin ? 0 : 1 } : x);
+    // この試合を「勝ち」にした場合（試合データの同一性で探し、見つからなければ日付・カード・開始時刻で探す）
+    const same = x => x === g || (x.d === g.d && x.h === g.h && x.a === g.a && (x.t || "") === (g.t || "") && x.st === g.st);
+    let done = false;
+    const g2 = DATA.games.map(x => !done && same(x) ? (done = true, { ...x, st: "final", hs: homeWin ? 1 : 0, as: homeWin ? 0 : 1 }) : x);
     const b = analyze(g2, S.period, CONFIG), A = {};
     b.rows.forEach(r => (A[r.t] = r));
     const out = [];
@@ -3390,7 +3516,12 @@ function renderToday(a) {
       if (!B || B.safe || B.eliminated || r.safe || r.eliminated) continue;
       if (B.self != null && r.self == null) out.push(`<li class="ng">${IC.swap}${fn(t)}（${own(t)}）の自力脱出が消滅</li>`);
       else if (B.self == null && r.self != null) out.push(`<li class="ok">${fn(t)}（${own(t)}）の自力脱出が復活（M${r.self}）</li>`);
-      else if ((t === g.h || t === g.a) && B.self !== r.self) out.push(`<li>${fn(t)}のマジック M${B.self} → M${r.self}</li>`);
+      else if ((t === g.h || t === g.a) && B.self !== r.self) {
+        // 負けたのにマジックが減るのは「残り試合が1つ減った」だけ（状況が良くなったわけではない）。紛らわしいので言い方を変える
+        const loser = homeWin ? g.a : g.h, left = (r.left || []).length;
+        if (t === loser && r.self < B.self) out.push(`<li>${fn(t)}は負けても自力脱出が残る（${r.self === left ? `残り${left}試合全勝が条件` : `残り${left}試合で${r.self}勝が条件`}）</li>`);
+        else out.push(`<li>${fn(t)}のマジック M${B.self} → M${r.self}</li>`);
+      }
     }
     return out.length ? out.join("") : `<li class="nil">順位・マジックに大きな動きなし</li>`;
   };
@@ -4235,6 +4366,26 @@ async function liveStats(key) {
 }
 // ================= チーム内の成績（球団ごとの全選手。NPB公式の個人成績を中継プログラム経由で） =================
 S.ptKind = "bat"; S.ptAll = false; S.ptSort = null; S.ptTeam = store("ptTeam");
+// 成績タブの表示のしかた（打者/投手・項目・並べ替え）を覚えておき、次に開いたときも同じにする
+const UI_KEY = "statsUI";
+function saveStatsUI() {
+  store(UI_KEY, JSON.stringify({ tmKind: S.tmKind, tmSort: S.tmSort || null, rkKind: S.rkKind, cat: S.cat, rkSort: S.rkSort || null, ptKind: S.ptKind, ptSort: S.ptSort || null }));
+}
+(() => {
+  let u = null;
+  try { u = JSON.parse(store(UI_KEY) || "null"); } catch { u = null; }
+  if (!u || typeof u !== "object") return;
+  const kind = k => k === "bat" || k === "pit";
+  const dir = d => d === "asc" || d === "desc";
+  if (kind(u.tmKind)) S.tmKind = u.tmKind;
+  if (kind(u.rkKind)) S.rkKind = u.rkKind;
+  if (CATS[S.rkKind] && CATS[S.rkKind].some(c => c[0] === u.cat)) S.cat = u.cat; else S.cat = CATS[S.rkKind][0][0];
+  if (kind(u.ptKind)) S.ptKind = u.ptKind;
+  const okSort = (o, keys) => o && typeof o === "object" && dir(o.dir) && keys.every(k => o[k] != null);
+  if (okSort(u.tmSort, ["kind", "col"]) && kind(u.tmSort.kind) && Number.isInteger(u.tmSort.col)) S.tmSort = u.tmSort;
+  if (okSort(u.rkSort, ["cat", "by"]) && (u.rkSort.by === "t" || u.rkSort.by === "v")) S.rkSort = u.rkSort;
+  if (okSort(u.ptSort, ["kind", "col"]) && kind(u.ptSort.kind) && Number.isInteger(u.ptSort.col)) S.ptSort = u.ptSort;
+})();
 const PT_COLS = {
   bat: [["試合", r => r["試合"]], ["打率", r => r["打率"], "rate"], ["本塁打", r => r["本塁打"]], ["打点", r => r["打点"]],
     ["OPS", r => (r["出塁率"] != null && r["長打率"] != null ? f3(Number(r["出塁率"]) + Number(r["長打率"])) : null), "rate"]],
@@ -4246,7 +4397,7 @@ function renderTeamIn() {
   const t = ptTeam();
   $("ptTeams").innerHTML = calOrder().map(k => `<button class="tbtn" type="button" data-t="${k}" style="${tv(k)}" aria-pressed="${k === t}"><span class="badge">${sn(k)}</span>${fn(k)}</button>`).join("");
   $("ptTeams").querySelectorAll(".tbtn").forEach(b => (b.onclick = () => { S.ptTeam = b.dataset.t; store("ptTeam", S.ptTeam); S.ptAll = false; renderTeamIn(); }));
-  document.querySelectorAll("#ptSeg button").forEach(b => { b.setAttribute("aria-pressed", String(b.dataset.k === S.ptKind)); b.onclick = () => { if (S.ptKind === b.dataset.k) return; S.ptKind = b.dataset.k; S.ptAll = false; renderTeamIn(); }; });
+  document.querySelectorAll("#ptSeg button").forEach(b => { b.setAttribute("aria-pressed", String(b.dataset.k === S.ptKind)); b.onclick = () => { if (S.ptKind === b.dataset.k) return; S.ptKind = b.dataset.k; S.ptAll = false; saveStatsUI(); renderTeamIn(); }; });
   const c = PST[t];
   if (c) drawTeamIn(t, c.d);
   else { $("ptAsof").textContent = ""; $("ptList").innerHTML = `<div class="rempty">${S.tab === "stats" ? "読み込み中…" : ""}</div>`; }
@@ -4298,11 +4449,13 @@ function drawTeamIn(t, d) {
   $("ptList").querySelectorAll("th.srt").forEach(th => (th.onclick = () => {
     const j = +th.dataset.col, c = cols[j], first = c[2] === "era" ? "asc" : "desc";
     S.ptSort = { kind, col: j, dir: sk && sk.col === j ? (sk.dir === "desc" ? "asc" : "desc") : first };
+    saveStatsUI();
     drawTeamIn(t, d);
   }));
   const more = $("ptMore"); if (more) more.onclick = () => { S.ptAll = !S.ptAll; drawTeamIn(t, d); };
 }
 function renderStats(fromLive) {
+  saveStatsUI();
   if (!fromLive) renderTeamIn();
   if (!fromLive && S.tab === "stats") setTimeout(() => liveStats(S.cat), 0);
   const st = statsData();
@@ -4586,6 +4739,83 @@ async function check(force) {
     }
   } catch {}
 }
+// ===== 引っぱって更新 =====
+// ホーム画面から開いたとき（アプリのように開いたとき）だけ使う。ブラウザのSafariでは、Safari自体の引っぱって再読み込みと重なるため使わない
+const isStandalone = () => !!window.__ptrForce || navigator.standalone === true || !!(window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+let refreshing = false;
+async function refreshNow() {
+  if (refreshing) return "";
+  refreshing = true;
+  let msg = "最新です";
+  try {
+    // サイト本体が新しくなっていれば、そのまま新しいサイトに切り替える
+    try {
+      const r = await fetch(location.pathname + "?t=" + Date.now(), { cache: "no-store" });
+      const m = (await r.text()).match(/<meta name="build" content="([^"]+)"/);
+      if (m && m[1] !== BUILD) { location.replace(location.pathname + "?v=" + Date.now()); return "新しいサイトを読み込み中…"; }
+    } catch {}
+    // 試合結果・成績などのデータ
+    try {
+      const d = await fetchData();
+      writeCache(d);
+      if (fromSnap || d._sig !== RAWSIG || sig(d) !== sig(DATA)) {
+        const y = window.scrollY;
+        DATA = d; RAWSIG = d._sig; fromSnap = false; pending = null; $("toast").hidden = true;
+        if (!S.periodPicked) S.period = null;
+        renderAll();
+        window.scrollTo(0, y);
+        msg = "更新しました";
+      }
+    } catch { msg = "更新できませんでした"; }
+    // 試合中のスコア・開いているタブの中身
+    try { await pollLive(); } catch {}
+    if (S.tab === "stats") { Object.keys(liveStatAt).forEach(k => delete liveStatAt[k]); delete PST[ptTeam()]; liveStats(S.cat); renderTeamIn(); }
+    if (S.tab === "game") { loadDetails(true); loadPitches(); }
+  } finally { refreshing = false; }
+  return msg;
+}
+(() => {
+  const el = $("ptr"), txt = $("ptrTxt");
+  let x0 = null, y0 = null, pull = 0;
+  const show = (p, label) => {
+    el.style.opacity = String(Math.min(1, p * 1.5));
+    el.style.transform = `translate(-50%,${-90 + Math.min(1, p) * 90}px)`;
+    el.style.setProperty("--pp", String(Math.min(1, p)));
+    if (label) txt.textContent = label;
+  };
+  const hide = () => {
+    el.style.transition = "transform .3s ease,opacity .3s ease";
+    el.style.opacity = "0"; el.style.transform = "translate(-50%,-90px)";
+    setTimeout(() => (el.style.transition = ""), 320);
+  };
+  window.addEventListener("touchstart", e => {
+    y0 = null;
+    if (!isStandalone() || refreshing || e.touches.length !== 1 || window.scrollY > 0 || anySheetOpen()) return;
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; pull = 0;
+  }, { passive: true });
+  window.addEventListener("touchmove", e => {
+    if (y0 == null) return;
+    const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
+    // 上へ動かした・横へ動かした（タブや月度のスワイプ）・ページが下にずれたときはやめる
+    if (dy <= 0 || Math.abs(dx) > dy || window.scrollY > 0) { if (pull > 0) hide(); y0 = null; pull = 0; return; }
+    pull = dy / 90;
+    el.style.transition = "";
+    show(pull, pull >= 1 ? "離すと更新" : "引っぱって更新");
+  }, { passive: true });
+  const end = async () => {
+    if (y0 == null) return;
+    y0 = null;
+    if (pull < 1) { if (pull > 0) hide(); pull = 0; return; }
+    pull = 0;
+    el.classList.add("spin"); show(1, "更新中…");
+    const r = await refreshNow();
+    el.classList.remove("spin"); show(1, r || "最新です");
+    setTimeout(hide, 1200);
+  };
+  window.addEventListener("touchend", end, { passive: true });
+  window.addEventListener("touchcancel", () => { if (y0 != null) { y0 = null; if (pull > 0) hide(); pull = 0; } }, { passive: true });
+})();
+
 load();
 setInterval(check, 60 * 1000);
 setInterval(pollLive, 30 * 1000); // 試合がある日だけ、30秒ごとにライブのスコアを取りに行く
