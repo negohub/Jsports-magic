@@ -404,6 +404,50 @@ async def song_link_check(browser):
     await pg.close()
 
 
+async def team_in_check(browser):
+    """チーム内の成績：選手が多くても表がはみ出さない・全員表示・並べ替え（両テーマ×幅390/320×両リーグ）"""
+    for theme in ["", "pawa"]:
+        for width in [390, 320]:
+            for lg in ["C", "P"]:
+                label = f"[チーム内の成績 {'パワプロ風' if theme else 'スタイリッシュ'} 幅{width} {lg}]"
+                pg, errs = await open_page(browser, width, theme)
+                if lg == "P":
+                    await pg.evaluate("switchLeague('P')")
+                    await pg.wait_for_timeout(200)
+                r = await pg.evaluate("""() => {
+                  const ng = [];
+                  setTab("stats");
+                  for (const t of CL) {
+                    const bat = {}, pit = {};
+                    (DATA.rosters[t] || []).forEach((x, i) => {
+                      const k = x.n.replace(/\\s+/g, "");
+                      if (x.p === "投手") pit[k] = { 登板: "52", 投球回: "160.1", 防御率: "12.34", 勝利: "12", 敗北: "10", 三振: "188" };
+                      else bat[k] = { 試合: "143", 打席: String(600 - i), 打率: ".333", 本塁打: "44", 打点: "123", 出塁率: ".444", 長打率: ".666" };
+                    });
+                    PST[t] = { at: Date.now(), d: { bat, pit, asof: "9/28" } };
+                  }
+                  const over = () => { const tb = document.getElementById("ptTbl"); return tb && tb.scrollWidth > tb.parentElement.clientWidth + 1 ? tb.scrollWidth - tb.parentElement.clientWidth : 0; };
+                  for (const t of CL) {
+                    S.ptTeam = t;
+                    for (const k of ["bat", "pit"]) {
+                      S.ptKind = k; S.ptAll = false; renderTeamIn();
+                      const n = document.querySelectorAll("#ptTbl tbody tr").length;
+                      if (!n) ng.push(`${t} ${k}: 表が出ない`);
+                      if (over()) ng.push(`${t} ${k}: 表が ${over()}px はみ出し`);
+                      const more = document.getElementById("ptMore");
+                      if (more) { more.click(); if (document.querySelectorAll("#ptTbl tbody tr").length <= n) ng.push(`${t} ${k}: 全員を表示が効かない`); if (over()) ng.push(`${t} ${k}: 全員表示で ${over()}px はみ出し`); }
+                      const th = document.querySelector("#ptTbl th.srt[data-col='2']"); if (th) { th.click(); if (!document.querySelector("#ptTbl th.srt.on")) ng.push(`${t} ${k}: 並べ替えが効かない`); }
+                    }
+                  }
+                  return ng;
+                }""")
+                for m in r[:5]:
+                    bad(f"{label} {m}")
+                for e in errs:
+                    bad(f"{label}: 画面のエラー {e}")
+                await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -452,6 +496,7 @@ async def main():
         await data_refresh(browser)
         await calc_cache(browser)
         await song_link_check(browser)
+        await team_in_check(browser)
         await browser.close()
     print()
     if PROBLEMS:
