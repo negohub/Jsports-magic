@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260928111803">
+<meta name="build" content="20260928114656">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1556,6 +1556,22 @@ html.theme-pawa .lutab tr.sub .lnm .sptile{opacity:.85}
 html.theme-pawa .putab td.pnx b{display:inline-flex;align-items:center;gap:4px}
 html.theme-pawa .pn3 .sptile b{font-size:15px}
 @media (max-width:374px){html.theme-pawa .ptile.sptile{padding:0 7px}html.theme-pawa .ptile.sptile b{font-size:12.5px}html.theme-pawa .pn3 .sptile b{font-size:13.5px}}
+/* 予告先発 */
+.yk{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;margin:8px 0 2px;padding:9px 10px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}
+.ykl{font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin-right:2px}
+.ykp{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:#F2F2F4}
+.ykp.none{color:var(--muted);font-weight:500;font-size:12px}
+.ykb{font-style:normal;display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 4px;border-radius:5px;background:var(--tc);color:var(--ti,#fff);font-size:10.5px;font-weight:800}
+.ykv{font-size:11px;color:var(--muted)}
+.ykp[data-pl]{cursor:pointer}
+html:not(.theme-pawa) .ykp[data-pl]{text-decoration:underline;text-decoration-color:rgba(255,255,255,.18);text-underline-offset:3px}
+html.theme-pawa .yk{background:#F4F9FF;border:2px solid #DCE7F5}
+html.theme-pawa .ykl{color:#4A6390}
+html.theme-pawa .ykp{color:#13264A}
+html.theme-pawa .ykp.none{color:#7F93B5}
+html.theme-pawa .ykb{border-radius:50%;width:22px;height:22px;min-width:0;padding:0;box-shadow:0 0 0 1.5px #fff,0 0 0 2.5px #13264A}
+html.theme-pawa .ykv{color:#4A6390}
+#detail .yk{margin:8px 0 10px}
 /* 担当者の名前タイル（パワプロ風） */
 .ptile.otile{display:inline-flex;height:auto;min-width:64px;padding:3px 12px;vertical-align:middle;cursor:default;border-radius:8px}
 .ptile.otile b{font-size:inherit;font-weight:700;letter-spacing:.06em}
@@ -2465,6 +2481,7 @@ window.addEventListener("load", () => moveLens(true));
 function setTab(t) {
   S.tab = t;
   if (t === "stats") setTimeout(() => liveStats(S.cat), 0);
+  if (t === "game" || t === "cal") setTimeout(() => loadStarters(), 0);
   $("kicker").textContent = TAB_TITLE[t][0];
   $("ttl").textContent = TAB_TITLE[t][1];
   requestAnimationFrame(() => moveLens());
@@ -2810,6 +2827,30 @@ function renderGame() {
   }
   $("noGame").hidden = !$("todayBlk").hidden;
 }
+// ===== 予告先発 =====
+let YK = {}, ykAt = 0, ykBusy = false;
+async function loadStarters(force) {
+  if (!CONFIG.liveApi || ykBusy || (!force && Date.now() - ykAt < 10 * 60e3)) return;
+  ykBusy = true;
+  try {
+    const r = await fetch(`${CONFIG.liveApi}?starters=1`);
+    const d = await r.json();
+    ykAt = Date.now();
+    if (d && d.starters && JSON.stringify(d.starters) !== JSON.stringify(YK)) {
+      YK = d.starters;
+      if (S.tab === "game") renderGame();
+      if (S.tab === "cal") renderCal();
+    }
+  } catch {} finally { ykBusy = false; }
+}
+const ykOf = g => YK[`${g.d}|${g.h}|${g.a}`] || null;
+// 予告先発の行（ビジター→ホームの順。スコアバグの並びと同じ）
+function ykHTML(g) {
+  const y = ykOf(g);
+  if (!y || g.st !== "sched") return "";
+  const one = (t, n) => n ? `<span class="ykp" data-pl="${t}|${esc(n)}|pit" style="${tv(t)}"><i class="ykb">${sn(t)}</i>${pwName(t, n, "投手")}</span>` : `<span class="ykp none" style="${tv(t)}"><i class="ykb">${sn(t)}</i>未発表</span>`;
+  return `<div class="yk"><span class="ykl">予告先発</span>${one(g.a, y.a)}<span class="ykv">vs</span>${one(g.h, y.h)}</div>`;
+}
 // 中継画面のスコア表示（スコアバグ）：上がビジター、下がホーム
 const SCORE_PREV = {}, SCORE_FLASH = {};
 function bugHTML(g, tag) {
@@ -2826,7 +2867,7 @@ function bugHTML(g, tag) {
     : fin ? `<div class="bi fin"><b>試合<br>終了</b></div>` : `<div class="bi pre"><b class="num">${esc(g.t || "")}</b><small>開始</small></div>`;
   return `<div class="bug${live ? " live" : ""}">
     <div class="bteams">${row(g.a, g.as, "a")}${row(g.h, g.hs, "h")}</div>${right}
-  </div>${tag ? `<div class="btag">${tag}</div>` : ""}`;
+  </div>${tag ? `<div class="btag">${tag}</div>` : ""}${ykHTML(g)}`;
 }
 function postCard(g) {
   const live = g.st === "live", fin = g.st === "final";
@@ -3554,7 +3595,7 @@ function renderCal() {
     const score = g.st === "final" ? `<span class="n num">${g.hs}</span><span style="color:var(--muted)">-</span><span class="n num">${g.as}</span>` : `<span style="color:var(--muted)">vs</span>`;
     const w = g.st === "sched" ? wxFor(g) : null;
     const wxRow = w ? `<div class="wxd">${wxIcon(w.code)}<b>${wxKind(w.code)[1]}</b><span class="num">${w.temp}℃</span>${w.pop != null ? `<span class="num${w.pop >= 60 ? " wxhi" : ""}">降水確率 ${w.pop}%</span>` : ""}${w.dome ? `<em>ドーム（天気の影響なし）</em>` : ""}</div>` : "";
-    return `<div class="dd">${mm}/${d2}（${WD[new Date(yy, mm - 1, d2).getDay()]}）${esc(g.v || "")}</div>${wxRow}
+    return `<div class="dd">${mm}/${d2}（${WD[new Date(yy, mm - 1, d2).getDay()]}）${esc(g.v || "")}</div>${wxRow}${ykHTML(g)}
       <div class="sc"><span class="dtm" style="color:${tc(g.h)};--tcol:${tc(g.h)}">${fn(g.h)}</span>${score}<span class="dtm" style="color:${tc(g.a)};--tcol:${tc(g.a)}">${fn(g.a)}</span>${res}</div>`;
   }).join("");
 }
