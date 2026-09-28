@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260928044325">
+<meta name="build" content="20260928062124">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -2274,7 +2274,7 @@ const CONFIG = {
   excluded: ["C"],        // 対象外の球団
   owners: { D: "庄村", T: "根来", G: "池田", S: "今井", DB: "新國" }, // 担当
   payee: "庄村",          // 受け取る人
-  ownerPos: { S: "内", D: "捕", DB: "外", G: "外", T: "内" },
+  ownerPos: { S: "内", D: "中", DB: "外", G: "外", T: "内" }, // パワプロ風の名前タイルの色（内＝内野手 外＝外野手 捕＝捕手 先＝先発 中＝リリーフ）
   nameShort: { "佐藤輝明": "佐藤輝" }, // 呼び名を個別に決める選手（フルネームは空白なしで書く） // パワプロ風テーマの名前タイルの色（今井＝内野手、庄村＝捕手、新國・池田＝外野手、根来＝内野手）
   fee: 2580,              // 1月度あたりの支払い額
   liveApi: "https://jsports-live.kazushi-negoro.workers.dev/", // Cloudflare WorkerのURL（空ならライブ更新はしない）
@@ -2327,7 +2327,7 @@ const yen = n => n.toLocaleString("ja-JP") + "円";
 const isPawa = () => document.documentElement.classList.contains("theme-pawa");
 const ownT = t => {
   if (!isPawa() || !own(t)) return own(t);
-  const c = { "投": "pp", "捕": "pc", "内": "pi", "外": "po" }[(CONFIG.ownerPos || {})[t]] || "pi";
+  const c = { "投": "pp", "中": "pp", "抑": "pp", "先": "ps", "捕": "pc", "内": "pi", "外": "po" }[(CONFIG.ownerPos || {})[t]] || "pi";
   return `<span class="ptile otile ${c}${own(t).length <= 2 ? " sp" : ""}"><b>${own(t)}</b></span>`;
 };
 const payLine = t => own(t) === CONFIG.payee ? `${own(t)}が ${yen(CONFIG.fee)} 支払い` : `${own(t)} → ${CONFIG.payee}へ ${yen(CONFIG.fee)}`;
