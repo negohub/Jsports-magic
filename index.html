@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260928121906">
+<meta name="build" content="20260928125401">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1557,6 +1557,12 @@ html.theme-pawa .lutab tr.sub .lnm .sptile{opacity:.85}
 html.theme-pawa .putab td.pnx b{display:inline-flex;align-items:center;gap:4px}
 html.theme-pawa .pn3 .sptile b{font-size:15px}
 @media (max-width:374px){html.theme-pawa .ptile.sptile{padding:0 7px}html.theme-pawa .ptile.sptile b{font-size:12.5px}html.theme-pawa .pn3 .sptile b{font-size:13.5px}}
+/* パワプロ風のランナーの札（図の上に重ねる選手タイル） */
+.fldw{position:relative}
+.fldw .fld{display:block;width:100%;height:auto}
+.ptile.rtile{position:absolute;transform:translate(-50%,-62%);height:24px;padding:0 10px;min-width:0;border-radius:6px;cursor:pointer;z-index:2}
+.ptile.rtile b{font-size:13px;letter-spacing:.04em;color:#1F2A44 !important;white-space:nowrap;margin:0}
+@media (max-width:374px){.ptile.rtile{height:21px;padding:0 7px}.ptile.rtile b{font-size:11.5px}}
 /* 1球ごとの一覧の球速の単位 */
 .pbar b small{font-size:.62em;font-weight:600;margin-left:1px;opacity:.75;letter-spacing:0}
 /* 予告先発 */
@@ -2994,6 +3000,10 @@ function pitchHTML(g) {
   // 名前：実際にランナーがいる塁に、割り出した走者を下の塁から順に当てはめる
   const RN = (() => { const occ = ["1", "2", "3"].filter(b => on({ "1": "一", "2": "二", "3": "三" }[b])), names = ["1", "2", "3"].map(b => SIM[b]).filter(Boolean), o = {};
     occ.forEach((b, i) => { if (names[i]) o[b] = names[i]; }); return o; })();
+  const RUN = [["2", 150, 34], ["1", 238, 96], ["3", 62, 96]].map(([b, x, y]) => {
+    const full = runnerOK(p, b, atk, on) ? p.runners[b] : RN[b];
+    return full ? { t: atk, x, y, full, short: String(full).split(" ")[0] } : null;
+  }).filter(Boolean);
   const field = `<svg class="fld" viewBox="0 0 300 190" aria-label="走者">
     <defs>
       <radialGradient id="gr" cx="50%" cy="100%" r="95%"><stop offset="0" stop-color="#2F7A33"/><stop offset="1" stop-color="#16461A"/></radialGradient>
@@ -3011,8 +3021,9 @@ function pitchHTML(g) {
     ${[["2", 150, 54], ["1", 213, 112], ["3", 87, 112]].map(([b, x, y]) => `<rect class="bs ${on({ "1": "一", "2": "二", "3": "三" }[b]) ? "on" : ""}" ${on({ "1": "一", "2": "二", "3": "三" }[b]) ? 'filter="url(#glow)"' : ""} x="${x - 7}" y="${y - 7}" width="14" height="14" transform="rotate(45 ${x} ${y})"/>`).join("")}
     <path d="M143 174 h14 v6 l-7 6 l-7 -6 z" fill="#fff"/>
     <g class="blab" font-size="9.5" font-weight="700" fill="rgba(255,255,255,.55)" text-anchor="middle"><text x="196" y="132">一塁</text><text x="150" y="79">二塁</text><text x="104" y="132">三塁</text></g>
-    ${[["2", 150, 34], ["1", 238, 96], ["3", 62, 96]].map(([b, x, y]) => { const full = runnerOK(p, b, atk, on) ? p.runners[b] : RN[b]; if (!full) return ""; const nm = String(full).split(" ")[0]; return runnerTag(atk, x, y, full, nm); }).join("")}
+    ${RUN.map(r => runnerTag(r.t, r.x, r.y, r.full, r.short)).join("")}
   </svg>`;
+  const fieldHTML = `<div class="fldw">${field}${runnerTiles(RUN)}</div>`;
   const pcell = (k, v) => v != null && v !== "" ? `<div><span>${k}</span><b class="num">${esc(String(v))}</b></div>` : "";
   const pg = p.pitcher && p.pitcher.game, bg = p.batter && p.batter.game;
   const lastRes = last ? String(last.res || "").normalize("NFKC").trim() : "";
@@ -3023,7 +3034,7 @@ function pitchHTML(g) {
       <div class="pinn"><b>${esc(p.half || "")}</b><span style="${tv(atk)}"><i></i>${fn(atk)}攻撃</span></div>
       <div class="bso3"><div><span>B</span>${lamp(p.b || 0, 3, "b")}</div><div><span>S</span>${lamp(p.s || 0, 2, "s")}</div><div><span>O</span>${lamp(p.o || 0, 2, "o")}</div></div>
     </div>
-    <div class="fwrap">${field}</div>
+    <div class="fwrap">${fieldHTML}</div>
     <div class="pvs3">
       <div class="pc3" style="${tv(def)}"><span class="wm num">${esc(p.pitcher ? p.pitcher.no : "")}</span>
         <div class="pr3">PITCHER<em>${fn(def)}</em></div>
@@ -3053,6 +3064,7 @@ function rosterGroups(t, name, fallback) {
 // ランナーの名前の札（球場の図の中）：パワプロ風は守備位置の色のタイル、スタイリッシュは黒い札
 function runnerTag(t, x, y, full, short) {
   const w = Math.max(60, short.length * 13 + 18);
+  if (isPawa()) return ""; // パワプロ風は図の上に選手タイルを重ねる（runnerTiles）
   if (!isPawa()) return `<g data-pl="${t}|${esc(full)}"><rect x="${x - w / 2}" y="${y - 13}" width="${w}" height="19" rx="2" fill="rgba(0,0,0,.85)"/><text x="${x}" y="${y + 1}" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff">${esc(short)}</text></g>`;
   const gr = rosterGroups(t, full), id = "rt" + t + x + y, n = gr.length;
   const stops = gr.map((k, i) => `<stop offset="${i / n}" stop-color="${PCOL[k]}"/><stop offset="${(i + 1) / n}" stop-color="${PCOL[k]}"/>`).join("");
@@ -3061,6 +3073,14 @@ function runnerTag(t, x, y, full, short) {
     <rect x="${x - w / 2}" y="${y - 14}" width="${w}" height="21" rx="5" fill="url(#${id})" stroke="#13264A" stroke-width="1.3"/>
     <rect x="${x - w / 2 + 1}" y="${y - 13}" width="${w - 2}" height="10" rx="4" fill="url(#${id}s)"/>
     <text x="${x}" y="${y + 1.5}" text-anchor="middle" font-size="12.5" font-weight="800" fill="#1F2A44">${esc(short)}</text></g>`;
+}
+// パワプロ風のランナーの札：図（300×190）の座標を割合にして、選手タイルを図の上に重ねる
+function runnerTiles(list) {
+  if (!isPawa() || !list.length) return "";
+  return list.map(({ t, x, y, full, short }) => {
+    const gr = rosterGroups(t, full);
+    return `<span class="ptile rtile ${TILEC[gr[0]] || "pi"}" data-pl="${t}|${esc(full)}" style="left:${(x / 300 * 100).toFixed(2)}%;top:${(y / 190 * 100).toFixed(2)}%;${tileStyle(gr)}"><b>${esc(short)}</b></span>`;
+  }).join("");
 }
 function pwName(t, name, fallback) {
   if (!isPawa() || !name) return esc(name || "");
