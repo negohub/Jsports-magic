@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260928103550">
+<meta name="build" content="20260928104804">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1528,6 +1528,9 @@ html.theme-pawa .hero .hb{border-radius:50% !important;clip-path:none !important
 .ps-sub span{font-size:14px;font-weight:600;color:#E8E8EC}
 .ps-note{font-size:10.5px;color:var(--muted);margin:10px 2px 2px;line-height:1.6}
 [data-pl]{cursor:pointer}
+.pn3[data-pl] > b,.pnx3 b[data-pl],.flow .fb[data-pl] > b{text-decoration:underline;text-decoration-color:rgba(255,255,255,.18);text-underline-offset:3px}
+html.theme-pawa .pn3[data-pl] > b,html.theme-pawa .flow .fb[data-pl] > b{text-decoration:none}
+html.theme-pawa .pnx3 b[data-pl]{text-decoration-color:rgba(19,38,74,.3)}
 .lnm[data-pl] span,.putab td.pnx[data-pl] b{text-decoration:underline;text-decoration-color:rgba(255,255,255,.18);text-underline-offset:3px}
 #songSheet .sp-b{margin-top:14px}
 html.theme-pawa .ps-main div{background:linear-gradient(180deg,#FFFFFF,#EAF4FF);border:2px solid #1D3E7C;box-shadow:0 2px 0 rgba(19,38,74,.2)}
@@ -2944,15 +2947,15 @@ function pitchHTML(g) {
     <div class="pvs3">
       <div class="pc3" style="${tv(def)}"><span class="wm num">${esc(p.pitcher ? p.pitcher.no : "")}</span>
         <div class="pr3">PITCHER<em>${fn(def)}</em></div>
-        ${p.pitcher ? `<div class="pn3"><b>${pwName(def, p.pitcher.name, "投手")}</b>${hand(p.pitcher.hand)}</div>
+        ${p.pitcher ? `<div class="pn3" data-pl="${def}|${esc(p.pitcher.name)}|pit"><b>${pwName(def, p.pitcher.name, "投手")}</b>${hand(p.pitcher.hand)}</div>
         <div class="pg3">${pcell("防", p.pitcher.era)}${pcell("球", pg ? pg.np : p.pitcher.np)}${pcell("回", pg && pg.ip)}${pcell("安", pg && pg.h)}${pcell("振", pg && pg.so)}${pcell("四", pg && pg.bb)}${pcell("失", pg && pg.r)}${pcell("打", pg ? pg.bf : p.pitcher.bf)}</div>` : ""}
       </div>
       <div class="pc3" style="${tv(atk)}"><span class="wm num">${esc(p.batter ? p.batter.no : "")}</span>
         <div class="pr3${abDone ? " done" : ""}">${abDone ? `<span class="abt">打席終了</span><span class="abd rc ${resCls(lastRes)}">${esc(lastRes)}</span>` : "BATTER"}<em>${fn(atk)}</em></div>
-        ${p.batter ? `<div class="pn3"><b>${pwName(atk, p.batter.name)}</b>${hand(p.batter.hand)}</div>
+        ${p.batter ? `<div class="pn3" data-pl="${atk}|${esc(p.batter.name)}"><b>${pwName(atk, p.batter.name)}</b>${hand(p.batter.hand)}</div>
         <div class="pg3">${pcell("率", p.batter.avg)}${pcell("打", bg && bg.ab)}${pcell("安", bg && bg.hit)}${pcell("点", bg && bg.rbi)}${pcell("本", bg && bg.hr)}${pcell("四", bg && bg.bb)}</div>
         ${bg && bg.results && bg.results.length ? `<div class="pres3">${bg.results.map((r, i) => rcChip(r, (bg.rbis || [])[i])).join("")}</div>` : ""}` : ""}
-        ${p.next ? `<div class="pnx3${abDone ? " up" : ""}">${abDone ? "次の打者" : "NEXT"}<b>${esc(p.next)}</b></div>` : ""}
+        ${p.next ? `<div class="pnx3${abDone ? " up" : ""}">${abDone ? "次の打者" : "NEXT"}<b data-pl="${atk}|${esc(p.next)}">${esc(p.next)}</b></div>` : ""}
       </div>
     </div>
     ${list.length ? `<div class="plist3">${list.map(x => `<div class="pl3 ${pitchCls(x.res)}"><span class="pn">${x.n}</span><span class="pty">${esc(x.type)}</span><span class="pbar"><i style="width:${spd(x.speed)}%"></i><b class="num">${kmh(x.speed) || ""}</b></span><span class="prs">${esc(x.res)}</span></div>`).join("")}</div>` : `<p class="pnone">この打席はまだ投球がありません</p>`}
@@ -2974,7 +2977,7 @@ function flowHTML(f, atk) {
   const hitc = r => "rc " + resCls(r);
   return `<div class="flow" style="${tv(atk)}"><div class="fh">${esc(f.half)}　${fn(atk)}の攻撃${f.runs ? `<b class="frun">${f.runs}点</b>` : ""}</div>${f.steps.map((st, i) => `<div class="fs${st.score ? " sc" : ""}">
       <span class="fi num">${i + 1}</span>
-      <span class="fb"><b>${esc(st.order)} ${pwName(atk, st.name)}</b>${st.sit ? `<small>${esc(st.sit)}</small>` : ""}</span>
+      <span class="fb" data-pl="${atk}|${esc(st.name)}"><b>${esc(st.order)} ${pwName(atk, st.name)}</b>${st.sit ? `<small>${esc(st.sit)}</small>` : ""}</span>
       <span class="fr ${hitc(st.res)}">${esc(st.res || "-")}</span>
       ${st.score ? `<span class="fsc num">${esc(st.score)}</span>` : ""}</div>`).join("")}</div>`;
 }
