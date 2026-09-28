@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260928111120">
+<meta name="build" content="20260928111803">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -977,10 +977,10 @@ body{padding-bottom:calc(98px + env(safe-area-inset-bottom,0px))}
 .tabbar{transform-origin:50% 100%;will-change:transform;transition:transform .5s cubic-bezier(.22,1,.36,1)}
 .tabbar button .tl{display:block;transition:opacity .28s ease,transform .5s cubic-bezier(.22,1,.36,1);will-change:opacity,transform}
 .tabbar button svg{transition:transform .5s cubic-bezier(.22,1,.36,1)}
-.tabbar.mini{transform:translateY(8px) scale(.8)}
-.tabbar.mini button .tl{opacity:0;transform:translateY(6px) scale(.9)}
-.tabbar.mini button svg{transform:translateY(8px) scale(1.12)}
-.tabbar.mini button[aria-selected="true"] svg{transform:translateY(8px) scale(1.16)}
+
+
+
+
 @media (prefers-reduced-motion:reduce){.tabbar,.tabbar button .tl,.tabbar button svg{transition:none}}
 
 /* ===== 打席結果の色分け（全画面共通） ===== */
@@ -1845,6 +1845,28 @@ html.theme-pawa{background:#CDEBFF}
 .pnx3.up{white-space:normal !important;overflow:visible !important;text-overflow:clip !important;flex-direction:column;align-items:flex-start;gap:2px}
 /* 打席終了の行：結果が長くても切れないよう、入りきらなければ球団名を次の行へ */
 .pr3.done{flex-wrap:wrap;row-gap:4px;overflow:visible}
+
+/* ===== なめらかな動き ===== */
+/* タブバー：--p（0〜1）に合わせて連続的に縮む。指に追従している間はそのまま、離したらばねの動き */
+.tabbar{--p:0;transform:translate3d(0,calc(var(--p) * 8px),0) scale(calc(1 - var(--p) * .2));transform-origin:50% 100%;will-change:transform;
+  transition:transform .6s cubic-bezier(.2,1.25,.35,1)}
+.tabbar button .tl{opacity:calc(1 - var(--p) * 1.7);transform:translate3d(0,calc(var(--p) * 6px),0) scale(calc(1 - var(--p) * .1));
+  transition:opacity .6s cubic-bezier(.2,1,.35,1),transform .6s cubic-bezier(.2,1.25,.35,1)}
+.tabbar button svg{transform:translate3d(0,calc(var(--p) * 8px),0) scale(calc(1 + var(--p) * .12));transition:transform .6s cubic-bezier(.2,1.25,.35,1)}
+.tabbar button[aria-selected="true"] svg{transform:translate3d(0,calc(var(--p) * 8px),0) scale(calc(1.08 + var(--p) * .08))}
+.tabbar.track,.tabbar.track button .tl,.tabbar.track button svg{transition:none}
+/* 選択中のタブのレンズ：少し弾むばねの動きですべる */
+.tabbar .lens{transition:transform .55s cubic-bezier(.3,1.35,.45,1),width .55s cubic-bezier(.3,1.35,.45,1)}
+/* 画面の切り替え：少し浮き上がりながらふわっと */
+.view:not([hidden]){animation:vin2 .45s cubic-bezier(.2,1,.3,1)}
+@keyframes vin2{0%{opacity:0;transform:translate3d(0,10px,0) scale(.985)}100%{opacity:1;transform:none}}
+/* ボタン：押した瞬間にほんの少し沈む */
+button,.chip,.tbtn,.ptile,.tgx,.shot{transition:transform .25s cubic-bezier(.2,1.4,.4,1)}
+button:active,.chip:active,.tbtn:active,.ptile:active,.tgx:active,.shot:active{transform:scale(.96)}
+.tabbar button:active{transform:none}
+/* 下から出る画面：ばねの動きで */
+.sheet-card{transition:transform .5s cubic-bezier(.2,1.15,.35,1)}
+@media (prefers-reduced-motion:reduce){.tabbar,.tabbar button .tl,.tabbar button svg,.tabbar .lens,.sheet-card,button{transition:none!important}.view:not([hidden]){animation:none}}
 </style>
 </head>
 <body>
@@ -2408,7 +2430,11 @@ window.addEventListener("resize", () => moveLens(true));
 (() => {
   const bar = document.querySelector(".tabbar");
   let lastY = window.scrollY, mini = false;
-  const set = v => { if (v !== mini) { mini = v; bar.classList.toggle("mini", v); } };
+  // p：0＝元の大きさ、1＝いちばん小さい。スクロールした量に合わせて連続的に変える
+  let p = 0, raf = 0;
+  const paint = () => { raf = 0; bar.style.setProperty("--p", p.toFixed(3)); const m = p > .5; if (m !== mini) { mini = m; bar.classList.toggle("mini", m); } };
+  const setP = (v, animate) => { p = Math.max(0, Math.min(1, v)); bar.classList.toggle("track", !animate); if (!raf) raf = requestAnimationFrame(paint); };
+  const set = v => setP(v ? 1 : 0, true);
   // 指（またはマウス・キー）でスクロールしたときだけ大きさを変える。
   // タブの切り替え・一球速報の自動更新などで画面の長さや位置が変わっただけでは動かさない
   // 指で触っている間と、離してからの惰性のスクロール（2.5秒まで）を「指でのスクロール」として扱う
@@ -2426,13 +2452,13 @@ window.addEventListener("resize", () => moveLens(true));
   window.addEventListener("scroll", () => {
     const y = window.scrollY, dy = y - lastY;
     if (!touching && Date.now() - userAt > 2500) { lastY = y; return; }
-    if (y < 60) set(false);
-    else if (dy > 6) set(true);
-    else if (dy < -6) set(false);
-    if (Math.abs(dy) > 6) lastY = y;
-    // スクロールが止まったら（指を離していれば）どの位置でも元の大きさに戻す
+    if (y < 60) setP(0, true);
+    else if (dy > 0) setP(p + dy / 90, false);   // 下へ：90px で最小まで、指に合わせて少しずつ
+    else if (dy < 0) setP(p + dy / 45, false);   // 上へ：下より早めに戻す
+    lastY = y;
+    // スクロールが止まったら（指を離していれば）どの位置でも、ばねの動きで元の大きさに戻す
     clearTimeout(idle);
-    idle = setTimeout(() => { if (!touching) set(false); }, 800);
+    idle = setTimeout(() => { if (!touching) setP(0, true); }, 700);
   }, { passive: true });
 })();
 window.addEventListener("load", () => moveLens(true));
