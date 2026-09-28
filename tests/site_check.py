@@ -665,34 +665,52 @@ async def pull_refresh_check(browser):
 
 
 async def memory_check(browser):
-    """成績タブの打者/投手・項目・並べ替えを、開き直しても覚えているか"""
-    pg, errs = await open_page(browser, 390, "")
-    await pg.evaluate("""() => {
-      setTab('stats');
-      document.querySelector('#tmSeg button[data-k="pit"]').click();
-      document.querySelector('#tmTbl th.srt[data-col="1"]').click();
-      document.querySelector('#rkSeg button[data-k="pit"]').click();
-      S.cat = CATS.pit[2][0]; renderStats();
-      document.querySelector('#ptSeg button[data-k="pit"]').click();
-    }""")
-    want = await pg.evaluate("[S.tmKind, JSON.stringify(S.tmSort), S.rkKind, S.cat, S.ptKind]")
-    await pg.wait_for_timeout(1500)   # 端末への保存が終わるのを待ってから開き直す
-    await pg.reload()
-    await pg.wait_for_timeout(700)
-    got = await pg.evaluate("[S.tmKind, JSON.stringify(S.tmSort), S.rkKind, S.cat, S.ptKind]")
-    if got != want:
-        bad(f"[状態の記憶] 開き直すと成績タブの状態が戻る（前：{want} → 後：{got}）")
-    # 壊れた値が入っていても画面が壊れない
-    await pg.evaluate("v => localStorage.setItem('statsUI', v)", json.dumps({"tmKind": "xx", "cat": "nope", "tmSort": {"kind": "bat", "col": "a"}}))
-    await pg.reload()
-    await pg.wait_for_timeout(700)
-    ok = await pg.evaluate("setTab('stats'), [S.tmKind, CATS[S.rkKind].some(c => c[0] === S.cat), !!document.querySelector('#tmTbl tbody tr')]")
-    if ok != ["bat", True, True]:
-        bad(f"[状態の記憶] 壊れた値が入っていると成績タブがおかしくなる（{ok}）")
-    await pg.evaluate("localStorage.removeItem('statsUI')")
-    for e in errs:
-        bad(f"[状態の記憶]: 画面のエラー {e}")
-    await pg.close()
+    """成績タブの打者/投手・項目・並べ替えを、開き直しても覚えているか
+    （file:// で開くと、開き直したときに端末への保存が消えることがある検査環境の癖があるため、手元のサーバー経由で開く）"""
+    import http.server, threading, functools
+
+    class Quiet(http.server.SimpleHTTPRequestHandler):
+        def log_message(self, *a):
+            pass
+
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=str(ROOT)))
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    url = f"http://127.0.0.1:{srv.server_port}/index.html"
+    try:
+        pg = await browser.new_page(viewport={"width": 390, "height": 844})
+        errs = []
+        pg.on("pageerror", lambda e: errs.append(str(e)))
+        await pg.add_init_script("localStorage.setItem('me','S'); localStorage.setItem('theme',''); localStorage.setItem('league','C')")
+        await pg.route("https://**", lambda r: r.abort())
+        await pg.goto(url)
+        await pg.wait_for_timeout(700)
+        await pg.evaluate("""() => {
+          setTab('stats');
+          document.querySelector('#tmSeg button[data-k="pit"]').click();
+          document.querySelector('#tmTbl th.srt[data-col="1"]').click();
+          document.querySelector('#rkSeg button[data-k="pit"]').click();
+          S.cat = CATS.pit[2][0]; renderStats();
+          document.querySelector('#ptSeg button[data-k="pit"]').click();
+        }""")
+        want = await pg.evaluate("[S.tmKind, JSON.stringify(S.tmSort), S.rkKind, S.cat, S.ptKind]")
+        await pg.wait_for_timeout(300)
+        await pg.reload()
+        await pg.wait_for_timeout(700)
+        got = await pg.evaluate("[S.tmKind, JSON.stringify(S.tmSort), S.rkKind, S.cat, S.ptKind]")
+        if got != want:
+            bad(f"[状態の記憶] 開き直すと成績タブの状態が戻る（前：{want} → 後：{got}）")
+        # 壊れた値が入っていても画面が壊れない
+        await pg.evaluate("v => localStorage.setItem('statsUI', v)", json.dumps({"tmKind": "xx", "cat": "nope", "tmSort": {"kind": "bat", "col": "a"}}))
+        await pg.reload()
+        await pg.wait_for_timeout(700)
+        ok = await pg.evaluate("setTab('stats'), [S.tmKind, CATS[S.rkKind].some(c => c[0] === S.cat), !!document.querySelector('#tmTbl tbody tr')]")
+        if ok != ["bat", True, True]:
+            bad(f"[状態の記憶] 壊れた値が入っていると成績タブがおかしくなる（{ok}）")
+        for e in errs:
+            bad(f"[状態の記憶]: 画面のエラー {e}")
+        await pg.close()
+    finally:
+        srv.shutdown()
 
 
 async def loser_wording_check(browser):
