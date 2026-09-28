@@ -424,8 +424,13 @@ async def team_in_check(browser):
                       if (x.p === "投手") pit[k] = { 登板: "52", 投球回: "160.1", 防御率: "12.34", 勝利: "12", 敗北: "10", 三振: "188" };
                       else bat[k] = { 試合: "143", 打席: String(600 - i), 打率: ".333", 本塁打: "44", 打点: "123", 出塁率: ".444", 長打率: ".666" };
                     });
+                    // とても長い名前の選手も混ぜる（省略せずに収まるか）
+                    bat["ダーウィンゾンヘルナンデスジュニア"] = { 試合: "143", 打席: "700", 打率: ".333", 本塁打: "44", 打点: "123", 出塁率: ".444", 長打率: ".666" };
+                    pit["クリストファーアレクサンダー"] = { 登板: "52", 投球回: "200.2", 防御率: "12.34", 勝利: "12", 敗北: "10", 三振: "188" };
                     PST[t] = { at: Date.now(), d: { bat, pit, asof: "9/28" } };
                   }
+                  const widths = {};
+                  const clipped = () => [...document.querySelectorAll("#ptTbl td, #ptTbl th")].filter(c => c.scrollWidth > c.clientWidth + 1).length;
                   const over = () => { const tb = document.getElementById("ptTbl"); return tb && tb.scrollWidth > tb.parentElement.clientWidth + 1 ? tb.scrollWidth - tb.parentElement.clientWidth : 0; };
                   for (const t of CL) {
                     S.ptTeam = t;
@@ -434,11 +439,14 @@ async def team_in_check(browser):
                       const n = document.querySelectorAll("#ptTbl tbody tr").length;
                       if (!n) ng.push(`${t} ${k}: 表が出ない`);
                       if (over()) ng.push(`${t} ${k}: 表が ${over()}px はみ出し`);
+                      if (clipped()) ng.push(`${t} ${k}: 文字がマスからはみ出したセルが ${clipped()} 個`);
+                      widths[k] = widths[k] || new Set(); widths[k].add(Math.round(document.getElementById("ptTbl").getBoundingClientRect().width) + "/" + [...document.querySelectorAll("#ptTbl thead th")].map(th => Math.round(th.getBoundingClientRect().width)).join(","));
                       const more = document.getElementById("ptMore");
                       if (more) { more.click(); if (document.querySelectorAll("#ptTbl tbody tr").length <= n) ng.push(`${t} ${k}: 全員を表示が効かない`); if (over()) ng.push(`${t} ${k}: 全員表示で ${over()}px はみ出し`); }
                       const th = document.querySelector("#ptTbl th.srt[data-col='2']"); if (th) { th.click(); if (!document.querySelector("#ptTbl th.srt.on")) ng.push(`${t} ${k}: 並べ替えが効かない`); }
                     }
                   }
+                  for (const k in widths) if (widths[k].size > 1) ng.push(`${k}: 球団によって表の幅・列の幅が違う（${[...widths[k]].join(" | ")}）`);
                   return ng;
                 }""")
                 for m in r[:5]:
@@ -446,6 +454,29 @@ async def team_in_check(browser):
                 for e in errs:
                     bad(f"{label}: 画面のエラー {e}")
                 await pg.close()
+
+
+async def starter_order_check(browser):
+    """予告先発：試合タブ・日程の詳細とも、ホームの投手が左（先）に来るか"""
+    pg, errs = await open_page(browser, 390, "")
+    r = await pg.evaluate("""() => {
+      const g = { d: "2099-01-01", h: "T", a: "S", st: "sched" };
+      YK[`${g.d}|${g.h}|${g.a}`] = { h: "才木 浩人", a: "奥川 恭伸" };
+      const box = document.createElement("div");
+      const ng = [];
+      for (const html of [ykHTML(g), ykHTML(g, true)]) {
+        box.innerHTML = html;
+        const first = box.querySelector(".ykp");
+        if (!first || !first.dataset.pl.startsWith("T|")) ng.push("ホームの投手が左になっていない");
+      }
+      delete YK[`${g.d}|${g.h}|${g.a}`];
+      return ng;
+    }""")
+    for m in r:
+        bad(f"[予告先発の並び] {m}")
+    for e in errs:
+        bad(f"[予告先発の並び]: 画面のエラー {e}")
+    await pg.close()
 
 
 async def main():
@@ -497,6 +528,7 @@ async def main():
         await calc_cache(browser)
         await song_link_check(browser)
         await team_in_check(browser)
+        await starter_order_check(browser)
         await browser.close()
     print()
     if PROBLEMS:
