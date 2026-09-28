@@ -246,6 +246,23 @@ async def game_live(pg, label):
         bad(f"{label} 試合中: {o}")
 
 
+async def cal_weather(pg, label):
+    """雨の確率が高い日があっても、日程の7列が同じ幅のままか（名前のぶつかりで列が広がった不具合の再発防止）"""
+    widths = await pg.evaluate("""(() => {
+      const time = [], code = [], temp = [], pop = [];
+      const d0 = new Date(jst().iso + 'T00:00:00');
+      for (let k = -3; k < 10; k++) { const d = new Date(d0.getTime() + k * 864e5); const ds = d.toISOString().slice(0, 10);
+        for (let h = 0; h < 24; h++) { time.push(ds + 'T' + String(h).padStart(2, '0') + ':00'); code.push(61); temp.push(22); pop.push(90); } }
+      Object.keys(VENUE).forEach(k => (WX[k] = { at: Date.now(), h: { time, weather_code: code, temperature_2m: temp, precipitation_probability: pop } }));
+      const out = [];
+      for (const t of Object.keys(CONFIG.owners)) { S.calTeam = t; S.calMonth = null; setTab('cal'); renderCal();
+        const w = [...document.querySelectorAll('.cal .wd')].slice(0, 7).map(e => Math.round(e.getBoundingClientRect().width));
+        if (Math.max(...w) - Math.min(...w) > 2) out.push(t + ':' + w.join(',')); }
+      return out; })()""")
+    for w in widths:
+        bad(f"{label}: 雨の日があると日程の列の幅がそろわない {w}")
+
+
 async def season_end(pg, label):
     await pg.evaluate("DATA.games.forEach(g=>{ if(g.st==='sched'||g.st==='live'||g.st==='canc'){ g.st='final'; g.hs=3; g.as=2; } }); renderAll(); setTab('magic')")
     await pg.wait_for_timeout(200)
@@ -312,6 +329,7 @@ async def main():
                 await essentials(pg, label)
                 await game_live(pg, label)
                 await sheets(pg, label)
+                await cal_weather(pg, label)
                 await season_end(pg, label)
                 for e in errs:
                     bad(f"{label}: 画面のエラー {e}")
