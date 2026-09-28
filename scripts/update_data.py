@@ -7,6 +7,7 @@
 import json
 import os
 import re
+from urllib.parse import quote
 import sys
 import time
 import unicodedata
@@ -337,7 +338,9 @@ SONG_EXTRA = {
           "ボスラー", "石川昂弥", "根尾昂", "木下拓哉", "宇佐見真吾", "ブライト健太", "土田龍空", "阿部寿樹",
           "加藤匠馬", "上林誠知", "細川成也", "山本泰寛", "鵜飼航丞"],
 }
-SONG_REV = 3  # 判定のしかたを変えたら数字を上げる（上げると時期に関係なく1回やり直す）
+# 公式に応援歌ページがない球団：まとめサイトの球団ページの表から、選手ごとのページ（なければ表の位置）を拾う
+SONG_LINK_PAGE = {"L": "https://www.yakyu-ouen.net/lions/"}
+SONG_REV = 4  # 判定のしかたを変えたら数字を上げる（上げると時期に関係なく1回やり直す）
 # 背番号で並んでいるページ（ヤクルト公式）は背番号でも照合する
 SONG_BY_NUMBER = {"https://www.yakult-swallows.co.jp/players/song"}
 VARIANT = str.maketrans({"髙": "高", "﨑": "崎", "濵": "浜", "德": "徳", "瀨": "瀬", "邊": "辺", "邉": "辺", "塚": "塚", "・": "", "＝": "", "=": ""})
@@ -347,13 +350,33 @@ def squash(s):
     return re.sub(r"\s+", "", norm(s)).translate(VARIANT)
 
 
+def song_links(url, html):
+    """まとめサイトの球団ページの選手応援歌の表から [(背番号, 表の名前, 選手ページのURL or None)] を取る"""
+    out = []
+    for tr in BeautifulSoup(html, "html.parser").find_all("tr"):
+        tds = tr.find_all(["td", "th"])
+        if len(tds) < 2:
+            continue
+        no = squash(tds[0].get_text())
+        name = squash(tds[1].get_text())
+        if not re.fullmatch(r"\d{1,3}", no) or len(name) < 2:
+            continue
+        a = tds[1].find("a", href=True)
+        out.append((no, name, a["href"] if a and a["href"].startswith("https://") else None))
+    return out
+
+
 def mark_songs(t, rows):
-    """応援歌ページに名前（または背番号）が出てくる選手に song=True を付ける。どのページも読めなければ None"""
+    """応援歌ページに名前（または背番号）が出てくる選手に song=True を付ける。どのページも読めなければ None
+    SONG_LINK_PAGE の球団は、応援歌がある選手に su（タップしたときに開くページ）も付ける"""
     texts, numbers, ok = [squash(" ".join(SONG_EXTRA.get(t, [])))], set(), bool(SONG_EXTRA.get(t))
+    links = []
     for url in SONG_SOURCES.get(t, []):
         html = fetch(url)
         if not html:
             continue
+        if SONG_LINK_PAGE.get(t) == url:
+            links = song_links(url, html)
         text = squash(BeautifulSoup(html, "html.parser").get_text(" "))
         if len(text) < 200:
             continue
@@ -369,6 +392,11 @@ def mark_songs(t, rows):
         name = squash(r["n"])
         r["song"] = (len(name) >= 2 and name in blob) or (not r["dev"] and r["no"] in numbers)
         n += r["song"]
+        if r["song"] and links:
+            # 名前が含まれる行を優先、なければ背番号が同じ行（表の名前が短い「ネビン」など）
+            hit = next((x for x in links if x[1] in name or name in x[1]), None) or next((x for x in links if x[0] == r["no"]), None)
+            if hit:
+                r["su"] = hit[2] or f"{SONG_LINK_PAGE[t]}#:~:text={quote(hit[1])}"
     return n
 
 
@@ -518,10 +546,13 @@ def fetch_rosters(old):
         if len(rows) >= 20:
             n = mark_songs(t, rows)
             if n is None and t in rosters:  # 応援歌ページが読めなかったときは前回の判定を引き継ぐ
-                prev = {(r["no"], r["n"]): r.get("song") for r in rosters[t]}
+                prev = {(r["no"], r["n"]): r for r in rosters[t]}
                 for r in rows:
-                    if prev.get((r["no"], r["n"])) is not None:
-                        r["song"] = prev[(r["no"], r["n"])]
+                    o = prev.get((r["no"], r["n"]))
+                    if o and o.get("song") is not None:
+                        r["song"] = o["song"]
+                        if o.get("su"):
+                            r["su"] = o["su"]
             print(f"[応援歌] {t}: 個別応援歌あり {n if n is not None else '判定できず'}人")
             rosters[t] = rows
         else:
