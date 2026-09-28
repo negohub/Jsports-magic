@@ -224,6 +224,10 @@ async def game_live(pg, label):
     for sel, name in [(".tg.islive .ls", "スコア表"), (".tg.islive .pbox", "一球速報"), (".tg.islive .lu", "打順"), (".tg.islive .pu", "投手成績"), (".tg.islive .bug", "スコアバグ")]:
         if not await pg.query_selector(sel):
             bad(f"{label}: 試合中の{name}が出ない")
+    # 一球速報の投手・打者・次の打者の名前もタップできる形になっているか
+    for sel, nm in ((".tg.islive .pc3 .pn3[data-pl]", "一球速報の投手・打者"), (".tg.islive .pnx3 b[data-pl]", "次の打者")):
+        if not await pg.query_selector(sel):
+            bad(f"{label}: {nm}の名前がタップできる形になっていない")
     # 打順の選手名をタップ → 選手の成績の画面が出るか
     name = await pg.query_selector(".tg.islive .lnm[data-pl]")
     if not name:
