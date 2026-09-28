@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260928184027">
+<meta name="build" content="20260928190348">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -4368,8 +4368,13 @@ async function liveStats(key) {
 S.ptKind = "bat"; S.ptAll = false; S.ptSort = null; S.ptTeam = store("ptTeam");
 // 成績タブの表示のしかた（打者/投手・項目・並べ替え）を覚えておき、次に開いたときも同じにする
 const UI_KEY = "statsUI";
+const uiNow = () => JSON.stringify({ tmKind: S.tmKind, tmSort: S.tmSort || null, rkKind: S.rkKind, cat: S.cat, rkSort: S.rkSort || null, ptKind: S.ptKind, ptSort: S.ptSort || null });
+let uiSaved = null;
+// 変わったときだけ書く（開いた直後の描画で、覚えていた内容を最初の状態で上書きしないように）
 function saveStatsUI() {
-  store(UI_KEY, JSON.stringify({ tmKind: S.tmKind, tmSort: S.tmSort || null, rkKind: S.rkKind, cat: S.cat, rkSort: S.rkSort || null, ptKind: S.ptKind, ptSort: S.ptSort || null }));
+  const v = uiNow();
+  if (v === uiSaved) return;
+  uiSaved = v; store(UI_KEY, v);
 }
 (() => {
   let u = null;
@@ -4386,6 +4391,7 @@ function saveStatsUI() {
   if (okSort(u.rkSort, ["cat", "by"]) && (u.rkSort.by === "t" || u.rkSort.by === "v")) S.rkSort = u.rkSort;
   if (okSort(u.ptSort, ["kind", "col"]) && kind(u.ptSort.kind) && Number.isInteger(u.ptSort.col)) S.ptSort = u.ptSort;
 })();
+uiSaved = uiNow();   // 開いた時点の状態（覚えていた内容、なければ最初の状態）は書き直さない
 const PT_COLS = {
   bat: [["試合", r => r["試合"]], ["打率", r => r["打率"], "rate"], ["本塁打", r => r["本塁打"]], ["打点", r => r["打点"]],
     ["OPS", r => (r["出塁率"] != null && r["長打率"] != null ? f3(Number(r["出塁率"]) + Number(r["長打率"])) : null), "rate"]],
