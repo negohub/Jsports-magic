@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260928143854">
+<meta name="build" content="20260928163921">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -3834,10 +3834,13 @@ const SONG_PAGE = {
   D: ["https://www.dragons.jp/teamdata/pdf/cheersong2026.pdf", false],
   C: ["https://www.carp.co.jp/team/songs", true],
   S: ["https://www.yakult-swallows.co.jp/players/song", true],
-  H: ["https://www.yakyu-ouen.net/hawks/", false], F: ["https://www.yakyu-ouen.net/fighters/", false],
-  B: ["https://www.yakyu-ouen.net/buffaloes/", false], E: ["https://www.yakyu-ouen.net/eagles/", false],
-  L: ["https://www.yakyu-ouen.net/lions/", false], M: ["https://www.yakyu-ouen.net/marines/", false],
+  // パ・リーグ：各球団の公式の応援歌ページ（西武だけ公式にページがないので応援歌まとめサイト）
+  H: ["https://www.softbankhawks.co.jp/team/song/", true], F: ["https://www.fighters.co.jp/entertainment/cheer_player/", true],
+  B: ["https://www.buffaloes.co.jp/team/playersong.html", false], E: ["https://www.rakuteneagles.jp/team/rooterssong/", false],
+  L: ["https://www.yakyu-ouen.net/lions/", false], M: ["https://www.marines.co.jp/fans/supportersong/", false],
 };
+// 公式ではないページを使っている球団（ボタンの文字を「公式」にしない）
+const SONG_UNOFFICIAL = new Set(["L"]);
 // チャンステーマ・チーム応援歌（曲名のみ）。[表示名, 公式ページ, ページ内でジャンプする文字（公式ページの見出しそのまま）]
 const CHANCE_PAGE = { DB: "https://www.baystars.co.jp/players/theme" };
 // 公式ページでチャンステーマが別タブに隠れている球団への一言（ヤクルト公式はタブの中なので位置までは飛べない）
@@ -3874,7 +3877,7 @@ const SONG_ONE = {
 const frag = x => encodeURIComponent(x).replace(/-/g, "%2D");
 const jump = (t, url, text) => SONG_PAGE[t] && SONG_PAGE[t][1] && text ? `${url}#:~:text=${frag(text)}` : url;
 const songLink = (t, x) => SONG_ONE[t] ? SONG_ONE[t](x) : SONG_PAGE[t] ? jump(t, SONG_PAGE[t][0], x.n) : null;
-const songLabel = t => (LG_TEAMS.P.includes(t) ? "応援歌" : "公式");
+const songLabel = t => (SONG_UNOFFICIAL.has(t) ? "応援歌" : "公式");
 S.songTeam = store("songTeam") || "T"; S.songQ = "";
 // 起動したときのリーグの外の球団が選ばれていたら、そのリーグの先頭の球団にする
 if (!CL.includes(S.songTeam)) S.songTeam = CONFIG.calOrder[0];
@@ -4051,7 +4054,7 @@ function renderSong() {
   $("songTeams").innerHTML = calOrder().map(k => `<button class="tbtn" type="button" data-t="${k}" style="${tv(k)}" aria-pressed="${k === t}"><span class="badge">${sn(k)}</span>${fn(k)}</button>`).join("");
   $("songTeams").querySelectorAll(".tbtn").forEach(b => (b.onclick = () => { S.songTeam = b.dataset.t; store("songTeam", S.songTeam); renderSong(); }));
   const pg = SONG_PAGE[t];
-  $("songHead").innerHTML = `<div class="sh" style="${tv(t)}"><span class="badge">${sn(t)}</span><b>${TEAM[t].n}</b>${pg ? `<a href="${pg[0]}" target="_blank" rel="noopener">${LG_TEAMS.P.includes(t) ? "応援歌のページ" : "公式の応援歌ページ"}</a>` : ""}</div>`;
+  $("songHead").innerHTML = `<div class="sh" style="${tv(t)}"><span class="badge">${sn(t)}</span><b>${TEAM[t].n}</b>${pg ? `<a href="${pg[0]}" target="_blank" rel="noopener">${SONG_UNOFFICIAL.has(t) ? "応援歌のページ" : "公式の応援歌ページ"}</a>` : ""}</div>`;
   const roster = ((DATA.rosters || {})[t] || []);
   const judged = roster.some(x => "song" in x);
   const all = judged ? roster.filter(x => x.song) : roster;
