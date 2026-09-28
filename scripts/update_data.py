@@ -25,9 +25,11 @@ TEAMS = [
     ("楽天", "E"), ("ジャイアンツ", "G"), ("巨人", "G"), ("阪神", "T"), ("中日", "D"), ("広島", "C"),
 ]
 CL = {"DB", "G", "T", "D", "S", "C"}
+PL = {"H", "F", "B", "E", "L", "M"}
 TEAM_RE = re.compile("|".join(re.escape(n) for n, _ in TEAMS))
 CODE = dict(TEAMS)
-ABBR = {"神": "T", "巨": "G", "デ": "DB", "中": "D", "広": "C", "ヤ": "S"}
+ABBR = {"神": "T", "巨": "G", "デ": "DB", "中": "D", "広": "C", "ヤ": "S",
+        "ソ": "H", "日": "F", "オ": "B", "楽": "E", "西": "L", "ロ": "M"}
 
 URLCODE = {"g": "G", "db": "DB", "t": "T", "d": "D", "c": "C", "s": "S",
            "h": "H", "f": "F", "b": "B", "e": "E", "l": "L", "m": "M"}
@@ -66,8 +68,6 @@ def parse_month(html, season):
                 continue
             found = list(TEAM_RE.finditer(card))
             home, away = CODE[found[0].group()], CODE[found[1].group()]
-            if home not in CL and away not in CL:
-                continue
             middle = card[found[0].end():found[1].start()]
             vcell = cells[idx + 1] if idx + 1 < len(cells) else ""
             tm = re.search(r"(\d{1,2}:\d{2})", vcell)
@@ -188,8 +188,9 @@ def parse_yahoo_rank(html, label, limit=10):
     return None
 
 
-def parse_yahoo_team(html):
-    """セ・リーグ順位表（詳細）からチーム成績を取る。「-」の項目は入れない"""
+def parse_yahoo_team(html, league=None):
+    """リーグの順位表（詳細）からチーム成績を取る。「-」の項目は入れない"""
+    league = league or CL
     soup = BeautifulSoup(html, "html.parser")
     for table in soup.find_all("table"):
         rows = table.find_all("tr")
@@ -205,7 +206,7 @@ def parse_yahoo_team(html):
             if len(cells) != len(head):
                 continue
             m = TEAM_RE.search(cells[ti])
-            if not m or CODE[m.group()] not in CL:
+            if not m or CODE[m.group()] not in league:
                 continue
             out[CODE[m.group()]] = {k: cells[head.index(k)] for k in TEAM_KEYS
                                     if k in head and re.search(r"\d", cells[head.index(k)])}
@@ -214,14 +215,15 @@ def parse_yahoo_team(html):
     return None
 
 
-def fetch_stats(season, old_stats):
-    """チーム成績と個人ランキング。取れなかった部分は前回の値を残す"""
+def fetch_stats(season, old_stats, kind=1):
+    """チーム成績と個人ランキング（kind=1 セ・リーグ、2 パ・リーグ）。取れなかった部分は前回の値を残す"""
+    league, tag = (CL, "") if kind == 1 else (PL, "パ・")
     st = json.loads(json.dumps(old_stats or {}))
     st["team"] = st.get("team") if isinstance(st.get("team"), dict) else {}
     st.setdefault("leaders", {})
     stamps = []
-    html = fetch(f"{YAHOO}/standings/detail/1")
-    tbl = parse_yahoo_team(html) if html else None
+    html = fetch(f"{YAHOO}/standings/detail/{kind}")
+    tbl = parse_yahoo_team(html, league) if html else None
     if tbl:
         for t, row in tbl.items():
             cur = st["team"].get(t)
@@ -229,29 +231,29 @@ def fetch_stats(season, old_stats):
             cur.update(row)
             st["team"][t] = cur
         stamps.append(stamp_of(html))
-        print("[成績] チーム成績 OK")
+        print(f"[{tag}成績] チーム成績 OK")
     else:
-        print("[成績] チーム成績 読み取れず（前回の値を使用）")
+        print(f"[{tag}成績] チーム成績 読み取れず（前回の値を使用）")
     # 個人ランキング：スポナビの成績の更新時刻が前回と同じなら、全項目の取り直しはしない（負担を減らす）
-    probe = fetch(f"{YAHOO}/stats/batter?gameKindId=1&type=avg")
+    probe = fetch(f"{YAHOO}/stats/batter?gameKindId={kind}&type=avg")
     probe_stamp = stamp_of(probe) if probe else None
     want = [f"b_{k}" for k in BAT_CATS] + [f"p_{k}" for k in PIT_CATS]
     have_all = all(k in st["leaders"] for k in want)
     if probe_stamp and have_all and st.get("rank_stamp") == list(probe_stamp):
-        print("[成績] 個人ランキングは前回から更新なし（取り直さない）")
+        print(f"[{tag}成績] 個人ランキングは前回から更新なし（取り直さない）")
         stamps.append(probe_stamp)
     else:
         leaders = {k: v for k, v in st["leaders"].items() if k in want}
-        for kind, pre, cats in (("batter", "b_", BAT_CATS), ("pitcher", "p_", PIT_CATS)):
+        for who, pre, cats in (("batter", "b_", BAT_CATS), ("pitcher", "p_", PIT_CATS)):
             for key, label in cats.items():
-                html = probe if (kind == "batter" and key == "avg") else fetch(f"{YAHOO}/stats/{kind}?gameKindId=1&type={key}")
+                html = probe if (who == "batter" and key == "avg") else fetch(f"{YAHOO}/stats/{who}?gameKindId={kind}&type={key}")
                 rows = parse_yahoo_rank(html, label) if html else None
                 if rows:
                     leaders[pre + key] = rows
                     stamps.append(stamp_of(html))
                 else:
-                    print(f"[成績] ランキング {label} 読み取れず（前回の値を使用）")
-                if not (kind == "batter" and key == "avg"):
+                    print(f"[{tag}成績] ランキング {label} 読み取れず（前回の値を使用）")
+                if not (who == "batter" and key == "avg"):
                     time.sleep(1)
         st["leaders"] = leaders
         if probe_stamp:
@@ -261,16 +263,17 @@ def fetch_stats(season, old_stats):
         y, mo, d, h, mi = max(stamps)
         st["asof"] = f"{mo}/{d} {h}:{mi:02d}"
     st["src"] = "スポーツナビ"
-    print(f"[成績] {st.get('asof')} 更新分 ランキング{len(st['leaders'])}部門")
+    print(f"[{tag}成績] {st.get('asof')} 更新分 ランキング{len(st['leaders'])}部門")
     return st
 
 
-def fetch_prev_order(season, old):
+def fetch_prev_order(season, old, lg="c"):
     """前年の最終順位（日程タブの球団の並びに使う）。一度取れたら次から取りに行かない"""
-    prev = (old or {}).get("prev_order")
+    league = CL if lg == "c" else PL
+    prev = (old or {}).get("prev_order" if lg == "c" else "prev_order_p")
     if prev and prev.get("season") == season - 1 and len(prev.get("order", [])) == 6:
         return prev
-    html = fetch(f"https://npb.jp/bis/{season - 1}/stats/std_c.html")
+    html = fetch(f"https://npb.jp/bis/{season - 1}/stats/std_{lg}.html")
     if html:
         soup = BeautifulSoup(html, "html.parser")
         for table in soup.find_all("table"):
@@ -278,16 +281,17 @@ def fetch_prev_order(season, old):
             for tr in table.find_all("tr"):
                 cells = tr.find_all(["td", "th"])
                 m = TEAM_RE.search(norm(cells[0].get_text(" ", strip=True))) if cells else None
-                if m and CODE[m.group()] in CL and CODE[m.group()] not in order:
+                if m and CODE[m.group()] in league and CODE[m.group()] not in order:
                     order.append(CODE[m.group()])
             if len(order) == 6:
-                print(f"[前年順位] {season - 1}年: {order}")
+                print(f"[前年順位] {season - 1}年 {'セ' if lg == 'c' else 'パ'}: {order}")
                 return {"season": season - 1, "order": order}
     print("[前年順位] 取得できず")
     return prev
 
 
-ROSTER_CODE = {"T": "t", "G": "g", "DB": "db", "D": "d", "C": "c", "S": "s"}
+ROSTER_CODE = {"T": "t", "G": "g", "DB": "db", "D": "d", "C": "c", "S": "s",
+               "H": "h", "F": "f", "B": "b", "E": "e", "L": "l", "M": "m"}
 POSITIONS = ("投手", "捕手", "内野手", "外野手")
 
 
@@ -319,6 +323,12 @@ SONG_SOURCES = {
     "D": ["https://www.yakyu-ouen.net/dragons/"],
     "C": ["https://www.carp.co.jp/team/songs", "https://www.yakyu-ouen.net/carp/"],
     "S": ["https://www.yakult-swallows.co.jp/players/song", "https://www.yakyu-ouen.net/swallows/"],
+    "H": ["https://www.yakyu-ouen.net/hawks/"],
+    "F": ["https://www.yakyu-ouen.net/fighters/"],
+    "B": ["https://www.yakyu-ouen.net/buffaloes/"],
+    "E": ["https://www.yakyu-ouen.net/eagles/"],
+    "L": ["https://www.yakyu-ouen.net/lions/"],
+    "M": ["https://www.yakyu-ouen.net/marines/"],
 }
 # 公式がPDFで配っている球団は、PDFに載っている選手名をここに書いておく（中日：cheersong2026.pdf）
 SONG_EXTRA = {
@@ -368,7 +378,7 @@ def fetch_fpos(season, old):
     """各球団の個人守備成績から、選手ごとに今季守ったポジション（投・捕・内・外）と試合数を取る（1日1回）"""
     today = datetime.now(JST).strftime("%Y-%m-%d")
     prev = (old or {}).get("fpos") or {}
-    if prev.get("date") == today and prev.get("season") == season and len(prev.get("teams", {})) == 6:
+    if prev.get("date") == today and prev.get("season") == season and len(prev.get("teams", {})) == len(ROSTER_CODE):
         return prev
     teams = dict(prev.get("teams", {})) if prev.get("season") == season else {}
     for t, code in ROSTER_CODE.items():
@@ -446,7 +456,7 @@ def fetch_fpos(season, old):
             time.sleep(1)
     # スポナビの球団別投手成績に「登板」「先発」があるので、取れた球団はそれで上書きする
     # （先発＝先発した試合数、中継ぎ＝登板−先発。セーブ10以上の投手の救援は「抑」）
-    YID = {"T": 5, "G": 1, "DB": 3, "D": 4, "C": 6, "S": 2}
+    YID = {"T": 5, "G": 1, "DB": 3, "D": 4, "C": 6, "S": 2, "H": 12, "F": 8, "B": 11, "E": 376, "L": 7, "M": 9}
     for t, yid in YID.items():
         html = fetch(f"https://baseball.yahoo.co.jp/npb/teams/{yid}/pitchingstats")
         if not html:
@@ -493,13 +503,13 @@ def fetch_rosters(old):
     now = datetime.now(JST)
     today = now.strftime("%Y-%m-%d")
     rosters = dict((old or {}).get("rosters") or {})
-    have_all = (len(rosters) == 6 and all(any("song" in r for r in v) for v in rosters.values())
+    have_all = (len(rosters) == len(ROSTER_CODE) and all(any("song" in r for r in v) for v in rosters.values())
                 and (old or {}).get("song_rev") == SONG_REV)
     # 更新は3月〜7月だけ（支配下登録の期限が7月末のため）。まだ全球団そろっていなければ時期に関係なく取る
     if have_all and not (3 <= now.month <= 7):
         return rosters, (old or {}).get("roster_date")
     # 取りに行くのは1日1回まで（応援歌ページが読めない球団があっても、何度も取りに行かない）
-    if len(rosters) == 6 and (old or {}).get("roster_date") == today and (old or {}).get("song_rev") == SONG_REV:
+    if len(rosters) == len(ROSTER_CODE) and (old or {}).get("roster_date") == today and (old or {}).get("song_rev") == SONG_REV:
         return rosters, today
     for t, code in ROSTER_CODE.items():
         html = fetch(f"https://npb.jp/bis/teams/rst_{code}.html")
@@ -551,9 +561,13 @@ def parse_post_rows(html, season, stage_of):
 def fetch_post(season, old):
     prev = [p for p in ((old or {}).get("post") or []) if p.get("d", "").startswith(str(season))]
     games = []
+    stage = lambda t: "CSF" if "ファイナルステージ" in t else "CS1" if "ファーストステージ" in t else None
     html = fetch(f"https://npb.jp/games/{season}/schedule_climax_cl.html")
     if html:
-        games += parse_post_rows(html, season, lambda t: "CSF" if "ファイナルステージ" in t else "CS1" if "ファーストステージ" in t else None)
+        games += parse_post_rows(html, season, stage)
+    html = fetch(f"https://npb.jp/games/{season}/schedule_climax_pl.html")
+    if html:
+        games += [dict(g, lg="P") for g in parse_post_rows(html, season, stage)]
     html = fetch(f"https://npb.jp/nippons/{season}/")
     if html:
         text = norm(BeautifulSoup(html, "html.parser").get_text(" ", strip=True))
@@ -564,9 +578,9 @@ def fetch_post(season, old):
         print("[ポストシーズン] 読み取れず（前回の値を使用）")
         return prev
     # 前回に結果があって今回取れなかった試合は、結果を引き継ぐ
-    old_by = {(p["d"], p["stage"], p["no"]): p for p in prev}
+    old_by = {(p["d"], p["stage"], p["no"], p.get("lg", "C")): p for p in prev}
     for g in games:
-        o = old_by.get((g["d"], g["stage"], g["no"]))
+        o = old_by.get((g["d"], g["stage"], g["no"], g.get("lg", "C")))
         if o and o.get("st") == "final" and g.get("st") != "final":
             for k in ("h", "a", "hs", "as", "st"):
                 if k in o:
@@ -657,11 +671,15 @@ def main():
             return fallback
 
     stats = safe("成績", lambda: fetch_stats(season, old_stats), old_stats)
+    old_stats_p = old.get("stats_p") if old and old.get("season") == season else None
+    stats_p = safe("パ・成績", lambda: fetch_stats(season, old_stats_p, 2), old_stats_p)
     prev_order = safe("前年の順位", lambda: fetch_prev_order(season, old), (old or {}).get("prev_order"))
+    prev_order_p = safe("パ・前年の順位", lambda: fetch_prev_order(season, old, "p"), (old or {}).get("prev_order_p"))
     rosters, roster_date = safe("選手一覧", lambda: fetch_rosters(old), ((old or {}).get("rosters") or {}, (old or {}).get("roster_date")))
     post = safe("ポストシーズン", lambda: fetch_post(season, old), (old or {}).get("post"))
     fpos = safe("守備位置", lambda: fetch_fpos(season, old), (old or {}).get("fpos"))
     if (old and old_games == all_games and old_stats == stats and old.get("prev_order") == prev_order
+            and old_stats_p == stats_p and old.get("prev_order_p") == prev_order_p
             and old.get("checked") == month and old.get("rosters") == rosters and old.get("song_rev") == SONG_REV
             and old.get("post") == post and old.get("fpos") == fpos):
         print("変化なし")
@@ -671,7 +689,9 @@ def main():
         "season": season,
         "games": all_games,
         "stats": stats,
+        "stats_p": stats_p,
         "prev_order": prev_order,
+        "prev_order_p": prev_order_p,
         "checked": month,
         "rosters": rosters,
         "roster_date": roster_date,
