@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260928163921">
+<meta name="build" content="20260928164641">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -3876,7 +3876,9 @@ const SONG_ONE = {
 };
 const frag = x => encodeURIComponent(x).replace(/-/g, "%2D");
 const jump = (t, url, text) => SONG_PAGE[t] && SONG_PAGE[t][1] && text ? `${url}#:~:text=${frag(text)}` : url;
-const songLink = (t, x) => SONG_ONE[t] ? SONG_ONE[t](x) : SONG_PAGE[t] ? jump(t, SONG_PAGE[t][0], x.n) : null;
+// su：データ更新で見つけた、その選手の応援歌ページ（公式に応援歌ページがない西武など）。あればそれを優先
+const okUrl = u => typeof u === "string" && /^https:\/\/[^"'<>\s]+$/.test(u);
+const songLink = (t, x) => okUrl(x.su) ? x.su : SONG_ONE[t] ? SONG_ONE[t](x) : SONG_PAGE[t] ? jump(t, SONG_PAGE[t][0], x.n) : null;
 const songLabel = t => (SONG_UNOFFICIAL.has(t) ? "応援歌" : "公式");
 S.songTeam = store("songTeam") || "T"; S.songQ = "";
 // 起動したときのリーグの外の球団が選ばれていたら、そのリーグの先頭の球団にする
