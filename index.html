@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260928062124">
+<meta name="build" content="20260928100517">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1823,6 +1823,13 @@ body{min-height:calc(100vh + 48px);min-height:calc(100lvh + 48px);box-sizing:bor
 /* ページの外側（引っぱったときに見える部分など）もテーマの背景の色に */
 html{background:#0A0A0C}
 html.theme-pawa{background:#CDEBFF}
+
+/* 次の打者：長い名前（エンカーナシオンなど）でも切れないよう、見出しの下の行に出して、必要なら折り返す */
+.pnx3{flex-wrap:wrap}
+.pnx3 b{min-width:0;overflow-wrap:anywhere;line-height:1.3}
+.pnx3.up{white-space:normal !important;overflow:visible !important;text-overflow:clip !important;flex-direction:column;align-items:flex-start;gap:2px}
+/* 打席終了の行：結果が長くても切れないよう、入りきらなければ球団名を次の行へ */
+.pr3.done{flex-wrap:wrap;row-gap:4px;overflow:visible}
 </style>
 </head>
 <body>
