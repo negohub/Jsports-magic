@@ -274,6 +274,22 @@ async def cal_weather(pg, label):
         bad(f"{label}: 雨の日があると日程の列の幅がそろわない {w}")
 
 
+async def starters_check(pg, label):
+    """予告先発が分かっている試合前の試合で、日程の詳細に予告先発が出るか"""
+    r = await pg.evaluate("""(() => {
+      const g = DATA.games.find(x => x.st === 'sched' && TEAM[x.h] && TEAM[x.a]);
+      if (!g) return 'skip';
+      YK = { [`${g.d}|${g.h}|${g.a}`]: { h: 'テスト太郎', a: null } };
+      const t = Object.keys(CONFIG.owners).includes(g.h) ? g.h : g.a;
+      S.calTeam = t; S.calMonth = +g.d.slice(5, 7); S.calSel = g.d; setTab('cal'); renderCal();
+      const e = document.querySelector('#detail .yk');
+      const out = e ? e.innerText.replace(/\s+/g, ' ') : '';
+      YK = {};
+      return out; })()""")
+    if r != "skip" and ("テスト太郎" not in r or "未発表" not in r):
+        bad(f"{label}: 日程の詳細に予告先発が出ない（{r}）")
+
+
 async def season_end(pg, label):
     await pg.evaluate("DATA.games.forEach(g=>{ if(g.st==='sched'||g.st==='live'||g.st==='canc'){ g.st='final'; g.hs=3; g.as=2; } }); renderAll(); setTab('magic')")
     await pg.wait_for_timeout(200)
@@ -341,6 +357,7 @@ async def main():
                 await game_live(pg, label)
                 await sheets(pg, label)
                 await cal_weather(pg, label)
+                await starters_check(pg, label)
                 await season_end(pg, label)
                 for e in errs:
                     bad(f"{label}: 画面のエラー {e}")
