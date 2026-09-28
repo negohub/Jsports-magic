@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260928125401">
+<meta name="build" content="20260928125919">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1563,6 +1563,9 @@ html.theme-pawa .pn3 .sptile b{font-size:15px}
 .ptile.rtile{position:absolute;transform:translate(-50%,-62%);height:24px;padding:0 10px;min-width:0;border-radius:6px;cursor:pointer;z-index:2}
 .ptile.rtile b{font-size:13px;letter-spacing:.04em;color:#1F2A44 !important;white-space:nowrap;margin:0}
 @media (max-width:374px){.ptile.rtile{height:21px;padding:0 7px}.ptile.rtile b{font-size:11.5px}}
+/* 球場名が長くても、LIVE と直接対決の札は1行のまま */
+.btag .vsb,.btag .lv{white-space:nowrap;flex:0 0 auto}
+.btag .vn{min-width:0}
 /* 1球ごとの一覧の球速の単位 */
 .pbar b small{font-size:.62em;font-weight:600;margin-left:1px;opacity:.75;letter-spacing:0}
 /* 予告先発 */
@@ -3233,7 +3236,7 @@ function renderToday(a) {
       <div class="tgo${lead === "a" ? " now" : ""}" style="${tv(g.a)}"><b>${fn(g.a)}が勝ったら${lead === "a" ? `<em>このまま終われば</em>` : ""}</b><ul>${effects(g, false)}</ul></div>`;
     const k = g.d + gkey(g), canOpen = (live || fin) && CONFIG.liveApi, open = canOpen && S.open[k];
     return `<div class="tg${live ? " islive" : ""}${canOpen ? " can" : ""}${open ? " open" : ""}"${canOpen ? ` data-open="${k}"` : ""}>
-      ${bugHTML(g, `${live ? `<span class="lv"><i class="ldot"></i>LIVE</span>` : ""}<span class="vn">${esc(g.v || "")}</span>${both ? `<span class="vsb">直接対決</span>` : ""}`)}
+      ${bugHTML(g, `${live ? `<span class="lv"><i class="ldot"></i>LIVE</span>` : ""}<span class="vn">${esc(venueName(g.v))}</span>${both ? `<span class="vsb">直接対決</span>` : ""}`)}
       ${canOpen ? `<div class="tgx">${open ? "閉じる" : live ? "タップで一球速報・スコア・打順" : "タップでスコア・打順"}<i></i></div>` : ""}
       ${open ? `<div class="tgd">${detailHTML(g)}</div>` : ""}${outs}
     </div>`;
@@ -3459,6 +3462,19 @@ const VENUE = {
   "宇都宮": [36.5551, 139.8828, 0], "鹿児島": [31.5602, 130.5581, 0], "那覇": [26.2124, 127.6792, 0], "函館": [41.7687, 140.7288, 0],
   "旭川": [43.7706, 142.3650, 0], "帯広": [42.9236, 143.1966, 0], "北九州": [33.8834, 130.8752, 0], "熊本": [32.8032, 130.7079, 0],
 };
+// 球場の正式名称（表示用。データの中の短い表記はそのまま使う）
+const VENUE_NAME = {
+  "横浜": "横浜スタジアム", "マツダスタジアム": "MAZDA Zoom-Zoom スタジアム広島", "神宮": "明治神宮野球場", "甲子園": "阪神甲子園球場",
+  "バンテリンドーム": "バンテリンドーム ナゴヤ", "東京ドーム": "東京ドーム", "京セラD大阪": "京セラドーム大阪", "ほっと神戸": "ほっともっとフィールド神戸",
+  "楽天モバイル": "楽天モバイル 最強パーク宮城", "エスコンF": "エスコンフィールドHOKKAIDO", "みずほPayPay": "みずほPayPayドーム福岡",
+  "ベルーナドーム": "ベルーナドーム", "ZOZOマリン": "ZOZOマリンスタジアム",
+  "岐阜": "岐阜県営長良川球場", "豊橋": "豊橋市民球場", "松山": "坊っちゃんスタジアム", "長野": "長野オリンピックスタジアム",
+  "前橋": "上毛新聞敷島球場", "福井": "セーレン・ドリームスタジアム", "いわき": "ヨークいわきスタジアム", "倉敷": "倉敷マスカットスタジアム",
+  "ハードオフ新潟": "HARD OFF ECOスタジアム新潟", "弘前": "はるか夢球場", "盛岡": "きたぎんボールパーク",
+  "富山": "富山市民球場アルペンスタジアム", "金沢": "石川県立野球場", "那覇": "沖縄セルラースタジアム那覇", "秋田": "こまちスタジアム",
+  "郡山": "ヨーク開成山スタジアム", "宇都宮": "宇都宮清原球場", "北九州": "北九州市民球場", "熊本": "リブワーク藤崎台球場", "鹿児島": "平和リース球場",
+};
+const venueName = v => { if (!v) return ""; const k = String(v).normalize("NFKC").replace(/\s+/g, ""); return VENUE_NAME[k] || VENUE_NAME[v] || v; };
 const venueOf = v => { if (!v) return null; const k = String(v).normalize("NFKC").replace(/\s+/g, ""); return VENUE[k] ? k : Object.keys(VENUE).find(x => k.includes(x) || x.includes(k)) || null; };
 const WX = {};
 async function loadWx(v) {
@@ -3636,7 +3652,7 @@ function renderCal() {
     const score = g.st === "final" ? `<span class="n num">${g.hs}</span><span style="color:var(--muted)">-</span><span class="n num">${g.as}</span>` : `<span style="color:var(--muted)">vs</span>`;
     const w = g.st === "sched" ? wxFor(g) : null;
     const wxRow = w ? `<div class="wxd">${wxIcon(w.code)}<b>${wxKind(w.code)[1]}</b><span class="num">${w.temp}℃</span>${w.pop != null ? `<span class="num${w.pop >= 60 ? " wxhi" : ""}">降水確率 ${w.pop}%</span>` : ""}${w.dome ? `<em>ドーム（天気の影響なし）</em>` : ""}</div>` : "";
-    return `<div class="dd">${mm}/${d2}（${WD[new Date(yy, mm - 1, d2).getDay()]}）${esc(g.v || "")}</div>${wxRow}${ykHTML(g, true)}
+    return `<div class="dd">${mm}/${d2}（${WD[new Date(yy, mm - 1, d2).getDay()]}）${esc(venueName(g.v))}</div>${wxRow}${ykHTML(g, true)}
       <div class="sc"><span class="dtm" style="color:${tc(g.h)};--tcol:${tc(g.h)}">${fn(g.h)}</span>${score}<span class="dtm" style="color:${tc(g.a)};--tcol:${tc(g.a)}">${fn(g.a)}</span>${res}</div>`;
   }).join("");
 }
