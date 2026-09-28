@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260928035001">
+<meta name="build" content="20260928044325">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -133,7 +133,7 @@ h2 small{font-size:12.5px;color:var(--muted);font-weight:600;font-style:normal;m
 .monthbar button:disabled{opacity:.25;cursor:default}
 .mrec{text-align:center;font-size:13.5px;color:var(--muted);margin:0 0 12px}
 .mrec b{color:#fff;font-weight:900}
-.cal{display:grid;grid-template-columns:repeat(7,1fr);background:var(--line2);gap:1px;border:1px solid var(--line2)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));background:var(--line2);gap:1px;border:1px solid var(--line2)}
 .cal .wd{background:var(--p1);text-align:center;font-size:12px;font-weight:800;padding:7px 0;color:var(--muted)}
 .cal .wd.sa{color:var(--sat)} .cal .wd.su{color:var(--sun)}
 .day{background:var(--bg);min-height:86px;padding:6px 1px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:default;border:0;text-align:center}
@@ -992,18 +992,18 @@ body{padding-bottom:calc(98px + env(safe-area-inset-bottom,0px))}
 .wxc{position:absolute;right:2px;top:2px;display:flex;flex-direction:column;align-items:center;line-height:1}
 .wxc .wxi{width:15px;height:15px}
 .wxc small{font-size:8.5px;color:#9FC9FF;font-weight:700;margin-top:1px}
-.wxc small.hi{color:#5AB0FF}
+.wxc small.wxhi{color:#5AB0FF}
 .wxd{display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;margin:4px 0 8px;font-size:13px;color:#DADADA}
 .wxd .wxi{width:22px;height:22px}
 .wxd b{font-weight:700}
-.wxd span.hi{color:#5AB0FF;font-weight:700}
+.wxd span.wxhi{color:#5AB0FF;font-weight:700}
 .wxd em{font-style:normal;font-size:11.5px;color:var(--muted);border:1px solid #2A2A2A;padding:0 6px}
 
 /* 天気は時刻の下の行に（重ならないように） */
 .wxr{display:flex;align-items:center;justify-content:center;gap:2px;margin-top:1px;line-height:1}
 .wxr .wxi{width:14px;height:14px}
 .wxr small{font-size:9.5px;font-weight:700;color:#BFD9FF;letter-spacing:0}
-.wxr small.hi{color:#fff;background:#1E6FD9;padding:1px 3px;border-radius:2px}
+.wxr small.wxhi{color:#fff;background:#1E6FD9;padding:1px 3px;border-radius:2px}
 
 /* 個人ランキング：打者／投手と全項目のメニュー */
 .rkbar{display:flex;align-items:center;gap:10px;margin-bottom:10px}
@@ -1045,11 +1045,11 @@ body{padding-bottom:calc(98px + env(safe-area-inset-bottom,0px))}
 .themeSeg button{border:0;border-radius:11px;padding:10px;font:inherit;font-size:13.5px;font-weight:700;color:#BDBDBD;background:none;cursor:pointer}
 .themeSeg button[aria-pressed="true"]{background:#fff;color:#000}
 .sh-note{font-size:11.5px;color:var(--muted);margin:10px 0 0;line-height:1.6}
-.hi{display:grid;grid-template-columns:12px 104px 1fr;align-items:baseline;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
-.hi i{width:9px;height:9px;border-radius:50%;background:#2ECC71;align-self:center}
-.hi.warn i{background:#FFB020}.hi.ng i{background:#FF3B3B}.hi.off i{background:#555}
-.hi b{font-weight:700}.hi span{color:#C8C8C8}
-.hi.ng span{color:#FF8A8A}.hi.warn span{color:#FFD08A}
+#healthBox .hi{display:grid;grid-template-columns:12px 104px 1fr;align-items:baseline;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
+#healthBox .hi i{width:9px;height:9px;border-radius:50%;background:#2ECC71;align-self:center}
+#healthBox .hi.warn i{background:#FFB020}#healthBox .hi.ng i{background:#FF3B3B}#healthBox .hi.off i{background:#555}
+#healthBox .hi b{font-weight:700}#healthBox .hi span{color:#C8C8C8}
+#healthBox .hi.ng span{color:#FF8A8A}#healthBox .hi.warn span{color:#FFD08A}
 
 /* ===================== やわらかさ（全体の仕上げ） ===================== */
 :root{--r-lg:20px;--r-md:14px;--r-sm:9px;--soft-line:rgba(255,255,255,.07);--card:#0E0E11;--card2:#131317}
@@ -1561,6 +1561,8 @@ html.theme-pawa .ytbl .ynm .otile.sp b{letter-spacing:.3em;margin-right:-.3em}
 html.theme-pawa .hist td.tnm .otile{font-size:13px;min-width:56px;padding:2px 8px}
 html.theme-pawa .se-box .otile{font-size:20px}
 /* ===== パワプロ風：細部（消えないよう独立したまとまりにしておく） ===== */
+/* 日程：ポストシーズンの印（CS・日本シリーズ）は、明るい背景でも読めるオレンジの札に */
+html.theme-pawa .day .ps{color:#fff !important;background:linear-gradient(180deg,#FFA53A,#E06E00);padding:1px 4px;border-radius:4px;box-shadow:0 1px 0 rgba(0,0,0,.15)}
 /* 日程：月の成績の行 */
 html.theme-pawa #mRec,html.theme-pawa #mRec *{color:#13264A !important}
 /* 試合タブ：投手成績の名前 */
@@ -1727,12 +1729,12 @@ html.theme-pawa .sheet-card{background:linear-gradient(180deg,rgba(255,255,255,.
   -webkit-backdrop-filter:blur(30px) saturate(190%);backdrop-filter:blur(30px) saturate(190%);
   box-shadow:0 20px 50px rgba(19,38,74,.35),inset 0 1px 0 #fff,inset 0 0 0 1.5px rgba(255,255,255,.7);color:#13264A}
 html.theme-pawa .sheet-grip{background:rgba(19,38,74,.25)}
-html.theme-pawa .sheet-head b,html.theme-pawa .me-lead,html.theme-pawa .hi b{color:#13264A}
+html.theme-pawa .sheet-head b,html.theme-pawa .me-lead,html.theme-pawa #healthBox .hi b{color:#13264A}
 html.theme-pawa .sheet-x{background:rgba(19,38,74,.08);color:#13264A}
 html.theme-pawa .sh-lab,html.theme-pawa .sh-note{color:#4A6390}
-html.theme-pawa .hi{border-color:rgba(19,38,74,.1)}
-html.theme-pawa .hi span{color:#3B5480}
-html.theme-pawa .hi.warn span{color:#B26A00}html.theme-pawa .hi.ng span{color:#D32F2F}
+html.theme-pawa #healthBox .hi{border-color:rgba(19,38,74,.1)}
+html.theme-pawa #healthBox .hi span{color:#3B5480}
+html.theme-pawa #healthBox .hi.warn span{color:#B26A00}html.theme-pawa #healthBox .hi.ng span{color:#D32F2F}
 html.theme-pawa .me-row{background:rgba(255,255,255,.6);color:#13264A;box-shadow:inset 0 0 0 1px rgba(19,38,74,.12)}
 html.theme-pawa .me-row span{color:#C98A00}
 html.theme-pawa .themeSeg{background:rgba(19,38,74,.08)}
@@ -3444,7 +3446,7 @@ function renderCal() {
       else if (g.st === "final") { const r = resultOf(g, t); inner += `<span class="rs ${r}">${r === "w" ? "○" : r === "l" ? "×" : "△"}</span>`; }
       else if (g.st === "live") { const me = g.h === t ? g.hs : g.as, op = g.h === t ? g.as : g.hs; inner += `<span class="tx lvc num">${me}-${op}</span><span class="tx lvc">${esc((g.inn || "").replace("回", ""))}</span>`; }
       else inner += `<span class="tx num">${esc(g.t || "")}</span>`;
-      if (g.st === "sched") { const w = wxFor(g); if (w && !w.dome) inner += `<span class="wxr">${wxIcon(w.code)}${w.pop != null && w.pop >= 30 ? `<small class="num${w.pop >= 60 ? " hi" : ""}">${w.pop}%</small>` : ""}</span>`; }
+      if (g.st === "sched") { const w = wxFor(g); if (w && !w.dome) inner += `<span class="wxr">${wxIcon(w.code)}${w.pop != null && w.pop >= 30 ? `<small class="num${w.pop >= 60 ? " wxhi" : ""}">${w.pop}%</small>` : ""}</span>`; }
     }
     const pg = !g && postByDay[iso];
     if (pg) {
@@ -3487,7 +3489,7 @@ function renderCal() {
     const res = g.st === "canc" ? `<span class="res">中止</span>` : r ? `<span class="res ${r}">${r === "w" ? "勝ち" : r === "l" ? "負け" : "引き分け"}</span>` : `<span class="res num">${esc(g.t || "試合前")}</span>`;
     const score = g.st === "final" ? `<span class="n num">${g.hs}</span><span style="color:var(--muted)">-</span><span class="n num">${g.as}</span>` : `<span style="color:var(--muted)">vs</span>`;
     const w = g.st === "sched" ? wxFor(g) : null;
-    const wxRow = w ? `<div class="wxd">${wxIcon(w.code)}<b>${wxKind(w.code)[1]}</b><span class="num">${w.temp}℃</span>${w.pop != null ? `<span class="num${w.pop >= 60 ? " hi" : ""}">降水確率 ${w.pop}%</span>` : ""}${w.dome ? `<em>ドーム（天気の影響なし）</em>` : ""}</div>` : "";
+    const wxRow = w ? `<div class="wxd">${wxIcon(w.code)}<b>${wxKind(w.code)[1]}</b><span class="num">${w.temp}℃</span>${w.pop != null ? `<span class="num${w.pop >= 60 ? " wxhi" : ""}">降水確率 ${w.pop}%</span>` : ""}${w.dome ? `<em>ドーム（天気の影響なし）</em>` : ""}</div>` : "";
     return `<div class="dd">${mm}/${d2}（${WD[new Date(yy, mm - 1, d2).getDay()]}）${esc(g.v || "")}</div>${wxRow}
       <div class="sc"><span class="dtm" style="color:${tc(g.h)};--tcol:${tc(g.h)}">${fn(g.h)}</span>${score}<span class="dtm" style="color:${tc(g.a)};--tcol:${tc(g.a)}">${fn(g.a)}</span>${res}</div>`;
   }).join("");
