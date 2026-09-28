@@ -151,7 +151,7 @@ async def open_page(browser, width, theme, me="S"):
     pg = await browser.new_page(viewport={"width": width, "height": 844})
     errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
-    await pg.add_init_script(f"localStorage.setItem('me','{me}'); localStorage.setItem('theme','{theme}'); localStorage.setItem('songTeam','T')")
+    await pg.add_init_script(f"localStorage.setItem('me','{me}'); localStorage.setItem('theme','{theme}'); localStorage.setItem('songTeam','T'); localStorage.setItem('league','C')")
     await pg.route(LIVE + "**", route_live)
     await pg.route("https://api.open-meteo.com/**", lambda r: r.fulfill(status=500, body="x"))
     await pg.goto(URL)
@@ -369,6 +369,26 @@ async def main():
                 await season_end(pg, label)
                 for e in errs:
                     bad(f"{label}: 画面のエラー {e}")
+                await pg.close()
+                # パ・リーグに切り替えて、同じように全タブを検査する
+                plabel = label.replace("]", " パ・リーグ]")
+                pg, errs = await open_page(browser, width, theme)
+                await pg.evaluate("switchLeague('P')")
+                await pg.wait_for_timeout(300)
+                if await pg.evaluate("LEAGUE") != "P" or await pg.evaluate("CL.join(',')") != "H,F,B,E,L,M":
+                    bad(f"{plabel}: パ・リーグに切り替わらない")
+                await scan(pg, plabel)
+                shown = await pg.evaluate("[...document.querySelectorAll('.cl-only')].filter(e => e.offsetParent).length")
+                if shown:
+                    bad(f"{plabel}: セ・リーグだけの部分（支払いなど）が {shown} か所出ている")
+                if await pg.evaluate("document.getElementById('stdTtl').textContent") != "パ・リーグ順位表":
+                    bad(f"{plabel}: 順位表の見出しがパ・リーグになっていない")
+                await pg.evaluate("switchLeague('C')")
+                await pg.wait_for_timeout(200)
+                if await pg.evaluate("CL.join(',')") != "DB,G,T,D,S,C":
+                    bad(f"{plabel}: セ・リーグに戻らない")
+                for e in errs:
+                    bad(f"{plabel}: 画面のエラー {e}")
                 await pg.close()
         # 担当を選んでいない人・選ぶ前の人
         for me in ["none", ""]:
