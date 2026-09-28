@@ -323,12 +323,13 @@ SONG_SOURCES = {
     "D": ["https://www.yakyu-ouen.net/dragons/"],
     "C": ["https://www.carp.co.jp/team/songs", "https://www.yakyu-ouen.net/carp/"],
     "S": ["https://www.yakult-swallows.co.jp/players/song", "https://www.yakyu-ouen.net/swallows/"],
-    "H": ["https://www.yakyu-ouen.net/hawks/"],
-    "F": ["https://www.yakyu-ouen.net/fighters/"],
-    "B": ["https://www.yakyu-ouen.net/buffaloes/"],
-    "E": ["https://www.yakyu-ouen.net/eagles/"],
+    # パ・リーグ：公式の応援歌ページ＋応援歌まとめサイト（西武は公式にページがないのでまとめサイトだけ）
+    "H": ["https://www.softbankhawks.co.jp/team/song/", "https://www.yakyu-ouen.net/hawks/"],
+    "F": ["https://www.fighters.co.jp/entertainment/cheer_player/", "https://www.yakyu-ouen.net/fighters/"],
+    "B": ["https://www.buffaloes.co.jp/team/playersong.html", "https://www.yakyu-ouen.net/buffaloes/"],
+    "E": ["https://www.rakuteneagles.jp/team/rooterssong/", "https://www.yakyu-ouen.net/eagles/"],
     "L": ["https://www.yakyu-ouen.net/lions/"],
-    "M": ["https://www.yakyu-ouen.net/marines/"],
+    "M": ["https://www.marines.co.jp/fans/supportersong/", "https://www.yakyu-ouen.net/marines/"],
 }
 # 公式がPDFで配っている球団は、PDFに載っている選手名をここに書いておく（中日：cheersong2026.pdf）
 SONG_EXTRA = {
@@ -336,7 +337,7 @@ SONG_EXTRA = {
           "ボスラー", "石川昂弥", "根尾昂", "木下拓哉", "宇佐見真吾", "ブライト健太", "土田龍空", "阿部寿樹",
           "加藤匠馬", "上林誠知", "細川成也", "山本泰寛", "鵜飼航丞"],
 }
-SONG_REV = 2  # 判定のしかたを変えたら数字を上げる（上げると時期に関係なく1回やり直す）
+SONG_REV = 3  # 判定のしかたを変えたら数字を上げる（上げると時期に関係なく1回やり直す）
 # 背番号で並んでいるページ（ヤクルト公式）は背番号でも照合する
 SONG_BY_NUMBER = {"https://www.yakult-swallows.co.jp/players/song"}
 VARIANT = str.maketrans({"髙": "高", "﨑": "崎", "濵": "浜", "德": "徳", "瀨": "瀬", "邊": "辺", "邉": "辺", "塚": "塚", "・": "", "＝": "", "=": ""})
