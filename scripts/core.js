@@ -52,13 +52,42 @@ function analyze(games, period, cfg) {
   let sig = LEAGUE + "|" + CL.join(",") + "|" + period.id + "|" + period.months.join(",") + "|" + (cfg.excluded || []).join(",") + "|" + !!cfg.tieIsSafe + "|" + (cfg.prevOrder || []).join(",");
   for (const g of games) if (period.months.includes(monthOf(g.d))) sig += "|" + g.d + g.h + g.a + g.st + g.hs + "-" + g.as;
   const hit = __anMemo.get(sig);
-  if (hit) return __clone(hit);
+  if (hit) return __relink(__clone(hit), games, period);
   const res = analyzeRaw(games, period, cfg);
   if (__anMemo.size > 80) __anMemo.clear();
   __anMemo.set(sig, __clone(res));
   return res;
 }
 function __clone(o) { return typeof structuredClone === "function" ? structuredClone(o) : JSON.parse(JSON.stringify(o)); }
+// 使い回した結果の「残り試合」を、今渡された試合データそのものに付け替える
+// （画面では「この試合が勝ったら」を試合データの同一性で探すため。複製のままだと見つからない）
+function __relink(res, games, period) {
+  const pool = new Map();
+  for (const g of games) {
+    if (!period.months.includes(monthOf(g.d))) continue;
+    const k = g.d + "|" + g.h + "|" + g.a;
+    if (!pool.has(k)) pool.set(k, []);
+    pool.get(k).push(g);
+  }
+  const used = new Map();
+  const pick = x => {
+    const k = x.d + "|" + x.h + "|" + x.a, list = pool.get(k);
+    if (!list) return x;
+    // 同じ日・同じカードが2試合あるとき（ダブルヘッダー）は、開始時刻・状態が同じものを順に使う
+    const u = used.get(k) || new Set();
+    const g = list.find(y => !u.has(y) && y.t === x.t && y.st === x.st) || list.find(y => !u.has(y)) || list[0];
+    u.add(g); used.set(k, u);
+    return g;
+  };
+  res.remaining = res.remaining.map(pick);
+  // 球団ごとの残り試合も、同じ試合データを指すように
+  const byKey = new Map();
+  res.remaining.forEach(g => { const k = g.d + "|" + g.h + "|" + g.a + "|" + (g.t || ""); if (!byKey.has(k)) byKey.set(k, []); byKey.get(k).push(g); });
+  const re = arr => { const cnt = new Map(); return (arr || []).map(x => { const k = x.d + "|" + x.h + "|" + x.a + "|" + (x.t || ""), list = byKey.get(k); if (!list) return x; const i = cnt.get(k) || 0; cnt.set(k, i + 1); return list[Math.min(i, list.length - 1)]; }); };
+  for (const r of res.rows) r.left = re(r.left);
+  for (const t in res.R) res.R[t].left = re(res.R[t].left);
+  return res;
+}
 function analyzeRaw(games, period, cfg) {
   const targets = CL.filter(t => !cfg.excluded.includes(t));
   const R = {};
