@@ -147,8 +147,8 @@ CHECK_JS = r"""
 TABS = ["magic", "game", "cal", "std", "stats", "song"]
 
 
-async def open_page(browser, width, theme, me="S"):
-    pg = await browser.new_page(viewport={"width": width, "height": 844})
+async def open_page(browser, width, theme, me="S", touch=False):
+    pg = await browser.new_page(viewport={"width": width, "height": 844}, has_touch=touch)
     errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
     await pg.add_init_script(f"localStorage.setItem('me','{me}'); localStorage.setItem('theme','{theme}'); localStorage.setItem('songTeam','T'); localStorage.setItem('league','C')")
@@ -373,6 +373,12 @@ async def calc_cache(browser):
           if (key() === before) ng.push("試合が変わっても計算し直さない");
           g.hs = hs; g.as = as;
           if (key() !== before) ng.push("元に戻しても答えが戻らない");
+          // 使い回した結果の残り試合が、画面の試合データそのものを指しているか（「勝ったら」の計算で使う）
+          for (const q of CONFIG.periods) {
+            analyze(DATA.games, q, CONFIG); const y1 = analyze(DATA.games, q, CONFIG);   // 2回目は使い回し
+            if (y1.remaining.some(g => !DATA.games.includes(g))) ng.push(`使い回した結果の残り試合が、試合データそのものを指していない ${q.id}`);
+            if (y1.rows.some(r => (r.left || []).some(g => !DATA.games.includes(g)))) ng.push(`使い回した結果の球団ごとの残り試合が、試合データそのものを指していない ${q.id}`);
+          }
           const x = analyze(DATA.games, p, CONFIG); x.rows[0].w = 999;
           if (analyze(DATA.games, p, CONFIG).rows[0].w === 999) ng.push("返した結果の書き換えが使い回しに混ざる");
           return ng;
@@ -542,6 +548,228 @@ async def wording_check(browser):
             await pg.close()
 
 
+# 指の操作をまねる（touchstart→touchmove→touchend）
+SWIPE_JS = """([sel, dx, dy]) => {
+  const el = typeof sel === "string" ? document.querySelector(sel) : sel;
+  if (!el) return "no-element";
+  el.scrollIntoView({ block: "center" });
+  const b = el.getBoundingClientRect(), x = b.left + b.width / 2, y = b.top + Math.min(b.height / 2, 40);
+  const mk = (cx, cy) => new Touch({ identifier: 1, target: el, clientX: cx, clientY: cy });
+  const fire = (type, cx, cy) => { const t = mk(cx, cy); el.dispatchEvent(new TouchEvent(type, { touches: type === "touchend" ? [] : [t], targetTouches: type === "touchend" ? [] : [t], changedTouches: [t], bubbles: true, cancelable: true })); };
+  fire("touchstart", x, y);
+  for (let i = 1; i <= 8; i++) fire("touchmove", x + dx * i / 8, y + dy * i / 8);
+  fire("touchend", x + dx, y + dy);
+  return "ok";
+}"""
+
+
+async def tap_target_check(browser):
+    """指で押す部品が縦横44px以上あるか（表の球団名はマス全体が押せるか）。両テーマ×幅390/320×両リーグ・全タブ"""
+    for theme in ["", "pawa"]:
+        for width in [390, 320]:
+            for lg in ["C", "P"]:
+                label = f"[押しやすさ {'パワプロ風' if theme else 'スタイリッシュ'} 幅{width} {lg}]"
+                pg, errs = await open_page(browser, width, theme)
+                if lg == "P":
+                    await pg.evaluate("switchLeague('P')")
+                    await pg.wait_for_timeout(200)
+                for tab in ["magic", "game", "cal", "std", "stats", "song"]:
+                    r = await pg.evaluate("""(tab) => {
+                      setTab(tab);
+                      const v = document.getElementById('v-' + tab), ng = new Set();
+                      v.querySelectorAll('a[href], button, summary, select, th.srt').forEach(e => {
+                        if (!e.offsetParent || e.closest('.ptile, .howto li, .foot, p')) return;   // 文章の中のリンク・選手名の札は対象外
+                        let b = e.getBoundingClientRect();
+                        const td = e.matches('td.tnm a') ? e.closest('td') : null;
+                        if (td) {
+                          // マス全体が押せるか：マスの隅を押したときにこのリンクに当たるか
+                          b = td.getBoundingClientRect();
+                          e.scrollIntoView({ block: 'center' }); b = td.getBoundingClientRect();
+                          const hit = document.elementFromPoint(b.left + 3, b.bottom - 3);
+                          if (!hit || !(hit === e || e.contains(hit) || hit.closest('a') === e)) { ng.add(`球団名のマスの隅を押してもリンクにならない：${e.textContent.trim().slice(0, 10)}`); return; }
+                        }
+                        if (b.width < 1) return;
+                        // 表の見出し（並べ替え）と日程のカレンダーの日付（7列）は、列の幅が画面幅で決まるので高さだけ確かめる
+                        if (b.height < 43.5 || (b.width < 43.5 && !e.matches('th.srt, #cal button.day'))) ng.add(`${e.tagName.toLowerCase()}「${e.textContent.trim().slice(0, 10)}」${Math.round(b.width)}×${Math.round(b.height)}`);
+                      });
+                      return [...ng].slice(0, 6);
+                    }""", tab)
+                    for m in r:
+                        bad(f"{label} [{tab}] 押す部品が小さい：{m}")
+                r = await pg.evaluate("(() => { window.scrollTo(0, 0); const b = document.getElementById('gearBtn').getBoundingClientRect(); return b.width >= 43.5 && b.height >= 43.5 ? '' : `設定ボタンが小さい（${Math.round(b.width)}×${Math.round(b.height)}）`; })()")
+                if r:
+                    bad(f"{label} {r}")
+                for e in errs:
+                    bad(f"{label}: 画面のエラー {e}")
+                await pg.close()
+
+
+async def swipe_check(browser):
+    """戦況の順位表のあたりを左右にスワイプすると月度が変わる・それ以外の場所ではタブが変わる"""
+    for theme in ["", "pawa"]:
+        label = f"[スワイプ {'パワプロ風' if theme else 'スタイリッシュ'}]"
+        pg, errs = await open_page(browser, 390, theme, touch=True)
+        await pg.evaluate("setTab('magic'); window.scrollTo(0, 0)")
+        before = await pg.evaluate("S.period.id")
+        list_ = await pg.evaluate("periods().map(p => p.id)")
+        i = list_.index(before)
+        await pg.evaluate(SWIPE_JS, ["#cards", 160, 0])      # 右へ：前の月度
+        await pg.wait_for_timeout(200)
+        after = await pg.evaluate("[S.tab, S.period.id]")
+        if i > 0 and (after[0] != "magic" or after[1] != list_[i - 1]):
+            bad(f"{label} 順位表を右へスワイプしても前の月度にならない（{before}→{after}）")
+        await pg.evaluate(SWIPE_JS, ["#cards", -160, 0])     # 左へ：元の月度
+        await pg.wait_for_timeout(200)
+        after = await pg.evaluate("[S.tab, S.period.id]")
+        if after != ["magic", before]:
+            bad(f"{label} 順位表を左へスワイプしても元の月度に戻らない（{after}）")
+        await pg.evaluate(SWIPE_JS, ["#cards", 30, 0])       # 少しだけ：変わらない
+        await pg.wait_for_timeout(200)
+        if await pg.evaluate("S.period.id") != before:
+            bad(f"{label} 少し動かしただけで月度が変わる")
+        await pg.evaluate(SWIPE_JS, ["#formBlk", -160, 0])   # 順位表以外：タブが変わる
+        await pg.wait_for_timeout(300)
+        if await pg.evaluate("S.tab") != "game":
+            bad(f"{label} 順位表以外の場所を左へスワイプしてもタブが変わらない")
+        for e in errs:
+            bad(f"{label}: 画面のエラー {e}")
+        await pg.close()
+
+
+async def pull_refresh_check(browser):
+    """引っぱって更新：ホーム画面から開いたときだけ動き、更新の処理が呼ばれる"""
+    pg, errs = await open_page(browser, 390, "", touch=True)
+    r = await pg.evaluate("""async () => {
+      const ng = []; let called = 0;
+      window.scrollTo(0, 0);
+      // ブラウザで開いているとき：動かない
+      const sw = async () => { const el = document.querySelector('#alert'); const mk = y => new Touch({ identifier: 2, target: el, clientX: 200, clientY: y });
+        const f = (type, y) => { const t = mk(y); el.dispatchEvent(new TouchEvent(type, { touches: type === 'touchend' ? [] : [t], changedTouches: [t], bubbles: true, cancelable: true })); };
+        f('touchstart', 150); for (let i = 1; i <= 8; i++) f('touchmove', 150 + 16 * i); f('touchend', 278); await new Promise(r => setTimeout(r, 50)); };
+      await sw();
+      if (document.getElementById('ptrTxt').textContent !== '引っぱって更新' || getComputedStyle(document.getElementById('ptr')).opacity !== '0') ng.push('ブラウザで開いているのに引っぱって更新が動く');
+      window.__ptrForce = true;
+      const t0 = document.getElementById('ptrTxt').textContent;
+      await sw();
+      const txt = document.getElementById('ptrTxt').textContent;
+      if (!/更新中|最新です|更新しました|更新できません/.test(txt)) ng.push(`ホーム画面から開いたときに引っぱって更新が動かない（表示：${txt}）`);
+      await new Promise(r => setTimeout(r, 1500));
+      window.__ptrForce = false;
+      return ng;
+    }""")
+    for m in r:
+        bad(f"[引っぱって更新] {m}")
+    for e in errs:
+        bad(f"[引っぱって更新]: 画面のエラー {e}")
+    await pg.close()
+
+
+async def memory_check(browser):
+    """成績タブの打者/投手・項目・並べ替えを、開き直しても覚えているか"""
+    pg, errs = await open_page(browser, 390, "")
+    await pg.evaluate("""() => {
+      setTab('stats');
+      document.querySelector('#tmSeg button[data-k="pit"]').click();
+      document.querySelector('#tmTbl th.srt[data-col="1"]').click();
+      document.querySelector('#rkSeg button[data-k="pit"]').click();
+      S.cat = CATS.pit[2][0]; renderStats();
+      document.querySelector('#ptSeg button[data-k="pit"]').click();
+    }""")
+    want = await pg.evaluate("[S.tmKind, JSON.stringify(S.tmSort), S.rkKind, S.cat, S.ptKind]")
+    await pg.wait_for_timeout(1500)   # 端末への保存が終わるのを待ってから開き直す
+    await pg.reload()
+    await pg.wait_for_timeout(700)
+    got = await pg.evaluate("[S.tmKind, JSON.stringify(S.tmSort), S.rkKind, S.cat, S.ptKind]")
+    if got != want:
+        bad(f"[状態の記憶] 開き直すと成績タブの状態が戻る（前：{want} → 後：{got}）")
+    # 壊れた値が入っていても画面が壊れない
+    await pg.evaluate("v => localStorage.setItem('statsUI', v)", json.dumps({"tmKind": "xx", "cat": "nope", "tmSort": {"kind": "bat", "col": "a"}}))
+    await pg.reload()
+    await pg.wait_for_timeout(700)
+    ok = await pg.evaluate("setTab('stats'), [S.tmKind, CATS[S.rkKind].some(c => c[0] === S.cat), !!document.querySelector('#tmTbl tbody tr')]")
+    if ok != ["bat", True, True]:
+        bad(f"[状態の記憶] 壊れた値が入っていると成績タブがおかしくなる（{ok}）")
+    await pg.evaluate("localStorage.removeItem('statsUI')")
+    for e in errs:
+        bad(f"[状態の記憶]: 画面のエラー {e}")
+    await pg.close()
+
+
+async def loser_wording_check(browser):
+    """負けた側のマジックが減る場面では「負けても自力脱出が残る」と書き、「M5 → M4」とは書かない"""
+    pg, errs = await open_page(browser, 390, "")
+    r = await pg.evaluate("""() => {
+      // 今の月度の残り試合から、負けた側のマジックが減る場面を探す
+      const p = S.period, base = analyze(DATA.games, p, CONFIG), by = {}; base.rows.forEach(x => by[x.t] = x);
+      for (const g of base.remaining) {
+        for (const hw of [true, false]) {
+          const g2 = DATA.games.map(x => x === g ? { ...x, st: 'final', hs: hw ? 1 : 0, as: hw ? 0 : 1 } : x);
+          const b = analyze(g2, p, CONFIG), lo = hw ? g.a : g.h, B = by[lo], R = b.rows.find(x => x.t === lo);
+          if (B && R && !B.safe && !B.eliminated && !R.safe && !R.eliminated && B.self != null && R.self != null && R.self < B.self) {
+            // その試合を今日の試合にして描く
+            const today = g.d; jst = () => ({ y: +today.slice(0, 4), m: +today.slice(5, 7), d: +today.slice(8), iso: today });
+            setTab('game'); renderGame();
+            const box = [...document.querySelectorAll('#today .tgo')].find(el => el.querySelector('b').textContent.startsWith(fn(hw ? g.h : g.a) + 'が勝ったら'));
+            if (!box) return ['場面は見つかったが、「勝ったら」の欄が出ない'];
+            const t = box.textContent, ng = [];
+            if (!t.includes(fn(lo) + 'は負けても自力脱出が残る')) ng.push(`「${fn(lo)}は負けても自力脱出が残る」と書かれていない：${t.slice(0, 80)}`);
+            if (t.includes(fn(lo) + 'のマジック M' + B.self + ' → M' + R.self)) ng.push('負けた側のマジックが「M○ → M○」と減るように書かれている');
+            return ng;
+          }
+        }
+      }
+      return [];
+    }""")
+    for m in r:
+        bad(f"[負けた側の書き方] {m}")
+    for e in errs:
+        bad(f"[負けた側の書き方]: 画面のエラー {e}")
+    await pg.close()
+
+
+async def home_screen_check(browser):
+    """ホーム画面に置いたときにアプリのように開く設定があるか"""
+    pg, errs = await open_page(browser, 390, "")
+    r = await pg.evaluate("""() => [!!document.querySelector('link[rel=manifest]'), (document.querySelector('meta[name=apple-mobile-web-app-capable]') || {}).content]""")
+    if r != [True, "yes"]:
+        bad(f"[ホーム画面] アプリとして開く設定が足りない（{r}）")
+    mf = ROOT / "manifest.json"
+    try:
+        m = json.loads(mf.read_text(encoding="utf-8"))
+        if m.get("display") != "standalone" or not m.get("icons"):
+            bad("[ホーム画面] manifest.json の display／icons がおかしい")
+    except Exception as e:
+        bad(f"[ホーム画面] manifest.json が読めない（{e}）")
+    await pg.close()
+
+
+async def next_day_check(browser):
+    """試合のない日に出る「次の試合」の「勝ったら」が、その日当日に見たときと同じ内容か（計算の使い回しで試合を見失わないか）"""
+    pg, errs = await open_page(browser, 390, "")
+    r = await pg.evaluate("""() => {
+      const p = S.period, a = analyze(DATA.games, p, CONFIG);
+      if (!a.remaining.length) return [];
+      // 残り試合の期間の中で、試合のない日（D）と、その次に試合がある日（first）を探す
+      const ds = [...new Set(a.remaining.map(g => g.d))].sort();
+      let D = null, first = null;
+      for (let t = new Date(ds[0] + 'T00:00:00Z'); t.toISOString().slice(0, 10) < ds[ds.length - 1]; t.setUTCDate(t.getUTCDate() + 1)) {
+        const iso = t.toISOString().slice(0, 10);
+        const mine = g => a.rows.some(r => r.t === g.h || r.t === g.a);   // 表示しているリーグの対象球団の試合
+        if (!DATA.games.some(g => g.d === iso && g.st !== 'canc' && mine(g))) { D = iso; first = ds.find(x => x > iso); break; }
+      }
+      if (!D || !first) return [];
+      const read = iso => { jst = () => ({ y: +iso.slice(0, 4), m: +iso.slice(5, 7), d: +iso.slice(8), iso }); setTab('game'); renderGame();
+        return [...document.querySelectorAll('#today .tgo')].map(e => e.innerText.replace(/\\s+/g, ' ')).sort().join(' | '); };
+      const nextView = read(D), dayView = read(first);
+      return nextView === dayView ? [] : [`前の日に見た「次の試合」と当日の内容が違う：${nextView.slice(0, 120)} ／ ${dayView.slice(0, 120)}`];
+    }""")
+    for m in r:
+        bad(f"[次の試合] {m}")
+    for e in errs:
+        bad(f"[次の試合]: 画面のエラー {e}")
+    await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -593,6 +821,13 @@ async def main():
         await team_in_check(browser)
         await starter_order_check(browser)
         await wording_check(browser)
+        await tap_target_check(browser)
+        await swipe_check(browser)
+        await pull_refresh_check(browser)
+        await memory_check(browser)
+        await loser_wording_check(browser)
+        await next_day_check(browser)
+        await home_screen_check(browser)
         await browser.close()
     print()
     if PROBLEMS:
