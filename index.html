@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260928171822">
+<meta name="build" content="20260928180124">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1572,6 +1572,9 @@ html.theme-pawa .pn3 .sptile b{font-size:15px}
 /* パ・リーグ表示のときは、セ・リーグの遊び（支払い・担当者）の部分を隠す */
 html.lg-p .cl-only{display:none !important}
 html:not(.lg-p) .pl-only{display:none !important}
+/* テーマで説明の言葉を出し分ける（th-s＝スタイリッシュだけ、th-p＝パワプロ風だけ） */
+html.theme-pawa .th-s{display:none !important}
+html:not(.theme-pawa) .th-p{display:none !important}
 /* パ・リーグの日程の球団ボタン：球団名を1行に */
 html.lg-p #teamSel .tbtn,html.lg-p #songTeams .tbtn{font-size:8.5px;letter-spacing:-.04em;white-space:nowrap;overflow:hidden}
 /* 球場名が長くても、LIVE と直接対決の札は1行のまま */
@@ -1638,7 +1641,7 @@ html.theme-pawa #detail .dtm{color:#13264A !important;box-shadow:inset 0 -5px 0 
 /* 確定の条件と残り試合・計算のルール */
 html.theme-pawa .conds *,html.theme-pawa .rules *{color:#13264A}
 html.theme-pawa .conds .badge,html.theme-pawa .rules .badge{color:var(--ti,#000) !important}
-html.theme-pawa .conds .vs{background:#EAF2FB !important;color:#1D3E7C !important}
+html.theme-pawa .conds .vs{background:#EAF2FB !important;color:#1D3E7C !important;border-color:#1D3E7C !important;box-shadow:inset 0 0 0 1px #1D3E7C}
 html.theme-pawa .conds small,html.theme-pawa .rules small{color:#4A6390}
 /* 日程のマス */
 html.theme-pawa .day,html.theme-pawa .day .dn,html.theme-pawa .day .mu,html.theme-pawa .day .res,html.theme-pawa .day .tx,html.theme-pawa .day .rs{color:#13264A !important}
@@ -1997,10 +2000,10 @@ html.lg-p #ptTeams .tbtn{font-size:8.5px;letter-spacing:-.04em;white-space:nowra
       <p class="cl-only">順位は勝率（勝÷（勝＋敗）、引き分けは除外）。勝率で並んだ場合は、セ・リーグの規定どおり ①勝利数 ②当該球団間の対戦勝率 ③リーグ内対戦（交流戦を除く）の勝率 ④前年度順位 の順で決めます（月度の成績で判定）。同率で並ぶ可能性が残っているうちは、★（回避確定）も支払い確定も出しません。</p>
       <p class="pl-only">パ・リーグ6球団の、月度ごとの最下位回避マジックを表示します（担当者・支払いはセ・リーグだけの遊びです）。3・4月と9・10月はまとめて1つの月度、それ以外は1か月ごとにリセット。交流戦も含む全公式戦の勝敗で集計します。</p>
       <p class="pl-only">順位は勝率（勝÷（勝＋敗）、引き分けは除外）。勝率で並んだ場合は、パ・リーグの規定どおり ①当該球団間の対戦勝率 ②リーグ内対戦（交流戦を除く）の勝率 ③前年度順位 の順で決めます（月度の成績で判定）。同率で並ぶ可能性が残っているうちは、★（回避確定）も最下位確定も出しません。</p>
-      <p>M は、どの試合で勝っても最下位回避が確定する残りの勝ち数。自力で決められない（残り全勝でも最下位の可能性が残る）球団は「自力消滅」と表示します。★は回避確定、赤い「支払い」は最下位確定。</p>
+      <p>M は、どの試合で勝っても最下位回避が確定する残りの勝ち数。自力で決められない（残り全勝でも最下位の可能性が残る）球団は「自力消滅」と表示します。★は回避確定、赤い「<span class="cl-only">支払</span><span class="pl-only">最下位</span>」は最下位確定。</p>
       <p>勝差は1位とのゲーム差。</p>
     </details>
-    <details class="howto"><summary>見方</summary><ul><li>順位表：勝差は1位とのゲーム差、残試合はこの月度の残り試合。広島は参考として薄く表示（対象外なので順位・マジック・支払いは広島を除く5球団で計算）。球団名をタップすると公式サイト。</li><li>マジック：最下位を回避するまでの勝ち数。★は回避確定、赤字の「支払」は最下位確定、「自力消滅」は、残り試合に全部勝っても、ほかの球団の結果しだいで最下位の可能性が残る状態（自力での最下位脱出ができない）。</li><li>対戦成績：左の球団から見た、この月度だけの勝数-負数（引分数）。広島は参考として薄く表示。</li><li>順位の推移：広島（参考）は、5球団の勝率のあいだの位置に点線で表示（5球団の順位には関係しません）。</li><li>直近の勝敗：○は勝ち、●は負け、△は引き分け。下の文字は対戦相手。右が最新。並びは前年の順位順。</li><li>日程の天気は、試合開始時刻の球場の予報（約2週間先まで）。％は試合中の降水確率の最大値です。天気予報：Open-Meteo。</li><li>勝率で並んだときは、セ・リーグの規定（勝利数→当該球団間の対戦勝率→交流戦を除く勝率→前年度順位）で順位を決めます。</li><li>振替待ちは、中止になって振替日がまだ決まっていない試合です。日程に入るとマジックが変わります。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li class="cl-only">順位表：勝差は1位とのゲーム差、残試合はこの月度の残り試合。広島は参考として薄く表示（対象外なので順位・マジック・支払いは広島を除く5球団で計算）。球団名をタップすると公式サイト。</li><li class="pl-only">順位表：勝差は1位とのゲーム差、残試合はこの月度の残り試合。球団名をタップすると公式サイト。</li><li>マジック：最下位を回避するまでの勝ち数。★は回避確定、赤い「<span class="cl-only">支払</span><span class="pl-only">最下位</span>」は最下位確定、「自力消滅」は、残り試合に全部勝っても、ほかの球団の結果しだいで最下位の可能性が残る状態（自力での最下位脱出ができない）。</li><li>確定の条件と残り試合：各球団の説明に名前が出てくる相手（いちばん抜きやすい相手）との直接対決は、残り試合の中で<span class="th-s">白枠</span><span class="th-p">青い枠</span>で表示。勝てば自分の勝ちと相手の負けで、1試合で2つ進みます。</li><li>対戦成績：左の球団から見た、この月度だけの勝数-負数（引分数）。<span class="cl-only">広島は参考として薄く表示。</span></li><li class="cl-only">順位の推移：広島（参考）は、5球団の勝率のあいだの位置に点線で表示（5球団の順位には関係しません）。</li><li>直近の勝敗：○は勝ち、●は負け、△は引き分け。下の文字は対戦相手。右が最新。並びは前年の順位順。</li><li>日程の天気は、試合開始時刻の球場の予報（約2週間先まで）。％は試合中の降水確率の最大値です。天気予報：Open-Meteo。</li><li class="cl-only">勝率で並んだときは、セ・リーグの規定（勝利数→当該球団間の対戦勝率→交流戦を除く勝率→前年度順位）で順位を決めます。</li><li class="pl-only">勝率で並んだときは、パ・リーグの規定（当該球団間の対戦勝率→交流戦を除く勝率→前年度順位）で順位を決めます。</li><li>振替待ちは、中止になって振替日がまだ決まっていない試合です。日程に入るとマジックが変わります。</li></ul></details>
   </section>
 
   <section class="view" id="v-cal" aria-label="日程" hidden>
@@ -2026,7 +2029,7 @@ html.lg-p #ptTeams .tbtn{font-size:8.5px;letter-spacing:-.04em;white-space:nowra
     <div class="hist cl-only" id="hist"></div>
     <h2 class="cl-only">担当者ごとの年間成績</h2>
     <div class="tot cl-only" id="tot"></div>
-    <details class="howto"><summary>見方</summary><ul><li>順位表：勝差は1位とのゲーム差。1位の勝差の欄は優勝マジック。</li><li>優勝ライン：首位と、まだ優勝の可能性がある球団の、残り試合の勝敗ごとの最終勝率。赤字は首位がこの成績以上なら優勝（優勝マジックと同じ）、黄色は今の勝率のペースを保った場合。優勝が決まると表示されなくなります。</li><li>対戦成績：左の球団から見た勝数-負数（引分数）。例：神の行・巨の列＝阪神の巨人戦。</li><li>月度ごとの支払い：順位は左から1位。赤枠が最下位（支払い）。広島は対象外。</li><li>担当者ごとの年間成績：数字は各月度の順位（白＝1位、赤＝最下位、点線＝集計中）。支払いの少ない順、同じなら平均順位の順。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li>順位表：勝差は1位とのゲーム差。1位の勝差の欄は優勝マジック。</li><li>優勝ライン：首位と、まだ優勝の可能性がある球団の、残り試合の勝敗ごとの最終勝率。赤字は首位がこの成績以上なら優勝（優勝マジックと同じ）、黄色の背景は今の勝率のペースを保った場合。優勝が決まると表示されなくなります。</li><li>対戦成績：左の球団から見た勝数-負数（引分数）。<span class="cl-only">例：神の行・巨の列＝阪神の巨人戦。</span><span class="pl-only">例：ソの行・日の列＝ソフトバンクの日本ハム戦。</span></li><li class="cl-only">月度ごとの支払い：順位は左から1位で、一番右が最下位（支払い）。広島は対象外。</li><li class="cl-only">担当者ごとの年間成績：数字は各月度の順位（<span class="th-s">白</span><span class="th-p">金色</span>＝1位、赤＝最下位、点線の枠＝集計中）。支払いの少ない順、同じなら平均順位の順。MVPはいちばん上の人、「最多」は支払いの回数がいちばん多い人。</li></ul></details>
   </section>
   <section class="view" id="v-game" aria-label="今日の試合" hidden>
     <section class="blk" id="todayBlk">
@@ -2058,7 +2061,7 @@ html.lg-p #ptTeams .tbtn{font-size:8.5px;letter-spacing:-.04em;white-space:nowra
     <div class="teams" id="ptTeams"></div>
     <div class="seg" id="ptSeg"><button type="button" data-k="bat" aria-pressed="true">打者</button><button type="button" data-k="pit" aria-pressed="false">投手</button></div>
     <div id="ptList"></div>
-    <details class="howto"><summary>見方</summary><ul><li>並べ替え：チーム成績・個人ランキングは、見出し（小さな上下の三角が付いた項目）をタップするとその項目で並べ替え、もう一度タップすると昇順／降順が入れ替わります。</li><li>チーム成績：黄色の太字が各項目のリーグトップ。得点・失点・得失点差は試合結果からすぐに計算しています。</li><li>チーム内の成績：球団ボタンでチームを選ぶと、そのチームで出場した全選手の今季成績を並べます（NPB公式）。最初は出場の多い順。打率・OPSで並べるときは30打席未満、防御率で並べるときは10投球回未満の選手を下にまとめます。選手名をタップすると詳しい成績が出ます。</li><li>個人ランキング：スポーツナビの個人成績と同じ全項目（打者24・投手27）。右上のメニューで項目を選べます。打率・出塁率・長打率・OPS・得点圏打率は規定打席以上、防御率・勝率・奪三振率・被打率・K/BB・WHIPは規定投球回以上の選手が対象。各項目の上位10人。出典：スポーツナビ。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li>並べ替え：チーム成績・個人ランキング・チーム内の成績は、見出し（小さな上下の三角が付いた項目）をタップするとその項目で並べ替え、もう一度タップすると昇順／降順が入れ替わります。</li><li>チーム成績：<span class="th-s">黄色</span><span class="th-p">オレンジ</span>の太字が各項目のリーグトップ。得点・失点・得失点差は試合結果からすぐに計算しています。</li><li>チーム内の成績：球団ボタンでチームを選ぶと、そのチームで出場した全選手の今季成績を並べます（NPB公式）。最初は出場の多い順。打率・OPSで並べるときは30打席未満、防御率で並べるときは10投球回未満の選手を下にまとめます。選手名をタップすると詳しい成績が出ます。</li><li>個人ランキング：スポーツナビの個人成績と同じ全項目（打者24・投手27）。右上のメニューで項目を選べます。打率・出塁率・長打率・OPS・得点圏打率は規定打席以上、防御率・勝率・奪三振率・被打率・K/BB・WHIPは規定投球回以上の選手が対象。各項目の10位まで（同じ順位の選手はすべて表示）。出典：スポーツナビ。</li></ul></details>
   </section>
   <p class="note" id="note"></p>
 </main>
@@ -2849,7 +2852,7 @@ function renderMagic() {
     return `<div class="cond" style="${tv(r.t)}">
       <div class="ch"><span class="badge">${sn(r.t)}</span><b>${name}</b><span class="owm">${CONFIG.owners[r.t] || ""}</span>${r.self !== null ? `<span class="mg2">M${r.self}</span>` : ""}</div>
       <p class="main">${main}</p>${lines.map(l => `<p class="sub2">${l}</p>`).join("")}
-      <div class="lab">残り試合${h2hDays.length ? `（白枠は${yn}との直接対決）` : ""}</div><div class="left num">${left}</div></div>`;
+      <div class="lab">残り試合${h2hDays.length ? `（<span class="th-s">白枠</span><span class="th-p">青い枠</span>は${yn}との直接対決）` : ""}</div><div class="left num">${left}</div></div>`;
   }).join("");
   $("excl").textContent = CONFIG.excluded.map(fn).join("・") + "は対象外";
 }
