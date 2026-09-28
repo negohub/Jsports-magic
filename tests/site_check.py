@@ -352,6 +352,38 @@ async def data_refresh(browser):
         srv.shutdown()
 
 
+async def calc_cache(browser):
+    """計算結果の使い回し：元の計算と同じ答えになるか・試合が変わったら計算し直すか・書き換えても混ざらないか（両リーグ）"""
+    for lg in ["C", "P"]:
+        pg, errs = await open_page(browser, 390, "")
+        if lg == "P":
+            await pg.evaluate("switchLeague('P')")
+            await pg.wait_for_timeout(200)
+        r = await pg.evaluate("""() => {
+          const strip = a => { const c = JSON.parse(JSON.stringify(a)); if (!c.exact) c.rows.forEach(r => { delete r.rate; delete r.avoid; delete r.self; }); return JSON.stringify(c); };
+          const ng = [];
+          for (const p of CONFIG.periods) {
+            if (strip(analyze(DATA.games, p, CONFIG)) !== strip(analyzeRaw(DATA.games, p, CONFIG))) ng.push("一致しない " + p.id);
+            if (JSON.stringify(analyze(DATA.games, p, CONFIG)) !== JSON.stringify(analyze(DATA.games, p, CONFIG))) ng.push("毎回ちがう " + p.id);
+          }
+          const g = DATA.games.find(g => g.st === "final" && CL.includes(g.h) && g.hs !== g.as);
+          const p = CONFIG.periods.find(p => p.months.includes(+g.d.slice(5, 7)));
+          const key = () => JSON.stringify(analyze(DATA.games, p, CONFIG).rows.map(r => [r.t, r.w, r.l]));
+          const before = key(); const hs = g.hs, as = g.as; g.hs = as; g.as = hs;
+          if (key() === before) ng.push("試合が変わっても計算し直さない");
+          g.hs = hs; g.as = as;
+          if (key() !== before) ng.push("元に戻しても答えが戻らない");
+          const x = analyze(DATA.games, p, CONFIG); x.rows[0].w = 999;
+          if (analyze(DATA.games, p, CONFIG).rows[0].w === 999) ng.push("返した結果の書き換えが使い回しに混ざる");
+          return ng;
+        }""")
+        for m in r:
+            bad(f"[計算の使い回し {lg}] {m}")
+        for e in errs:
+            bad(f"[計算の使い回し {lg}]: 画面のエラー {e}")
+        await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -398,6 +430,7 @@ async def main():
                 bad(f"[担当{me}]: 画面のエラー {e}")
             await pg.close()
         await data_refresh(browser)
+        await calc_cache(browser)
         await browser.close()
     print()
     if PROBLEMS:
