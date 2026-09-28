@@ -585,11 +585,21 @@ async def tap_target_check(browser):
                         let b = e.getBoundingClientRect();
                         const td = e.matches('td.tnm a') ? e.closest('td') : null;
                         if (td) {
-                          // マス全体が押せるか：マスの隅を押したときにこのリンクに当たるか
-                          b = td.getBoundingClientRect();
+                          // マス全体が押せるか：リンクの見えない面（a::before）がマスいっぱいに広がっているか、
+                          // さらにマスの左端・右端（文字のない所）を押したときにこのリンクに当たるか
+                          const pb = getComputedStyle(e, '::before');
+                          if (getComputedStyle(td).position !== 'relative' || pb.position !== 'absolute' || pb.top !== '0px' || pb.left !== '0px' || pb.right !== '0px' || pb.bottom !== '0px') {
+                            ng.add(`球団名のマス全体が押せる作りになっていない：${e.textContent.trim().slice(0, 10)}`); return;
+                          }
                           e.scrollIntoView({ block: 'center' }); b = td.getBoundingClientRect();
-                          const hit = document.elementFromPoint(b.left + 3, b.bottom - 3);
-                          if (!hit || !(hit === e || e.contains(hit) || hit.closest('a') === e)) { ng.add(`球団名のマスの隅を押してもリンクにならない：${e.textContent.trim().slice(0, 10)}`); return; }
+                          const y = b.top + b.height / 2;
+                          for (const x of [b.left + 4, b.right - 4]) {
+                            const hit = document.elementFromPoint(x, y);
+                            if (!hit || !(hit === e || e.contains(hit) || hit.closest('a') === e)) {
+                              const d = hit ? `${hit.tagName.toLowerCase()}${hit.id ? '#' + hit.id : ''}.${String(hit.className).split(' ')[0]}` : 'なし';
+                              ng.add(`球団名のマスの端を押してもリンクにならない：${e.textContent.trim().slice(0, 10)}（押された所：${d}、位置 ${Math.round(x)},${Math.round(y)}、画面の高さ ${innerHeight}）`); return;
+                            }
+                          }
                         }
                         if (b.width < 1) return;
                         // 表の見出し（並べ替え）と日程のカレンダーの日付（7列）は、列の幅が画面幅で決まるので高さだけ確かめる
