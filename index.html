@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260929114031">
+<meta name="build" content="20260929122000">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -4549,7 +4549,7 @@ async function liveStats(key) {
 const OFF_LABEL = { cut: "戦力外", offer: "戦力外", retire: "引退", mgr: "退任" };
 // 監督の現役時代のポジション（パワプロ風の名前のタイルの色に使う）。名前は空白なし
 const MGR_POS = { "藤川球児": "投", "阿部慎之助": "捕", "相川亮二": "捕", "井上一樹": "外", "新井貴浩": "内", "池山隆寛": "内",
-  "小久保裕紀": "内", "新庄剛志": "外", "岸田護": "投", "三木肇": "内", "西口文也": "投", "サブロー": "外" };
+  "小久保裕紀": "内", "新庄剛志": "外", "岸田護": "投", "三木肇": "内", "西口文也": "投", "サブロー": "外", "橋上秀樹": "外" };
 const mgrPos = n => MGR_POS[nk(n)] || "内";
 const mgrTile = (n, cls = "") => { const p = mgrPos(n); return `<span class="ptile ${cls} ${TILEC[p] || "pi"}" style="${tileStyle([p])}"><b>${esc(n)}</b></span>`; };
 // 「公示 任意引退・自由契約」のページ（去年の一覧）から拾ってしまったものは出さない（データ更新でも消すが、念のため画面側でも）
@@ -4580,7 +4580,7 @@ function renderOff() {
   $("offAsof").textContent = [items.length ? [cut ? `戦力外${cut}人` : "", ret ? `引退${ret}人` : "", mg ? `監督退任${mg}人` : ""].filter(Boolean).join("・") : "", o.checked_at ? `${Number(o.checked_at.slice(5, 7))}/${Number(o.checked_at.slice(8, 10))} ${o.checked_at.slice(11, 16)} 確認` : ""].filter(Boolean).join("　");
   // 発表日：今季の日付は「9/28」、去年の秋に表明した引退などは「2025/11/24」
   const md = d => !d ? "" : (o.season && d.slice(0, 4) !== String(o.season) ? `${d.slice(0, 4)}/` : "") + `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
-  const kindText = x => x.kind === "mgr" ? "今季限りで退任" : x.kind === "retire" ? "現役引退" : x.kind === "offer" ? "来季の契約を結ばない（育成で再契約を打診）" : x.dev ? "育成選手の来季の契約を結ばない" : "来季の契約を結ばない";
+  const kindText = x => x.kind === "mgr" ? (x.mid ? "シーズン途中で辞任" : "今季限りで退任") : x.kind === "retire" ? "現役引退" : x.kind === "offer" ? "来季の契約を結ばない（育成で再契約を打診）" : x.dev ? "育成選手の来季の契約を結ばない" : "来季の契約を結ばない";
   const teams = calOrder().filter(t => CL.includes(t));
   const has = teams.filter(t => items.some(x => x.t === t)), none = teams.filter(t => !items.some(x => x.t === t));
   // パワプロ風：名前は守備位置の色のタイル（2つ以上守る選手は塗り分け）
