@@ -228,6 +228,63 @@ def parse_yahoo_team(html, league=None):
     return None
 
 
+# ---------- チーム内の成績（スポナビの球団ごとの打撃成績・投手成績：個人ランキングと同じ全項目） ----------
+YAHOO_TEAM = {"G": 1, "S": 2, "DB": 3, "D": 4, "T": 5, "C": 6, "L": 7, "F": 8, "M": 9, "B": 11, "H": 12, "E": 376}
+TSTATS_EVERY = 3 * 3600   # 3時間に1回
+
+
+def parse_team_stats(html, team_name):
+    """スポナビの「打撃成績」「投手成績」の表：見出し（打率・試合…）と、選手ごとの行 [名前, 位置, 値…]。
+    その球団のページか（見出しの球団名）も確かめる。出場のない選手（全部「-」）は入れない"""
+    soup = BeautifulSoup(html, "html.parser")
+    title = norm((soup.find("title") or soup).get_text(" "))
+    if team_name and team_name not in title:
+        return None
+    for table in soup.find_all("table"):
+        rows = table.find_all("tr")
+        if not rows:
+            continue
+        head = [re.sub(r"\s+", "", norm(c.get_text(" ", strip=True))) for c in rows[0].find_all(["th", "td"])]
+        if "選手名" not in head:
+            continue
+        i_n, i_p = head.index("選手名"), (head.index("位置") if "位置" in head else None)
+        cols = [h for k, h in enumerate(head) if k not in (i_n, i_p, head.index("背番号") if "背番号" in head else -1)]
+        out = []
+        for tr in rows[1:]:
+            c = [norm(x.get_text(" ", strip=True)) for x in tr.find_all(["td", "th"])]
+            if len(c) != len(head) or c[i_n] == "選手名":
+                continue
+            vals = [v for k, v in enumerate(c) if k not in (i_n, i_p, head.index("背番号") if "背番号" in head else -1)]
+            if all(v in ("-", "") for v in vals):
+                continue
+            out.append([re.sub(r"\s+", " ", c[i_n]).strip(), c[i_p] if i_p is not None else ""] + vals)
+        return {"cols": cols, "rows": out}
+    return None
+
+
+def fetch_team_stats(season, old):
+    prev = (old or {}).get("tstats") or {}
+    now = datetime.now(JST)
+    if prev.get("at") and (now - datetime.fromisoformat(prev["at"])).total_seconds() < TSTATS_EVERY and prev.get("teams"):
+        return prev
+    names = {"G": "巨人", "S": "ヤクルト", "DB": "DeNA", "D": "中日", "T": "阪神", "C": "広島", "L": "西武", "F": "日本ハム", "M": "ロッテ", "B": "オリックス", "H": "ソフトバンク", "E": "楽天"}
+    res = {"at": now.isoformat(timespec="seconds"), "asof": now.strftime("%-m/%-d %H:%M"), "cols": dict(prev.get("cols") or {}), "teams": dict(prev.get("teams") or {})}
+    ok = 0
+    for t, yid in YAHOO_TEAM.items():
+        cur = dict(res["teams"].get(t) or {})
+        for kind, page in (("bat", "battingstats"), ("pit", "pitchingstats")):
+            html = fetch(f"{YAHOO}/teams/{yid}/{page}")
+            got = parse_team_stats(html, names[t]) if html else None
+            if got and got["rows"]:
+                res["cols"][kind] = got["cols"]
+                cur[kind] = got["rows"]
+                ok += 1
+            time.sleep(0.3)
+        res["teams"][t] = cur
+    print(f"[チーム内の成績] {ok}/24 ページ（スポナビ）")
+    return res if ok else prev or None
+
+
 def fetch_stats(season, old_stats, kind=1):
     """チーム成績と個人ランキング（kind=1 セ・リーグ、2 パ・リーグ）。取れなかった部分は前回の値を残す"""
     league, tag = (CL, "") if kind == 1 else (PL, "パ・")
@@ -1417,6 +1474,7 @@ def main():
     stats = safe("成績", lambda: fetch_stats(season, old_stats), old_stats)
     old_stats_p = old.get("stats_p") if old and old.get("season") == season else None
     stats_p = safe("パ・成績", lambda: fetch_stats(season, old_stats_p, 2), old_stats_p)
+    tstats = safe("チーム内の成績", lambda: fetch_team_stats(season, old if old and old.get("season") == season else None), (old or {}).get("tstats"))
     prev_order = safe("前年の順位", lambda: fetch_prev_order(season, old), (old or {}).get("prev_order"))
     prev_order_p = safe("パ・前年の順位", lambda: fetch_prev_order(season, old, "p"), (old or {}).get("prev_order_p"))
     rosters, roster_date = safe("選手一覧", lambda: fetch_rosters(old), ((old or {}).get("rosters") or {}, (old or {}).get("roster_date")))
@@ -1443,7 +1501,7 @@ def main():
             and old_stats_p == stats_p and old.get("prev_order_p") == prev_order_p
             and old.get("checked") == month and old.get("rosters") == rosters and old.get("song_rev") == SONG_REV
             and old.get("post") == post and old.get("fpos") == fpos
-            and old.get("offseason") == offseason):
+            and old.get("offseason") == offseason and old.get("tstats") == tstats):
         print("変化なし")
         return
     data = {
@@ -1461,6 +1519,7 @@ def main():
         "post": post,
         "fpos": fpos,
         "offseason": offseason,
+        "tstats": tstats,
     }
     write_json(data)
     print(f"保存しました: {len(all_games)}試合")
