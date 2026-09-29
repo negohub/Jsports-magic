@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260929162841">
+<meta name="build" content="20260929163831">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -4513,9 +4513,25 @@ function openManager(t, name) {
   const head = `<div class="sp-h mg-h" style="${tv(t)}"><span class="badge">${sn(t)}</span>${nameHtml}${out ? `<span class="offtag k-mgr">退任</span>` : ""}</div>
     <div class="mg-sub">${fn(t)}の監督<i class="ps-pos" style="--c:${PCOL[p]}">現役時代は${PN[p]}</i></div>`;
   let body;
-  if (!r || !(r.seasons || []).length) body = `<div class="ps-load">監督としての成績は、次のデータの更新のあとに出ます。</div>`;
+  // シーズン途中で辞任した監督：NPBの年度別成績ではその年が代行との合算の1行になるので、
+  // 辞任した日より前の試合（試合データ）だけで、その年の成績を数えて足す
+  const midIt = offItems().find(x => x.t === t && x.kind === "mgr" && x.mid && x.date && nk(x.n) === nk(name));
+  let midNote = "";
+  const seasons = ((r && r.seasons) || []).slice();
+  if (midIt && String(DATA.season || midIt.date.slice(0, 4)) === midIt.date.slice(0, 4)) {
+    const y = midIt.date.slice(0, 4), gs = DATA.games.filter(g => (g.h === t || g.a === t) && g.st === "final" && g.d < midIt.date);
+    if (gs.length) {
+      const w = gs.filter(g => (g.h === t ? g.hs > g.as : g.as > g.hs)).length, l = gs.filter(g => (g.h === t ? g.hs < g.as : g.as < g.hs)).length;
+      const last = gs.map(g => g.d).sort().pop();
+      const i = seasons.findIndex(x => x.y === y && x.t === t);
+      const row = { y, t, rank: "途中", g: gs.length, w, l, d: gs.length - w - l, part: true };
+      if (i >= 0) seasons[i] = row; else seasons.push(row);
+      midNote = `${y}年は${Number(last.slice(5, 7))}/${Number(last.slice(8))}までの成績（シーズン途中で辞任）`;
+    }
+  }
+  if (!seasons.length) body = `<div class="ps-load">監督としての成績は、次のデータの更新のあとに出ます。</div>`;
   else {
-    const S2 = r.seasons, sum = k => S2.reduce((a, x) => a + (x[k] || 0), 0);
+    const S2 = seasons.sort((a, b) => a.y.localeCompare(b.y)), sum = k => S2.reduce((a, x) => a + (x[k] || 0), 0);
     const g = sum("g"), w = sum("w"), l = sum("l"), d = sum("d"), pct = w + l ? (w / (w + l)).toFixed(3).replace(/^0/, "") : "-";
     const wins = S2.filter(x => x.rank === "1").length, yrs = new Set(S2.map(x => x.y)).size;
     const cell = (k, v) => `<div><small>${k}</small><b class="num">${v}</b></div>`;
@@ -4523,9 +4539,9 @@ function openManager(t, name) {
     body = `<div class="ps-sec"><p class="ps-t">監督としての通算成績（${yrs}年）</p><div class="ps-main">${cell("試合", g)}${cell("勝利", w)}${cell("敗北", l)}${cell("勝率", pct)}</div>
       <div class="ps-sub">${sub("引分", d)}${sub("リーグ優勝", `${wins}回`)}${sub("年数", `${yrs}年`)}</div></div>
       <div class="ps-sec"><p class="ps-t">年度ごと</p><div class="ywrap"><table class="ytab mgtab"><colgroup><col class="c-y"><col class="c-t"><col class="c-r"><col class="c-wl"><col class="c-p"></colgroup><thead><tr><th>年度</th><th>球団</th><th>順位</th><th>勝-敗-分</th><th>勝率</th></tr></thead><tbody>${
-        S2.slice().reverse().map(x => `<tr style="${tv(x.t)}"><td class="num">${esc(x.y)}</td><td><span class="badge">${sn(x.t)}</span></td><td class="num${x.rank === "1" ? " best" : ""}">${x.rank ? x.rank + "位" : "-"}</td><td class="num">${x.w}-${x.l}-${x.d}</td><td class="num">${x.w + x.l ? (x.w / (x.w + x.l)).toFixed(3).replace(/^0/, "") : "-"}</td></tr>`).join("")
+        S2.slice().reverse().map(x => `<tr style="${tv(x.t)}"><td class="num">${esc(x.y)}</td><td><span class="badge">${sn(x.t)}</span></td><td class="num${x.rank === "1" ? " best" : ""}">${x.part ? "途中" : x.rank ? x.rank + "位" : "-"}</td><td class="num">${x.w}-${x.l}-${x.d}</td><td class="num">${x.w + x.l ? (x.w / (x.w + x.l)).toFixed(3).replace(/^0/, "") : "-"}</td></tr>`).join("")
       }</tbody></table></div></div>
-      <p class="ps-note">NPB公式の球団の年度別成績から${r.asof ? `（${esc(r.asof)} 時点。今季の成績も含みます）` : ""}</p>`;
+      <p class="ps-note">NPB公式の球団の年度別成績から${r && r.asof ? `（${esc(r.asof)} 時点。今季の成績も含みます）` : ""}${midNote ? `。${midNote}` : ""}</p>`;
   }
   $("songPick").innerHTML = head + `<div class="ps-body">${body}</div>`;
   $("songSheet").querySelector(".sheet-head b").textContent = "監督の成績";
