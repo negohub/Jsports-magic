@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260929140753">
+<meta name="build" content="20260929144005">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -4276,7 +4276,7 @@ const SONG_PAGE = {
   C: ["https://www.carp.co.jp/team/songs", true],
   S: ["https://www.yakult-swallows.co.jp/players/song", true],
   // パ・リーグ：各球団の公式の応援歌ページ（西武だけ公式にページがないので応援歌まとめサイト）
-  H: ["https://www.softbankhawks.co.jp/team/song/", true], F: ["https://www.fighters.co.jp/entertainment/cheer_player/", true],
+  H: ["https://www.softbankhawks.co.jp/team/song", true], F: ["https://www.fighters.co.jp/entertainment/cheer_player/", true],
   B: ["https://www.buffaloes.co.jp/team/playersong.html", false], E: ["https://www.rakuteneagles.jp/team/rooterssong/", false],
   L: ["https://www.yakyu-ouen.net/lions/", false], M: ["https://www.marines.co.jp/fans/supportersong/", false],
 };
@@ -4316,7 +4316,13 @@ const SONG_ONE = {
   T: x => `https://m.hanshintigers.jp/data/march/${x.no}.html`,
 };
 const frag = x => encodeURIComponent(x).replace(/-/g, "%2D");
-const jump = (t, url, text) => SONG_PAGE[t] && SONG_PAGE[t][1] && text ? `${url}#:~:text=${frag(text)}` : url;
+// 応援歌ページの中のその選手の名前の所へ飛ぶ（テキストフラグメント）。
+// 名字と名前のあいだの空白はページによって半角・全角・改行などまちまちなので、「名字から名前まで」の範囲で指定する（text=名字,名前）
+const jump = (t, url, text) => {
+  if (!(SONG_PAGE[t] && SONG_PAGE[t][1] && text)) return url;
+  const p = String(text).trim().split(/\s+/);
+  return `${url}#:~:text=${p.length >= 2 ? `${frag(p[0])},${frag(p[p.length - 1])}` : frag(p[0])}`;
+};
 // su：データ更新で見つけた、その選手の応援歌ページ（公式に応援歌ページがない西武など）。あればそれを優先
 const okUrl = u => typeof u === "string" && /^https:\/\/[^"'<>\s]+$/.test(u);
 const songLink = (t, x) => okUrl(x.su) ? x.su : SONG_ONE[t] ? SONG_ONE[t](x) : SONG_PAGE[t] ? jump(t, SONG_PAGE[t][0], x.n) : null;
