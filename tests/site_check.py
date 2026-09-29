@@ -1,5 +1,5 @@
 """
-J SPORTS ペナントレース：サイト全体の自動検査
+hobby baseball：サイト全体の自動検査
 
   python tests/site_check.py            # すべて検査（index.html を直接開く）
 
@@ -1533,6 +1533,7 @@ async def team_rank_menu_check(browser):
     SET = """() => { const t = ptTeam(), ro = (DATA.rosters[t] || []), bat = {}, pit = {};
       ro.filter(x => x.p !== '投手').slice(0, 9).forEach((x, i) => { bat[x.n] = { 試合: 100 + i, 打席: 350 + i * 10, 打数: 300, 安打: 80 + i, 二塁打: 10, 三塁打: 1, 本塁打: 5 + i, 塁打: 120, 打点: 40 + i, 得点: 30, 盗塁: i * 3, 盗塁刺: 1, 犠打: 2, 犠飛: 1, 四球: 30, 死球: 2, 三振: 60, 併殺打: 5, 打率: '.2' + (60 + i), 長打率: '.40' + i, 出塁率: '.33' + i }; });
       ro.filter(x => x.p === '投手').slice(0, 6).forEach((x, i) => { pit[x.n] = { 登板: 20 + i, 勝利: 5, 敗北: 3, セーブ: i, ホールド: 10, HP: 12, 完投: 0, 完封勝: 0, 無四球: 0, 勝率: '.625', 打者: 300, 投球回: '60.1', 安打: 50, 本塁打: 5, 四球: 20, 死球: 2, 三振: 55 + i, 暴投: 1, ボーク: 0, 失点: 20, 自責点: 18, 防御率: '2.' + (10 + i) }; });
+      DATA.tstats = null; DATA.tstats_at = null;   // この試験は中継プログラム（NPB）の表の形で見る
       PST[t] = { at: Date.now(), d: { bat, pit, asof: '9/28' } }; renderTeamIn(); }"""
     for theme in ["", "pawa"]:
         for width in [320, 390]:
@@ -1641,6 +1642,15 @@ async def speed_health_check(browser):
         rows = await pg.evaluate("openSheet(), [...document.querySelectorAll('#healthBox .hi b')].map(b => b.textContent)")
         if "チーム別成績" not in rows:
             bad(f"[データの状態] チーム別成績の行がない：{rows}")
+        # パ・リーグ（担当者なし）では「あなたの担当」を出さない。セ・リーグでは出す
+        if await pg.evaluate("document.getElementById('meSec').hidden"):
+            bad("[あなたの担当] セ・リーグで設定に「あなたの担当」が出ない")
+        await pg.evaluate("switchLeague('P')")
+        if not await pg.evaluate("document.getElementById('meSec').hidden"):
+            bad("[あなたの担当] パ・リーグでも設定に「あなたの担当」が出ている")
+        if await pg.evaluate("document.getElementById('meCard').innerText.trim()"):
+            bad("[あなたの担当] パ・リーグの戦況に「あなた」のカードが出ている")
+        await pg.evaluate("switchLeague('C')")
         # スタイリッシュでは「名前の色（パワプロ風）」の欄を出さない
         if not await pg.evaluate("document.getElementById('opSec').hidden"):
             bad("[名前の色] スタイリッシュでも「名前の色（パワプロ風）」の欄が出ている")
@@ -1663,6 +1673,57 @@ async def speed_health_check(browser):
     }""")
     for m in r:
         bad(f"[データの状態] {m}")
+    await pg.close()
+
+
+async def brand_check(browser):
+    """サイト名（hobby baseball）・ホーム画面のアイコン・OGP・開いたときの演出・設定のデータの状態（折りたたみ）"""
+    html = (ROOT / "index.html").read_text(encoding="utf-8")
+    for need, why in [("<title>hobby baseball</title>", "ページの名前"), ('apple-mobile-web-app-title" content="hobby baseball"', "ホーム画面の名前"),
+                      ('og:title" content="hobby baseball"', "OGPの名前"), ('og:image" content="https://negohub.github.io/hobby-baseball/ogp.png"', "OGPの画像"),
+                      ('rel="apple-touch-icon" href="apple-touch-icon.png"', "ホーム画面のアイコン"), ('id="splash"', "開いたときの演出")]:
+        if need not in html:
+            bad(f"[サイト名・アイコン] {why}が設定されていない")
+    if "J SPORTS ペナントレース" in html:
+        bad("[サイト名・アイコン] 古いサイト名（J SPORTS ペナントレース）が残っている")
+    try:
+        m = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
+        if m.get("name") != "hobby baseball" or not any(i.get("sizes") == "512x512" for i in m.get("icons", [])):
+            bad("[サイト名・アイコン] manifest.json の名前・アイコンが違う")
+        for i in m.get("icons", []):
+            if not (ROOT / i["src"]).exists():
+                bad(f"[サイト名・アイコン] アイコンの画像がない：{i['src']}")
+    except (OSError, ValueError) as e:
+        bad(f"[サイト名・アイコン] manifest.json を読めない：{e}")
+    for f in ["ogp.png", "apple-touch-icon.png", "favicon.png", "splash.jpg"]:
+        if not (ROOT / f).exists():
+            bad(f"[サイト名・アイコン] {f} がない")
+    pg, errs = await open_page(browser, 390, "")
+    r = await pg.evaluate("""() => {
+      const ng = [];
+      if (document.getElementById('splash')) ng.push('自動の検査のときに開いたときの演出が消えていない（ほかの検査の邪魔になる）');
+      openSheet();
+      const det = document.querySelector('#sheet details.sh-det');
+      if (!det) ng.push('データの状態が折りたたみになっていない');
+      else if (det.open) ng.push('データの状態が最初から開いている');
+      renderHealth();
+      if (!document.getElementById('gearDot').hidden) ng.push('歯車の右上に点が出ている');
+      if (!document.querySelector('.minibar .mk') || document.querySelector('.minibar .mk').textContent !== 'hobby baseball') ng.push('小さい見出しのサイト名が違う');
+      return ng;
+    }""")
+    for m in r:
+        bad(f"[サイト名・アイコン] {m}")
+    await pg.close()
+    # 演出が出て、終わると消えるか（自動の検査ではない状態をまねる）
+    pg = await browser.new_page(viewport={"width": 390, "height": 844})
+    await pg.add_init_script("Object.defineProperty(navigator, 'webdriver', { get: () => false })")
+    await pg.goto(URL)
+    await pg.wait_for_timeout(200)
+    if not await pg.evaluate("!!document.getElementById('splash')"):
+        bad("[開いたときの演出] 演出が出ない")
+    await pg.wait_for_timeout(2000)
+    if await pg.evaluate("!!document.getElementById('splash') || document.documentElement.classList.contains('splashing')"):
+        bad("[開いたときの演出] 演出が終わっても消えない")
     await pg.close()
 
 
@@ -1738,6 +1799,7 @@ async def main():
         await owner_pos_check(browser)
         await team_rank_menu_check(browser)
         await speed_health_check(browser)
+        await brand_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
