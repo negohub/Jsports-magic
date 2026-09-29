@@ -925,6 +925,17 @@ async def offseason_check(browser):
                       if (over.length) ng.push(`監督の年度ごとの表で文字がマスからはみ出している：${over.slice(0, 3).join('、')}`);
                     }
                     document.getElementById('songSheet').hidden = true; document.getElementById('songSheet').classList.remove('open');
+                    // シーズン途中で辞任した監督：その年は辞任した日より前の試合だけで数える
+                    const tm = CL[2], cut = (DATA.games.filter(g => g.st === 'final').map(g => g.d).sort()[40] || '2026-05-01');
+                    DATA.offseason.items.push({ t: tm, n: 'テスト 途中', kind: 'mgr', mid: true, date: cut });
+                    DATA.offseason.mgr_rec['テスト 途中'] = { seasons: [{ y: '2025', t: tm, rank: '3', g: 143, w: 70, l: 69, d: 4 }], asof: '9/28' };
+                    openManager(tm, 'テスト 途中');
+                    const gs = DATA.games.filter(g => (g.h === tm || g.a === tm) && g.st === 'final' && g.d < cut);
+                    const w = gs.filter(g => (g.h === tm ? g.hs > g.as : g.as > g.hs)).length, l = gs.filter(g => (g.h === tm ? g.hs < g.as : g.as < g.hs)).length;
+                    const t2 = document.getElementById('songPick').innerText;
+                    if (gs.length && (!t2.includes(`${w}-${l}-${gs.length - w - l}`) || !t2.includes('シーズン途中で辞任') || !t2.includes('途中'))) ng.push(`途中で辞任した監督のその年の成績が、辞任前の試合だけになっていない（${w}-${l}）`);
+                    document.getElementById('songSheet').hidden = true; document.getElementById('songSheet').classList.remove('open');
+                    DATA.offseason.items.pop(); delete DATA.offseason.mgr_rec['テスト 途中'];
                   }
                   // オフの動き：移籍・FA宣言・加入・ドラフトの並びと札
                   const t0 = CL[0], ro0 = DATA.rosters[t0] || [];
