@@ -1144,6 +1144,42 @@ async def call_name_check(browser):
             bad(f"[過去の役割の読み取り] {want} のはずが {got}")
 
 
+async def pitch_tile_check(browser):
+    """パワプロ風の一球速報・打順・投手の表・走者の名前の札が、名前の長さに関係なく同じ大きさで、長い名前も札からはみ出さないか"""
+    for width in [390, 320]:
+        pg, errs = await open_page(browser, width, "pawa")
+        r = await pg.evaluate("""() => {
+          const ng = [], t = CL[0], o = CL[1], T = DATA.rosters[t] || [], O = DATA.rosters[o] || [];
+          const g = DATA.games.find(x => x.h === t && x.a === o) || DATA.games.find(x => x.h === t);
+          if (!g) return ng;
+          const today = g.d; jst = () => ({ y: +today.slice(0, 4), m: +today.slice(5, 7), d: +today.slice(8), iso: today }); liveWanted = () => false;
+          Object.assign(g, { st: 'live', hs: 1, as: 0, inn: '5回裏' });
+          const k = g.d + gkey(g), longest = arr => arr.slice().sort((a, b) => b.n.replace(/\\\\s/g, '').length - a.n.replace(/\\\\s/g, '').length)[0];
+          const bats = T.filter(x => x.p !== '投手'), pits = O.filter(x => x.p === '投手');
+          GD[k] = { line: { innings: ['1','2','3','4','5','6','7','8','9'], away: { name: '', inn: ['0','0','0','0','0','','','',''], r: '0', h: '1', e: '0' }, home: { name: '', inn: ['1','0','0','0','','','','',''], r: '1', h: '3', e: '0' } },
+            plays: [], flows: [], pitchers: [pits.slice(0, 3).map(x => ({ name: x.n, ip: '1', np: 10, h: 0, hr: 0, so: 1, bb: 0, r: 0, er: 0, era: '1.00' })).concat([{ name: longest(pits).n, ip: '1', np: 10, h: 0, hr: 0, so: 1, bb: 0, r: 0, er: 0, era: '1.00' }]), []],
+            lineups: [O.filter(x => x.p !== '投手').slice(0, 9).map((x, i) => ({ order: i + 1, name: x.n, pos: '遊', avg: '.250', starter: true, results: [] })), bats.slice(0, 8).concat([longest(bats)]).map((x, i) => ({ order: i + 1, name: x.n, pos: '遊', avg: '.250', starter: true, results: [] }))] };
+          PD[k] = { half: '5回裏', b: 1, s: 1, o: 1, bases: { '1': true, '3': true }, runners: { '1': longest(bats).n, '3': bats[0].n },
+            batter: { name: longest(bats).n, no: '1', hand: '左打', avg: '.250' }, pitcher: { name: longest(pits).n, no: '1', hand: '右投', np: 50, bf: 10, era: '3.00' }, next: bats[1].n, pitches: [] };
+          S.open[k] = true; S.lu = S.lu || {}; renderAll(); setTab('game');
+          const box = document.querySelector('.tgd');
+          if (!box) return ['一球速報が開けない'];
+          const groups = { '投手・打者': '.pn3 .ptile', '走者': '.ptile.rtile', '打順': '.lnm .ptile', '投手の表': '.putab td.pnx .ptile' };
+          for (const [n, sel] of Object.entries(groups)) {
+            const ws = [...box.querySelectorAll(sel)].map(e => Math.round(e.getBoundingClientRect().width));
+            if (ws.length && new Set(ws).size > 1) ng.push(`${n}の札の大きさがそろっていない：${[...new Set(ws)].join(',')}`);
+          }
+          box.querySelectorAll('.ptile').forEach(e => { const b = e.querySelector('b'), r = document.createRange(); r.selectNodeContents(b); const rr = r.getBoundingClientRect(), tr = e.getBoundingClientRect(); if (rr.width && (rr.left < tr.left + 0.5 || rr.right > tr.right - 0.5)) ng.push(`名前が札からはみ出している：${b.textContent}`); });
+          box.querySelectorAll('.pn3').forEach(e => { const tl = e.querySelector('.ptile'), h = e.querySelector('.hd'); if (tl && h && Math.abs(tl.getBoundingClientRect().top - h.getBoundingClientRect().top) > 12) ng.push('名前の札と「右投」などが同じ行に並んでいない'); });
+          return ng.slice(0, 6);
+        }""")
+        for m in r:
+            bad(f"[一球速報の名前の札 パワプロ風 幅{width}] {m}")
+        for e in errs:
+            bad(f"[一球速報の名前の札 パワプロ風 幅{width}]: 画面のエラー {e}")
+        await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -1207,6 +1243,7 @@ async def main():
         await offseason_check(browser)
         await weather_stop_check(browser)
         await call_name_check(browser)
+        await pitch_tile_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
