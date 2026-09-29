@@ -134,7 +134,7 @@ def fetch(url):
     for i in range(3):
         try:
             # 断られた（403など）ときは、ふつうのブラウザと同じ名乗りでもう一度（球団のサイトの一部）
-            r = requests.get(url, timeout=30, headers=BROWSER_UA if denied else {"User-Agent": "Mozilla/5.0 (jsports-magic)"})
+            r = requests.get(url, timeout=30, headers=BROWSER_UA if denied else {"User-Agent": "Mozilla/5.0 (hobby-baseball)"})
             if r.status_code in (401, 403, 406, 429):
                 denied = True
             if r.status_code == 200:
