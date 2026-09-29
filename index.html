@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260929112139">
+<meta name="build" content="20260929114031">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -2333,7 +2333,8 @@ function clSort(rows, games, inScope, prevOrder) {
 // 鍵：リーグ・月度・設定・その月度の試合の中身。試合が1つでも変われば計算し直す
 const __anMemo = new Map();
 function analyze(games, period, cfg) {
-  let sig = LEAGUE + "|" + CL.join(",") + "|" + period.id + "|" + period.months.join(",") + "|" + (cfg.excluded || []).join(",") + "|" + !!cfg.tieIsSafe + "|" + (cfg.prevOrder || []).join(",");
+  let sig = LEAGUE + "|" + CL.join(",") + "|" + period.id + "|" + period.months.join(",") + "|" + (cfg.excluded || []).join(",") + "|" + !!cfg.tieIsSafe + "|" + (cfg.prevOrder || []).join(",")
+    + "|" + (cfg.finalPid === period.id ? JSON.stringify(cfg.virtual || []) : "");
   for (const g of games) if (period.months.includes(monthOf(g.d))) sig += "|" + g.d + g.h + g.a + g.st + g.hs + "-" + g.as;
   const hit = __anMemo.get(sig);
   if (hit) return __relink(__clone(hit), games, period);
@@ -2377,7 +2378,10 @@ function analyzeRaw(games, period, cfg) {
   const R = {};
   CL.forEach(t => (R[t] = { w: 0, l: 0, d: 0, left: [] }));
   const remaining = [];
-  for (const g of games) {
+  // 最後の月度（シーズンの終わりを含む月度）では、中止になって振替日がまだ決まっていない試合（振替待ち）も
+  // 必ずこの月度のうちに行われるので、残り試合に入れる（日付が決まっていない仮の試合：virt）
+  const extra = cfg.finalPid === period.id ? (cfg.virtual || []) : [];
+  for (const g of extra.length ? games.concat(extra) : games) {
     if (!period.months.includes(monthOf(g.d)) || g.st === "canc") continue;
     const inH = !!R[g.h], inA = !!R[g.a];
     if (g.st === "final") {
@@ -2563,10 +2567,15 @@ const TEAM_URL = {
 };
 
 /* ===== シーズン順位表（スポナビ形式） ===== */
-function seasonTable(games, prevOrder) {
+function seasonTable(games, prevOrder, pend = []) {
   const R = {};
   CL.forEach(t => (R[t] = { t, w: 0, l: 0, d: 0, rem: 0, h2h: {} }));
   CL.forEach(t => CL.forEach(u => (R[t].h2h[u] = 0)));
+  // 振替待ち（中止になって振替日がまだ決まっていない試合）も、これから必ず行う試合なので残り試合に入れる
+  for (const p of pend || []) {
+    if (R[p.a]) R[p.a].rem += p.n;
+    if (p.b && R[p.b]) { R[p.b].rem += p.n; if (R[p.a]) { R[p.a].h2h[p.b] += p.n; R[p.b].h2h[p.a] += p.n; } }
+  }
   for (const g of games) {
     if (g.st === "canc") continue;
     const inH = !!R[g.h], inA = !!R[g.a];
@@ -3024,6 +3033,7 @@ function renderMagic() {
       if (g.st === "final") { const me = g.h === x ? g.hs : g.as, op = g.h === x ? g.as : g.hs; me > op ? R.w++ : me < op ? R.l++ : R.d++; }
       else R.rem++;
     }
+    if (S.period.id === CONFIG.finalPid) R.rem += (CONFIG.virtual || []).filter(v => v.h === x || v.a === x).length;   // 振替待ちも残り試合に
     const p = R.w + R.l ? R.w / (R.w + R.l) : 0;
     let at = tRows.findIndex(r => (r.w + r.l ? r.w / (r.w + r.l) : 0) < p);
     if (at < 0) at = tRows.length;
@@ -3045,7 +3055,7 @@ function renderMagic() {
     const name = fn(r.t);
     const [Y, n] = r.best || [null, null];
     const yn = Y ? fn(Y) : "";
-    const h2hDays = Y ? r.left.filter(g => g.h === Y || g.a === Y).map(g => md2(g.d)) : [];
+    const h2hDays = Y ? r.left.filter(g => !g.virt && (g.h === Y || g.a === Y)).map(g => md2(g.d)) : [];
     const lines = [];
     let main;
     if (r.self !== null) {
@@ -3065,6 +3075,7 @@ function renderMagic() {
     const left = r.left.map(g => {
       const opp = g.h === r.t ? g.a : g.h;
       const key = opp === Y;
+      if (g.virt) return `<span class="${key ? "vs" : ""}">振替 ${TEAM[opp] ? fn(opp) : "交流戦"}</span>`;   // 振替日がまだ決まっていない試合
       return `<span class="${key ? "vs" : ""}">${md2(g.d)} ${fn(opp)}</span>`;
     }).join("");
     return `<div class="cond" style="${tv(r.t)}">
@@ -3171,7 +3182,7 @@ function pendingHTML(teams) {
   const list = pendingMakeups().filter(p => !teams || teams.includes(p.a) || (p.b && teams.includes(p.b)));
   if (!list.length) return "";
   const total = list.reduce((s, p) => s + p.n, 0);
-  return `<div class="pend"><b>振替待ち ${total}試合</b><span>${list.map(p => `${p.b ? `${fn(p.a)}−${fn(p.b)}` : `${fn(p.a)}（交流戦）`} ${p.n}`).join("　")}</span><small>振替日が決まると日程に入り、マジックも変わります</small></div>`;
+  return `<div class="pend"><b>振替待ち ${total}試合</b><span>${list.map(p => `${p.b ? `${fn(p.a)}−${fn(p.b)}` : `${fn(p.a)}（交流戦）`} ${p.n}`).join("　")}</span><small>${S.period && S.period.id === CONFIG.finalPid ? "最後の月度なので、振替待ちの試合も残り試合に入れて数えています（振替日が決まると日程に入ります）" : "振替日が決まると日程に入り、マジックも変わります"}</small></div>`;
 }
 
 /* ---------- 打席結果の分類（色分け用） ---------- */
@@ -3617,7 +3628,7 @@ function detailHTML(g) {
 function renderToday(a) {
   const byT = {}; a.rows.forEach(r => (byT[r.t] = r));
   const today = jst().iso;
-  const rem = a.remaining.slice().sort((x, y) => x.d < y.d ? -1 : 1);
+  const rem = a.remaining.filter(g => !g.virt).sort((x, y) => x.d < y.d ? -1 : 1);
   const todaysAll = DATA.games.filter(g => g.d === today && S.period.months.includes(monthOf(g.d)) && (byT[g.h] || byT[g.a]));
   const todays = todaysAll.filter(g => g.st !== "canc");
   const day = todays.length ? today : rem.find(g => g.d >= today) ? rem.find(g => g.d >= today).d : null;
@@ -4096,9 +4107,10 @@ function renderCal() {
 /* ---------- 順位 ---------- */
 function renderStd() {
   renderRace();
-  const rows = seasonTable(DATA.games, calOrder());
+  const rows = seasonTable(DATA.games, calOrder(), pendingMakeups());
+  // 残試合：日程に入っている試合＋振替待ち（中止になって振替日がまだ決まっていない試合）
   const remS = {};
-  DATA.games.forEach(g => { if (g.st === "sched" || g.st === "live") { remS[g.h] = (remS[g.h] || 0) + 1; remS[g.a] = (remS[g.a] || 0) + 1; } });
+  rows.forEach(r => (remS[r.t] = r.rem));
   renderH2H(rows.map(r => r.t));
   $("std").innerHTML = pendingHTML() + yTable(rows.map((r, i) => ({ t: r.t, g: r.g, w: r.w, l: r.l, d: r.d, gb: i === 0 ? null : r.gb, rem: remS[r.t] || 0,
     first: r.magic === 0 ? "優勝" : r.magic != null ? `M${r.magic}` : "-" })));
@@ -4455,7 +4467,7 @@ const num = v => { const x = parseFloat(String(v ?? "").replace(/^\./, "0.")); r
 // 優勝ライン：首位と、まだ優勝の可能性がある球団の「残り試合の勝敗ごとの勝率」を並べる
 function renderRace() {
   const box = $("raceBox");
-  const rows = seasonTable(DATA.games, calOrder());
+  const rows = seasonTable(DATA.games, calOrder(), pendingMakeups());
   const X = rows[0];
   const pct = (w, l) => (w + l ? w / (w + l) : 0);
   const f3 = v => v.toFixed(3).replace(/^0/, "");
@@ -4877,8 +4889,19 @@ function renderUpd() {
   $("upd").innerHTML = (liveNow ? `<span class="lvh">● LIVE</span>　` : "")
     + (t ? `最終更新 <b class="num">${t.getMonth() + 1}/${t.getDate()} ${hm(t)}</b>` : "");
 }
+// 振替待ちの試合を、日付の決まっていない仮の試合にする（最後の月度の残り試合に入れるため）
+function virtualMakeups() {
+  const ps = periods(), fin = ps[ps.length - 1];
+  if (!fin) return { pid: null, list: [] };
+  const lastM = Math.max(...fin.months), y = DATA.season || (DATA.games[0] || {}).d?.slice(0, 4) || String(jst().y);
+  const d = `${String(y).slice(0, 4)}-${String(lastM).padStart(2, "0")}-28`;
+  const list = [];
+  for (const p of pendingMakeups()) for (let i = 0; i < p.n; i++) list.push({ d, h: p.a, a: p.b || "__", st: "sched", t: "", v: "", virt: true });
+  return { pid: fin.id, list };
+}
 function renderAll() {
   CONFIG.prevOrder = calOrder(); // 同率時の最後の決め手（前年度順位）
+  const vm = virtualMakeups(); CONFIG.finalPid = vm.pid; CONFIG.virtual = vm.list;
   const u = DATA.updated ? new Date(DATA.updated) : null;
   renderUpd();
   // ヘッダーの色の帯：前年の順位順（表示しているリーグの6球団）
