@@ -358,6 +358,53 @@ def parse_yearly(html):
     return rows, asof
 
 
+def parse_player_ids(html):
+    """NPBの選手一覧ページから、選手名 → NPBの選手ページの番号（/bis/players/○○.html）"""
+    out = {}
+    for a in BeautifulSoup(html, "html.parser").find_all("a", href=True):
+        m = re.search(r"/bis/players/(\d+)\.html", a["href"])
+        if m:
+            out[squash(a.get_text())] = m.group(1)
+    return out
+
+
+def pitcher_role(html):
+    """NPBの選手ページの投手成績（年度ごと）から、最近の一軍の役割を決める：抑え・先発・中継ぎ
+    直近3年（一軍で投げた年）を合わせて、セーブが15以上なら抑え、(勝利+敗北)÷登板が0.4以上か完投があれば先発、ほかは中継ぎ"""
+    soup = BeautifulSoup(html, "html.parser")
+    for table in soup.find_all("table"):
+        rows = [[norm(c.get_text(" ", strip=True)) for c in tr.find_all(["td", "th"])] for tr in table.find_all("tr")]
+        head = next((r for r in rows if "登板" in r and "セーブ" in r), None)
+        if not head:
+            continue
+        ix = {k: head.index(k) for k in ("登板", "勝利", "敗北", "セーブ", "完投") if k in head}
+        if len(ix) < 4:
+            continue
+        years = []
+        for r in rows:
+            if len(r) < len(head) - 2 or not re.match(r"^\d{4}", r[0] if r else ""):
+                continue
+            try:
+                g = int(r[ix["登板"]] or 0)
+            except (ValueError, IndexError):
+                continue
+            if g <= 0:
+                continue
+            num = lambda k: int(r[ix[k]]) if k in ix and re.fullmatch(r"\d+", r[ix[k]] or "") else 0
+            years.append({"y": r[0][:4], "g": g, "w": num("勝利"), "l": num("敗北"), "sv": num("セーブ"), "cg": num("完投")})
+        if not years:
+            return None
+        last = sorted(years, key=lambda x: x["y"])[-3:]
+        g, sv, cg = (sum(x[k] for x in last) for k in ("g", "sv", "cg"))
+        wl = sum(x["w"] + x["l"] for x in last)
+        if sv >= 15:
+            return "抑"
+        if cg > 0 or (g and wl / g >= 0.4):
+            return "先"
+        return "中"
+    return None
+
+
 def mgr_key(name):
     """監督の名前の照合用（空白を除き、髙→高 などの字体をそろえる）"""
     return re.sub(r"\s+", "", norm(name or "")).replace("髙", "高").replace("﨑", "崎").replace("濵", "浜")
@@ -623,12 +670,15 @@ def fetch_offseason(season, old, rosters, force=False, any_month=False):
     items = {(x["t"], x["n"]): x for x in prev.get("items", []) if not OFF_URL_NG.search(x.get("url") or "")}
     # 各球団の監督の名前（NPBの選手一覧ページから、1日1回）
     managers = dict(prev.get("managers") or {})
+    player_ids = {}
     if prev.get("managers_date") != now.strftime("%Y-%m-%d") or not managers:
         for t, code in ROSTER_CODE.items():
             html = fetch(f"https://npb.jp/bis/teams/rst_{code}.html")
             m = parse_manager(html) if html else None
             if m:
                 managers[t] = m
+            if html:
+                player_ids[t] = parse_player_ids(html)
         print(f"[監督] {len(managers)}球団: " + " ".join(f"{t}:{m['n']}" for t, m in managers.items()))
     # 監督としての通算成績（NPBの12球団の年度別成績ページから、今の監督と退任する監督の分だけ。1日1回）
     mgr_rec = dict(prev.get("mgr_rec") or {})
@@ -694,6 +744,29 @@ def fetch_offseason(season, old, rosters, force=False, any_month=False):
                 st["found"] += 1
             print(f"  [戦力外・引退 {t}] {ltitle[:40]} → {len(found)}人{('（' + why + '）') if why else ''}")
         teams[t] = st
+    # 投手の過去の一軍の役割（先発・中継ぎ・抑え）：NPBの選手ページから。1回調べたら残す（1回に30人まで）
+    looked = 0
+    need = {t for (t, n), it in items.items() if not it.get("role") and it.get("kind") != "mgr"
+            and any(r.get("p") == "投手" and squash(r.get("n", "")) == squash(n) for r in rosters.get(t) or [])}
+    for t in need - set(player_ids):   # 監督の名前を取らなかった回でも、調べる球団の選手ページの番号は取る
+        html = fetch(f"https://npb.jp/bis/teams/rst_{ROSTER_CODE[t]}.html")
+        if html:
+            player_ids[t] = parse_player_ids(html)
+    for (t, n), it in items.items():
+        if it.get("role") or it.get("kind") == "mgr" or looked >= 30:
+            continue
+        ro = next((r for r in rosters.get(t) or [] if squash(r.get("n", "")) == squash(n)), None)
+        if not ro or ro.get("p") != "投手":
+            continue
+        pid = (player_ids.get(t) or {}).get(squash(n))
+        if not pid:
+            continue
+        html = fetch(f"https://npb.jp/bis/players/{pid}.html")
+        looked += 1
+        time.sleep(0.5)
+        role = pitcher_role(html) if html else None
+        if role:
+            it["role"] = role
     # 補う分：OFF_SEED と data/offseason_fix.json（{"exclude": [{"t","n"}], "add": [{...}]}）
     # すでに公式の発表から見つけている選手は、発表日・種類だけ補う（リンクは公式の発表のまま）
     def patch(x):
