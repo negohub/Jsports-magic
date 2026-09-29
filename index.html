@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260929171541">
+<meta name="build" content="20260929174959">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1910,13 +1910,9 @@ html.theme-pawa{background:#CDEBFF}
 
 /* ===== なめらかな動き ===== */
 /* タブバー：--p（0〜1）に合わせて連続的に縮む。指に追従している間はそのまま、離したらばねの動き */
-.tabbar{--p:0;transform:translate3d(0,calc(var(--p) * 8px),0) scale(calc(1 - var(--p) * .2));transform-origin:50% 100%;will-change:transform;
-  transition:transform .6s cubic-bezier(.2,1.25,.35,1)}
-.tabbar button .tl{opacity:calc(1 - var(--p) * 1.7);transform:translate3d(0,calc(var(--p) * 6px),0) scale(calc(1 - var(--p) * .1));
-  transition:opacity .6s cubic-bezier(.2,1,.35,1),transform .6s cubic-bezier(.2,1.25,.35,1)}
-.tabbar button svg{transform:translate3d(0,calc(var(--p) * 8px),0) scale(calc(1 + var(--p) * .12));transition:transform .6s cubic-bezier(.2,1.25,.35,1)}
-.tabbar button[aria-selected="true"] svg{transform:translate3d(0,calc(var(--p) * 8px),0) scale(calc(1.08 + var(--p) * .08))}
-.tabbar.track,.tabbar.track button .tl,.tabbar.track button svg{transition:none}
+/* タブバー：縮む・戻る動きは JS のばね（1フレームごとに transform を書く）。CSS のトランジションは重ねない */
+.tabbar{transform-origin:50% 100%;will-change:transform;transition:none !important;backface-visibility:hidden}
+.tabbar button .tl,.tabbar button svg{transition:none !important;will-change:transform,opacity;backface-visibility:hidden}
 /* 選択中のタブのレンズ：少し弾むばねの動きですべる */
 .tabbar .lens{transition:transform .55s cubic-bezier(.3,1.35,.45,1),width .55s cubic-bezier(.3,1.35,.45,1)}
 /* 画面の切り替え：少し浮き上がりながらふわっと */
@@ -2000,6 +1996,8 @@ th.srt{height:44px}
 @keyframes ptrspin{to{transform:rotate(360deg)}}
 html.theme-pawa .ptr{background:#fff;color:#13264A;border:2px solid #1D3E7C}
 
+/* タップの反応を速く（ダブルタップの拡大の待ち時間をなくす） */
+html{touch-action:manipulation}
 /* ===== 設定：担当者の名前の色（ポジション） ===== */
 .op-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:8px 0;border-bottom:1px solid var(--line,#2A2A2A)}
 .op-row b{font-size:14px;min-width:3em}
@@ -2813,14 +2811,41 @@ function moveLens(instant) {
 }
 window.addEventListener("resize", () => moveLens(true));
 // スクロールしている間は（下へでも上へでも）タブバーを小さく。いちばん上の近くと、スクロールが止まったときに元の大きさに戻す
+// 動きは「ばね」で1フレームずつ計算して transform を書く（途中で向きが変わっても速さを引き継ぐので、カクッとしない）
 (() => {
   const bar = document.querySelector(".tabbar");
-  let lastY = window.scrollY, mini = false;
-  // p：0＝元の大きさ、1＝いちばん小さい。スクロールした量に合わせて連続的に変える
-  let p = 0, raf = 0;
-  const paint = () => { raf = 0; bar.style.setProperty("--p", p.toFixed(3)); const m = p > .5; if (m !== mini) { mini = m; bar.classList.toggle("mini", m); } };
-  const setP = (v, animate) => { p = Math.max(0, Math.min(1, v)); bar.classList.toggle("track", !animate); if (!raf) raf = requestAnimationFrame(paint); };
-  const set = v => setP(v ? 1 : 0, true);
+  let lastY = window.scrollY;
+  // p：0＝元の大きさ、1＝いちばん小さい。target：向かう先。v：速さ（1秒あたり）
+  let p = 0, v = 0, target = 0, follow = false, raf = 0, last = 0;
+  const K = 320, C = 30;   // ばねの強さ・止まりやすさ（少しだけ弾んで止まる）
+  const draw = () => {
+    bar.style.transform = `translate3d(0,${(p * 8).toFixed(2)}px,0) scale(${(1 - p * .2).toFixed(4)})`;
+    const tl = `translate3d(0,${(p * 6).toFixed(2)}px,0) scale(${(1 - p * .1).toFixed(4)})`, op = Math.max(0, 1 - p * 1.7).toFixed(3);
+    bar.querySelectorAll("button").forEach(b => {
+      const l = b.querySelector(".tl"), g = b.querySelector("svg");
+      if (l) { l.style.transform = tl; l.style.opacity = op; }
+      if (g) g.style.transform = `translate3d(0,${(p * 8).toFixed(2)}px,0) scale(${((b.getAttribute("aria-selected") === "true" ? 1.08 : 1) + p * (b.getAttribute("aria-selected") === "true" ? .08 : .12)).toFixed(4)})`;
+    });
+    bar.classList.toggle("mini", p > .5);
+  };
+  const step = now => {
+    raf = 0;
+    const dt = Math.min(.032, last ? (now - last) / 1000 : .016);
+    last = now;
+    if (follow) {   // 指のスクロールに合わせているあいだは、そのまま追いかける（遅れない）
+      v = (target - p) / Math.max(dt, .008); p = target;
+    } else {         // 離れたら、ばねで target へ（速さを引き継ぐ）
+      const a = -K * (p - target) - C * v;
+      v += a * dt; p += v * dt;
+      if (Math.abs(p - target) < .0005 && Math.abs(v) < .005) { p = target; v = 0; }
+    }
+    p = Math.max(-.06, Math.min(1.04, p));
+    draw();
+    if (follow || p !== target || v !== 0) raf = requestAnimationFrame(step); else last = 0;
+  };
+  const kick = () => { if (!raf) { last = 0; raf = requestAnimationFrame(step); } };
+  const setP = (val, spring) => { target = Math.max(0, Math.min(1, val)); follow = !spring; kick(); };
+  const set = on => setP(on ? 1 : 0, true);
   // 指（またはマウス・キー）でスクロールしたときだけ大きさを変える。
   // タブの切り替え・一球速報の自動更新などで画面の長さや位置が変わっただけでは動かさない
   // 指で触っている間と、離してからの惰性のスクロール（2.5秒まで）を「指でのスクロール」として扱う
@@ -2835,16 +2860,19 @@ window.addEventListener("resize", () => moveLens(true));
   window.addEventListener("touchstart", e => (ty = e.touches[0].clientY), { passive: true });
   window.addEventListener("touchmove", e => { if (ty != null && e.touches[0].clientY - ty > 12 && window.scrollY < 60) set(false); }, { passive: true });
   window.addEventListener("wheel", e => { if (e.deltaY < 0 && window.scrollY < 60) set(false); }, { passive: true });
+  // スクロールが止まったら（指を離していて、惰性のスクロールも止まってから）ばねで元の大きさに戻す
+  const settle = () => { clearTimeout(idle); idle = setTimeout(() => { if (!touching) setP(0, true); else settle(); }, 180); };
   window.addEventListener("scroll", () => {
     const y = window.scrollY, dy = y - lastY;
-    if (!touching && Date.now() - userAt > 2500) { lastY = y; return; }
-    if (y < 60) setP(0, true);
-    else if (dy !== 0) setP(p + Math.abs(dy) / 90, false);   // 下へも上へも：90px で最小まで、指に合わせて少しずつ
     lastY = y;
-    // スクロールが止まったら（指を離していれば）どの位置でも、ばねの動きで元の大きさに戻す
-    clearTimeout(idle);
-    idle = setTimeout(() => { if (!touching) setP(0, true); }, 700);
+    if (!touching && Date.now() - userAt > 2500) return;
+    if (y < 60) setP(0, true);
+    else if (dy !== 0) setP(target + Math.abs(dy) / 90, false);   // 下へも上へも：90px で最小まで、指に合わせて少しずつ
+    settle();
   }, { passive: true });
+  if ("onscrollend" in window) window.addEventListener("scrollend", () => { if (!touching) { clearTimeout(idle); setP(0, true); } }, { passive: true });
+  window.__tabbarP = () => ({ p, target, v });   // 検査用
+  draw();
 })();
 window.addEventListener("load", () => moveLens(true));
 // ===== 左右スワイプ（タブの切り替え・戦況の月度の切り替えで共通） =====
@@ -2966,8 +2994,9 @@ function hideSwipeHint() {
 }
 function setTab(t) {
   S.tab = t;
-  if (t === "stats") setTimeout(() => { liveStats(S.cat); renderTeamIn(); }, 0);
-  if (t === "game" || t === "cal") setTimeout(() => loadStarters(), 0);
+  // 重い描き直しは、画面がふわっと出てくる動き（0.45秒）の邪魔をしないよう、動きが落ち着いてから
+  if (t === "stats") setTimeout(() => { liveStats(S.cat); renderTeamIn(); }, 260);
+  if (t === "game" || t === "cal") setTimeout(() => loadStarters(), 260);
   $("kicker").textContent = TAB_TITLE[t][0];
   $("ttl").textContent = TAB_TITLE[t][1];
   requestAnimationFrame(() => moveLens());
