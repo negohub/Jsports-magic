@@ -859,6 +859,78 @@ async def tabbar_check(browser):
     await pg.close()
 
 
+async def offseason_check(browser):
+    """今オフの戦力外・引退：一覧・札が出るか、はみ出さないか、押しやすいか（両テーマ×幅390/320×両リーグ）。
+    あわせて、データ更新側の読み取り（球団の発表ページから選手を拾う処理）を試験用のページで確かめる"""
+    for theme in ["", "pawa"]:
+        for width in [390, 320]:
+            for lg in ["C", "P"]:
+                label = f"[戦力外・引退 {'パワプロ風' if theme else 'スタイリッシュ'} 幅{width} {lg}]"
+                pg, errs = await open_page(browser, width, theme)
+                if lg == "P":
+                    await pg.evaluate("switchLeague('P')")
+                    await pg.wait_for_timeout(200)
+                r = await pg.evaluate("""() => {
+                  const ng = [], items = [];
+                  // 表示中のリーグの各球団から、名簿の選手を2人ずつ（長い名前の選手も入れる）
+                  CL.forEach((t, i) => {
+                    const ro = (DATA.rosters[t] || []).slice().sort((a, b) => b.n.length - a.n.length);
+                    if (ro[0]) items.push({ t, n: ro[0].n, no: ro[0].no, dev: false, kind: 'offer', date: '2026-09-29', url: 'https://example.com/a', title: '' });
+                    if (ro[1] && i % 2 === 0) items.push({ t, n: ro[1].n, no: ro[1].no, dev: false, kind: 'retire', date: '2026-09-23', url: 'https://example.com/b', title: '' });
+                  });
+                  DATA.offseason = { season: 2026, checked_at: '2026-09-29T15:00:00+09:00', items, teams: {}, seen: {} };
+                  jst = () => ({ y: 2026, m: 10, d: 1, iso: '2026-10-01' });
+                  setTab('stats'); renderStats();
+                  const blk = document.getElementById('offBlk');
+                  if (blk.hidden) { ng.push('一覧が出ない'); return ng; }
+                  const rows = blk.querySelectorAll('.ofr');
+                  if (rows.length !== items.length) ng.push(`一覧の人数が違う（${rows.length}／${items.length}）`);
+                  const W = blk.getBoundingClientRect().right + 1;
+                  blk.querySelectorAll('.ofr, .ofr *').forEach(e => { const b = e.getBoundingClientRect(); if (b.width && b.right > W) ng.push(`一覧が横にはみ出し：${e.className}`); });
+                  blk.querySelectorAll('.oln, .onm').forEach(e => { const b = e.getBoundingClientRect(); if (e.matches('.oln') && (b.height < 43.5 || b.width < 43.5)) ng.push(`「発表」が小さい ${Math.round(b.width)}×${Math.round(b.height)}`); });
+                  // 札：チーム内の成績・応援歌・選手の成績画面
+                  const it = items[0], k = it.n.replace(/\\s+/g, '');
+                  PST[it.t] = { at: Date.now(), d: { bat: { [k]: { 試合: '1', 打席: '9', 打率: '.1', 本塁打: '0', 打点: '0', 出塁率: '.1', 長打率: '.1' } }, pit: { [k]: { 登板: '1', 投球回: '1', 防御率: '1.00', 勝利: '0', 敗北: '0', 三振: '1' } }, asof: '9/28' } };
+                  S.ptTeam = it.t; renderTeamIn();
+                  if (!document.querySelector('#ptTbl .offtag')) ng.push('チーム内の成績に札が出ない');
+                  const over = [...document.querySelectorAll('#ptTbl td, #ptTbl th')].filter(c => c.scrollWidth > c.clientWidth + 1).length;
+                  if (over) ng.push(`札を付けたチーム内の成績で、文字がマスからはみ出したセルが ${over} 個`);
+                  return ng;
+                }""")
+                for m in r[:6]:
+                    bad(f"{label} {m}")
+                # 選手の成績画面の札
+                ok = await pg.evaluate("""async () => { const it = DATA.offseason.items[0]; await openPlayer(it.t, it.n); return !!document.querySelector('#songPick .sp-h .offtag'); }""")
+                if not ok:
+                    bad(f"{label} 選手の成績画面に札が出ない")
+                for e in errs:
+                    bad(f"{label}: 画面のエラー {e}")
+                await pg.close()
+    # データ更新側：発表ページの読み取り（requests・BeautifulSoup が入っている環境だけ）
+    try:
+        import sys as _s
+        _s.path.insert(0, str(ROOT / "scripts"))
+        import update_data as ud
+    except ImportError:
+        print("  （データ更新側の読み取りの試験は、requests・BeautifulSoup がないため省略）")
+        return
+    roster = [{"n": "酒居 知史", "no": "28"}, {"n": "林 優樹", "no": "64"}, {"n": "今野 龍太", "no": "66"}, {"n": "伊藤 樹", "no": "20"}, {"n": "辛島 航", "no": "58"}, {"n": "松田 啄磨", "no": "061", "dev": True}]
+    lst = '<ul class="news-list"><li><a href="/news/1.html">2026/09/28 来季の選手契約について</a></li><li><a href="/news/2.html">辛島 航選手 現役引退に関して</a></li><li><a href="/news/3.html">伊藤 樹選手がプロ初勝利</a></li><li><a href="/news/4.html">契約更改について</a></li></ul>'
+    art = ('<header>伊藤 樹選手</header><article><h1>来季の選手契約について</h1><p>2026/09/28</p><p>以下の選手と2027シーズンの選手契約を行わないことを通知しました。</p>'
+           '<p>投手 酒居 知史<br>投手 林 優樹<br>投手 今野 龍太<br>【育成】投手 松田 啄磨</p><p>なお、酒居 知史投手、林 優樹投手には育成選手契約を打診しております。</p></article>'
+           '<aside class="side">伊藤 樹選手がプロ初勝利</aside>')
+    links = [t for _, t in ud.off_links("https://www.example.jp/news/", lst)]
+    if len(links) != 2 or not any("契約" in t for t in links) or not any("引退" in t for t in links):
+        bad(f"[戦力外・引退の読み取り] ニュース一覧から発表を正しく選べない：{links}")
+    got, _ = ud.off_article("E", "u", "来季の選手契約について", art, roster, 2026)
+    want = {"酒居 知史": "offer", "林 優樹": "offer", "今野 龍太": "cut", "松田 啄磨": "cut"}
+    if {x["n"]: x["kind"] for x in got} != want:
+        bad(f"[戦力外・引退の読み取り] 発表から選手を正しく拾えない：{[(x['n'], x['kind']) for x in got]}")
+    old, why = ud.off_article("E", "u", "来季の選手契約について", "<h1>来季の選手契約について</h1><p>2025/10/05</p><p>酒居 知史投手と来季の契約を結ばない</p>", roster, 2026)
+    if old:
+        bad("[戦力外・引退の読み取り] 去年の発表を今年のものとして拾っている")
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -919,6 +991,7 @@ async def main():
         await home_screen_check(browser)
         await name_center_check(browser)
         await tabbar_check(browser)
+        await offseason_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
