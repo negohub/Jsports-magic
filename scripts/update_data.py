@@ -574,13 +574,13 @@ def off_article(t, url, list_title, html, roster, season, manager=None):
     return items, ""
 
 
-def fetch_offseason(season, old, rosters, force=False):
+def fetch_offseason(season, old, rosters, force=False, any_month=False):
     """各球団の公式サイトから、今オフの戦力外・引退の発表を集める（前回までに見つけたものは残す）"""
     prev = (old or {}).get("offseason") or {}
     if prev.get("season") != season:
         prev = {}
     now = datetime.now(JST)
-    if now.month < 9 and not force:
+    if now.month < 9 and not any_month:   # 9月〜12月だけ（手動で実行しても、この時期以外は見に行かない）
         return prev or None
     last = prev.get("checked_at")
     if last and not force:
@@ -988,7 +988,9 @@ def main():
     rosters, roster_date = safe("選手一覧", lambda: fetch_rosters(old), ((old or {}).get("rosters") or {}, (old or {}).get("roster_date")))
     post = safe("ポストシーズン", lambda: fetch_post(season, old), (old or {}).get("post"))
     fpos = safe("守備位置", lambda: fetch_fpos(season, old), (old or {}).get("fpos"))
-    offseason = safe("戦力外・引退", lambda: fetch_offseason(season, old, rosters, os.environ.get("OFF_FORCE") == "1"), (old or {}).get("offseason"))
+    # Actions の画面で「Run workflow」を押したとき（手動で実行したとき）は、3時間の間隔を待たずに球団サイトを見に行く
+    off_force = os.environ.get("OFF_FORCE") == "1" or os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch"
+    offseason = safe("戦力外・引退", lambda: fetch_offseason(season, old, rosters, off_force, os.environ.get("OFF_FORCE") == "1"), (old or {}).get("offseason"))
     if (old and old_games == all_games and old_stats == stats and old.get("prev_order") == prev_order
             and old_stats_p == stats_p and old.get("prev_order_p") == prev_order_p
             and old.get("checked") == month and old.get("rosters") == rosters and old.get("song_rev") == SONG_REV
