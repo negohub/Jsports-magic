@@ -877,11 +877,12 @@ async def offseason_check(browser):
                     const ro = (DATA.rosters[t] || []).slice().sort((a, b) => b.n.length - a.n.length);
                     if (ro[0]) items.push({ t, n: ro[0].n, no: ro[0].no, dev: false, kind: 'offer', date: '2026-09-29', url: 'https://example.com/a', title: '' });
                     if (ro[1] && i % 2 === 0) items.push({ t, n: ro[1].n, no: ro[1].no, dev: false, kind: 'retire', date: '2026-09-23', url: 'https://example.com/b', title: '' });
-                    if (i === 1) items.push({ t, n: 'テスト 監督太郎', no: '99', dev: false, kind: 'mgr', role: '監督', date: '2026-09-29', url: '', title: '' });
+                    if (i === 1) items.push({ t, n: '井上 一樹', no: '99', dev: false, kind: 'mgr', role: '監督', date: '2026-09-29', url: '', title: '' });
                   });
                   // 去年の「公示 任意引退・自由契約」のページから拾ったもの（出してはいけない）
                   const bogus = { t: CL[0], n: 'ニセ 公示太郎', no: '1', dev: false, kind: 'retire', date: '2026-09-29', url: 'https://www.example.jp/news/announce/retire/', title: '' };
-                  DATA.offseason = { season: 2026, checked_at: '2026-09-29T15:00:00+09:00', items: items.concat([bogus]), teams: {}, seen: {} };
+                  const mgrRec = { '井上 一樹': { seasons: [{ y: '2025', t: CL[1], rank: '4', g: 143, w: 63, l: 78, d: 2 }, { y: '2026', t: CL[1], rank: '1', g: 141, w: 59, l: 80, d: 2 }], asof: '9/28' } };
+                  DATA.offseason = { season: 2026, checked_at: '2026-09-29T15:00:00+09:00', items: items.concat([bogus]), teams: {}, seen: {}, mgr_rec: mgrRec };
                   jst = () => ({ y: 2026, m: 10, d: 1, iso: '2026-10-01' });
                   renderAll(); setTab('off');
                   const tb = document.querySelector('.tabbar button[data-tab="off"]'), blk = document.getElementById('v-off');
@@ -895,9 +896,24 @@ async def offseason_check(browser):
                   if (blk.querySelector('#offList a')) ng.push('一覧に「発表」などのリンクが残っている');
                   if (rows.length !== items.length) ng.push(`一覧の人数が違う（${rows.length}／${items.length}）`);
                   // 監督の退任：球団のいちばん上に出て、名前は押せない（成績がないため）
-                  const mrow = [...rows].find(r => r.textContent.includes('テスト 監督太郎'));
+                  const mrow = [...rows].find(r => r.textContent.includes('井上 一樹'));
                   if (!mrow) ng.push('監督の退任が出ない');
-                  else { if (mrow.querySelector('[data-pl]')) ng.push('監督の名前が押せてしまう'); if (mrow.previousElementSibling && mrow.previousElementSibling.classList.contains('ofr')) ng.push('監督の退任が球団のいちばん上にない'); }
+                  else {
+                    if (mrow.querySelector('[data-pl]')) ng.push('監督の名前が選手の成績画面につながっている');
+                    if (mrow.previousElementSibling && mrow.previousElementSibling.classList.contains('ofr')) ng.push('監督の退任が球団のいちばん上にない');
+                    // パワプロ風：監督の名前は現役時代のポジション（井上一樹＝外野手）の色のタイル
+                    if (isPawa() && !mrow.querySelector('.onm .ptile.po')) ng.push('パワプロ風で、監督の名前が現役時代のポジションの色のタイルになっていない');
+                    // 名前をタップすると、監督としての通算成績
+                    mrow.querySelector('[data-mgr]').click();
+                    const sp = document.getElementById('songPick'), txt = sp.textContent;
+                    if (document.getElementById('songSheet').hidden || !txt.includes('監督としての通算成績（2年）')) ng.push('監督の名前をタップしても通算成績が出ない');
+                    else {
+                      if (!/284/.test(txt) || !/122/.test(txt) || !/158/.test(txt) || !/[.]436/.test(txt)) ng.push('監督の通算成績の数字が違う（284試合122勝158敗.436のはず）');
+                      if (!txt.includes('1回')) ng.push('リーグ優勝の回数が違う');
+                      if (sp.scrollWidth > sp.clientWidth + 1) ng.push('監督の成績画面が横にはみ出している');
+                    }
+                    document.getElementById('songSheet').hidden = true; document.getElementById('songSheet').classList.remove('open');
+                  }
                   // パワプロ風は、名前が守備位置の色のタイルになっているか
                   if (isPawa() && [...rows].some(r => !r.querySelector('.onm .ptile'))) ng.push('パワプロ風なのに、名前がタイルになっていない');
                   if (items.some(x => x.kind === 'mgr' && offOf(x.t, x.n))) ng.push('監督に選手の札が付く');
@@ -960,6 +976,13 @@ async def offseason_check(browser):
     old, why = ud.off_article("E", "u", "来季の選手契約について", "<h1>来季の選手契約について</h1><p>2025/10/05</p><p>酒居 知史投手と来季の契約を結ばない</p>", roster, 2026)
     if old:
         bad("[戦力外・引退の読み取り] 去年の発表を今年のものとして拾っている")
+    # 監督の通算成績：NPBの年度別成績（表の行でも箇条書きの行でも）から、年度・監督・順位・勝敗を読む
+    rows, asof = ud.parse_yearly('<ul><li>2026年9月28日(月) 現在</li><li>1936※ 池田 豊 16 7 9 0 .438 .237 9 5.72</li><li>1939 根本・小西 6 96 38 53 5 .418 27.5</li><li>2025 井上 一樹 4 143 63 78 2 .447 23.0 .232 83 2.97</li></ul>')
+    got = [(r["y"], r["m"], r["rank"], r["g"], r["w"], r["l"], r["d"]) for r in rows]
+    if asof != "9/28" or ("2025", "井上 一樹", "4", 143, 63, 78, 2) not in got or ("1936", "池田 豊", "", 16, 7, 9, 0) not in got:
+        bad(f"[監督の通算成績の読み取り] NPBの年度別成績を正しく読めない：{asof} {got}")
+    if ud.mgr_key("髙木 守道") != ud.mgr_key("高木守道"):
+        bad("[監督の通算成績の読み取り] 監督の名前の字体（髙・高）をそろえられない")
     # 監督：NPBの選手一覧の「監督」の欄から名前を取り、辞任の発表で退任として拾う（二軍監督の話・選手の発表の中の監督のコメントは拾わない）
     mgr = ud.parse_manager('<table><tr><th>No.</th><th>監督</th></tr><tr><td>99</td><td>井上 一樹</td></tr><tr><th>No.</th><th>投手</th></tr><tr><td>11</td><td>中西 聖輝</td></tr></table>')
     if not mgr or mgr.get("n") != "井上 一樹":
