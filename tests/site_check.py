@@ -425,6 +425,7 @@ async def team_in_check(browser):
                     await pg.evaluate("switchLeague('P')")
                     await pg.wait_for_timeout(200)
                 r = await pg.evaluate("""() => {
+                  DATA.tstats = null; DATA.tstats_at = null;   // この試験は中継プログラム（NPB）の表で見る
                   const ng = [];
                   setTab("stats");
                   for (const t of CL) {
@@ -1000,6 +1001,7 @@ async def offseason_check(browser):
                   PST[it.t] = { at: Date.now(), d: { bat: { [k]: { 試合: '1', 打席: '9', 打率: '.1', 本塁打: '0', 打点: '0', 出塁率: '.1', 長打率: '.1' } }, pit: { [k]: { 登板: '1', 投球回: '1', 防御率: '1.00', 勝利: '0', 敗北: '0', 三振: '1' } }, asof: '9/28' } };
                   // 打者の表は打者だけ・投手の表は投手だけなので、その選手の守備位置の側の表で見る
                   S.ptKind = (((DATA.rosters[it.t] || []).find(r => r.n === it.n) || {}).p === '投手') ? 'pit' : 'bat';
+                  DATA.tstats = null; DATA.tstats_at = null;   // この試験は中継プログラム（NPB）の表で見る
                   setTab('stats'); S.ptTeam = it.t; renderTeamIn();
                   if (!document.querySelector('#ptTbl .offtag')) ng.push('チーム別成績に札が出ない');
                   S.ptKind = 'bat';
@@ -1487,6 +1489,8 @@ async def consistency_check(browser):
         seen = set()
         for line in texts:
             tab, _, x = line.partition("｜")
+            if x.replace("\n", "") == "自力脱出消滅":
+                continue   # 表のマジック欄は「自力脱出／消滅」の2行で出している
             for pat, why in NG:
                 for part in x.split("\n"):
                     if _re.search(pat, part.strip()) and (why, part) not in seen:
@@ -1575,6 +1579,93 @@ async def team_rank_menu_check(browser):
             await pg.close()
 
 
+async def speed_health_check(browser):
+    """起動を軽く：チーム別成績は data/tstats.json に分けて、成績タブを開いたときに読む。
+    サイト一式の保存（sw.js）の中身と登録のしかた。データの状態に各項目の行が出るか。
+    チーム別成績のメニューに「出場の多い順」がないこと、スタイリッシュに「名前の色」の欄がないこと"""
+    import http.server, threading, functools, subprocess
+    sw = ROOT / "sw.js"
+    if not sw.exists():
+        bad("[起動の速さ] sw.js（サイト一式の保存）がない")
+    else:
+        out = subprocess.run(["node", "--check", str(sw)], capture_output=True, text=True)
+        if out.returncode:
+            bad(f"[起動の速さ] sw.js に書き間違いがある：{out.stderr[:120]}")
+        src = sw.read_text(encoding="utf-8")
+        for need, why in [("skipWaiting", "新しい版にすぐ切り替わらない"), ('req.mode === "navigate"', "サイト本体を保存していない"),
+                          ("/data/", "データを保存していない"), ('searchParams.has("v")', "新しい版への切り替え（?v=）で最新を取りに行かない"),
+                          ("url.origin !== self.location.origin", "ほかのサイトへの通信（速報など）に手を出してしまう")]:
+            if need not in src:
+                bad(f"[起動の速さ] sw.js：{why}")
+    html = (ROOT / "index.html").read_text(encoding="utf-8")
+    if 'navigator.serviceWorker.register("sw.js")' not in html or 'location.protocol === "https:"' not in html:
+        bad("[起動の速さ] サイト一式の保存を https のときだけ登録していない")
+    class Quiet(http.server.SimpleHTTPRequestHandler):
+        def log_message(self, *a):
+            pass
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=str(ROOT)))
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{srv.server_port}/"
+    try:
+        d = json.loads((ROOT / "data" / "latest.json").read_text(encoding="utf-8"))
+        t0 = "T"
+        ts = {"at": "2026-09-29T21:00:00+09:00", "asof": "9/29 21:00", "cols": {"bat": ["打率", "試合", "打席"], "pit": ["防御率", "登板", "投球回"]},
+              "teams": {t0: {"bat": [["読込 太郎", "内", ".300", "100", "400"]], "pit": [["読込 次郎", "投", "2.50", "20", "100.1"]]}}}
+        dd = dict(d); dd.pop("tstats", None); dd["tstats_at"] = ts["at"]
+        seen = []
+        pg = await browser.new_page(viewport={"width": 390, "height": 844})
+        errs = []
+        pg.on("pageerror", lambda e: errs.append(str(e)))
+        await pg.add_init_script("localStorage.clear(); localStorage.setItem('me','T'); localStorage.setItem('league','C')")
+        await pg.route("https://**", lambda r: r.abort())
+        await pg.route("**/data/latest.json*", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps(dd, ensure_ascii=False)))
+        async def ts_route(r):
+            seen.append(r.request.url)
+            await r.fulfill(status=200, content_type="application/json", body=json.dumps(ts, ensure_ascii=False))
+        await pg.route("**/data/tstats.json*", ts_route)
+        await pg.goto(base + "index.html")
+        await pg.wait_for_timeout(900)
+        if seen:
+            bad("[起動の速さ] 開いた瞬間にチーム別成績（data/tstats.json）まで読んでいる")
+        await pg.evaluate("S.ptTeam = 'T'; setTab('stats')")
+        await pg.wait_for_timeout(900)
+        if not seen:
+            bad("[起動の速さ] 成績タブを開いてもチーム別成績（data/tstats.json）を読みに行かない")
+        txt = await pg.evaluate("document.getElementById('ptList').innerText")
+        if "読込" not in txt:
+            bad("[起動の速さ] 読んだチーム別成績が表に出ない")
+        opts = await pg.evaluate("[...document.querySelectorAll('#ptCat option')].map(o => o.textContent)")
+        if "出場の多い順" in opts or (opts and opts[0] != "打率"):
+            bad(f"[チーム別成績] メニューの最初が打率になっていない・「出場の多い順」が残っている：{opts[:2]}")
+        # データの状態：チーム別成績の行
+        rows = await pg.evaluate("openSheet(), [...document.querySelectorAll('#healthBox .hi b')].map(b => b.textContent)")
+        if "チーム別成績" not in rows:
+            bad(f"[データの状態] チーム別成績の行がない：{rows}")
+        # スタイリッシュでは「名前の色（パワプロ風）」の欄を出さない
+        if not await pg.evaluate("document.getElementById('opSec').hidden"):
+            bad("[名前の色] スタイリッシュでも「名前の色（パワプロ風）」の欄が出ている")
+        for e in errs:
+            bad(f"[起動の速さ]: 画面のエラー {e}")
+        await pg.close()
+    finally:
+        srv.shutdown()
+    # オフシーズンの行（開けていない球団の知らせ・監督コーチ一覧・ドラフト）
+    pg, errs = await open_page(browser, 390, "")
+    r = await pg.evaluate("""() => {
+      DATA.offseason = { season: 2026, checked_at: new Date(Date.now()).toISOString(), items: [{ t: 'G', n: 'テスト', kind: 'cut', date: '2026-10-01' }],
+        teams: { G: { err: 'ニュース一覧を開けない' } }, staff: { T: [], G: [], DB: [], D: [], C: [], S: [] }, managers_date: '2026-10-01', draft_status: { 'https://npb.jp/draft/2026/': 0 } };
+      const it = healthItems(), get = k => it.find(x => x.k === k) || {};
+      const ng = [];
+      if (get('オフシーズン情報').lv !== 'warn' || !String(get('オフシーズン情報').v).includes('巨人')) ng.push('開けていない球団（巨人）がデータの状態に出ない');
+      if (get('監督・コーチ一覧').lv !== 'ok') ng.push('監督・コーチ一覧の行が出ない');
+      if (!get('ドラフト').k) ng.push('ドラフトの行が出ない');
+      return ng;
+    }""")
+    for m in r:
+        bad(f"[データの状態] {m}")
+    await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -1646,6 +1737,7 @@ async def main():
         await consistency_check(browser)
         await owner_pos_check(browser)
         await team_rank_menu_check(browser)
+        await speed_health_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
