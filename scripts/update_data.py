@@ -107,9 +107,13 @@ def parse_ticker(html):
             elif getattr(el, "name", None) == "img" and el.get("alt"):
                 parts.append(f" {el['alt']} ")
         text = norm(" ".join(parts))
+        home, away = URLCODE.get(m.group(4)), URLCODE.get(m.group(5))
+        # 中止・ノーゲーム：月の日程ページより先に、当日の試合欄に「中止」と出る（日程ページの更新を待たずに反映する）
+        if home and away and re.search(r"中止|ノーゲーム", text) and "試合終了" not in text:
+            res[(f"{m.group(1)}-{m.group(2)}-{m.group(3)}", home, away)] = "canc"
+            continue
         if "試合終了" not in text:
             continue
-        home, away = URLCODE.get(m.group(4)), URLCODE.get(m.group(5))
         sc = re.search(r"(\d+)\s*-\s*(\d+)", text)
         names = [CODE[x.group()] for x in TEAM_RE.finditer(text)]
         if not (home and away and sc) or len(names) < 2 or {names[0], names[1]} != {home, away}:
@@ -121,10 +125,18 @@ def parse_ticker(html):
     return res
 
 
+BROWSER_UA = {"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+              "Accept-Language": "ja,en;q=0.8", "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"}
+
+
 def fetch(url):
+    denied = False
     for i in range(3):
         try:
-            r = requests.get(url, timeout=30, headers={"User-Agent": "Mozilla/5.0 (jsports-magic)"})
+            # 断られた（403など）ときは、ふつうのブラウザと同じ名乗りでもう一度（球団のサイトの一部）
+            r = requests.get(url, timeout=30, headers=BROWSER_UA if denied else {"User-Agent": "Mozilla/5.0 (jsports-magic)"})
+            if r.status_code in (401, 403, 406, 429):
+                denied = True
             if r.status_code == 200:
                 try:
                     return r.content.decode("utf-8")
@@ -548,10 +560,12 @@ OFF_DATE = re.compile(r"(20\d\d)\s*[./年-]\s*(\d{1,2})\s*[./月-]\s*(\d{1,2})")
 OFF_EVERY = 3 * 3600   # 球団サイトを見に行く間隔（秒）。15分ごとの自動更新のたびには見に行かない
 
 
-def off_links(list_url, html):
-    """ニュース一覧のページから、戦力外・引退の発表らしい記事のリンク（URL, 見出し）を取る"""
+def off_links(list_url, html, hosts=None):
+    """ニュース一覧のページから、戦力外・引退の発表らしい記事のリンク（URL, 見出し）を取る
+    hosts：一覧とは別のサイトへのリンクを受け付けるとき（NPBの「12球団ニュース」→ 各球団の公式サイト）"""
     from urllib.parse import urljoin, urlparse
     host = urlparse(list_url).netloc.replace("www.", "")
+    ok_hosts = {h.replace("www.", "") for h in hosts} if hosts else {host}
     out, seen = [], set()
     for a in BeautifulSoup(html, "html.parser").find_all("a", href=True):
         title = re.sub(r"\s+", " ", norm(a.get_text(" "))).strip()
@@ -561,8 +575,8 @@ def off_links(list_url, html):
         mgr = bool(OFF_TITLE_MGR.search(title)) and not re.search(r"公示|グッズ|チケット|販売|二軍|ファーム", title)
         if not retire and not mgr and not (OFF_TITLE.search(title) and not OFF_TITLE_NG.search(title)):
             continue
-        url = urljoin(list_url, a["href"]).split("#")[0]
-        if urlparse(url).netloc.replace("www.", "") != host or url in seen or url.rstrip("/") == list_url.rstrip("/") or OFF_URL_NG.search(url):
+        url = re.sub(r"^http://", "https://", urljoin(list_url, a["href"]).split("#")[0])   # 同じ記事を http と https で2回読まないように
+        if urlparse(url).netloc.replace("www.", "") not in ok_hosts or url in seen or url.rstrip("/") == list_url.rstrip("/") or OFF_URL_NG.search(url):
             continue
         seen.add(url)
         out.append((url, title))
@@ -712,12 +726,16 @@ def fetch_offseason(season, old, rosters, force=False, any_month=False):
         roster = rosters.get(t) or []
         cands, got = [], set()
         # 候補の一覧ページを全部見て、発表らしい記事をまとめる（球団ごとの状況も残す：開けたか・何件あったか）
-        for u in urls:
+        # 最後に NPB公式の「12球団ニュース」の球団別ページも見る（球団のサイトの一覧が読めないときの助け）
+        from urllib.parse import urlparse
+        team_hosts = {urlparse(u).netloc for u in urls}
+        npb_list = f"https://npb.jp/news/teamnews_{ROSTER_CODE[t]}.html"
+        for u in urls + [npb_list]:
             html = fetch(u)
             if not html:
                 st["lists"][u] = "開けない"
                 continue
-            found_links = off_links(u, html)
+            found_links = off_links(u, html, team_hosts if u == npb_list else None)
             st["lists"][u] = len(found_links)
             for url, ltitle in found_links:
                 if url not in got:
@@ -1087,9 +1105,14 @@ def main():
     for g in all_games:
         k = key(g)
         if g["st"] in ("sched", "live") and k in ticker:
-            g["st"], g["hs"], g["as"] = "final", ticker[k][0], ticker[k][1]
-            g.pop("t", None)
-            print(f"  速報から反映: {k} {g['hs']}-{g['as']}")
+            if ticker[k] == "canc":
+                g["st"] = "canc"
+                g.pop("t", None)
+                print(f"  速報から反映: {k} 中止")
+            else:
+                g["st"], g["hs"], g["as"] = "final", ticker[k][0], ticker[k][1]
+                g.pop("t", None)
+                print(f"  速報から反映: {k} {g['hs']}-{g['as']}")
     # 一度確定した結果は巻き戻さない
     done = {key(g): g for g in old_games if g["st"] in ("final", "canc")}
     for i, g in enumerate(all_games):
