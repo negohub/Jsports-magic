@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260929135336">
+<meta name="build" content="20260929140753">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -4745,7 +4745,7 @@ function renderOff() {
     return `<span class="ptile otl ${TILEC[gr[0]] || "pp"}${len >= 6 ? " n7" : len >= 5 ? " n5" : ""}" style="${tileStyle(gr)}"><b>${esc(x.n)}</b></span>`;
   };
   // 1行目：札・名前・背番号、2行目：内容・発表日
-  const row = x => `<div class="ofr"><span class="offtag k-${x.kind}">${OFF_LABEL[x.kind]}</span><div class="omain"><div class="on1"><span class="onm"${x.kind === "mgr" ? ` data-mgr="${x.t}|${esc(x.n)}"` : OFF_IN.has(x.kind) ? "" : ` data-pl="${x.t}|${esc(x.n)}|"`}>${nameHtml(x)}</span>${x.kind === "mgr" ? `<span class="ono">${esc(x.role || "監督")}</span>` : x.no ? `<span class="ono num">#${esc(x.no)}</span>` : ""}</div><div class="okd">${kindText(x)}${!x.date ? "" : o.season && x.date.slice(0, 4) < String(o.season) ? `<span class="odt num">（${md(x.date)}に表明）</span>` : `<span class="odt num">・${md(x.date)}</span>`}</div></div></div>`;
+  const row = x => `<div class="ofr"><span class="offtag k-${x.kind}">${OFF_LABEL[x.kind]}</span><div class="omain"><div class="on1"><span class="onm"${x.kind === "mgr" ? ` data-mgr="${x.t}|${esc(x.n)}"` : OFF_IN.has(x.kind) && !((DATA.rosters || {})[x.t] || []).some(r => nk(r.n) === nk(x.n)) ? "" : ` data-pl="${x.t}|${esc(x.n)}|"`}>${nameHtml(x)}</span>${x.kind === "mgr" ? `<span class="ono">${esc(x.role || "監督")}</span>` : x.no ? `<span class="ono num">#${esc(x.no)}</span>` : ""}</div><div class="okd">${kindText(x)}${!x.date ? "" : o.season && x.date.slice(0, 4) < String(o.season) ? `<span class="odt num">（${md(x.date)}に表明）</span>` : `<span class="odt num">・${md(x.date)}</span>`}</div></div></div>`;
   $("offList").innerHTML = (has.length ? has.map(t => {
     const all = items.filter(x => x.t === t);
     const byDate = (a, b) => (b.date || "").localeCompare(a.date || "");
