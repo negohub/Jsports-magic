@@ -1392,6 +1392,14 @@ async def song_list_check(browser):
       if (tiles.includes(mv.n)) ng.push(`移籍した選手（${mv.n}）が応援歌タブに出ている`);
       const extra = tiles.filter(n => noSong.some(x => x.n === n));
       if (extra.length) ng.push(`応援歌がない選手が出ている：${extra.slice(0, 3).join('、')}`);
+      // 応援歌ページの飛び先：名字から名前までの範囲（text=名字,名前）。ソフトバンクは転送されないURL（最後の「/」なし）
+      for (const tt of ['H', 'F', 'DB']) {
+        const x = (DATA.rosters[tt] || []).find(r => r.song && /\\s/.test(r.n));
+        if (!x) continue;
+        const [a, b] = x.n.trim().split(/\\s+/), u = songLink(tt, x);
+        if (!u.includes('#:~:text=' + encodeURIComponent(a) + ',' + encodeURIComponent(b))) ng.push(`応援歌ページの飛び先が「名字,名前」の範囲になっていない（${tt}）：${decodeURIComponent(u)}`);
+        if (tt === 'H' && !u.startsWith('https://www.softbankhawks.co.jp/team/song#')) ng.push(`ソフトバンクの応援歌ページのURLが転送されない形になっていない：${u}`);
+      }
       DATA.offseason = null; renderSong();
       return ng;
     }""")
