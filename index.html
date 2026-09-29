@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260929104741">
+<meta name="build" content="20260929112139">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1564,6 +1564,22 @@ html.theme-pawa .pn3 .sptile b{font-size:15px}
 .ptile.rtile{position:absolute;transform:translate(-50%,-62%);height:24px;padding:0 10px;min-width:0;border-radius:6px;cursor:pointer;z-index:2}
 .ptile.rtile b{font-size:13px;letter-spacing:.04em;color:#1F2A44 !important;white-space:nowrap;margin:0}
 @media (max-width:374px){.ptile.rtile{height:21px;padding:0 7px}.ptile.rtile b{font-size:11.5px}}
+/* ===== 一球速報（パワプロ風）の名前の札：名前の長さに関係なく同じ大きさ。長い名前は文字を小さくして収める ===== */
+/* 字間は最後の文字の後ろにも付くので、その分を右の余白で打ち消して真ん中に */
+html.theme-pawa .pn3 .sptile,html.theme-pawa .lnm .sptile,html.theme-pawa .putab td.pnx .sptile,html.theme-pawa .flow .fb .sptile,.ptile.rtile{justify-content:center;box-sizing:border-box;overflow:hidden}
+html.theme-pawa .sptile b,.ptile.rtile b{margin-right:-.04em}
+/* 札の幅（--w）と基本の文字の大きさ（--fs）。文字の大きさは「札の幅 ÷ 文字数」を超えないように自動で小さくする（--n は文字数） */
+html.theme-pawa .pn3 .sptile{--w:90px;--fs:15px;width:var(--w);padding:0 4px}   /* 右に「右投」などの札が並ぶので、欄の幅に収まる大きさ */
+html.theme-pawa .lnm .sptile,html.theme-pawa .putab td.pnx .sptile,html.theme-pawa .flow .fb .sptile{--w:84px;--fs:13px;width:var(--w);padding:0 4px}
+.ptile.rtile{--w:68px;--fs:13px;width:var(--w);padding:0 4px}
+html.theme-pawa .pn3 .sptile b,html.theme-pawa .lnm .sptile b,html.theme-pawa .putab td.pnx .sptile b,html.theme-pawa .flow .fb .sptile b,.ptile.rtile b{font-size:min(var(--fs), calc((var(--w) - 12px) / var(--n, 3)))}
+html.theme-pawa .sptile.n5 b,.ptile.rtile.n5 b{letter-spacing:0;margin-right:0}
+html.theme-pawa .sptile.n7 b,.ptile.rtile.n7 b{letter-spacing:-.02em;margin-right:.02em}
+@media (max-width:374px){
+  html.theme-pawa .pn3 .sptile{--w:62px;--fs:13.5px;padding:0 3px}
+  html.theme-pawa .lnm .sptile,html.theme-pawa .putab td.pnx .sptile,html.theme-pawa .flow .fb .sptile{--w:72px;--fs:12px}
+  .ptile.rtile{--w:60px;--fs:11.5px;padding:0 2px}
+}
 /* スワイプで切り替えたとき：次の画面が横からすべり込む */
 .view.sw-l:not([hidden]){animation:swl .45s cubic-bezier(.2,1,.3,1)}
 .view.sw-r:not([hidden]){animation:swr .45s cubic-bezier(.2,1,.3,1)}
@@ -3480,7 +3496,7 @@ function runnerTiles(list) {
   if (!isPawa() || !list.length) return "";
   return list.map(({ t, x, y, full, short }) => {
     const gr = rosterGroups(t, full);
-    return `<span class="ptile rtile ${TILEC[gr[0]] || "pi"}" data-pl="${t}|${esc(full)}" style="left:${(x / 300 * 100).toFixed(2)}%;top:${(y / 190 * 100).toFixed(2)}%;${tileStyle(gr)}"><b>${esc(short)}</b></span>`;
+    return `<span class="ptile rtile ${TILEC[gr[0]] || "pi"}${nmLen(short)}" data-pl="${t}|${esc(full)}" style="--n:${[...short].length};left:${(x / 300 * 100).toFixed(2)}%;top:${(y / 190 * 100).toFixed(2)}%;${tileStyle(gr)}"><b>${esc(short)}</b></span>`;
   }).join("");
 }
 // 速報の呼び名：名簿で探して苗字にする（同じ球団に同じ苗字がいれば「佐藤輝」のように区別）。名簿にいなければそのまま
@@ -3493,10 +3509,12 @@ function callName(t, name) {
   if (hit) return shortName(t, hit.n);
   return /\s/.test(n) ? shortName(t, n) : n;
 }
+// 名前の長さの目印（パワプロ風の札は大きさをそろえ、長い名前は文字を小さくする）
+const nmLen = nm => { const n = [...String(nm || "")].length; return n >= 7 ? " n7" : n >= 5 ? " n5" : ""; };
 function pwName(t, name, fallback) {
   if (!isPawa() || !name) return esc(callName(t, name));
-  const gr = rosterGroups(t, name, fallback);
-  return `<span class="ptile sptile ${TILEC[gr[0]] || "pi"}" style="${tileStyle(gr)}"><b>${esc(callName(t, name))}</b></span>`;
+  const gr = rosterGroups(t, name, fallback), nm = callName(t, name);
+  return `<span class="ptile sptile ${TILEC[gr[0]] || "pi"}${nmLen(nm)}" style="--n:${[...nm].length};${tileStyle(gr)}"><b>${esc(nm)}</b></span>`;
 }
 function flowHTML(f, atk) {
   if (!f) return `<div class="flow"><p class="fnone">この回の流れはまだ取得できていません</p></div>`;
