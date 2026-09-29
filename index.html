@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260928194625">
+<meta name="build" content="20260929044008">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -2620,7 +2620,7 @@ function moveLens(instant) {
   if (instant) requestAnimationFrame(() => (l.style.transition = ""));
 }
 window.addEventListener("resize", () => moveLens(true));
-// 下にスクロールしている間はタブバーを小さく、上に戻すと元の大きさに（iOS 26のSafariと同じ動き）
+// スクロールしている間は（下へでも上へでも）タブバーを小さく。いちばん上の近くと、スクロールが止まったときに元の大きさに戻す
 (() => {
   const bar = document.querySelector(".tabbar");
   let lastY = window.scrollY, mini = false;
@@ -2647,8 +2647,7 @@ window.addEventListener("resize", () => moveLens(true));
     const y = window.scrollY, dy = y - lastY;
     if (!touching && Date.now() - userAt > 2500) { lastY = y; return; }
     if (y < 60) setP(0, true);
-    else if (dy > 0) setP(p + dy / 90, false);   // 下へ：90px で最小まで、指に合わせて少しずつ
-    else if (dy < 0) setP(p + dy / 45, false);   // 上へ：下より早めに戻す
+    else if (dy !== 0) setP(p + Math.abs(dy) / 90, false);   // 下へも上へも：90px で最小まで、指に合わせて少しずつ
     lastY = y;
     // スクロールが止まったら（指を離していれば）どの位置でも、ばねの動きで元の大きさに戻す
     clearTimeout(idle);
