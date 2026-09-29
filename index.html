@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260929082412">
+<meta name="build" content="20260929092847">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1984,6 +1984,23 @@ th.srt{height:44px}
 @keyframes ptrspin{to{transform:rotate(360deg)}}
 html.theme-pawa .ptr{background:#fff;color:#13264A;border:2px solid #1D3E7C}
 
+/* ===== 雨などによる中断・遅延・中止の帯（試合カードのスコアのすぐ下） ===== */
+.wxb{display:flex;align-items:center;gap:8px;margin:-2px 0 8px;padding:9px 12px;border-radius:10px;font-size:13.5px;font-weight:800;line-height:1.35;
+  background:rgba(255,176,32,.14);color:#FFC24A;border:1px solid rgba(255,176,32,.45)}
+.wxb i{flex:0 0 auto;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;font-style:normal;font-size:11px;background:#FFB020;color:#1A1200}
+.wxb.stop i{animation:wxblink 1.4s ease-in-out infinite}
+@keyframes wxblink{50%{opacity:.35}}
+.wxb.canc{background:rgba(229,72,77,.14);color:#FF8A8D;border-color:rgba(229,72,77,.5)}
+.wxb.canc i{background:#E5484D;color:#fff}
+.wxb.go{background:rgba(46,204,113,.12);color:#5EE08F;border-color:rgba(46,204,113,.45)}
+.wxb.go i{background:#2ECC71;color:#062B14}
+.bi.fin.canc b{color:#FF8A8D}
+.bug.canc .bteams{opacity:.6}
+html.theme-pawa .wxb{background:linear-gradient(180deg,#FFF6D6,#FFE08A);color:#5A3C00;border:2px solid #C98A00;box-shadow:0 3px 0 rgba(201,138,0,.35)}
+html.theme-pawa .wxb.canc{background:linear-gradient(180deg,#FFE3E3,#FFB8B8);color:#7A1010;border-color:#C62828;box-shadow:0 3px 0 rgba(198,40,40,.3)}
+html.theme-pawa .wxb.go{background:linear-gradient(180deg,#E6FAEA,#BDEFC6);color:#0E5A22;border-color:#1FA83A;box-shadow:0 3px 0 rgba(31,168,58,.3)}
+html.theme-pawa .bi.fin.canc b{color:#C62828}
+@media (prefers-reduced-motion:reduce){.wxb.stop i{animation:none}}
 /* ===== 今オフの戦力外・引退 ===== */
 .tabbar button[hidden]{display:none !important}
 /* タブが7つのときは、文字を少し小さく */
@@ -2128,7 +2145,7 @@ html.theme-pawa .swhint{color:#1D3E7C}
       <div id="today"></div>
     </section>
     <div class="rempty" id="noGame" hidden>対象の球団の試合はしばらくありません。</div>
-    <details class="howto"><summary>見方</summary><ul><li>ホーム画面から開いているときは、いちばん上で画面を下に引っぱると、最新の結果・スコアをすぐに取り直せます。</li><li>「勝ったら」は、その試合の結果だけで見た場合の変化です（同じ日のほかの試合は考えていません）。</li><li>「負けても自力脱出が残る」：負けた側のマジックの数字が減ることがありますが、それは残り試合が1つ減っただけで、状況が良くなったわけではありません。そのため数字の変化ではなく、残り試合で何勝すればよいかを書いています。</li><li>試合中は自動で更新します（スコアは30秒、一球速報は15秒ごと）。スコア表の点が入ったマスをタップすると、その回の流れが開きます。スコア表・流れ・一球速報のデータはスポーツナビから取得しています。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li>雨などで試合が中断したとき・開始が遅れているとき・中止やノーゲーム・コールドになったときは、試合のスコアのすぐ下に帯で出ます（黄色＝中断・遅れ、赤＝中止・ノーゲーム、緑＝再開・コールド）。試合中の速報と同じように自動で更新されます。</li><li>ホーム画面から開いているときは、いちばん上で画面を下に引っぱると、最新の結果・スコアをすぐに取り直せます。</li><li>「勝ったら」は、その試合の結果だけで見た場合の変化です（同じ日のほかの試合は考えていません）。</li><li>「負けても自力脱出が残る」：負けた側のマジックの数字が減ることがありますが、それは残り試合が1つ減っただけで、状況が良くなったわけではありません。そのため数字の変化ではなく、残り試合で何勝すればよいかを書いています。</li><li>試合中は自動で更新します（スコアは30秒、一球速報は15秒ごと）。スコア表の点が入ったマスをタップすると、その回の流れが開きます。スコア表・流れ・一球速報のデータはスポーツナビから取得しています。</li></ul></details>
   </section>
 
   <section class="view" id="v-song" aria-label="応援歌" hidden>
@@ -2614,6 +2631,8 @@ const sn = t => (TEAM[t] ? TEAM[t].s : t);
 const fn = t => (TEAM[t] ? TEAM[t].n : t);
 const pctOf = (w, l) => fmtPct(w, l);
 const own = t => (CONFIG.owners[t] || fn(t));
+// 「阪神（根来）」のように球団名の後ろに付ける担当者。担当者がいない球団（パ・リーグ・広島）は何も付けない
+const ownP = t => (CONFIG.owners[t] ? `（${CONFIG.owners[t]}）` : "");
 const yen = n => n.toLocaleString("ja-JP") + "円";
 // 担当者の名前：パワプロ風テーマのときは守備位置の色のタイル
 const isPawa = () => document.documentElement.classList.contains("theme-pawa");
@@ -3052,6 +3071,8 @@ function liveWanted() {
   const today = jst().iso, h = new Date(Date.now() + 9 * 3600e3).getUTCHours();
   return h >= 11 && (DATA.games.some(g => g.d === today && (g.st === "sched" || g.st === "live") && inLg(g)) || postToday().some(g => g.st !== "final"));
 }
+// 雨などによる中断・遅延・中止の情報（試合ごと。d+h+a）
+const GSTOP = {};
 async function pollLive() {
   if (document.hidden || !liveWanted()) return;
   try {
@@ -3062,6 +3083,9 @@ async function pollLive() {
     const j = await r.json();
     let changed = false;
     for (const x of j.games || []) {
+      // 雨などによる中断・開始の遅れ・中止・ノーゲーム・コールド（試合前の遅れもあるので、先に覚えておく）
+      const wk = x.d + x.h + x.a, wOld = JSON.stringify(GSTOP[wk] || null), wNew = JSON.stringify(x.w || null);
+      if (wOld !== wNew) { if (x.w) GSTOP[wk] = x.w; else delete GSTOP[wk]; changed = true; }
       if (x.st === "sched") continue;
       const g = DATA.games.find(y => y.d === x.d && y.h === x.h && y.a === x.a);
       if (!g) { // ポストシーズン
@@ -3216,6 +3240,22 @@ function ykHTML(g, homeFirst = true) {
 }
 // 中継画面のスコア表示（スコアバグ）：上がビジター、下がホーム
 const SCORE_PREV = {}, SCORE_FLASH = {};
+// 雨などで中断・開始が遅れている・中止・ノーゲーム・コールドのとき、試合カードのスコアのすぐ下に帯で出す
+function wxHTML(g) {
+  const w = GSTOP[g.d + g.h + g.a];
+  if (!w) return "";
+  const why = w.reason ? `${w.reason}のため` : "";
+  let t = "", cls = "stop";
+  if (w.kind === "中断") t = `${why}試合中断中${w.at ? `（${w.at}〜）` : ""}`;
+  else if (w.kind === "再開") { if (g.st !== "live") return ""; t = `${w.at ? `${w.at}に` : ""}試合再開${w.from ? `（${why}${w.from}から中断）` : why ? `（${why}中断していました）` : ""}`; cls = "go"; }
+  else if (w.kind === "遅延") { if (g.st === "final") return ""; t = `${why}試合開始が遅れています`; }
+  else if (w.kind === "中止") { t = `${why}試合中止`; cls = "canc"; }
+  else if (w.kind === "ノーゲーム") { t = `${why}ノーゲーム`; cls = "canc"; }
+  else if (w.kind === "コールド") { t = `${why}コールドゲーム`; cls = "go"; }
+  else return "";
+  const ic = cls === "go" ? "▶" : cls === "canc" ? "×" : "‖";
+  return `<div class="wxb ${cls}" role="status"><i aria-hidden="true">${ic}</i><span>${esc(t)}</span></div>`;
+}
 function bugHTML(g, tag) {
   const k = g.d + gkey(g), live = g.st === "live", fin = g.st === "final", started = live || fin;
   const prev = SCORE_PREV[k];
@@ -3227,10 +3267,12 @@ function bugHTML(g, tag) {
   const row = (t, sc, side) => `<div class="bt${fl === side ? " flash" : ""}${live && ((side === "a") === top) ? " atk" : ""}" style="${tv(t)}">
       <span class="bk">${sn(t)}</span><b class="bn">${fn(t)}</b>${fl === side ? `<em class="gl">得点</em>` : ""}<span class="bs2 num">${started ? sc : ""}</span></div>`;
   const right = live ? `<div class="bi"><span class="barrow ${top ? "t" : "b"}">${IC.up}</span><b class="num">${n || ""}</b><span class="bo">${[0, 1].map(i => `<i class="${i < outs ? "on" : ""}"></i>`).join("")}</span></div>`
-    : fin ? `<div class="bi fin"><b>試合<br>終了</b></div>` : `<div class="bi pre"><b class="num">${esc(g.t || "")}</b><small>開始</small></div>`;
-  return `<div class="bug${live ? " live" : ""}">
+    : fin ? `<div class="bi fin"><b>試合<br>終了</b></div>`
+    : g.st === "canc" ? `<div class="bi fin canc"><b>${(GSTOP[g.d + g.h + g.a] || {}).kind === "ノーゲーム" ? "ノー<br>ゲーム" : "試合<br>中止"}</b></div>`
+    : `<div class="bi pre"><b class="num">${esc(g.t || "")}</b><small>開始</small></div>`;
+  return `<div class="bug${live ? " live" : ""}${g.st === "canc" ? " canc" : ""}">
     <div class="bteams">${row(g.a, g.as, "a")}${row(g.h, g.hs, "h")}</div>${right}
-  </div>${tag ? `<div class="btag">${tag}</div>` : ""}${ykHTML(g)}`;
+  </div>${wxHTML(g)}${tag ? `<div class="btag">${tag}</div>` : ""}${ykHTML(g)}`;
 }
 function postCard(g) {
   const live = g.st === "live", fin = g.st === "final";
@@ -3540,7 +3582,8 @@ function renderToday(a) {
   const byT = {}; a.rows.forEach(r => (byT[r.t] = r));
   const today = jst().iso;
   const rem = a.remaining.slice().sort((x, y) => x.d < y.d ? -1 : 1);
-  const todays = DATA.games.filter(g => g.d === today && S.period.months.includes(monthOf(g.d)) && (byT[g.h] || byT[g.a]) && g.st !== "canc");
+  const todaysAll = DATA.games.filter(g => g.d === today && S.period.months.includes(monthOf(g.d)) && (byT[g.h] || byT[g.a]));
+  const todays = todaysAll.filter(g => g.st !== "canc");
   const day = todays.length ? today : rem.find(g => g.d >= today) ? rem.find(g => g.d >= today).d : null;
   $("todayBlk").hidden = !day || a.finished;
   if (!day || a.finished) return;
@@ -3558,16 +3601,16 @@ function renderToday(a) {
     const out = [];
     for (const r of b.rows) {
       const B = byT[r.t];
-      if (!B.safe && r.safe) out.push(`<li class="ok">${IC.shield}${fn(r.t)}（${own(r.t)}）の回避が確定</li>`);
+      if (!B.safe && r.safe) out.push(`<li class="ok">${IC.shield}${fn(r.t)}${ownP(r.t)}の回避が確定</li>`);
       if (!B.eliminated && r.eliminated) out.push(`<li class="ng">${IC.pay}${own(r.t)}の支払いが確定</li>`);
     }
     const lowA = b.rows[b.rows.length - 1].t;
-    if (lowA !== lowB) out.push(`<li class="ng">${IC.swap}最下位が${fn(lowA)}（${own(lowA)}）に入れ替わる</li>`);
+    if (lowA !== lowB) out.push(`<li class="ng">${IC.swap}最下位が${fn(lowA)}${ownP(lowA)}に入れ替わる</li>`);
     for (const r of b.rows) {
       const t = r.t, B = byT[t];
       if (!B || B.safe || B.eliminated || r.safe || r.eliminated) continue;
-      if (B.self != null && r.self == null) out.push(`<li class="ng">${IC.swap}${fn(t)}（${own(t)}）の自力脱出が消滅</li>`);
-      else if (B.self == null && r.self != null) out.push(`<li class="ok">${fn(t)}（${own(t)}）の自力脱出が復活（M${r.self}）</li>`);
+      if (B.self != null && r.self == null) out.push(`<li class="ng">${IC.swap}${fn(t)}${ownP(t)}の自力脱出が消滅</li>`);
+      else if (B.self == null && r.self != null) out.push(`<li class="ok">${fn(t)}${ownP(t)}の自力脱出が復活（M${r.self}）</li>`);
       else if ((t === g.h || t === g.a) && B.self !== r.self) {
         // 負けたのにマジックが減るのは「残り試合が1つ減った」だけ（状況が良くなったわけではない）。紛らわしいので言い方を変える
         const loser = homeWin ? g.a : g.h, left = (r.left || []).length;
@@ -3579,7 +3622,8 @@ function renderToday(a) {
   };
   // 試合中 → これから → 終わった試合 → 中止 の順。同じ中では開始時刻順
   const stRank = g => ((ME() && (g.h === ME() || g.a === ME()) && g.st !== "final" && g.st !== "canc") ? -1 : ({ live: 0, sched: 1, final: 2, canc: 3 }[g.st] ?? 1));
-  const list = (day === today ? todays : rem.filter(g => g.d === day)).slice()
+  // 今日の試合：中止・ノーゲームになった試合も、帯で分かるように並べる（いちばん下）
+  const list = (day === today ? todaysAll : rem.filter(g => g.d === day)).slice()
     .sort((x, y) => stRank(x) - stRank(y) || ((x.t || "") < (y.t || "") ? -1 : (x.t || "") > (y.t || "") ? 1 : 0));
   $("today").innerHTML = list.map(g => {
     const both = byT[g.h] && byT[g.a];
@@ -3587,7 +3631,7 @@ function renderToday(a) {
     const lead = live && g.hs !== g.as ? (g.hs > g.as ? "h" : "a") : null;
     const state = live ? `<span class="lv">● LIVE ${esc(g.inn || "")}</span>` : fin ? `<span class="fin">試合終了</span>` : `<span class="num">${esc(g.t || "")}</span>`;
     const mid = live || fin ? `<b class="sc num">${g.hs}<i>-</i>${g.as}</b>` : `<i>vs</i>`;
-    const outs = fin ? "" : `
+    const outs = fin || g.st === "canc" ? "" : `
       <div class="tgo${lead === "h" ? " now" : ""}" style="${tv(g.h)}"><b>${fn(g.h)}が勝ったら${lead === "h" ? `<em>このまま終われば</em>` : ""}</b><ul>${effects(g, true)}</ul></div>
       <div class="tgo${lead === "a" ? " now" : ""}" style="${tv(g.a)}"><b>${fn(g.a)}が勝ったら${lead === "a" ? `<em>このまま終われば</em>` : ""}</b><ul>${effects(g, false)}</ul></div>`;
     const k = g.d + gkey(g), canOpen = (live || fin) && CONFIG.liveApi, open = canOpen && S.open[k];
