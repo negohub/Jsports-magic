@@ -944,6 +944,20 @@ async def offseason_check(browser):
                   if (!bt) ng.push('種類の切り替えボタン（ドラフト）が出ない');
                   else { bt.click(); const rows2 = [...document.querySelectorAll('#offList .ofr')]; if (!rows2.length || rows2.some(r => !r.querySelector('.offtag.k-draft'))) ng.push('ドラフトで絞り込んでも、ほかの種類が混ざる'); document.querySelector('#offCats button[data-oc="all"]').click(); }
                   if (/\\d+人/.test(document.getElementById('offAsof').textContent + [...document.querySelectorAll('#offList .ofh')].map(h => h.textContent).join(''))) ng.push('人数の説明が残っている');
+                  // 首脳陣：コーチの退団・就任・配置転換。「首脳陣」のボタンで監督とコーチだけ
+                  DATA.offseason.items.push({ t: t0, n: 'テスト 退団', kind: 'coach_out', role: 'ヘッドコーチ', no: '77', date: '2026-10-08' },
+                    { t: t0, n: 'テスト 就任', kind: 'coach_in', role: '投手コーチ', date: '2026-11-02' },
+                    { t: t0, n: 'テスト 異動', kind: 'coach_move', role: '二軍監督', date: '2026-10-08' });
+                  renderOff();
+                  const card3 = [...document.querySelectorAll('#offList .ofteam')].find(c => c.textContent.includes(fn(t0)));
+                  const txt3 = card3 ? card3.textContent : '';
+                  if (!txt3.includes('ヘッドコーチ・今季限りで退団') || !txt3.includes('投手コーチに就任') || !txt3.includes('首脳陣の配置転換')) ng.push('コーチの退団・就任・配置転換の書き方が違う');
+                  if (card3 && [...card3.querySelectorAll('.ofr')].some(r => /テスト 退団|テスト 就任|テスト 異動/.test(r.textContent) && r.querySelector('[data-pl]'))) ng.push('コーチの名前が選手の成績画面につながっている');
+                  const sb = document.querySelector('#offCats button[data-oc="staff"]');
+                  if (!sb || sb.textContent !== '首脳陣') ng.push('「首脳陣」のボタンが出ない');
+                  else { sb.click(); const r3 = [...document.querySelectorAll('#offList .ofr')]; if (r3.some(r => !/k-(mgr|coach_)/.test(r.querySelector('.offtag').className))) ng.push('首脳陣で絞り込んでも選手が混ざる'); document.querySelector('#offCats button[data-oc="all"]').click(); }
+                  if (document.querySelector('#offCats button[data-oc="mgr"]')) ng.push('「監督」のボタンが残っている');
+                  DATA.offseason.items.splice(-3, 3);
                   DATA.offseason.items.splice(-4, 4); renderOff();
                   // 今季の一軍の登板がない投手は、データ更新で調べた過去の役割（先発）の色になるか
                   const pr = (DATA.rosters[CL[0]] || []).find(x => x.p === '投手' && !DATA.offseason.items.some(y => y.t === CL[0] && y.n === x.n) && posGroups(CL[0], x.n, '投手').join() === '投');
@@ -1034,6 +1048,13 @@ async def offseason_check(browser):
         bad(f"[オフの動きの読み取り] NPBのトレードの公示を正しく読めない：{tr}")
     if ud.OFF_TITLE_MOVE.search("FANCLUB 2026/9/25 あなたの推し") or not ud.OFF_TITLE_MOVE_NG.search("新入団選手情報"):
         bad("[オフの動きの読み取り] ファンクラブの記事や新入団選手の一覧を、移籍の発表として読んでしまう")
+    # 首脳陣：NPBの監督・コーチ一覧と、コーチの退団・配置転換・留任・新任の読み取り
+    st = ud.parse_staff('<h5>一覧</h5><table><tr><th>位置</th><th>番号</th><th>氏名</th></tr><tr><td>監督</td><td>99</td><td>井上 一樹</td></tr><tr><td>ヘッドコーチ</td><td>77</td><td>嶋 基宏</td></tr><tr><td>投手コーチ</td><td>83</td><td>山井 大介</td></tr><tr><td>二軍監督</td><td>74</td><td>飯山 裕志</td></tr></table><h5>監督・コーチ登録公示以降の動き</h5><table><tr><td>◎</td><td>2026/3/25</td><td>内野守備走塁コーチ</td><td>森越 祐人</td></tr></table>')
+    if [x["n"] for x in st] != ["井上 一樹", "嶋 基宏", "山井 大介", "飯山 裕志"]:
+        bad(f"[オフの動きの読み取り] NPBの監督・コーチ一覧を正しく読めない：{st}")
+    got = ud.off_coach("D", "u", "コーチングスタッフについて", "<h1>コーチングスタッフについて</h1><p>2026/10/08</p><p>嶋基宏ヘッドコーチが今季限りで退団することになりました。</p><p>また飯山裕志二軍監督は来季、一軍内野守備走塁コーチへ配置転換となります。</p><p>投手コーチ　山井 大介（留任）</p><p>新任 打撃コーチ　立浪 和義</p>", st, set(), 2026)
+    if sorted((x["n"], x["kind"]) for x in got) != sorted([("嶋 基宏", "coach_out"), ("飯山 裕志", "coach_move"), ("立浪 和義", "coach_in")]):
+        bad(f"[オフの動きの読み取り] コーチの退団・配置転換・就任を正しく読めない：{[(x['n'], x['kind']) for x in got]}")
     dr = ud.parse_draft("<h3>阪神タイガース</h3><table><tr><td>1位</td><td>立石 正広</td><td>内野手</td><td>創価大</td></tr><tr><td>育成1位</td><td>山田 太郎</td><td>投手</td><td>○○高</td></tr></table><h3>読売ジャイアンツ</h3><table><tr><td>1位</td><td>竹丸 和幸</td><td>投手</td><td>鷺宮製作所</td></tr></table>")
     if [(x["t"], x["n"], x["round"]) for x in dr] != [("T", "立石 正広", "1位"), ("T", "山田 太郎", "育成1位"), ("G", "竹丸 和幸", "1位")]:
         bad(f"[オフの動きの読み取り] ドラフトの指名選手を正しく読めない：{dr}")
@@ -1049,8 +1070,9 @@ async def offseason_check(browser):
     if not mgr or mgr.get("n") != "井上 一樹":
         bad(f"[戦力外・引退の読み取り] NPBの選手一覧から監督の名前を取れない：{mgr}")
     ttl = [t for _, t in ud.off_links("https://www.example.jp/news/", '<a href="/1">井上一樹監督 辞任のお知らせ</a><a href="/2">二軍監督 退任について</a>')]
-    if ttl != ["井上一樹監督 辞任のお知らせ"]:
-        bad(f"[戦力外・引退の読み取り] 監督の辞任の発表を正しく選べない：{ttl}")
+    # 二軍監督の退任は、首脳陣（コーチ）の発表として拾う
+    if ttl != ["井上一樹監督 辞任のお知らせ", "二軍監督 退任について"]:
+        bad(f"[戦力外・引退の読み取り] 監督・首脳陣の発表を正しく選べない：{ttl}")
     got, _ = ud.off_article("D", "u", "井上一樹監督 辞任のお知らせ", "<h1>井上一樹監督 辞任のお知らせ</h1><p>2026.09.29</p><p>井上一樹監督から今季限りで辞任したいとの申し入れがあり、受理しました。</p>", roster, 2026, mgr)
     if [(x["n"], x["kind"]) for x in got] != [("井上 一樹", "mgr")]:
         bad(f"[戦力外・引退の読み取り] 監督の辞任を拾えない：{[(x['n'], x['kind']) for x in got]}")
