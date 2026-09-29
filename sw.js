@@ -3,8 +3,8 @@
 //   ただし「?v=」付き（新しい版への切り替え）で開いたときは、必ず最新を取りに行く
 // ・データ（data/*.json）：まず最新を取りに行き、取れなければ保存しておいたものを使う
 // ・中継プログラム（速報）・天気など、ほかのサイトへの通信には手を出さない
-const CACHE = "jsp-v1";
-const SHELL = ["./", "./index.html", "./manifest.json"];
+const CACHE = "hb-v9";
+const SHELL = ["./", "./index.html", "./manifest.json", "./apple-touch-icon.png", "./icon-192.png", "./icon-512.png", "./favicon.png", "./splash.jpg"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).catch(() => {}));
@@ -49,7 +49,7 @@ self.addEventListener("fetch", e => {
   }
 
   // そのほか（manifest など）：保存分があればそれ、なければ取りに行って保存
-  if (/\.(json|png|svg|ico|webmanifest)$/.test(url.pathname)) {
+  if (/\.(json|png|jpg|svg|ico|webmanifest)$/.test(url.pathname)) {
     e.respondWith(caches.match(keyOf(req.url)).then(hit => hit || fetch(req).then(res => {
       if (res.ok) { const cp = res.clone(); caches.open(CACHE).then(c => c.put(keyOf(req.url), cp)); }
       return res;
