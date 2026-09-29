@@ -3,30 +3,32 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>J SPORTS ペナントレース</title>
-<meta name="description" content="月度の最下位が、J SPORTS代を払う。戦況・試合速報・順位・成績・応援歌">
+<title>hobby baseball</title>
+<meta name="description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="ペナントレース">
+<meta name="apple-mobile-web-app-title" content="hobby baseball">
 <link rel="icon" type="image/png" href="favicon.png">
+<meta property="og:image:alt" content="hobby baseball">
 <meta name="robots" content="noindex, nofollow, noarchive">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preload" href="splash.jpg" as="image">
 <link rel="manifest" href="manifest.json">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="J SPORTS ペナントレース">
-<meta property="og:title" content="J SPORTS ペナントレース">
-<meta property="og:description" content="月度の最下位が、J SPORTS代を払う。戦況・試合速報・順位・成績・応援歌">
+<meta property="og:site_name" content="hobby baseball">
+<meta property="og:title" content="hobby baseball">
+<meta property="og:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta property="og:url" content="https://negohub.github.io/Jsports-magic/">
 <meta property="og:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="J SPORTS ペナントレース">
+<meta name="twitter:title" content="hobby baseball">
+<meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260929181849">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
+<meta name="build" content="20260929195125">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -1999,6 +2001,31 @@ html.theme-pawa .ptr{background:#fff;color:#13264A;border:2px solid #1D3E7C}
 
 /* タップの反応を速く（ダブルタップの拡大の待ち時間をなくす） */
 html{touch-action:manipulation}
+/* ===== 開いたときの演出：アイコンがぶわーんと大きくなって弾けて、サイトが出てくる ===== */
+#splash{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;pointer-events:none;
+  background:linear-gradient(180deg,#2F8BE8,#6CC6FF 60%,#BDEBFF);animation:spBg 1.6s cubic-bezier(.2,.8,.2,1) forwards}
+#splash .sp-wrap{position:relative;width:132px;height:132px}
+#splash .sp-icon{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:30px;box-shadow:0 18px 50px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.12);
+  transform:scale(.35);opacity:0;will-change:transform,opacity,filter;animation:spIcon 1.35s cubic-bezier(.3,.7,.2,1) forwards}
+#splash .sp-ring{position:absolute;left:50%;top:50%;width:132px;height:132px;margin:-66px 0 0 -66px;border-radius:50%;border:6px solid #FFD83A;box-shadow:0 0 0 3px #13264A;
+  transform:scale(.4);opacity:0;animation:spRing .7s cubic-bezier(.1,.8,.2,1) .98s forwards}
+#splash .sp-dot{position:absolute;left:50%;top:50%;width:var(--s);height:var(--s);margin:calc(var(--s) / -2) 0 0 calc(var(--s) / -2);border-radius:50%;background:var(--c);
+  opacity:0;transform:rotate(var(--a)) translate3d(0,0,0) scale(.4);animation:spDot .75s cubic-bezier(.1,.9,.2,1) .98s forwards}
+@keyframes spIcon{0%{transform:scale(.35);opacity:0}24%{transform:scale(1.1);opacity:1}34%{transform:scale(.94);opacity:1}44%{transform:scale(1.03);opacity:1}
+  52%{transform:scale(1);opacity:1;filter:blur(0)}74%{transform:scale(3.4);opacity:1;filter:blur(0)}100%{transform:scale(8);opacity:0;filter:blur(10px)}}
+@keyframes spRing{0%{transform:scale(1);opacity:1}100%{transform:scale(6);opacity:0;border-width:1px}}
+@keyframes spDot{0%{opacity:1;transform:rotate(var(--a)) translate3d(0,-150px,0) scale(1.3)}100%{opacity:0;transform:rotate(var(--a)) translate3d(0,calc(var(--d) * -1.6),0) scale(.3)}}
+@keyframes spBg{0%,62%{opacity:1}100%{opacity:0}}
+/* 演出のあいだ、下のサイトは少し奥から出てくる */
+html.splashing main,html.splashing .top{transform:scale(.96);opacity:0}
+html.splash-out main,html.splash-out .top{transition:transform .6s cubic-bezier(.2,1,.3,1),opacity .5s ease}
+@media (prefers-reduced-motion:reduce){#splash{display:none}}
+/* 設定：データの状態（折りたたみ） */
+.sh-det summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;min-height:44px;font-size:12.5px;font-weight:700;color:var(--muted,#8B8B95)}
+.sh-det summary::-webkit-details-marker{display:none}
+.sh-det summary::after{content:"＋";font-weight:700}
+.sh-det[open] summary::after{content:"－"}
+html.theme-pawa .sh-det summary{color:#4A6390}
 /* ===== 設定：担当者の名前の色（ポジション） ===== */
 .op-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:8px 0;border-bottom:1px solid var(--line,#2A2A2A)}
 .op-row b{font-size:14px;min-width:3em}
@@ -2147,12 +2174,27 @@ html.theme-pawa .swhint{color:#1D3E7C}
 </style>
 </head>
 <body>
+<!-- 開いたとき：アイコンがぶわーんと大きくなって弾けて、サイトが出てくる -->
+<div id="splash" aria-hidden="true">
+  <div class="sp-wrap"><img class="sp-icon" src="splash.jpg" alt="" decoding="sync" fetchpriority="high"><i class="sp-ring"></i><i class="sp-dot" style="--a:0deg;--d:190px;--s:14px;--c:#FFC83D"></i><i class="sp-dot" style="--a:30deg;--d:240px;--s:10px;--c:#FFFFFF"></i><i class="sp-dot" style="--a:60deg;--d:200px;--s:12px;--c:#FF5A3C"></i><i class="sp-dot" style="--a:90deg;--d:250px;--s:9px;--c:#FFC83D"></i><i class="sp-dot" style="--a:120deg;--d:210px;--s:13px;--c:#FFFFFF"></i><i class="sp-dot" style="--a:150deg;--d:245px;--s:10px;--c:#FF5A3C"></i><i class="sp-dot" style="--a:180deg;--d:195px;--s:14px;--c:#FFC83D"></i><i class="sp-dot" style="--a:210deg;--d:235px;--s:9px;--c:#FFFFFF"></i><i class="sp-dot" style="--a:240deg;--d:205px;--s:12px;--c:#FF5A3C"></i><i class="sp-dot" style="--a:270deg;--d:250px;--s:10px;--c:#FFC83D"></i><i class="sp-dot" style="--a:300deg;--d:215px;--s:13px;--c:#FFFFFF"></i><i class="sp-dot" style="--a:330deg;--d:240px;--s:9px;--c:#FF5A3C"></i></div>
+</div>
+<script>
+// 自動の検査・動きを減らす設定・新しい版への切り替え（?v=）のときは出さない
+(function () {
+  var sp = document.getElementById("splash");
+  var skip = navigator.webdriver || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) || /[?&]v=/.test(location.search);
+  if (skip) { sp.remove(); return; }
+  document.documentElement.classList.add("splashing");
+  setTimeout(function () { var h = document.documentElement; h.classList.add("splash-out"); h.classList.remove("splashing"); setTimeout(function () { h.classList.remove("splash-out"); }, 700); }, 1050);
+  setTimeout(function () { sp.remove(); }, 1800);
+})();
+</script>
 <div class="ptr" id="ptr" aria-live="polite"><i class="ptr-ic"></i><span id="ptrTxt">引っぱって更新</span></div>
 <header class="top">
   <div class="brand">
     <button type="button" class="gear" id="gearBtn" aria-label="設定"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><i class="gdot" id="gearDot" hidden></i></button>
     <button type="button" class="hwarn" id="hWarn" hidden></button>
-    <div class="j" id="kicker">J SPORTS ペナントレース</div>
+    <div class="j" id="kicker">hobby baseball</div>
     <h1 id="ttl">今月の戦況</h1>
     <div class="upd" id="upd">読み込み中…</div>
   </div>
@@ -2275,7 +2317,7 @@ html.theme-pawa .swhint{color:#1D3E7C}
   <div class="sheet-card" role="dialog" aria-label="設定">
     <div class="sheet-grip"></div>
     <div class="sheet-head"><b>設定</b><button type="button" class="sheet-x" data-close aria-label="閉じる">×</button></div>
-    <section class="sh-sec">
+    <section class="sh-sec" id="meSec">
       <button type="button" class="me-row" data-mepick>あなたの担当<span id="meNow"></span></button>
     </section>
     <section class="sh-sec">
@@ -2297,9 +2339,10 @@ html.theme-pawa .swhint{color:#1D3E7C}
       <p class="sh-note">前のシーズンの記録（戦況・順位・成績・支払いなど）を見られます。</p>
     </section>
     <section class="sh-sec">
-      <div class="sh-lab">データの状態</div>
+      <details class="sh-det"><summary>データの状態</summary>
       <div id="healthBox"></div>
       <p class="sh-note">緑は正常、黄は注意、赤は自動更新が止まっている可能性があります。</p>
+      </details>
     </section>
   </div>
 </div>
@@ -2323,7 +2366,7 @@ html.theme-pawa .swhint{color:#1D3E7C}
   </div>
 </div>
 
-<div class="minibar" id="minibar" aria-hidden="true"><span class="mk">J SPORTS</span><b id="miniTtl"></b><span class="ml" id="miniLive"></span></div>
+<div class="minibar" id="minibar" aria-hidden="true"><span class="mk">hobby baseball</span><b id="miniTtl"></b><span class="ml" id="miniLive"></span></div>
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden>
   <span id="toastMsg">最新の結果が届きました</span>
@@ -2794,13 +2837,13 @@ function defaultPeriod(list) {
   return list.find(p => p.months.includes(m)) || list[list.length - 1] || CONFIG.periods[0];
 }
 const TAB_TITLE = {
-  magic: ["J SPORTS ペナントレース", "今月の戦況"],
-  game: ["J SPORTS ペナントレース", "今日の試合"],
-  cal: ["J SPORTS ペナントレース", "日程・結果"],
-  get std() { return ["J SPORTS ペナントレース", isPL() ? "順位" : "順位・支払い"]; },
-  song: ["J SPORTS ペナントレース", "応援歌"],
-  stats: ["J SPORTS ペナントレース", "成績"],
-  off: ["J SPORTS ペナントレース", "オフの動き"],
+  magic: ["hobby baseball", "今月の戦況"],
+  game: ["hobby baseball", "今日の試合"],
+  cal: ["hobby baseball", "日程・結果"],
+  get std() { return ["hobby baseball", isPL() ? "順位" : "順位・支払い"]; },
+  song: ["hobby baseball", "応援歌"],
+  stats: ["hobby baseball", "成績"],
+  off: ["hobby baseball", "オフの動き"],
 };
 function moveLens(instant) {
   const b = document.querySelector('.tabbar button[aria-selected="true"]'), l = $("lens");
@@ -3003,7 +3046,7 @@ function setTab(t) {
   requestAnimationFrame(() => moveLens());
   magicTitle();
   if (t === "game") { loadDetails(); loadPitches(); }
-  document.title = t === "magic" ? "J SPORTS ペナントレース" : `${TAB_TITLE[t][1]}｜J SPORTS ペナントレース`;
+  document.title = t === "magic" ? "hobby baseball" : `${TAB_TITLE[t][1]}｜hobby baseball`;
   document.querySelectorAll(".tabbar button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === t)));
   ["magic", "game", "cal", "std", "song", "stats", "off"].forEach(k => { const v = $("v-" + k); v.hidden = k !== t; if (k !== t) v.classList.remove("swin"); });
   window.scrollTo({ top: 0 });
@@ -3826,7 +3869,7 @@ function drawCard(a) {
   const cur = defaultPeriod(periods());
   const ttl = S.period.id === cur.id ? "今月の戦況" : `${S.period.label}の戦況`;
   x.textBaseline = "alphabetic"; x.textAlign = "left";
-  x.fillStyle = "#9A9A9A"; x.font = F(600, 28); x.fillText("J SPORTS ペナントレース", P, 92);
+  x.fillStyle = "#9A9A9A"; x.font = F(600, 28); x.fillText("hobby baseball", P, 92);
   x.fillStyle = "#fff"; x.font = F(700, 76); x.fillText(ttl, P - 4, 182);
   const u = liveChangedAt && (!DATA.updated || liveChangedAt > new Date(DATA.updated)) ? liveChangedAt : DATA.updated ? new Date(DATA.updated) : null;
   if (u) { x.textAlign = "right"; x.fillStyle = "#8A8A8A"; x.font = F(400, 26);
@@ -5177,8 +5220,7 @@ function fmtDT(iso) { const d = jp(iso); return `${d.m}/${d.d} ${d.hm}`; }
 function renderHealth() {
   const items = healthItems();
   const worst = items.some(x => x.lv === "ng") ? "ng" : items.some(x => x.lv === "warn") ? "warn" : "ok";
-  $("gearDot").hidden = worst === "ok";
-  $("gearDot").className = "gdot " + worst;
+  $("gearDot").hidden = true;   // 歯車の右上の点は出さない（データの状態は設定の中で見る）
   const w = $("hWarn");
   if (worst === "ng") { w.hidden = false; w.textContent = "⚠ 試合結果の自動更新が止まっている可能性があります"; w.className = "hwarn ng"; }
   else w.hidden = true;
@@ -5205,6 +5247,8 @@ function switchLeague(lg) {
   S.period = null; S.periodPicked = false; S.cat = S.cat || "b_avg";
   Object.keys(liveStatAt).forEach(k => delete liveStatAt[k]);
   paintLgSeg(); renderAll(); moveLens(true);
+  $("meSec").hidden = isPL();   // 設定を開いたまま切り替えたときも、パ・リーグでは「あなたの担当」を隠す
+  if (typeof renderOwnerPos === "function") renderOwnerPos();
   if (S.tab === "stats") liveStats(S.cat);
   if (S.tab === "game" || S.tab === "cal") loadStarters(true);
   pollLive();
@@ -5260,7 +5304,8 @@ function renderOwnerPos() {
 }
 function openSheet() {
   loadArchIndex();
-  renderOwnerPos(); $("meNow").textContent = ME() ? `${own(ME())}（${fn(ME())}）` : "選んでいない"; $("sheet").hidden = false; requestAnimationFrame(() => $("sheet").classList.add("open")); renderHealth(); }
+  renderOwnerPos(); $("meSec").hidden = isPL();   // パ・リーグには担当者がいないので「あなたの担当」は出さない
+  $("meNow").textContent = ME() ? `${own(ME())}（${fn(ME())}）` : "選んでいない"; $("sheet").hidden = false; requestAnimationFrame(() => $("sheet").classList.add("open")); renderHealth(); }
 function closeSheet() { $("sheet").classList.remove("open"); setTimeout(() => ($("sheet").hidden = true), 280); }
 $("gearBtn").onclick = openSheet;
 $("hWarn").onclick = openSheet;
