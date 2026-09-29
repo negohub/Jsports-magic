@@ -962,7 +962,7 @@ async def offseason_check(browser):
                   renderOff();
                   const card3 = [...document.querySelectorAll('#offList .ofteam')].find(c => c.textContent.includes(fn(t0)));
                   const txt3 = card3 ? card3.textContent : '';
-                  if (!txt3.includes('ヘッドコーチ・今季限りで退団') || !txt3.includes('投手コーチに就任') || !txt3.includes('首脳陣の配置転換')) ng.push('コーチの退団・就任・配置転換の書き方が違う');
+                  if (!txt3.includes('ヘッドコーチ・今季限りで退団') || !txt3.includes('投手コーチに就任') || !txt3.includes('首脳陣 配置転換')) ng.push('コーチの退団・就任・配置転換の書き方が違う');
                   if (card3 && [...card3.querySelectorAll('.ofr')].some(r => /テスト 退団|テスト 就任|テスト 異動/.test(r.textContent) && r.querySelector('[data-pl]'))) ng.push('コーチの名前が選手の成績画面につながっている');
                   const sb = document.querySelector('#offCats button[data-oc="staff"]');
                   if (!sb || sb.textContent !== '首脳陣') ng.push('「首脳陣」のボタンが出ない');
@@ -988,8 +988,11 @@ async def offseason_check(browser):
                   // 札：チーム内の成績・応援歌・選手の成績画面
                   const it = items[0], k = it.n.replace(/\\s+/g, '');
                   PST[it.t] = { at: Date.now(), d: { bat: { [k]: { 試合: '1', 打席: '9', 打率: '.1', 本塁打: '0', 打点: '0', 出塁率: '.1', 長打率: '.1' } }, pit: { [k]: { 登板: '1', 投球回: '1', 防御率: '1.00', 勝利: '0', 敗北: '0', 三振: '1' } }, asof: '9/28' } };
+                  // 打者の表は打者だけ・投手の表は投手だけなので、その選手の守備位置の側の表で見る
+                  S.ptKind = (((DATA.rosters[it.t] || []).find(r => r.n === it.n) || {}).p === '投手') ? 'pit' : 'bat';
                   setTab('stats'); S.ptTeam = it.t; renderTeamIn();
-                  if (!document.querySelector('#ptTbl .offtag')) ng.push('チーム内の成績に札が出ない');
+                  if (!document.querySelector('#ptTbl .offtag')) ng.push('チーム別成績に札が出ない');
+                  S.ptKind = 'bat';
                   if (document.getElementById('offList').closest('#v-stats')) ng.push('一覧が成績タブに残っている');
                   const over = [...document.querySelectorAll('#ptTbl td, #ptTbl th')].filter(c => c.scrollWidth > c.clientWidth + 1).length;
                   if (over) ng.push(`札を付けたチーム内の成績で、文字がマスからはみ出したセルが ${over} 個`);
@@ -1450,7 +1453,8 @@ async def song_list_check(browser):
 
 async def consistency_check(browser):
     """言葉・書き方の統一：同じものを別の書き方で出していないか（全タブ・設定・選手の画面）"""
-    NG = [(r"\d{1,2}:\d{2} 確認", "時刻の後ろは「更新」にそろえる（「確認」になっている）"),
+    NG = [(r"^(チーム内の成績|今オフの動き|.*のオフの動き|今日の試合|次の試合|直近の勝敗|順位の推移|担当者ごとの年間成績|月度ごとの支払い|首脳陣の配置転換)", "見出しに「〜の」が残っている"),
+          (r"\d{1,2}:\d{2} 確認", "時刻の後ろは「更新」にそろえる（「確認」になっている）"),
           (r"\d+月\d+日時点", "日付は「M/D 時点」にそろえる（「○月○日時点」になっている）"),
           (r"現在$", "「現在」ではなく「時点」「更新」にそろえる"),
           (r"取得できませんでした|開き直して", "読み込めなかったときの文言がそろっていない"),
@@ -1530,7 +1534,8 @@ async def team_rank_menu_check(browser):
               for (const kind of ['bat', 'pit']) {
                 S.ptKind = kind; renderTeamIn();
                 const sel = document.getElementById('ptCat'), opts = [...sel.options].map(o => o.value).filter(Boolean);
-                if (opts.length < (kind === 'bat' ? 20 : 24)) ng.push(`${kind}の項目が少ない（${opts.length}）`);
+                const want = CATS[kind].map(c => c[1]);
+                if (opts.join() !== want.join()) ng.push(`${kind}の項目が個人ランキングと違う（${opts.length}項目）`);
                 for (const v of opts) {
                   sel.value = v; sel.dispatchEvent(new Event('change'));
                   const tb = document.getElementById('ptTbl');
@@ -1540,6 +1545,17 @@ async def team_rank_menu_check(browser):
                   if (!tb.querySelector('th.on')) ng.push(`${v}を選んでも、その項目の見出しが選ばれた形にならない`);
                 }
               }
+              // 打者の表に投手、投手の表に野手が出ない（スポナビの「位置」）
+              const t = ptTeam(); DATA.tstats = { at: '2026-09-29T21:00:00+09:00', asof: '9/29 21:00', cols: { bat: ['打率', '試合', '打席'], pit: ['防御率', '登板', '投球回'] },
+                teams: { [t]: { bat: [['野手 一郎', '内', '.300', '100', '400'], ['投手 二郎', '投', '.100', '20', '30']], pit: [['投手 二郎', '投', '2.50', '20', '100.1'], ['野手 一郎', '内', '0.00', '1', '1']] } } };
+              S.ptSort = null; S.ptKind = 'bat'; renderTeamIn();
+              let names = [...document.querySelectorAll('#ptTbl tbody tr')].map(tr => tr.querySelector('[data-pl]').dataset.pl.split('|')[1]);
+              if (names.join() !== '野手 一郎') ng.push(`打者の表に投手が混ざる（${names}）`);
+              S.ptKind = 'pit'; renderTeamIn();
+              names = [...document.querySelectorAll('#ptTbl tbody tr')].map(tr => tr.querySelector('[data-pl]').dataset.pl.split('|')[1]);
+              if (names.join() !== '投手 二郎') ng.push(`投手の表に野手が混ざる（${names}）`);
+              if (!document.getElementById('ptAsof').textContent.includes('9/29 21:00 更新')) ng.push('チーム別成績の更新時刻が出ない');
+              DATA.tstats = null; S.ptKind = 'bat';
               S.ptSort = null; saveStatsUI(); return ng.slice(0, 6);
             }""")
             for m in r:
