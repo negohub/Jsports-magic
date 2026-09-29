@@ -49,7 +49,8 @@ function clSort(rows, games, inScope, prevOrder) {
 // 鍵：リーグ・月度・設定・その月度の試合の中身。試合が1つでも変われば計算し直す
 const __anMemo = new Map();
 function analyze(games, period, cfg) {
-  let sig = LEAGUE + "|" + CL.join(",") + "|" + period.id + "|" + period.months.join(",") + "|" + (cfg.excluded || []).join(",") + "|" + !!cfg.tieIsSafe + "|" + (cfg.prevOrder || []).join(",");
+  let sig = LEAGUE + "|" + CL.join(",") + "|" + period.id + "|" + period.months.join(",") + "|" + (cfg.excluded || []).join(",") + "|" + !!cfg.tieIsSafe + "|" + (cfg.prevOrder || []).join(",")
+    + "|" + (cfg.finalPid === period.id ? JSON.stringify(cfg.virtual || []) : "");
   for (const g of games) if (period.months.includes(monthOf(g.d))) sig += "|" + g.d + g.h + g.a + g.st + g.hs + "-" + g.as;
   const hit = __anMemo.get(sig);
   if (hit) return __relink(__clone(hit), games, period);
@@ -93,7 +94,10 @@ function analyzeRaw(games, period, cfg) {
   const R = {};
   CL.forEach(t => (R[t] = { w: 0, l: 0, d: 0, left: [] }));
   const remaining = [];
-  for (const g of games) {
+  // 最後の月度（シーズンの終わりを含む月度）では、中止になって振替日がまだ決まっていない試合（振替待ち）も
+  // 必ずこの月度のうちに行われるので、残り試合に入れる（日付が決まっていない仮の試合：virt）
+  const extra = cfg.finalPid === period.id ? (cfg.virtual || []) : [];
+  for (const g of extra.length ? games.concat(extra) : games) {
     if (!period.months.includes(monthOf(g.d)) || g.st === "canc") continue;
     const inH = !!R[g.h], inA = !!R[g.a];
     if (g.st === "final") {
@@ -279,10 +283,15 @@ const TEAM_URL = {
 };
 
 /* ===== シーズン順位表（スポナビ形式） ===== */
-function seasonTable(games, prevOrder) {
+function seasonTable(games, prevOrder, pend = []) {
   const R = {};
   CL.forEach(t => (R[t] = { t, w: 0, l: 0, d: 0, rem: 0, h2h: {} }));
   CL.forEach(t => CL.forEach(u => (R[t].h2h[u] = 0)));
+  // 振替待ち（中止になって振替日がまだ決まっていない試合）も、これから必ず行う試合なので残り試合に入れる
+  for (const p of pend || []) {
+    if (R[p.a]) R[p.a].rem += p.n;
+    if (p.b && R[p.b]) { R[p.b].rem += p.n; if (R[p.a]) { R[p.a].h2h[p.b] += p.n; R[p.b].h2h[p.a] += p.n; } }
+  }
   for (const g of games) {
     if (g.st === "canc") continue;
     const inH = !!R[g.h], inA = !!R[g.a];
