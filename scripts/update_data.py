@@ -532,6 +532,9 @@ OFF_LISTS = {
 # 見出しで拾う発表：「来季の選手契約について」「選手契約に関して」「○○選手 現役引退」「○○選手について」（阪神の引退の発表の見出し）など
 OFF_TITLE = re.compile(r"契約|退団|戦力外|自由契約|選手について|選手に関して")
 OFF_TITLE_MGR = re.compile(r"監督.{0,20}(辞任|退任|解任)|(辞任|退任|解任).{0,20}監督")   # 監督の辞任・退任
+# 移籍・加入（オフの動き）：トレード・FA・新外国人・入団・獲得など
+OFF_TITLE_MOVE = re.compile(r"トレード|FA|フリーエージェント|新外国人|外国人選手|入団|獲得|加入|移籍|現役ドラフト")
+OFF_TITLE_MOVE_NG = re.compile(r"グッズ|チケット|販売|ファンクラブ|イベント|記念|会見の(?:お知らせ|模様)|テスト|募集|タイトル|受賞|賞|達成|記録|ドラフト会議|指名|入団式|キャンプ|放送|配信")
 OFF_TITLE_NG = re.compile(r"更改|合意|締結|獲得|入団|加入|新外国人|育成選手契約を結ぶ|スポンサー|パートナー|協定|提携|ファンクラブ|チケット|グッズ|放送|配信|中継|販売|募集|キャンプ|約款|規約|観戦|公示|登録|抹消|出演|誕生日|登場曲|達成|記録|受賞|選出|手術|負傷|故障|けが|怪我|復帰|結婚|入籍|出産")
 OFF_URL_NG = re.compile(r"/announce/|/stadium/|/ticket|/fanclub|/shop|/goods|/company/|/recruit")
 # 本文の終わりの目印（ここから後ろは「関連ニュース」などなので見ない）
@@ -573,7 +576,8 @@ def off_links(list_url, html, hosts=None):
             continue
         retire = "引退" in title and not re.search(r"公示|グッズ|チケット|販売", title)
         mgr = bool(OFF_TITLE_MGR.search(title)) and not re.search(r"公示|グッズ|チケット|販売|二軍|ファーム", title)
-        if not retire and not mgr and not (OFF_TITLE.search(title) and not OFF_TITLE_NG.search(title)):
+        move = bool(OFF_TITLE_MOVE.search(title)) and not OFF_TITLE_MOVE_NG.search(title)
+        if not retire and not mgr and not move and not (OFF_TITLE.search(title) and not OFF_TITLE_NG.search(title)):
             continue
         url = re.sub(r"^http://", "https://", urljoin(list_url, a["href"]).split("#")[0])   # 同じ記事を http と https で2回読まないように
         if urlparse(url).netloc.replace("www.", "") not in ok_hosts or url in seen or url.rstrip("/") == list_url.rstrip("/") or OFF_URL_NG.search(url):
@@ -666,6 +670,97 @@ def off_article(t, url, list_title, html, roster, season, manager=None):
     return items, ""
 
 
+FOREIGN_NAME = re.compile(r"([ァ-ヶー]{2,}(?:[・＝=][ァ-ヶー]{2,}){0,3})\s*(?:投手|捕手|内野手|外野手|選手)")
+
+
+def off_moves(t, url, list_title, html, rosters, season):
+    """移籍・加入の発表から：トレード（出る・入る）、FA宣言、FAでの加入、新外国人、そのほかの加入を取り出す。
+    ほかの球団の名簿にいる選手が出てくれば「その球団から加入」、自分の球団の名簿の選手なら「出る」側"""
+    soup = BeautifulSoup(html, "html.parser")
+    h = soup.find("h1") or soup.find("title")
+    title = re.sub(r"\s+", " ", norm(h.get_text(" "))).strip() if h else ""
+    title = title if len(title) >= 4 and OFF_TITLE_MOVE.search(title) else list_title
+    for tag in soup(["script", "style", "noscript", "header", "footer", "nav", "aside", "form"]):
+        tag.decompose()
+    text = norm(soup.get_text("\n"))
+    S = squash(text)
+    e = OFF_END.search(S, 200)
+    if e:
+        S = S[:e.start()]
+    date = ""
+    for m in OFF_DATE.finditer(text[:600]):
+        y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        if y < season - 1:
+            continue
+        if y == season - 1 or (y == season and mo < 9):
+            return []   # オフより前の記事
+        date = f"{y:04d}-{mo:02d}-{d:02d}"
+        break
+    via = "trade" if "トレード" in title else "fa" if re.search(r"FA|フリーエージェント", title) else "genekidraft" if "現役ドラフト" in title else "move"
+    fa_decl = via == "fa" and re.search(r"宣言|行使|権利", title) and not re.search(r"獲得|入団|加入|合意", title)
+    base = {"date": date, "url": url, "title": title[:80]}
+    out, found = [], {}
+    for tt, ro in rosters.items():
+        for r in ro:
+            k = squash(r.get("n", ""))
+            if len(k) >= 3 and k in S:
+                found.setdefault(tt, []).append(r)
+    if fa_decl:
+        return [{"t": t, "n": r["n"], "no": r.get("no", ""), "dev": bool(r.get("dev")), "kind": "fa_decl", **base} for r in found.get(t, [])]
+    others = {tt: rs for tt, rs in found.items() if tt != t}
+    for tt, rs in others.items():
+        for r in rs:
+            out.append({"t": t, "n": r["n"], "no": "", "dev": False, "kind": "in", "via": via, "from": tt, "pos": r.get("p", ""), **base})
+            out.append({"t": tt, "n": r["n"], "no": r.get("no", ""), "dev": bool(r.get("dev")), "kind": "out", "via": via, "to": t, **base})
+    if via == "trade" and others:   # トレード：自分の球団の選手は相手の球団へ
+        to = next(iter(others))
+        for r in found.get(t, []):
+            out.append({"t": t, "n": r["n"], "no": r.get("no", ""), "dev": bool(r.get("dev")), "kind": "out", "via": "trade", "to": to, **base})
+            out.append({"t": to, "n": r["n"], "no": "", "dev": False, "kind": "in", "via": "trade", "from": t, "pos": r.get("p", ""), **base})
+    # 新外国人：どの名簿にもいない名前を見出しから（カタカナの名前＋「投手」「選手」など）
+    if re.search(r"新外国人|外国人選手", title) or (not others and re.search(r"獲得|入団|契約合意|契約締結", title)):
+        known = {squash(r.get("n", "")) for ro in rosters.values() for r in ro}
+        for m in FOREIGN_NAME.finditer(title):
+            n = m.group(1)
+            if squash(n) not in known and not any(squash(n) in k for k in known):
+                pos = re.search(r"(投手|捕手|内野手|外野手)", title[m.end() - 4:m.end()])
+                out.append({"t": t, "n": n, "no": "", "dev": False, "kind": "in", "via": "newfor", "pos": pos.group(1) if pos else "", **base})
+    return out
+
+
+# ドラフト会議の指名選手（NPB公式）：表の行でも箇条書きでも「○位 名前 … 守備 … 所属」の並びを、球団の見出しごとに読む
+DRAFT_ROW = re.compile(r"^(育成)?\s*(\d{1,2})\s*位\s+(.+?)\s+(投手|捕手|内野手|外野手)\s*(.*)$")
+FULLNAME = {"福岡ソフトバンクホークス": "H", "北海道日本ハムファイターズ": "F", "オリックス・バファローズ": "B", "東北楽天ゴールデンイーグルス": "E",
+            "埼玉西武ライオンズ": "L", "千葉ロッテマリーンズ": "M", "阪神タイガース": "T", "横浜DeNAベイスターズ": "DB", "読売ジャイアンツ": "G",
+            "中日ドラゴンズ": "D", "広島東洋カープ": "C", "東京ヤクルトスワローズ": "S"}
+
+
+def parse_draft(html):
+    soup = BeautifulSoup(html, "html.parser")
+    out, cur = [], None
+    for el in soup.find_all(["h2", "h3", "h4", "h5", "caption", "th", "tr", "li", "p", "div"]):
+        if el.name in ("tr", "li"):
+            row = re.sub(r"\s+", " ", norm(el.get_text(" ", strip=True)))
+            m = DRAFT_ROW.match(row)
+            if m and cur:
+                name = re.sub(r"\s*[（(].*$", "", m.group(3)).strip()
+                out.append({"t": cur, "n": name, "round": ("育成" if m.group(1) else "") + m.group(2) + "位", "pos": m.group(4), "from": m.group(5).strip()[:30]})
+            continue
+        txt = norm(el.get_text(" ", strip=True))
+        if len(txt) > 40 or el.find(["tr", "li"]):
+            continue
+        for full, code in FULLNAME.items():
+            if full in txt:
+                cur = code
+                break
+    seen, res = set(), []
+    for x in out:
+        if (x["t"], x["n"]) not in seen:
+            seen.add((x["t"], x["n"]))
+            res.append(x)
+    return res
+
+
 def fetch_offseason(season, old, rosters, force=False, any_month=False):
     """各球団の公式サイトから、今オフの戦力外・引退の発表を集める（前回までに見つけたものは残す）"""
     prev = (old or {}).get("offseason") or {}
@@ -752,17 +847,34 @@ def fetch_offseason(season, old, rosters, force=False, any_month=False):
             if not html:
                 continue
             found, why = off_article(t, url, ltitle, html, roster, season, managers.get(t))
+            if OFF_TITLE_MOVE.search(ltitle) and not OFF_TITLE_MOVE_NG.search(ltitle):
+                found += off_moves(t, url, ltitle, html, rosters, season)
             seen[url] = today
             st["new"] += 1
             for it in found:
                 it["date"] = it["date"] or today
-                old_it = items.get((t, it["n"]))
+                old_it = items.get((it["t"], it["n"]))
                 # 同じ選手の発表が2つあるとき（戦力外→引退など）は、新しい方
                 if not old_it or it["date"] >= old_it.get("date", ""):
-                    items[(t, it["n"])] = it
+                    items[(it["t"], it["n"])] = it
                 st["found"] += 1
             print(f"  [戦力外・引退 {t}] {ltitle[:40]} → {len(found)}人{('（' + why + '）') if why else ''}")
         teams[t] = st
+    # ドラフト会議の指名選手（10月〜）
+    draft_st = {}
+    if now.month >= 10 or any_month:
+        for u in (f"https://npb.jp/draft/{season}/", f"https://npb.jp/draft/{season}/result.html", "https://npb.jp/draft/"):
+            html = fetch(u)
+            got = parse_draft(html) if html else []
+            draft_st[u] = len(got) if html else "開けない"
+            if got:
+                for x in got:
+                    key = (x["t"], x["n"])
+                    if key not in items:
+                        items[key] = {"t": x["t"], "n": x["n"], "no": "", "dev": x["round"].startswith("育成"), "kind": "draft",
+                                      "round": x["round"], "pos": x["pos"], "from": x["from"], "date": today, "url": u, "title": ""}
+                break
+        print(f"[ドラフト] {draft_st}")
     # 投手の過去の一軍の役割（先発・中継ぎ・抑え）：NPBの選手ページから。1回調べたら残す（1回に30人まで）
     looked = 0
     need = {t for (t, n), it in items.items() if not it.get("role") and it.get("kind") != "mgr"
@@ -772,7 +884,7 @@ def fetch_offseason(season, old, rosters, force=False, any_month=False):
         if html:
             player_ids[t] = parse_player_ids(html)
     for (t, n), it in items.items():
-        if it.get("role") or it.get("kind") == "mgr" or looked >= 30:
+        if it.get("role") or it.get("kind") in ("mgr", "draft", "in") or looked >= 30:
             continue
         ro = next((r for r in rosters.get(t) or [] if squash(r.get("n", "")) == squash(n)), None)
         if not ro or ro.get("p") != "投手":
@@ -825,7 +937,8 @@ def fetch_offseason(season, old, rosters, force=False, any_month=False):
     print(f"[戦力外・引退] {len(out)}人（" + " ".join(f"{t}:{v['found']}" for t, v in teams.items()) + "）")
     return {"season": season, "checked_at": now.isoformat(timespec="seconds"), "items": out, "teams": teams, "seen": seen,
             "managers": managers, "managers_date": now.strftime("%Y-%m-%d") if managers else prev.get("managers_date"),
-            "mgr_rec": mgr_rec, "mgr_rec_date": now.strftime("%Y-%m-%d") if mgr_rec else prev.get("mgr_rec_date")}
+            "mgr_rec": mgr_rec, "mgr_rec_date": now.strftime("%Y-%m-%d") if mgr_rec else prev.get("mgr_rec_date"),
+            "draft_status": draft_st or prev.get("draft_status")}
 
 
 def fetch_fpos(season, old):
@@ -1050,6 +1163,38 @@ def write_json(data):
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
+    write_archive(data)
+
+
+ARCH_DIR = os.path.join(os.path.dirname(OUT), "archive")
+
+
+def write_archive(data, force=False):
+    """シーズンの記録を残す：公式戦がすべて終わったら（または11月以降）、data/archive/<年>.json に丸ごと保存し、
+    data/archive/index.json（残っているシーズンの一覧）を更新する。次のシーズンになっても前の年の記録を見られるように"""
+    try:
+        season = int(data.get("season") or 0)
+        gs = data.get("games") or []
+        done = gs and all(g.get("st") in ("final", "canc") for g in gs)
+        if not season or not (force or done or datetime.now(JST).month >= 11 or datetime.now(JST).year > season):
+            return
+        os.makedirs(ARCH_DIR, exist_ok=True)
+        with open(os.path.join(ARCH_DIR, f"{season}.json"), "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
+        idx_path = os.path.join(ARCH_DIR, "index.json")
+        seasons = []
+        if os.path.exists(idx_path):
+            try:
+                with open(idx_path, encoding="utf-8") as f:
+                    seasons = json.load(f).get("seasons", [])
+            except (OSError, json.JSONDecodeError):
+                seasons = []
+        seasons = sorted({int(x) for x in seasons} | {season}, reverse=True)
+        with open(idx_path, "w", encoding="utf-8") as f:
+            json.dump({"seasons": seasons}, f, ensure_ascii=False)
+        print(f"[記録] {season}年のシーズンを data/archive/{season}.json に保存（{seasons}）")
+    except Exception as e:   # 記録の保存に失敗しても、ふだんのデータ更新は止めない
+        print(f"[記録] 保存できませんでした: {e}")
 
 
 def main():
@@ -1061,6 +1206,8 @@ def main():
                 old = json.load(f)
             except json.JSONDecodeError:
                 old = None
+    if old and old.get("season") and int(old["season"]) < season and not os.path.exists(os.path.join(ARCH_DIR, f"{int(old['season'])}.json")):
+        write_archive(old, force=True)   # 前のシーズンの記録を残してから、新しいシーズンのデータにする
     old_games = old["games"] if old and old.get("season") == season else []
     old_month = {}
     for g in old_games:
@@ -1139,6 +1286,20 @@ def main():
     prev_order_p = safe("パ・前年の順位", lambda: fetch_prev_order(season, old, "p"), (old or {}).get("prev_order_p"))
     rosters, roster_date = safe("選手一覧", lambda: fetch_rosters(old), ((old or {}).get("rosters") or {}, (old or {}).get("roster_date")))
     post = safe("ポストシーズン", lambda: fetch_post(season, old), (old or {}).get("post"))
+    # CS・日本シリーズの結果：当日の試合欄（ticker）から、その日のその段階の試合を1つに決められたら結果を入れる
+    for g in post or []:
+        if g.get("st") == "final":
+            continue
+        lg = g.get("lg", "C")
+        cands = [k for k in ticker if k[0] == g["d"] and (
+            (k[1] in CL) != (k[2] in CL) if g["stage"] == "JS" else all(x in (PL if lg == "P" else CL) for x in k[1:]))]
+        if len(cands) == 1:
+            k = cands[0]
+            g["h"], g["a"] = k[1], k[2]
+            if ticker[k] == "canc":
+                g["st"] = "canc"
+            else:
+                g["hs"], g["as"], g["st"] = ticker[k][0], ticker[k][1], "final"
     fpos = safe("守備位置", lambda: fetch_fpos(season, old), (old or {}).get("fpos"))
     # Actions の画面で「Run workflow」を押したとき（手動で実行したとき）は、3時間の間隔を待たずに球団サイトを見に行く
     off_force = os.environ.get("OFF_FORCE") == "1" or os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch"
