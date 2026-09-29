@@ -316,6 +316,23 @@ def parse_roster(html):
     return out
 
 
+def parse_manager(html):
+    """NPBの選手一覧ページから、監督の名前を取る（コーチは取らない）"""
+    soup = BeautifulSoup(html, "html.parser")
+    for table in soup.find_all("table"):
+        role = None
+        for tr in table.find_all("tr"):
+            cells = [norm(c.get_text(" ", strip=True)) for c in tr.find_all(["td", "th"])]
+            if len(cells) < 2:
+                continue
+            if cells[0] == "No.":
+                role = cells[1]
+                continue
+            if role == "監督" and re.fullmatch(r"\d{1,3}", cells[0]) and cells[1]:
+                return {"no": cells[0], "n": re.sub(r"\s+", " ", cells[1])}
+    return None
+
+
 # 個別の応援歌がある選手を調べるページ（名前だけを照合し、歌詞は保存しない）
 SONG_SOURCES = {
     "T": ["https://m.hanshintigers.jp/data/march/", "https://www.yakyu-ouen.net/tigers/"],
@@ -406,23 +423,48 @@ FPOS_GROUP = {"一塁手": "内", "二塁手": "内", "三塁手": "内", "遊�
 # ---------- オフの戦力外・引退（各球団の公式サイトの発表から） ----------
 # 各球団のニュース一覧から「来季の選手契約について」「現役引退」などの発表を探し、
 # 記事の中に出てくる名簿の選手名と照らし合わせる（記事の作りは球団ごとに違うので、名前の照合で拾う）
+# パ・リーグ6球団は同じ作りのサイトで、ニュース一覧は /news/list/（チームのニュースは /news/list/0/00000001/）
+# （/news/announce/retire/ は「公示 任意引退・自由契約」の去年までの一覧なので使わない）
+_PA = lambda base: [base + "/news/list/0/00000001/", base + "/news/list/"]
 OFF_LISTS = {
-    "G": ["https://www.giants.jp/news/"],
+    "G": ["https://www.giants.jp/news/", "https://www.giants.jp/news/list/", "https://www.giants.jp/"],
     "T": ["https://hanshintigers.jp/news/topics/", "https://hanshintigers.jp/news/"],
     "DB": ["https://www.baystars.co.jp/news/"],
-    "C": ["https://www.carp.co.jp/news/", "https://www.carp.co.jp/"],
+    "C": ["https://www.carp.co.jp/news", "https://www.hub.carp.co.jp/news/news26/index.html", "https://www.carp.co.jp/"],
     "S": ["https://www.yakult-swallows.co.jp/news/"],
     "D": ["https://dragons.jp/news/", "https://dragons.jp/"],
-    "H": ["https://www.softbankhawks.co.jp/news/"],
-    "F": ["https://www.fighters.co.jp/news/"],
-    "B": ["https://www.buffaloes.co.jp/news/"],
-    "E": ["https://www.rakuteneagles.jp/news/"],
-    "L": ["https://www.seibulions.jp/news/"],
-    "M": ["https://www.marines.co.jp/news/"],
+    "H": _PA("https://www.softbankhawks.co.jp"),
+    "F": _PA("https://www.fighters.co.jp"),
+    "B": _PA("https://www.buffaloes.co.jp"),
+    "E": _PA("https://www.rakuteneagles.jp"),
+    "L": _PA("https://www.seibulions.jp"),
+    "M": _PA("https://www.marines.co.jp"),
 }
-OFF_TITLE = re.compile(r"契約|退団|戦力外|自由契約")
-OFF_TITLE_NG = re.compile(r"更改|合意|締結|獲得|入団|加入|新外国人|育成選手契約を結ぶ|スポンサー|パートナー|協定|提携|ファンクラブ|チケット|グッズ|放送|配信|中継|販売|募集|キャンプ")
-OFF_KEY = re.compile(r"結ばない|行わない|締結しない|更新しない|結ばず|行わず|戦力外|自由契約|退団|引退")
+# 見出しで拾う発表：「来季の選手契約について」「選手契約に関して」「○○選手 現役引退」「○○選手について」（阪神の引退の発表の見出し）など
+OFF_TITLE = re.compile(r"契約|退団|戦力外|自由契約|選手について|選手に関して")
+OFF_TITLE_MGR = re.compile(r"監督.{0,20}(辞任|退任|解任)|(辞任|退任|解任).{0,20}監督")   # 監督の辞任・退任
+OFF_TITLE_NG = re.compile(r"更改|合意|締結|獲得|入団|加入|新外国人|育成選手契約を結ぶ|スポンサー|パートナー|協定|提携|ファンクラブ|チケット|グッズ|放送|配信|中継|販売|募集|キャンプ|約款|規約|観戦|公示|登録|抹消|出演|誕生日|登場曲|達成|記録|受賞|選出|手術|負傷|故障|けが|怪我|復帰|結婚|入籍|出産")
+OFF_URL_NG = re.compile(r"/announce/|/stadium/|/ticket|/fanclub|/shop|/goods|/company/|/recruit")
+# 本文の終わりの目印（ここから後ろは「関連ニュース」などなので見ない）
+OFF_END = re.compile(r"関連ニュース|関連記事|一覧へ戻る|もっと見る|RELATEDNEWS|RelatedNews|おすすめ記事|最新ニュース|ニュース一覧")
+# 今季より前に引退を表明していた選手など、ニュース一覧の最初のページに出てこない発表（見つけたら公式の発表で上書き・補う）
+OFF_SEED = [
+    {"t": "L", "n": "栗山 巧", "kind": "retire", "date": "2025-11-24"},
+    {"t": "DB", "n": "ビシエド", "kind": "retire", "date": "2026-05-25"},
+    {"t": "H", "n": "中村 晃", "kind": "retire", "date": "2026-07-03", "url": "https://www.softbankhawks.co.jp/news/detail/202601046312.html"},
+    {"t": "M", "n": "角中 勝也", "kind": "retire", "date": "2026-07-20"},
+    {"t": "B", "n": "平野 佳寿", "kind": "retire", "date": "2026-08-09"},
+    {"t": "S", "n": "石川 雅規", "kind": "retire", "date": "2026-09-02"},
+    {"t": "M", "n": "唐川 侑己", "kind": "retire", "date": "2026-09-04"},
+    {"t": "F", "n": "中島 卓也", "kind": "retire", "date": "2026-09-11"},
+    {"t": "E", "n": "辛島 航", "kind": "retire", "date": "2026-09-23", "url": "https://www.rakuteneagles.jp/news/detail/202601195444.html"},
+    {"t": "B", "n": "山田 修義", "kind": "retire", "date": "2026-09-24"},
+    {"t": "B", "n": "西野 真弘", "kind": "retire", "date": "2026-09-24"},
+    {"t": "T", "n": "西 勇輝", "kind": "retire", "date": "2026-09-25", "url": "https://hanshintigers.jp/news/topics/info_11241.html"},
+    {"t": "T", "n": "岩貞 祐太", "kind": "retire", "date": "2026-09-28"},
+    {"t": "D", "n": "井上 一樹", "kind": "mgr", "role": "監督", "date": "2026-09-29"},
+]
+OFF_KEY = re.compile(r"結ばない|行わない|締結しない|更新しない|結ばず|行わず|戦力外|自由契約|退団|引退|辞任|退任|解任")
 OFF_JUNK = re.compile(r"side|related|recommend|ranking|breadcrumb|pickup|banner|share|sns|pager|pagination|footer|header|menu|gnav|global|topics-list|news-list|other", re.I)
 OFF_DATE = re.compile(r"(20\d\d)\s*[./年-]\s*(\d{1,2})\s*[./月-]\s*(\d{1,2})")
 OFF_EVERY = 3 * 3600   # 球団サイトを見に行く間隔（秒）。15分ごとの自動更新のたびには見に行かない
@@ -437,18 +479,19 @@ def off_links(list_url, html):
         title = re.sub(r"\s+", " ", norm(a.get_text(" "))).strip()
         if not title or len(title) > 120:
             continue
-        retire = "引退" in title
-        if not retire and not (OFF_TITLE.search(title) and not OFF_TITLE_NG.search(title)):
+        retire = "引退" in title and not re.search(r"公示|グッズ|チケット|販売", title)
+        mgr = bool(OFF_TITLE_MGR.search(title)) and not re.search(r"公示|グッズ|チケット|販売|二軍|ファーム", title)
+        if not retire and not mgr and not (OFF_TITLE.search(title) and not OFF_TITLE_NG.search(title)):
             continue
         url = urljoin(list_url, a["href"]).split("#")[0]
-        if urlparse(url).netloc.replace("www.", "") != host or url in seen or url.rstrip("/") == list_url.rstrip("/"):
+        if urlparse(url).netloc.replace("www.", "") != host or url in seen or url.rstrip("/") == list_url.rstrip("/") or OFF_URL_NG.search(url):
             continue
         seen.add(url)
         out.append((url, title))
     return out
 
 
-def off_article(t, url, list_title, html, roster, season):
+def off_article(t, url, list_title, html, roster, season, manager=None):
     """1つの発表記事から、戦力外（来季契約せず）・育成再契約の打診・現役引退の選手を取り出す"""
     soup = BeautifulSoup(html, "html.parser")
     h = soup.find("h1") or soup.find("title")
@@ -463,6 +506,7 @@ def off_article(t, url, list_title, html, roster, season):
         if OFF_JUNK.search(cls) and tag.name not in ("body", "html", "main", "article"):
             tag.decompose()
     text = norm(soup.get_text("\n"))
+    retire_page = "引退" in list_title or "引退" in title
     # 発表日：本文の先頭あたり（見出しの近く）の日付。今季の9月より前なら去年などの古い記事なので使わない
     # 見つからなければ空（見つけた日を使う）。本文の途中の日付（生年月日など）は見ない
     date = ""
@@ -471,16 +515,28 @@ def off_article(t, url, list_title, html, roster, season):
         y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
         if y < season - 1:
             continue
-        if y == season - 1 or (y == season and mo < 9):
+        old = y == season - 1 or (y == season and mo < 9)
+        if retire_page and old and (y == season or mo >= 10):
+            old = False   # 引退の表明は今季の途中や去年の秋のこともある（今の名簿にいる選手だけ拾うので、去年の引退選手は出ない）
+        if old:
             return [], "古い記事"
         date = f"{y:04d}-{mo:02d}-{d:02d}"
         break
     S = squash(text)
-    retire = "引退" in list_title or "引退" in title
-    if not OFF_KEY.search(S):
+    k0 = OFF_KEY.search(S)
+    if not k0:
         return [], "戦力外・引退の文言なし"
+    # 本文の終わり（「関連ニュース」「一覧へ戻る」など）から後ろは見ない
+    e = OFF_END.search(S, k0.end())
+    if e:
+        S = S[:e.start()]
+    keys = [(m.start(), m.group(0)) for m in OFF_KEY.finditer(S)]
+    mkeys = keys   # 監督用（辞任・退任・解任も含む）
+    keys = [kk for kk in keys if kk[1] not in ("辞任", "退任", "解任")]   # 選手用
     # 名前を探す範囲：「結ばない」「引退」などの言葉の前後（記事の横の一覧などを拾わないように）
-    wins = [(max(0, m.start() - 700), m.end() + 700) for m in OFF_KEY.finditer(S)]
+    wins = [(max(0, p - 700), p + 700) for p, _ in keys]
+    if not keys:
+        roster = []   # 監督の辞任などの発表だけで、選手の話はない
     sq_title = squash(title)
     # 「育成選手契約を打診」の文（改行・句点で区切った1文ずつ。名前の並びと混ざらないよう、詰める前の本文で区切る）
     offer_sents = [squash(x) for x in re.split(r"[。\n]", text) if "育成" in x and re.search(r"打診|再契約|提示|予定", x)]
@@ -495,14 +551,26 @@ def off_article(t, url, list_title, html, roster, season):
         in_title = k in sq_title
         if not in_title and not any(a <= p <= b for p in pos for a, b in wins):
             continue
-        if retire:
+        # 種類：名前にいちばん近い言葉が「引退」なら引退、「結ばない・行わない・戦力外」などなら戦力外（見出しに引退があれば引退）
+        near = min(keys, key=lambda kk: min((abs(kk[0] - p) for p in pos), default=10 ** 9))[1] if pos else ""
+        if retire_page and near in ("", "引退"):
             kind = "retire"
-        elif any(k in x for x in offer_sents):
+        elif near == "引退":
+            kind = "retire"
+        elif any(k in x for x in offer_sents) or re.match(r".{0,12}育成.{0,12}(打診|再契約)", S[pos[0] + len(k):pos[0] + len(k) + 30] if pos else ""):
             kind = "offer"
         else:
             kind = "cut"
         items.append({"t": t, "n": r["n"], "no": r.get("no", ""), "dev": bool(r.get("dev")), "kind": kind,
                       "date": date, "url": url, "title": title[:80]})
+    # 監督：名前が「辞任・退任・解任」の近く（または見出し）に出てくれば、監督の退任（二軍監督・コーチの話は除く）
+    if manager and manager.get("n"):
+        k = squash(manager["n"])
+        pos = [m.start() for m in re.finditer(re.escape(k), S)]
+        near = [kk for p in pos for kk in mkeys if kk[1] in ("辞任", "退任", "解任") and abs(kk[0] - p) < 120]
+        if (near or (k in sq_title and OFF_TITLE_MGR.search(title))) and not re.search(k + r".{0,4}(二軍|ファーム)", S):
+            items.append({"t": t, "n": manager["n"], "no": manager.get("no", ""), "dev": False, "kind": "mgr", "role": "監督",
+                          "date": date, "url": url, "title": title[:80]})
     return items, ""
 
 
@@ -521,31 +589,47 @@ def fetch_offseason(season, old, rosters, force=False):
                 return prev
         except ValueError:
             pass
-    items = {(x["t"], x["n"]): x for x in prev.get("items", [])}
-    seen = dict(prev.get("seen") or {})
+    # 前回までに見つけたもの（「公示」の一覧など、今は使わないページから拾ったものは消す）
+    items = {(x["t"], x["n"]): x for x in prev.get("items", []) if not OFF_URL_NG.search(x.get("url") or "")}
+    # 各球団の監督の名前（NPBの選手一覧ページから、1日1回）
+    managers = dict(prev.get("managers") or {})
+    if prev.get("managers_date") != now.strftime("%Y-%m-%d") or not managers:
+        for t, code in ROSTER_CODE.items():
+            html = fetch(f"https://npb.jp/bis/teams/rst_{code}.html")
+            m = parse_manager(html) if html else None
+            if m:
+                managers[t] = m
+        print(f"[監督] {len(managers)}球団: " + " ".join(f"{t}:{m['n']}" for t, m in managers.items()))
+    seen = {u: d for u, d in (prev.get("seen") or {}).items() if not OFF_URL_NG.search(u)}
     teams = {}
     today = now.strftime("%Y-%m-%d")
     for t, urls in OFF_LISTS.items():
-        st = {"list": None, "links": 0, "new": 0, "found": 0, "err": ""}
+        st = {"lists": {}, "links": 0, "new": 0, "found": 0, "err": ""}
         roster = rosters.get(t) or []
-        cands = []
+        cands, got = [], set()
+        # 候補の一覧ページを全部見て、発表らしい記事をまとめる（球団ごとの状況も残す：開けたか・何件あったか）
         for u in urls:
             html = fetch(u)
             if not html:
-                st["err"] = "ニュース一覧を開けない"
+                st["lists"][u] = "開けない"
                 continue
-            cands = off_links(u, html)
-            st["list"], st["links"], st["err"] = u, len(cands), ""
-            if cands:
-                break
-        for url, ltitle in cands[:12]:
+            found_links = off_links(u, html)
+            st["lists"][u] = len(found_links)
+            for url, ltitle in found_links:
+                if url not in got:
+                    got.add(url)
+                    cands.append((url, ltitle))
+        st["links"] = len(cands)
+        if not any(isinstance(v, int) for v in st["lists"].values()):
+            st["err"] = "ニュース一覧を開けない"
+        for url, ltitle in cands[:15]:
             if url in seen:
                 continue
             html = fetch(url)
             time.sleep(1)
             if not html:
                 continue
-            found, why = off_article(t, url, ltitle, html, roster, season)
+            found, why = off_article(t, url, ltitle, html, roster, season, managers.get(t))
             seen[url] = today
             st["new"] += 1
             for it in found:
@@ -557,7 +641,26 @@ def fetch_offseason(season, old, rosters, force=False):
                 st["found"] += 1
             print(f"  [戦力外・引退 {t}] {ltitle[:40]} → {len(found)}人{('（' + why + '）') if why else ''}")
         teams[t] = st
-    # 手で直す分（data/offseason_fix.json があれば）：{"exclude": [{"t","n"}], "add": [{...}]}
+    # 補う分：OFF_SEED と data/offseason_fix.json（{"exclude": [{"t","n"}], "add": [{...}]}）
+    # すでに公式の発表から見つけている選手は、発表日・種類だけ補う（リンクは公式の発表のまま）
+    def patch(x):
+        if not (x.get("t") and x.get("n") and x.get("kind")):
+            return
+        key = (x["t"], x["n"])
+        ro = next((r for r in rosters.get(x["t"]) or [] if squash(r.get("n", "")) == squash(x["n"])), None)
+        if key in items:
+            for f in ("date", "kind"):
+                if x.get(f):
+                    items[key][f] = x[f]
+            if x.get("url") and not items[key].get("url"):
+                items[key]["url"] = x["url"]
+        else:
+            items[key] = {"t": x["t"], "n": x["n"], "no": (ro or {}).get("no", "") or (managers.get(x["t"]) or {}).get("no", "") if x["kind"] == "mgr" else (ro or {}).get("no", ""),
+                          "dev": bool((ro or {}).get("dev")), "kind": x["kind"], "date": x.get("date") or today, "url": x.get("url", ""), "title": x.get("title", "")}
+            if x.get("role"):
+                items[key]["role"] = x["role"]
+    for x in OFF_SEED:
+        patch(x)
     fix_path = os.path.join(os.path.dirname(OUT), "offseason_fix.json")
     if os.path.exists(fix_path):
         try:
@@ -566,8 +669,7 @@ def fetch_offseason(season, old, rosters, force=False):
             for x in fix.get("exclude", []):
                 items.pop((x.get("t"), x.get("n")), None)
             for x in fix.get("add", []):
-                if x.get("t") and x.get("n") and x.get("kind"):
-                    items[(x["t"], x["n"])] = {"no": "", "dev": False, "date": today, "url": "", "title": "", **x}
+                patch(x)
         except (OSError, json.JSONDecodeError) as e:
             print(f"  offseason_fix.json を読めません: {e}")
     # 見た記事の記録は60日分だけ残す
@@ -575,7 +677,8 @@ def fetch_offseason(season, old, rosters, force=False):
     seen = {u: d for u, d in seen.items() if d >= lim}
     out = sorted(items.values(), key=lambda x: (x["date"], x["t"], x["n"]), reverse=True)
     print(f"[戦力外・引退] {len(out)}人（" + " ".join(f"{t}:{v['found']}" for t, v in teams.items()) + "）")
-    return {"season": season, "checked_at": now.isoformat(timespec="seconds"), "items": out, "teams": teams, "seen": seen}
+    return {"season": season, "checked_at": now.isoformat(timespec="seconds"), "items": out, "teams": teams, "seen": seen,
+            "managers": managers, "managers_date": now.strftime("%Y-%m-%d") if managers else prev.get("managers_date")}
 
 
 def fetch_fpos(season, old):
