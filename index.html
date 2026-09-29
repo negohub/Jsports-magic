@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260929122000">
+<meta name="build" content="20260929123306">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -2065,6 +2065,9 @@ html.theme-pawa .ptile .offtag{height:16px;padding:0 4px;font-size:9px;border-wi
 html.theme-pawa .offtag.k-mgr{color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.35);background:linear-gradient(180deg,#5C84D6,#1D3E7C);border-color:#13264A;box-shadow:inset 0 2px 0 rgba(255,255,255,.45),0 2px 0 rgba(19,38,74,.45)}
 #offList .ofr .onm[data-mgr]{cursor:pointer}
 .mgtab{width:100%;table-layout:fixed}
+/* 列の幅：年度（4桁）が隣の列にはみ出さないように広めに */
+.mgtab col.c-y{width:23%}.mgtab col.c-t{width:17%}.mgtab col.c-r{width:17%}.mgtab col.c-wl{width:25%}.mgtab col.c-p{width:18%}
+.mgtab td:first-child{white-space:nowrap;font-size:13px}
 .mgtab th,.mgtab td{text-align:center !important;padding:7px 4px !important;font-size:13px}
 .mgtab td .badge{margin:0 auto}
 .mgtab td.best{color:#FFD21F;font-weight:800}
@@ -4383,7 +4386,7 @@ function openManager(t, name) {
     const sub = (k, v) => `<div><span>${k}</span><b class="num">${v}</b></div>`;
     body = `<div class="ps-sec"><p class="ps-t">監督としての通算成績（${yrs}年）</p><div class="ps-main">${cell("試合", g)}${cell("勝利", w)}${cell("敗北", l)}${cell("勝率", pct)}</div>
       <div class="ps-sub">${sub("引分", d)}${sub("リーグ優勝", `${wins}回`)}${sub("年数", `${yrs}年`)}</div></div>
-      <div class="ps-sec"><p class="ps-t">年度ごと</p><div class="ywrap"><table class="ytab mgtab"><thead><tr><th>年度</th><th>球団</th><th>順位</th><th>勝-敗-分</th><th>勝率</th></tr></thead><tbody>${
+      <div class="ps-sec"><p class="ps-t">年度ごと</p><div class="ywrap"><table class="ytab mgtab"><colgroup><col class="c-y"><col class="c-t"><col class="c-r"><col class="c-wl"><col class="c-p"></colgroup><thead><tr><th>年度</th><th>球団</th><th>順位</th><th>勝-敗-分</th><th>勝率</th></tr></thead><tbody>${
         S2.slice().reverse().map(x => `<tr style="${tv(x.t)}"><td class="num">${esc(x.y)}</td><td><span class="badge">${sn(x.t)}</span></td><td class="num${x.rank === "1" ? " best" : ""}">${x.rank ? x.rank + "位" : "-"}</td><td class="num">${x.w}-${x.l}-${x.d}</td><td class="num">${x.w + x.l ? (x.w / (x.w + x.l)).toFixed(3).replace(/^0/, "") : "-"}</td></tr>`).join("")
       }</tbody></table></div></div>
       <p class="ps-note">NPB公式の球団の年度別成績から${r.asof ? `（${esc(r.asof)} 時点。今季の成績も含みます）` : ""}</p>`;
