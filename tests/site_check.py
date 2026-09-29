@@ -879,7 +879,9 @@ async def offseason_check(browser):
                     if (ro[1] && i % 2 === 0) items.push({ t, n: ro[1].n, no: ro[1].no, dev: false, kind: 'retire', date: '2026-09-23', url: 'https://example.com/b', title: '' });
                     if (i === 1) items.push({ t, n: 'テスト 監督太郎', no: '99', dev: false, kind: 'mgr', role: '監督', date: '2026-09-29', url: '', title: '' });
                   });
-                  DATA.offseason = { season: 2026, checked_at: '2026-09-29T15:00:00+09:00', items, teams: {}, seen: {} };
+                  // 去年の「公示 任意引退・自由契約」のページから拾ったもの（出してはいけない）
+                  const bogus = { t: CL[0], n: 'ニセ 公示太郎', no: '1', dev: false, kind: 'retire', date: '2026-09-29', url: 'https://www.example.jp/news/announce/retire/', title: '' };
+                  DATA.offseason = { season: 2026, checked_at: '2026-09-29T15:00:00+09:00', items: items.concat([bogus]), teams: {}, seen: {} };
                   jst = () => ({ y: 2026, m: 10, d: 1, iso: '2026-10-01' });
                   renderAll(); setTab('off');
                   const tb = document.querySelector('.tabbar button[data-tab="off"]'), blk = document.getElementById('v-off');
@@ -889,6 +891,8 @@ async def offseason_check(browser):
                   if (tbb.some((b, i) => i && b.left < tbb[i - 1].right - 1)) ng.push('タブのボタンが重なっている');
                   if (tbb.some(b => b.right > innerWidth)) ng.push('タブバーが画面からはみ出している');
                   const rows = blk.querySelectorAll('.ofr');
+                  if (blk.textContent.includes('ニセ 公示太郎')) ng.push('去年の公示の一覧から拾ったものが出ている');
+                  if (blk.querySelector('#offList a')) ng.push('一覧に「発表」などのリンクが残っている');
                   if (rows.length !== items.length) ng.push(`一覧の人数が違う（${rows.length}／${items.length}）`);
                   // 監督の退任：球団のいちばん上に出て、名前は押せない（成績がないため）
                   const mrow = [...rows].find(r => r.textContent.includes('テスト 監督太郎'));
