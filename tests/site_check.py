@@ -1400,6 +1400,11 @@ async def song_list_check(browser):
         if (!u.includes('#:~:text=' + encodeURIComponent(a) + ',' + encodeURIComponent(b))) ng.push(`応援歌ページの飛び先が「名字,名前」の範囲になっていない（${tt}）：${decodeURIComponent(u)}`);
         if (tt === 'H' && !u.startsWith('https://www.softbankhawks.co.jp/team/song#')) ng.push(`ソフトバンクの応援歌ページのURLが転送されない形になっていない：${u}`);
       }
+      // 応援歌のページを開くボタンの文字は、どの球団も「応援歌」（「公式」と混ざらない）
+      const labels = new Set([...document.querySelectorAll('#v-song a.sof')].map(a => a.textContent.trim()));
+      if (labels.size && (labels.size > 1 || !labels.has('応援歌'))) ng.push(`応援歌のボタンの文字がそろっていない：${[...labels].join('・')}`);
+      for (const tt of ['L', 'H', 'T']) { const x = (DATA.rosters[tt] || []).find(r => r.song); if (x) { openPlayer(tt, x.n); const a = document.querySelector('#songPick a.sof'); if (a && a.textContent.trim() !== '応援歌') ng.push(`選手の画面の応援歌のボタンが「${a.textContent.trim()}」（${tt}）`); } }
+      document.getElementById('songSheet').hidden = true; document.getElementById('songSheet').classList.remove('open');
       DATA.offseason = null; renderSong();
       return ng;
     }""")
