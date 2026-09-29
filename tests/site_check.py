@@ -379,8 +379,9 @@ async def calc_cache(browser):
           // 使い回した結果の残り試合が、画面の試合データそのものを指しているか（「勝ったら」の計算で使う）
           for (const q of CONFIG.periods) {
             analyze(DATA.games, q, CONFIG); const y1 = analyze(DATA.games, q, CONFIG);   // 2回目は使い回し
-            if (y1.remaining.some(g => !DATA.games.includes(g))) ng.push(`使い回した結果の残り試合が、試合データそのものを指していない ${q.id}`);
-            if (y1.rows.some(r => (r.left || []).some(g => !DATA.games.includes(g)))) ng.push(`使い回した結果の球団ごとの残り試合が、試合データそのものを指していない ${q.id}`);
+            // 振替待ちの仮の試合（virt：日付が決まっていない試合）は試合データにないので除く
+            if (y1.remaining.some(g => !g.virt && !DATA.games.includes(g))) ng.push(`使い回した結果の残り試合が、試合データそのものを指していない ${q.id}`);
+            if (y1.rows.some(r => (r.left || []).some(g => !g.virt && !DATA.games.includes(g)))) ng.push(`使い回した結果の球団ごとの残り試合が、試合データそのものを指していない ${q.id}`);
           }
           const x = analyze(DATA.games, p, CONFIG); x.rows[0].w = 999;
           if (analyze(DATA.games, p, CONFIG).rows[0].w === 999) ng.push("返した結果の書き換えが使い回しに混ざる");
