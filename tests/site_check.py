@@ -885,6 +885,8 @@ async def offseason_check(browser):
                   if (blk.hidden) { ng.push('一覧が出ない'); return ng; }
                   const rows = blk.querySelectorAll('.ofr');
                   if (rows.length !== items.length) ng.push(`一覧の人数が違う（${rows.length}／${items.length}）`);
+                  // パワプロ風は、名前が守備位置の色のタイルになっているか
+                  if (isPawa() && [...rows].some(r => !r.querySelector('.onm .ptile'))) ng.push('パワプロ風なのに、名前がタイルになっていない');
                   const W = blk.getBoundingClientRect().right + 1;
                   blk.querySelectorAll('.ofr, .ofr *').forEach(e => { const b = e.getBoundingClientRect(); if (b.width && b.right > W) ng.push(`一覧が横にはみ出し：${e.className}`); });
                   blk.querySelectorAll('.oln, .onm').forEach(e => { const b = e.getBoundingClientRect(); if (e.matches('.oln') && (b.height < 43.5 || b.width < 43.5)) ng.push(`「発表」が小さい ${Math.round(b.width)}×${Math.round(b.height)}`); });
