@@ -1483,6 +1483,72 @@ async def consistency_check(browser):
         await pg.close()
 
 
+async def owner_pos_check(browser):
+    """設定の「名前の色（パワプロ風）」：担当者ごとに好きなポジションの色を選べて、タイルの色が変わり、端末に残るか"""
+    pg, errs = await open_page(browser, 390, "pawa")
+    r = await pg.evaluate("""() => {
+      const ng = [], t = Object.keys(CONFIG.owners || {})[0];
+      if (!t) return ng;
+      openSheet();
+      if (document.getElementById('opSec').hidden) return ['設定に「名前の色」の欄が出ない'];
+      for (const [k, cls] of [['先', 'ps'], ['捕', 'pc'], ['外', 'po']]) {
+        document.querySelector(`#opList [data-op="${t}|${k}"]`).click();
+        if (ownerPosOf(t) !== k || JSON.parse(localStorage.getItem('ownerPos') || '{}')[t] !== k) ng.push(`${k}を選んでも保存されない`);
+        const tile = document.createElement('div'); tile.innerHTML = ownT(t);
+        if (!tile.querySelector('.ptile.' + cls)) ng.push(`${k}を選んでもタイルの色が変わらない（${tile.innerHTML.slice(0, 60)}）`);
+      }
+      localStorage.removeItem('ownerPos');
+      if (ownerPosOf(t) !== (CONFIG.ownerPos || {})[t]) ng.push('選んでいないときに最初の設定の色に戻らない');
+      switchLeague('P'); openSheet();
+      if (!document.getElementById('opSec').hidden) ng.push('パ・リーグ（担当者なし）でも「名前の色」の欄が出る');
+      return ng;
+    }""")
+    for m in r:
+        bad(f"[名前の色] {m}")
+    for e in errs:
+        bad(f"[名前の色]: 画面のエラー {e}")
+    await pg.close()
+
+
+async def team_rank_menu_check(browser):
+    """個人ランキングの下のボタンの列がないこと。チーム内の成績も項目のメニューで全項目を選べて、表がはみ出さず5列のままか"""
+    SET = """() => { const t = ptTeam(), ro = (DATA.rosters[t] || []), bat = {}, pit = {};
+      ro.filter(x => x.p !== '投手').slice(0, 9).forEach((x, i) => { bat[x.n] = { 試合: 100 + i, 打席: 350 + i * 10, 打数: 300, 安打: 80 + i, 二塁打: 10, 三塁打: 1, 本塁打: 5 + i, 塁打: 120, 打点: 40 + i, 得点: 30, 盗塁: i * 3, 盗塁刺: 1, 犠打: 2, 犠飛: 1, 四球: 30, 死球: 2, 三振: 60, 併殺打: 5, 打率: '.2' + (60 + i), 長打率: '.40' + i, 出塁率: '.33' + i }; });
+      ro.filter(x => x.p === '投手').slice(0, 6).forEach((x, i) => { pit[x.n] = { 登板: 20 + i, 勝利: 5, 敗北: 3, セーブ: i, ホールド: 10, HP: 12, 完投: 0, 完封勝: 0, 無四球: 0, 勝率: '.625', 打者: 300, 投球回: '60.1', 安打: 50, 本塁打: 5, 四球: 20, 死球: 2, 三振: 55 + i, 暴投: 1, ボーク: 0, 失点: 20, 自責点: 18, 防御率: '2.' + (10 + i) }; });
+      PST[t] = { at: Date.now(), d: { bat, pit, asof: '9/28' } }; renderTeamIn(); }"""
+    for theme in ["", "pawa"]:
+        for width in [320, 390]:
+            label = f"[チーム内の成績の項目 {'パワプロ風' if theme else 'スタイリッシュ'} 幅{width}]"
+            pg, errs = await open_page(browser, width, theme)
+            await pg.evaluate("setTab('stats')")
+            await pg.wait_for_timeout(300)
+            if await pg.evaluate("!!document.getElementById('catQuick')"):
+                bad(f"{label} 個人ランキングの下のボタンの列が残っている")
+            await pg.evaluate(SET)
+            r = await pg.evaluate("""() => {
+              const ng = [];
+              for (const kind of ['bat', 'pit']) {
+                S.ptKind = kind; renderTeamIn();
+                const sel = document.getElementById('ptCat'), opts = [...sel.options].map(o => o.value).filter(Boolean);
+                if (opts.length < (kind === 'bat' ? 20 : 24)) ng.push(`${kind}の項目が少ない（${opts.length}）`);
+                for (const v of opts) {
+                  sel.value = v; sel.dispatchEvent(new Event('change'));
+                  const tb = document.getElementById('ptTbl');
+                  if (!tb) { ng.push(`${v}を選ぶと表が出ない`); continue; }
+                  if (tb.querySelectorAll('thead th').length !== 6) ng.push(`${v}を選ぶと列の数が変わる`);
+                  if (tb.scrollWidth > tb.parentElement.clientWidth + 1 || [...tb.querySelectorAll('td, th')].some(c => c.scrollWidth > c.clientWidth + 1)) ng.push(`${v}を選ぶと表がはみ出す`);
+                  if (!tb.querySelector('th.on')) ng.push(`${v}を選んでも、その項目の見出しが選ばれた形にならない`);
+                }
+              }
+              S.ptSort = null; saveStatsUI(); return ng.slice(0, 6);
+            }""")
+            for m in r:
+                bad(f"{label} {m}")
+            for e in errs:
+                bad(f"{label}: 画面のエラー {e}")
+            await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -1552,6 +1618,8 @@ async def main():
         await archive_check(browser)
         await song_list_check(browser)
         await consistency_check(browser)
+        await owner_pos_check(browser)
+        await team_rank_menu_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
