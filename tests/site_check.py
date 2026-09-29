@@ -831,6 +831,34 @@ async def name_center_check(browser):
         await pg.close()
 
 
+async def tabbar_check(browser):
+    """下のタブバー：指でスクロールしている間は下へでも上へでも小さく、止まるといちばん上の近くでは元の大きさ"""
+    pg, errs = await open_page(browser, 390, "", touch=True)
+    r = await pg.evaluate("""async () => {
+      const bar = document.querySelector('.tabbar'), P = () => parseFloat(bar.style.getPropertyValue('--p') || '0'), ng = [];
+      setTab('magic');
+      const el = document.getElementById('formBlk'), wait = ms => new Promise(r => setTimeout(r, ms));
+      const f = (type, y) => { const t = new Touch({ identifier: 7, target: el, clientX: 200, clientY: y }); el.dispatchEvent(new TouchEvent(type, { touches: type === 'touchend' ? [] : [t], changedTouches: [t], bubbles: true, cancelable: true })); };
+      window.scrollTo(0, 1200); await wait(900);
+      f('touchstart', 300); for (let i = 1; i <= 8; i++) { f('touchmove', 300 - i * 15); window.scrollBy(0, 15); await wait(30); }
+      if (P() < .99) ng.push(`下へ読み進めてもタブバーが小さくならない（${P()}）`);
+      f('touchend', 180); await wait(1000);
+      if (P() > .01) ng.push(`スクロールが止まってもタブバーが元の大きさに戻らない（${P()}）`);
+      f('touchstart', 300); for (let i = 1; i <= 8; i++) { f('touchmove', 300 + i * 15); window.scrollBy(0, -15); await wait(30); }
+      if (P() < .99) ng.push(`上へ戻るときにタブバーが小さくならない（${P()}）`);
+      f('touchend', 420);
+      window.scrollTo(0, 20); f('touchstart', 300); f('touchmove', 310); window.scrollTo(0, 10); await wait(80);
+      if (P() > .01) ng.push(`いちばん上の近くでタブバーが元の大きさにならない（${P()}）`);
+      f('touchend', 310);
+      return ng;
+    }""")
+    for m in r:
+        bad(f"[タブバー] {m}")
+    for e in errs:
+        bad(f"[タブバー]: 画面のエラー {e}")
+    await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -890,6 +918,7 @@ async def main():
         await next_day_check(browser)
         await home_screen_check(browser)
         await name_center_check(browser)
+        await tabbar_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
