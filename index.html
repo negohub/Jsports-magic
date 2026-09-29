@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260929064219">
+<meta name="build" content="20260929081707">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1990,6 +1990,7 @@ html.theme-pawa .ptr{background:#fff;color:#13264A;border:2px solid #1D3E7C}
 .tabbar nav[style*="--tabs: 7"] button .tl,.tabbar nav[style*="--tabs:7"] button .tl{font-size:10px;letter-spacing:-.02em}
 .offtag{display:inline-flex;align-items:center;height:18px;padding:0 6px;margin-left:6px;border-radius:5px;font-size:10.5px;font-weight:800;letter-spacing:0;vertical-align:2px;white-space:nowrap;background:#E5484D;color:#fff}
 .offtag.k-retire{background:#8A8F98}
+.offtag.k-mgr{background:#3B5BA9}
 .offtag.k-offer{background:#E5484D}
 #offList .ofteam{margin:10px 0 0;border-radius:var(--r-md,14px);overflow:hidden;background:rgba(255,255,255,.04);border:1px solid var(--line,#2A2A2A)}
 #offList .ofh{display:flex;align-items:center;gap:8px;padding:9px 12px;font-weight:800;font-size:14px;border-left:4px solid var(--tc)}
@@ -2028,6 +2029,9 @@ html.theme-pawa .offtag{height:20px;padding:0 7px;border-radius:7px;font-size:11
   background:linear-gradient(180deg,#FF7A7A,#D62828);border:1.5px solid #8E1414;box-shadow:inset 0 2px 0 rgba(255,255,255,.55),0 2px 0 rgba(142,20,20,.45)}
 html.theme-pawa .offtag.k-retire{color:#13264A;text-shadow:0 1px 0 rgba(255,255,255,.7);background:linear-gradient(180deg,#F7F9FC,#B9C3D3);border-color:#6F7B8F;box-shadow:inset 0 2px 0 #fff,0 2px 0 rgba(111,123,143,.5)}
 html.theme-pawa .ptile .offtag{height:16px;padding:0 4px;font-size:9px;border-width:1px}
+html.theme-pawa .offtag.k-mgr{color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.35);background:linear-gradient(180deg,#5C84D6,#1D3E7C);border-color:#13264A;box-shadow:inset 0 2px 0 rgba(255,255,255,.45),0 2px 0 rgba(19,38,74,.45)}
+html.theme-pawa #offList .ptile.otl.mg{cursor:default;background:linear-gradient(180deg,#FFFFFF,#DCE6F5);border:2px solid #1D3E7C;box-shadow:inset 0 2px 0 #fff,0 2px 0 rgba(29,62,124,.35)}
+#offList .ofr .onm:not([data-pl]){cursor:default}
 html.theme-pawa #offList .ofr .offtag{min-width:56px}
 html.theme-pawa #offList .ofr .ono,html.theme-pawa #offList .ofr .okd,html.theme-pawa #offList .ofh small,html.theme-pawa #offList .ofnone{color:#4A5B7A}
 /* 応援歌の選手タイルに付ける札：タイルの右上の内側に小さく（タイルの外にはみ出すと切れるため） */
@@ -2137,7 +2141,7 @@ html.theme-pawa .swhint{color:#1D3E7C}
   <section class="view" id="v-off" aria-label="戦力外・引退" hidden>
     <h2 id="offHead">今オフの戦力外・引退<small id="offAsof"></small></h2>
     <div id="offList"></div>
-    <details class="howto"><summary>見方</summary><ul><li>各球団の公式サイトの発表（来季の選手契約について・現役引退など）を自動で集めて、表示しているリーグの球団ごとに並べます。選手名をタップすると今季の成績、「発表」で球団の公式の発表が開きます。成績タブのチーム内の成績・応援歌・選手の成績画面の名前の横にも「戦力外」「引退」の札が付きます。集め始めたばかりの球団は、発表から反映まで少し時間がかかることがあります。</li><li>このタブは、戦力外通告が始まる9月後半から12月までだけ表示します（発表があればそれより前でも）。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li>各球団の公式サイトの発表（来季の選手契約について・現役引退など）を自動で集めて、表示しているリーグの球団ごとに並べます。選手名をタップすると今季の成績、「発表」で球団の公式の発表が開きます。成績タブのチーム内の成績・応援歌・選手の成績画面の名前の横にも「戦力外」「引退」の札が付きます。集め始めたばかりの球団は、発表から反映まで少し時間がかかることがあります。</li><li>監督の辞任・退任も、各球団の公式サイトの発表から拾って、球団ごとのいちばん上に「退任」として出します（二軍監督・コーチは出しません）。</li><li>このタブは、戦力外通告が始まる9月後半から12月までだけ表示します（発表があればそれより前でも）。</li></ul></details>
   </section>
 
   <section class="view" id="v-stats" aria-label="成績" hidden>
@@ -4413,12 +4417,12 @@ async function liveStats(key) {
   if (res.some(Boolean) && S.tab === "stats") renderStats(true);
 }
 // ================= 今オフの戦力外・引退（各球団の公式発表を自動で集めたもの） =================
-const OFF_LABEL = { cut: "戦力外", offer: "戦力外", retire: "引退" };
+const OFF_LABEL = { cut: "戦力外", offer: "戦力外", retire: "引退", mgr: "退任" };
 const offItems = () => (((DATA && DATA.offseason) || {}).items || []).filter(x => OFF_LABEL[x.kind] && TEAM[x.t]);
 // 名前（名簿の名前・NPBの表の名前・名字だけ）から、その選手の発表を探す
 function offOf(t, name) {
   if (!name) return null;
-  const k = nk(name), list = offItems().filter(x => x.t === t);
+  const k = nk(name), list = offItems().filter(x => x.t === t && x.kind !== "mgr");
   return list.find(x => nk(x.n) === k) || (list.filter(x => nk(x.n).startsWith(k)).length === 1 ? list.find(x => nk(x.n).startsWith(k)) : null);
 }
 const offTag = (t, name) => { const o = offOf(t, name); return o ? `<span class="offtag k-${o.kind}">${OFF_LABEL[o.kind]}</span>` : ""; };
@@ -4435,27 +4439,29 @@ function renderOff() {
     requestAnimationFrame(() => moveLens(true));
   }
   if (!show) { if (S.tab === "off") setTab("magic"); return; }
-  const cut = items.filter(x => x.kind !== "retire").length, ret = items.length - cut;
+  const cut = items.filter(x => x.kind === "cut" || x.kind === "offer").length, ret = items.filter(x => x.kind === "retire").length, mg = items.filter(x => x.kind === "mgr").length;
   $("offHead").firstChild.textContent = isPL() ? "パ・リーグの戦力外・引退" : "セ・リーグの戦力外・引退";
   const o = (DATA && DATA.offseason) || {};
-  $("offAsof").textContent = [items.length ? `戦力外${cut}人・引退${ret}人` : "", o.checked_at ? `${Number(o.checked_at.slice(5, 7))}/${Number(o.checked_at.slice(8, 10))} ${o.checked_at.slice(11, 16)} 確認` : ""].filter(Boolean).join("　");
-  const md = d => d ? `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}` : "";
-  const kindText = x => x.kind === "retire" ? "現役引退" : x.kind === "offer" ? "来季の契約を結ばない（育成で再契約を打診）" : x.dev ? "育成選手の来季の契約を結ばない" : "来季の契約を結ばない";
+  $("offAsof").textContent = [items.length ? [cut ? `戦力外${cut}人` : "", ret ? `引退${ret}人` : "", mg ? `監督退任${mg}人` : ""].filter(Boolean).join("・") : "", o.checked_at ? `${Number(o.checked_at.slice(5, 7))}/${Number(o.checked_at.slice(8, 10))} ${o.checked_at.slice(11, 16)} 確認` : ""].filter(Boolean).join("　");
+  // 発表日：今季の日付は「9/28」、去年の秋に表明した引退などは「2025/11/24」
+  const md = d => !d ? "" : (o.season && d.slice(0, 4) !== String(o.season) ? `${d.slice(0, 4)}/` : "") + `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
+  const kindText = x => x.kind === "mgr" ? "今季限りで退任" : x.kind === "retire" ? "現役引退" : x.kind === "offer" ? "来季の契約を結ばない（育成で再契約を打診）" : x.dev ? "育成選手の来季の契約を結ばない" : "来季の契約を結ばない";
   const teams = calOrder().filter(t => CL.includes(t));
   const has = teams.filter(t => items.some(x => x.t === t)), none = teams.filter(t => !items.some(x => x.t === t));
   // パワプロ風：名前は守備位置の色のタイル（2つ以上守る選手は塗り分け）
   const pawa = isPawa();
   const nameHtml = x => {
+    if (x.kind === "mgr") return pawa ? `<span class="ptile otl mg"><b>${esc(x.n)}</b></span>` : esc(x.n);
     if (!pawa) return esc(x.n);
     const ro = ((DATA.rosters || {})[x.t] || []).find(r => nk(r.n) === nk(x.n));
     const gr = posGroups(x.t, x.n, ro ? ro.p : "投手"), len = [...x.n.replace(/\s+/g, "")].length;
     return `<span class="ptile otl ${TILEC[gr[0]] || "pp"}${len >= 6 ? " n7" : len >= 5 ? " n5" : ""}" style="${tileStyle(gr)}"><b>${esc(x.n)}</b></span>`;
   };
   // 1行目：札・名前・背番号、2行目：内容・発表日。右に公式の発表へのリンク
-  const row = x => `<div class="ofr"><span class="offtag k-${x.kind}">${OFF_LABEL[x.kind]}</span><div class="omain"><div class="on1"><span class="onm" data-pl="${x.t}|${esc(x.n)}|">${nameHtml(x)}</span>${x.no ? `<span class="ono num">#${esc(x.no)}</span>` : ""}</div><div class="okd">${kindText(x)}${x.date ? `<span class="odt num">・${md(x.date)}</span>` : ""}</div></div>${x.url && /^https:\/\//.test(x.url) ? `<a class="oln" href="${esc(x.url)}" target="_blank" rel="noopener">発表</a>` : ""}</div>`;
+  const row = x => `<div class="ofr"><span class="offtag k-${x.kind}">${OFF_LABEL[x.kind]}</span><div class="omain"><div class="on1"><span class="onm"${x.kind === "mgr" ? "" : ` data-pl="${x.t}|${esc(x.n)}|"`}>${nameHtml(x)}</span>${x.kind === "mgr" ? `<span class="ono">${esc(x.role || "監督")}</span>` : x.no ? `<span class="ono num">#${esc(x.no)}</span>` : ""}</div><div class="okd">${kindText(x)}${x.date ? `<span class="odt num">・${md(x.date)}</span>` : ""}</div></div>${x.url && /^https:\/\//.test(x.url) ? `<a class="oln" href="${esc(x.url)}" target="_blank" rel="noopener">発表</a>` : ""}</div>`;
   $("offList").innerHTML = (has.length ? has.map(t => {
-    const list = items.filter(x => x.t === t).sort((a, b) => (b.date || "").localeCompare(a.date || "") || (a.kind === "retire") - (b.kind === "retire"));
-    return `<div class="ofteam" style="${tv(t)}"><div class="ofh"><span class="badge">${sn(t)}</span>${fn(t)}<small>${list.filter(x => x.kind !== "retire").length ? `戦力外 ${list.filter(x => x.kind !== "retire").length}人` : ""}${list.some(x => x.kind === "retire") ? `${list.some(x => x.kind !== "retire") ? "・" : ""}引退 ${list.filter(x => x.kind === "retire").length}人` : ""}</small></div>${list.map(row).join("")}</div>`;
+    const list = items.filter(x => x.t === t).sort((a, b) => (b.kind === "mgr") - (a.kind === "mgr") || (b.date || "").localeCompare(a.date || "") || (a.kind === "retire") - (b.kind === "retire"));
+    return `<div class="ofteam" style="${tv(t)}"><div class="ofh"><span class="badge">${sn(t)}</span>${fn(t)}<small>${[["cut", "offer"], ["retire"], ["mgr"]].map((ks, i) => { const n = list.filter(x => ks.includes(x.kind)).length; return n ? (i === 2 ? "監督退任" : `${["戦力外", "引退"][i]} ${n}人`) : ""; }).filter(Boolean).join("・")}</small></div>${list.map(row).join("")}</div>`;
   }).join("") : `<p class="ofnone">まだ発表はありません。</p>`) + (has.length && none.length ? `<p class="ofnone">まだ発表なし：${none.map(fn).join("・")}</p>` : "");
 }
 // ================= チーム内の成績（球団ごとの全選手。NPB公式の個人成績を中継プログラム経由で） =================
