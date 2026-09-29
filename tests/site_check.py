@@ -844,19 +844,29 @@ async def tabbar_check(browser):
     """下のタブバー：指でスクロールしている間は下へでも上へでも小さく、止まるといちばん上の近くでは元の大きさ"""
     pg, errs = await open_page(browser, 390, "", touch=True)
     r = await pg.evaluate("""async () => {
-      const bar = document.querySelector('.tabbar'), P = () => parseFloat(bar.style.getPropertyValue('--p') || '0'), ng = [];
+      const bar = document.querySelector('.tabbar'), P = () => window.__tabbarP().p, ng = [];
       setTab('magic');
       const el = document.getElementById('formBlk'), wait = ms => new Promise(r => setTimeout(r, ms));
       const f = (type, y) => { const t = new Touch({ identifier: 7, target: el, clientX: 200, clientY: y }); el.dispatchEvent(new TouchEvent(type, { touches: type === 'touchend' ? [] : [t], changedTouches: [t], bubbles: true, cancelable: true })); };
       window.scrollTo(0, 1200); await wait(900);
       f('touchstart', 300); for (let i = 1; i <= 8; i++) { f('touchmove', 300 - i * 15); window.scrollBy(0, 15); await wait(30); }
       if (P() < .99) ng.push(`下へ読み進めてもタブバーが小さくならない（${P()}）`);
-      f('touchend', 180); await wait(1000);
+      f('touchend', 180);
+      // 元の大きさに戻る動き：1フレームごとの変化が小さく（カクつかない）、途中で飛ばない
+      const tr = []; const t0 = performance.now();
+      await new Promise(res => { const tick = () => { tr.push(P()); performance.now() - t0 < 1100 ? requestAnimationFrame(tick) : res(); }; requestAnimationFrame(tick); });
+      const jumps = tr.slice(1).map((x, i) => Math.abs(x - tr[i]));
+      if (Math.max(...jumps) > .2) ng.push(`元の大きさに戻るときに一気に変わるフレームがある（最大${Math.max(...jumps).toFixed(2)}）`);
+      if (tr.filter((x, i) => i && x !== tr[i - 1]).length < 8) ng.push('元の大きさに戻る動きのフレームが少ない（なめらかでない）');
       if (P() > .01) ng.push(`スクロールが止まってもタブバーが元の大きさに戻らない（${P()}）`);
+      const tf = getComputedStyle(bar).transform;
+      if (tf !== 'none' && tf !== 'matrix(1, 0, 0, 1, 0, 0)') ng.push(`元の大きさに戻っても形が戻っていない（${tf}）`);
       f('touchstart', 300); for (let i = 1; i <= 8; i++) { f('touchmove', 300 + i * 15); window.scrollBy(0, -15); await wait(30); }
       if (P() < .99) ng.push(`上へ戻るときにタブバーが小さくならない（${P()}）`);
       f('touchend', 420);
       window.scrollTo(0, 20); f('touchstart', 300); f('touchmove', 310); window.scrollTo(0, 10); await wait(80);
+      if (window.__tabbarP().target > .01) ng.push('いちばん上の近くでタブバーが元の大きさに向かわない');
+      await wait(900);   // ばねで戻る動きを待つ
       if (P() > .01) ng.push(`いちばん上の近くでタブバーが元の大きさにならない（${P()}）`);
       f('touchend', 310);
       return ng;
