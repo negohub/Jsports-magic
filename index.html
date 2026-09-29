@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260929052853">
+<meta name="build" content="20260929055340">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -2001,9 +2001,31 @@ html.theme-pawa .ptr{background:#fff;color:#13264A;border:2px solid #1D3E7C}
 #offList .ofr .odt{white-space:nowrap}
 #offList .ofr a.oln{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;padding:0 4px;font-size:12px;font-weight:700;color:inherit;text-decoration:underline;text-underline-offset:3px}
 #offList .ofnone{margin:10px 2px 0;font-size:12.5px;color:var(--muted,#8B8B95)}
-html.theme-pawa #offList .ofteam{background:#fff;border:2px solid #1D3E7C;box-shadow:0 3px 0 rgba(29,62,124,.25)}
-html.theme-pawa #offList .ofh{color:#13264A;background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 22%,#fff),#fff)}
-html.theme-pawa #offList .ofr{color:#13264A;border-top-color:#DCE6F2}
+/* パワプロ風：白いカード＋紺の太枠、見出しは球団色の帯、行は緑と白の交互、名前は守備位置の色のタイル、札とボタンはツヤのある立体 */
+html.theme-pawa #offList .ofteam{background:#fff;border:3px solid #1D3E7C;border-radius:16px;box-shadow:0 4px 0 rgba(29,62,124,.35)}
+html.theme-pawa #offList .ofh{color:#13264A;font-size:15px;padding:10px 12px;border-left:0;box-shadow:inset 6px 0 0 var(--tc);
+  background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 35%,#fff),#fff 70%);border-bottom:2px solid #1D3E7C}
+html.theme-pawa #offList .ofh .badge{box-shadow:0 0 0 2px #fff,0 0 0 4px #1D3E7C}
+html.theme-pawa #offList .ofh small{color:#1D3E7C;font-weight:800;background:#fff;border:2px solid #1D3E7C;border-radius:999px;padding:2px 9px}
+html.theme-pawa #offList .ofr{color:#13264A;border-top:1px solid #CFE3C8;background:#EEF7EA}
+html.theme-pawa #offList .ofh + .ofr{border-top:0}
+html.theme-pawa #offList .ofr:nth-child(odd){background:#fff}
+html.theme-pawa #offList .ofr .onm{overflow:visible}
+html.theme-pawa #offList .ptile.otl{display:inline-flex;align-items:center;justify-content:center;height:32px;min-width:92px;max-width:168px;padding:0 12px;border-radius:9px;cursor:pointer;vertical-align:middle}
+html.theme-pawa #offList .ptile.otl b{font-size:14px;letter-spacing:.06em;margin-right:-.06em;white-space:nowrap;color:#13264A}
+html.theme-pawa #offList .ptile.otl.n5 b{font-size:13px;letter-spacing:0;margin-right:0}
+html.theme-pawa #offList .ptile.otl.n7 b{font-size:11.5px;letter-spacing:-.02em;margin-right:.02em}
+html.theme-pawa #offList .ofr .ono{color:#4A5B7A;font-weight:800}
+html.theme-pawa #offList a.oln{min-width:54px;min-height:44px;margin:0;border-radius:10px;text-decoration:none;font-weight:800;color:#1D3E7C;
+  background:linear-gradient(180deg,#FFFFFF,#D9EBFF);border:2px solid #1D3E7C;box-shadow:inset 0 2px 0 #fff,0 3px 0 #1D3E7C;box-sizing:border-box}
+html.theme-pawa #offList a.oln:active{transform:translateY(2px);box-shadow:inset 0 2px 0 #fff,0 1px 0 #1D3E7C}
+html.theme-pawa #offList .ofnone{color:#13264A;font-weight:700;background:#fff;border:2px solid #1D3E7C;border-radius:12px;padding:8px 12px;box-shadow:0 3px 0 rgba(29,62,124,.25)}
+/* パワプロ風の札：ツヤのある立体（戦力外は赤、引退は銀） */
+html.theme-pawa .offtag{height:20px;padding:0 7px;border-radius:7px;font-size:11px;font-weight:900;letter-spacing:.04em;color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.3);
+  background:linear-gradient(180deg,#FF7A7A,#D62828);border:1.5px solid #8E1414;box-shadow:inset 0 2px 0 rgba(255,255,255,.55),0 2px 0 rgba(142,20,20,.45)}
+html.theme-pawa .offtag.k-retire{color:#13264A;text-shadow:0 1px 0 rgba(255,255,255,.7);background:linear-gradient(180deg,#F7F9FC,#B9C3D3);border-color:#6F7B8F;box-shadow:inset 0 2px 0 #fff,0 2px 0 rgba(111,123,143,.5)}
+html.theme-pawa .ptile .offtag{height:16px;padding:0 4px;font-size:9px;border-width:1px}
+html.theme-pawa #offList .ofr .offtag{min-width:56px}
 html.theme-pawa #offList .ofr .ono,html.theme-pawa #offList .ofr .okd,html.theme-pawa #offList .ofh small,html.theme-pawa #offList .ofnone{color:#4A5B7A}
 /* 応援歌の選手タイルに付ける札：タイルの右上の内側に小さく（タイルの外にはみ出すと切れるため） */
 .ptile{position:relative}
@@ -4406,8 +4428,16 @@ function renderOff() {
   const kindText = x => x.kind === "retire" ? "現役引退" : x.kind === "offer" ? "来季の契約を結ばない（育成で再契約を打診）" : x.dev ? "育成選手の来季の契約を結ばない" : "来季の契約を結ばない";
   const teams = calOrder().filter(t => CL.includes(t));
   const has = teams.filter(t => items.some(x => x.t === t)), none = teams.filter(t => !items.some(x => x.t === t));
+  // パワプロ風：名前は守備位置の色のタイル（2つ以上守る選手は塗り分け）
+  const pawa = isPawa();
+  const nameHtml = x => {
+    if (!pawa) return esc(x.n);
+    const ro = ((DATA.rosters || {})[x.t] || []).find(r => nk(r.n) === nk(x.n));
+    const gr = posGroups(x.t, x.n, ro ? ro.p : "投手"), len = [...x.n.replace(/\s+/g, "")].length;
+    return `<span class="ptile otl ${TILEC[gr[0]] || "pp"}${len >= 6 ? " n7" : len >= 5 ? " n5" : ""}" style="${tileStyle(gr)}"><b>${esc(x.n)}</b></span>`;
+  };
   // 1行目：札・名前・背番号、2行目：内容・発表日。右に公式の発表へのリンク
-  const row = x => `<div class="ofr"><span class="offtag k-${x.kind}">${OFF_LABEL[x.kind]}</span><div class="omain"><div class="on1"><span class="onm" data-pl="${x.t}|${esc(x.n)}|">${esc(x.n)}</span>${x.no ? `<span class="ono num">#${esc(x.no)}</span>` : ""}</div><div class="okd">${kindText(x)}${x.date ? `<span class="odt num">・${md(x.date)}</span>` : ""}</div></div>${x.url && /^https:\/\//.test(x.url) ? `<a class="oln" href="${esc(x.url)}" target="_blank" rel="noopener">発表</a>` : ""}</div>`;
+  const row = x => `<div class="ofr"><span class="offtag k-${x.kind}">${OFF_LABEL[x.kind]}</span><div class="omain"><div class="on1"><span class="onm" data-pl="${x.t}|${esc(x.n)}|">${nameHtml(x)}</span>${x.no ? `<span class="ono num">#${esc(x.no)}</span>` : ""}</div><div class="okd">${kindText(x)}${x.date ? `<span class="odt num">・${md(x.date)}</span>` : ""}</div></div>${x.url && /^https:\/\//.test(x.url) ? `<a class="oln" href="${esc(x.url)}" target="_blank" rel="noopener">発表</a>` : ""}</div>`;
   $("offList").innerHTML = (has.length ? has.map(t => {
     const list = items.filter(x => x.t === t).sort((a, b) => (b.date || "").localeCompare(a.date || "") || (a.kind === "retire") - (b.kind === "retire"));
     return `<div class="ofteam" style="${tv(t)}"><div class="ofh"><span class="badge">${sn(t)}</span>${fn(t)}<small>${list.filter(x => x.kind !== "retire").length ? `戦力外 ${list.filter(x => x.kind !== "retire").length}人` : ""}${list.some(x => x.kind === "retire") ? `${list.some(x => x.kind !== "retire") ? "・" : ""}引退 ${list.filter(x => x.kind === "retire").length}人` : ""}</small></div>${list.map(row).join("")}</div>`;
