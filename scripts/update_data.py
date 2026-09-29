@@ -1351,10 +1351,20 @@ def fetch_post(season, old):
     return games
 
 
+TSTATS_OUT = os.path.join(os.path.dirname(OUT), "tstats.json")
+
+
 def write_json(data):
+    """data/latest.json（開いた瞬間に使うもの）と data/tstats.json（チーム別成績：成績タブを開いたときに読むもの）に分けて保存。
+    シーズンの記録（data/archive）には、分けたものも入れて丸ごと残す"""
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    main = {k: v for k, v in data.items() if k != "tstats"}
+    main["tstats_at"] = (data.get("tstats") or {}).get("at")
     with open(OUT, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
+        json.dump(main, f, ensure_ascii=False, separators=(",", ":"))
+    if data.get("tstats"):
+        with open(TSTATS_OUT, "w", encoding="utf-8") as f:
+            json.dump(data["tstats"], f, ensure_ascii=False, separators=(",", ":"))
     write_archive(data)
 
 
@@ -1398,6 +1408,12 @@ def main():
                 old = json.load(f)
             except json.JSONDecodeError:
                 old = None
+    if old is not None and "tstats" not in old and os.path.exists(TSTATS_OUT):
+        try:
+            with open(TSTATS_OUT, encoding="utf-8") as f:
+                old["tstats"] = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            pass
     if old and old.get("season") and int(old["season"]) < season and not os.path.exists(os.path.join(ARCH_DIR, f"{int(old['season'])}.json")):
         write_archive(old, force=True)   # 前のシーズンの記録を残してから、新しいシーズンのデータにする
     old_games = old["games"] if old and old.get("season") == season else []
