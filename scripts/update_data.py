@@ -333,6 +333,36 @@ def parse_manager(html):
     return None
 
 
+YEARLY_ROW = re.compile(r"^(\d{4})\S*\s+(.+?)\s+(?:(\d{1,2})\s+)?(\d{1,3})\s+(\d{1,3})\s+(\d{1,3})\s+(\d{1,3})\s+(?:0|1)?\.\d{3}(?:\s|$)")
+
+
+def parse_yearly(html):
+    """NPBの球団の年度別成績ページ（1936年〜今季）から、年度・監督・順位・試合・勝利・敗北・引分を取る
+    （表の行でも箇条書きの行でも読めるように、1行ぶんの文字を並びで読む：年度 監督 [順位] 試合 勝利 敗北 引分 勝率 …）"""
+    soup = BeautifulSoup(html, "html.parser")
+    rows, asof, seen = [], "", set()
+    m = re.search(r"(\d{4})年(\d{1,2})月(\d{1,2})日\S*\s*現在", norm(soup.get_text(" ")))
+    if m:
+        asof = f"{int(m.group(2))}/{int(m.group(3))}"
+    for el in soup.find_all(["tr", "li"]):
+        text = re.sub(r"\s+", " ", norm(el.get_text(" ", strip=True))).strip()
+        mm = YEARLY_ROW.match(text)
+        if not mm:
+            continue
+        y, name, rank, g, w, l, d = mm.groups()
+        key = (y, name, g, w)
+        if key in seen:
+            continue
+        seen.add(key)
+        rows.append({"y": y, "m": name, "rank": rank or "", "g": int(g), "w": int(w), "l": int(l), "d": int(d)})
+    return rows, asof
+
+
+def mgr_key(name):
+    """監督の名前の照合用（空白を除き、髙→高 などの字体をそろえる）"""
+    return re.sub(r"\s+", "", norm(name or "")).replace("髙", "高").replace("﨑", "崎").replace("濵", "浜")
+
+
 # 個別の応援歌がある選手を調べるページ（名前だけを照合し、歌詞は保存しない）
 SONG_SOURCES = {
     "T": ["https://m.hanshintigers.jp/data/march/", "https://www.yakyu-ouen.net/tigers/"],
@@ -600,6 +630,29 @@ def fetch_offseason(season, old, rosters, force=False, any_month=False):
             if m:
                 managers[t] = m
         print(f"[監督] {len(managers)}球団: " + " ".join(f"{t}:{m['n']}" for t, m in managers.items()))
+    # 監督としての通算成績（NPBの12球団の年度別成績ページから、今の監督と退任する監督の分だけ。1日1回）
+    mgr_rec = dict(prev.get("mgr_rec") or {})
+    if prev.get("mgr_rec_date") != now.strftime("%Y-%m-%d") or not mgr_rec:
+        want = {mgr_key(m["n"]): m["n"] for m in managers.values()}
+        want.update({mgr_key(x["n"]): x["n"] for x in prev.get("items", []) if x.get("kind") == "mgr"})
+        want.update({mgr_key(x["n"]): x["n"] for x in OFF_SEED if x.get("kind") == "mgr"})
+        seasons, asof = {k: [] for k in want}, ""
+        ok = 0
+        for t, code in ROSTER_CODE.items():
+            html = fetch(f"https://npb.jp/bis/teams/yearly_{code}.html")
+            if not html:
+                continue
+            rows, a = parse_yearly(html)
+            if rows:
+                ok += 1
+                asof = asof or a
+            for r in rows:
+                k = mgr_key(r["m"])
+                if k in seasons:   # 2人で分けた年（「根本・小西」など）は数えない
+                    seasons[k].append({"y": r["y"], "t": t, "rank": r["rank"], "g": r["g"], "w": r["w"], "l": r["l"], "d": r["d"]})
+        if ok >= 10:   # 年度別成績のページがほとんど読めたときだけ入れ替える
+            mgr_rec = {want[k]: {"seasons": sorted(v, key=lambda x: (x["y"], x["t"])), "asof": asof} for k, v in seasons.items() if v}
+            print(f"[監督の通算成績] {len(mgr_rec)}人（{ok}球団の年度別成績から）")
     seen = {u: d for u, d in (prev.get("seen") or {}).items() if not OFF_URL_NG.search(u)}
     teams = {}
     today = now.strftime("%Y-%m-%d")
@@ -678,7 +731,8 @@ def fetch_offseason(season, old, rosters, force=False, any_month=False):
     out = sorted(items.values(), key=lambda x: (x["date"], x["t"], x["n"]), reverse=True)
     print(f"[戦力外・引退] {len(out)}人（" + " ".join(f"{t}:{v['found']}" for t, v in teams.items()) + "）")
     return {"season": season, "checked_at": now.isoformat(timespec="seconds"), "items": out, "teams": teams, "seen": seen,
-            "managers": managers, "managers_date": now.strftime("%Y-%m-%d") if managers else prev.get("managers_date")}
+            "managers": managers, "managers_date": now.strftime("%Y-%m-%d") if managers else prev.get("managers_date"),
+            "mgr_rec": mgr_rec, "mgr_rec_date": now.strftime("%Y-%m-%d") if mgr_rec else prev.get("mgr_rec_date")}
 
 
 def fetch_fpos(season, old):
