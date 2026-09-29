@@ -403,6 +403,181 @@ def mark_songs(t, rows):
 FPOS_GROUP = {"一塁手": "内", "二塁手": "内", "三塁手": "内", "遊撃手": "内", "外野手": "外", "捕手": "捕", "投手": "投"}
 
 
+# ---------- オフの戦力外・引退（各球団の公式サイトの発表から） ----------
+# 各球団のニュース一覧から「来季の選手契約について」「現役引退」などの発表を探し、
+# 記事の中に出てくる名簿の選手名と照らし合わせる（記事の作りは球団ごとに違うので、名前の照合で拾う）
+OFF_LISTS = {
+    "G": ["https://www.giants.jp/news/"],
+    "T": ["https://hanshintigers.jp/news/topics/", "https://hanshintigers.jp/news/"],
+    "DB": ["https://www.baystars.co.jp/news/"],
+    "C": ["https://www.carp.co.jp/news/", "https://www.carp.co.jp/"],
+    "S": ["https://www.yakult-swallows.co.jp/news/"],
+    "D": ["https://dragons.jp/news/", "https://dragons.jp/"],
+    "H": ["https://www.softbankhawks.co.jp/news/"],
+    "F": ["https://www.fighters.co.jp/news/"],
+    "B": ["https://www.buffaloes.co.jp/news/"],
+    "E": ["https://www.rakuteneagles.jp/news/"],
+    "L": ["https://www.seibulions.jp/news/"],
+    "M": ["https://www.marines.co.jp/news/"],
+}
+OFF_TITLE = re.compile(r"契約|退団|戦力外|自由契約")
+OFF_TITLE_NG = re.compile(r"更改|合意|締結|獲得|入団|加入|新外国人|育成選手契約を結ぶ|スポンサー|パートナー|協定|提携|ファンクラブ|チケット|グッズ|放送|配信|中継|販売|募集|キャンプ")
+OFF_KEY = re.compile(r"結ばない|行わない|締結しない|更新しない|結ばず|行わず|戦力外|自由契約|退団|引退")
+OFF_JUNK = re.compile(r"side|related|recommend|ranking|breadcrumb|pickup|banner|share|sns|pager|pagination|footer|header|menu|gnav|global|topics-list|news-list|other", re.I)
+OFF_DATE = re.compile(r"(20\d\d)\s*[./年-]\s*(\d{1,2})\s*[./月-]\s*(\d{1,2})")
+OFF_EVERY = 3 * 3600   # 球団サイトを見に行く間隔（秒）。15分ごとの自動更新のたびには見に行かない
+
+
+def off_links(list_url, html):
+    """ニュース一覧のページから、戦力外・引退の発表らしい記事のリンク（URL, 見出し）を取る"""
+    from urllib.parse import urljoin, urlparse
+    host = urlparse(list_url).netloc.replace("www.", "")
+    out, seen = [], set()
+    for a in BeautifulSoup(html, "html.parser").find_all("a", href=True):
+        title = re.sub(r"\s+", " ", norm(a.get_text(" "))).strip()
+        if not title or len(title) > 120:
+            continue
+        retire = "引退" in title
+        if not retire and not (OFF_TITLE.search(title) and not OFF_TITLE_NG.search(title)):
+            continue
+        url = urljoin(list_url, a["href"]).split("#")[0]
+        if urlparse(url).netloc.replace("www.", "") != host or url in seen or url.rstrip("/") == list_url.rstrip("/"):
+            continue
+        seen.add(url)
+        out.append((url, title))
+    return out
+
+
+def off_article(t, url, list_title, html, roster, season):
+    """1つの発表記事から、戦力外（来季契約せず）・育成再契約の打診・現役引退の選手を取り出す"""
+    soup = BeautifulSoup(html, "html.parser")
+    h = soup.find("h1") or soup.find("title")
+    title = re.sub(r"\s+", " ", norm(h.get_text(" "))).strip() if h else ""
+    title = title if len(title) >= 4 else list_title
+    for tag in soup(["script", "style", "noscript", "header", "footer", "nav", "aside", "form"]):
+        tag.decompose()
+    for tag in soup.find_all(True):
+        if tag.attrs is None:
+            continue
+        cls = " ".join(tag.get("class") or []) + " " + str(tag.get("id") or "")
+        if OFF_JUNK.search(cls) and tag.name not in ("body", "html", "main", "article"):
+            tag.decompose()
+    text = norm(soup.get_text("\n"))
+    # 発表日：本文の先頭あたり（見出しの近く）の日付。今季の9月より前なら去年などの古い記事なので使わない
+    # 見つからなければ空（見つけた日を使う）。本文の途中の日付（生年月日など）は見ない
+    date = ""
+    head = text[:max(400, text.find(title[:10]) + 400 if title[:10] and title[:10] in text else 400)]
+    for m in OFF_DATE.finditer(head):
+        y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        if y < season - 1:
+            continue
+        if y == season - 1 or (y == season and mo < 9):
+            return [], "古い記事"
+        date = f"{y:04d}-{mo:02d}-{d:02d}"
+        break
+    S = squash(text)
+    retire = "引退" in list_title or "引退" in title
+    if not OFF_KEY.search(S):
+        return [], "戦力外・引退の文言なし"
+    # 名前を探す範囲：「結ばない」「引退」などの言葉の前後（記事の横の一覧などを拾わないように）
+    wins = [(max(0, m.start() - 700), m.end() + 700) for m in OFF_KEY.finditer(S)]
+    sq_title = squash(title)
+    # 「育成選手契約を打診」の文（改行・句点で区切った1文ずつ。名前の並びと混ざらないよう、詰める前の本文で区切る）
+    offer_sents = [squash(x) for x in re.split(r"[。\n]", text) if "育成" in x and re.search(r"打診|再契約|提示|予定", x)]
+    items = []
+    for r in roster:
+        k = squash(r.get("n", ""))
+        if len(k) < 2:
+            continue
+        pos = [m.start() for m in re.finditer(re.escape(k), S)]
+        if len(k) == 2:   # 2文字の名前は「○○投手」「○○選手」のように続くときだけ
+            pos = [p for p in pos if re.match(r"(投手|捕手|内野手|外野手|選手)", S[p + 2:p + 6])]
+        in_title = k in sq_title
+        if not in_title and not any(a <= p <= b for p in pos for a, b in wins):
+            continue
+        if retire:
+            kind = "retire"
+        elif any(k in x for x in offer_sents):
+            kind = "offer"
+        else:
+            kind = "cut"
+        items.append({"t": t, "n": r["n"], "no": r.get("no", ""), "dev": bool(r.get("dev")), "kind": kind,
+                      "date": date, "url": url, "title": title[:80]})
+    return items, ""
+
+
+def fetch_offseason(season, old, rosters, force=False):
+    """各球団の公式サイトから、今オフの戦力外・引退の発表を集める（前回までに見つけたものは残す）"""
+    prev = (old or {}).get("offseason") or {}
+    if prev.get("season") != season:
+        prev = {}
+    now = datetime.now(JST)
+    if now.month < 9 and not force:
+        return prev or None
+    last = prev.get("checked_at")
+    if last and not force:
+        try:
+            if (now - datetime.fromisoformat(last)).total_seconds() < OFF_EVERY:
+                return prev
+        except ValueError:
+            pass
+    items = {(x["t"], x["n"]): x for x in prev.get("items", [])}
+    seen = dict(prev.get("seen") or {})
+    teams = {}
+    today = now.strftime("%Y-%m-%d")
+    for t, urls in OFF_LISTS.items():
+        st = {"list": None, "links": 0, "new": 0, "found": 0, "err": ""}
+        roster = rosters.get(t) or []
+        cands = []
+        for u in urls:
+            html = fetch(u)
+            if not html:
+                st["err"] = "ニュース一覧を開けない"
+                continue
+            cands = off_links(u, html)
+            st["list"], st["links"], st["err"] = u, len(cands), ""
+            if cands:
+                break
+        for url, ltitle in cands[:12]:
+            if url in seen:
+                continue
+            html = fetch(url)
+            time.sleep(1)
+            if not html:
+                continue
+            found, why = off_article(t, url, ltitle, html, roster, season)
+            seen[url] = today
+            st["new"] += 1
+            for it in found:
+                it["date"] = it["date"] or today
+                old_it = items.get((t, it["n"]))
+                # 同じ選手の発表が2つあるとき（戦力外→引退など）は、新しい方
+                if not old_it or it["date"] >= old_it.get("date", ""):
+                    items[(t, it["n"])] = it
+                st["found"] += 1
+            print(f"  [戦力外・引退 {t}] {ltitle[:40]} → {len(found)}人{('（' + why + '）') if why else ''}")
+        teams[t] = st
+    # 手で直す分（data/offseason_fix.json があれば）：{"exclude": [{"t","n"}], "add": [{...}]}
+    fix_path = os.path.join(os.path.dirname(OUT), "offseason_fix.json")
+    if os.path.exists(fix_path):
+        try:
+            with open(fix_path, encoding="utf-8") as f:
+                fix = json.load(f)
+            for x in fix.get("exclude", []):
+                items.pop((x.get("t"), x.get("n")), None)
+            for x in fix.get("add", []):
+                if x.get("t") and x.get("n") and x.get("kind"):
+                    items[(x["t"], x["n"])] = {"no": "", "dev": False, "date": today, "url": "", "title": "", **x}
+        except (OSError, json.JSONDecodeError) as e:
+            print(f"  offseason_fix.json を読めません: {e}")
+    # 見た記事の記録は60日分だけ残す
+    lim = (now - timedelta(days=60)).strftime("%Y-%m-%d")
+    seen = {u: d for u, d in seen.items() if d >= lim}
+    out = sorted(items.values(), key=lambda x: (x["date"], x["t"], x["n"]), reverse=True)
+    print(f"[戦力外・引退] {len(out)}人（" + " ".join(f"{t}:{v['found']}" for t, v in teams.items()) + "）")
+    return {"season": season, "checked_at": now.isoformat(timespec="seconds"), "items": out, "teams": teams, "seen": seen}
+
+
 def fetch_fpos(season, old):
     """各球団の個人守備成績から、選手ごとに今季守ったポジション（投・捕・内・外）と試合数を取る（1日1回）"""
     today = datetime.now(JST).strftime("%Y-%m-%d")
@@ -710,10 +885,12 @@ def main():
     rosters, roster_date = safe("選手一覧", lambda: fetch_rosters(old), ((old or {}).get("rosters") or {}, (old or {}).get("roster_date")))
     post = safe("ポストシーズン", lambda: fetch_post(season, old), (old or {}).get("post"))
     fpos = safe("守備位置", lambda: fetch_fpos(season, old), (old or {}).get("fpos"))
+    offseason = safe("戦力外・引退", lambda: fetch_offseason(season, old, rosters, os.environ.get("OFF_FORCE") == "1"), (old or {}).get("offseason"))
     if (old and old_games == all_games and old_stats == stats and old.get("prev_order") == prev_order
             and old_stats_p == stats_p and old.get("prev_order_p") == prev_order_p
             and old.get("checked") == month and old.get("rosters") == rosters and old.get("song_rev") == SONG_REV
-            and old.get("post") == post and old.get("fpos") == fpos):
+            and old.get("post") == post and old.get("fpos") == fpos
+            and old.get("offseason") == offseason):
         print("変化なし")
         return
     data = {
@@ -730,6 +907,7 @@ def main():
         "song_rev": SONG_REV,
         "post": post,
         "fpos": fpos,
+        "offseason": offseason,
     }
     write_json(data)
     print(f"保存しました: {len(all_games)}試合")
