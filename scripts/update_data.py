@@ -540,6 +540,7 @@ OFF_SEED = [
     {"t": "T", "n": "西 勇輝", "kind": "retire", "date": "2026-09-25", "url": "https://hanshintigers.jp/news/topics/info_11241.html"},
     {"t": "T", "n": "岩貞 祐太", "kind": "retire", "date": "2026-09-28"},
     {"t": "D", "n": "井上 一樹", "kind": "mgr", "role": "監督", "date": "2026-09-29"},
+    {"t": "G", "n": "阿部 慎之助", "kind": "mgr", "role": "監督", "date": "2026-05-26", "mid": True},   # シーズン途中で辞任（橋上秀樹が監督代行）
 ]
 OFF_KEY = re.compile(r"結ばない|行わない|締結しない|更新しない|結ばず|行わず|戦力外|自由契約|退団|引退|辞任|退任|解任")
 OFF_JUNK = re.compile(r"side|related|recommend|ranking|breadcrumb|pickup|banner|share|sns|pager|pagination|footer|header|menu|gnav|global|topics-list|news-list|other", re.I)
@@ -783,8 +784,9 @@ def fetch_offseason(season, old, rosters, force=False, any_month=False):
         else:
             items[key] = {"t": x["t"], "n": x["n"], "no": (ro or {}).get("no", "") or (managers.get(x["t"]) or {}).get("no", "") if x["kind"] == "mgr" else (ro or {}).get("no", ""),
                           "dev": bool((ro or {}).get("dev")), "kind": x["kind"], "date": x.get("date") or today, "url": x.get("url", ""), "title": x.get("title", "")}
-            if x.get("role"):
-                items[key]["role"] = x["role"]
+            for f in ("role", "mid"):
+                if x.get(f):
+                    items[key][f] = x[f]
     for x in OFF_SEED:
         patch(x)
     fix_path = os.path.join(os.path.dirname(OUT), "offseason_fix.json")
