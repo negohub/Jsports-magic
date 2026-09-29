@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260929103347">
+<meta name="build" content="20260929104741">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -3403,7 +3403,7 @@ function pitchHTML(g) {
     occ.forEach((b, i) => { if (names[i]) o[b] = names[i]; }); return o; })();
   const RUN = [["2", 150, 34], ["1", 238, 96], ["3", 62, 96]].map(([b, x, y]) => {
     const full = runnerOK(p, b, atk, on) ? p.runners[b] : RN[b];
-    return full ? { t: atk, x, y, full, short: String(full).split(" ")[0] } : null;
+    return full ? { t: atk, x, y, full, short: callName(atk, full) } : null;
   }).filter(Boolean);
   const field = `<svg class="fld" viewBox="0 0 300 190" aria-label="走者">
     <defs>
@@ -3447,7 +3447,7 @@ function pitchHTML(g) {
         ${p.batter ? `<div class="pn3" data-pl="${atk}|${esc(p.batter.name)}"><b>${pwName(atk, p.batter.name)}</b>${hand(p.batter.hand)}</div>
         <div class="pg3">${pcell("率", p.batter.avg)}${pcell("打", bg && bg.ab)}${pcell("安", bg && bg.hit)}${pcell("点", bg && bg.rbi)}${pcell("本", bg && bg.hr)}${pcell("四", bg && bg.bb)}</div>
         ${bg && bg.results && bg.results.length ? `<div class="pres3">${bg.results.map((r, i) => rcChip(r, (bg.rbis || [])[i])).join("")}</div>` : ""}` : ""}
-        ${p.next ? `<div class="pnx3${abDone ? " up" : ""}">${abDone ? "次の打者" : "NEXT"}<b data-pl="${atk}|${esc(p.next)}">${esc(p.next)}</b></div>` : ""}
+        ${p.next ? `<div class="pnx3${abDone ? " up" : ""}">${abDone ? "次の打者" : "NEXT"}<b data-pl="${atk}|${esc(p.next)}">${esc(callName(atk, p.next))}</b></div>` : ""}
       </div>
     </div>
     ${list.length ? `<div class="plist3">${list.map(x => `<div class="pl3 ${pitchCls(x.res)}"><span class="pn">${x.n}</span><span class="pty">${esc(x.type)}</span><span class="pbar"><i style="width:${spd(x.speed)}%"></i><b class="num">${kmh(x.speed) ? `${kmh(x.speed)}<small>km</small>` : ""}</b></span><span class="prs">${esc(x.res)}</span></div>`).join("")}</div>` : `<p class="pnone">この打席はまだ投球がありません</p>`}
@@ -3483,10 +3483,20 @@ function runnerTiles(list) {
     return `<span class="ptile rtile ${TILEC[gr[0]] || "pi"}" data-pl="${t}|${esc(full)}" style="left:${(x / 300 * 100).toFixed(2)}%;top:${(y / 190 * 100).toFixed(2)}%;${tileStyle(gr)}"><b>${esc(short)}</b></span>`;
   }).join("");
 }
+// 速報の呼び名：名簿で探して苗字にする（同じ球団に同じ苗字がいれば「佐藤輝」のように区別）。名簿にいなければそのまま
+function callName(t, name) {
+  const n = String(name || "").trim();
+  if (!n) return "";
+  const ro = (DATA.rosters || {})[t] || [], k = nk(n);
+  const pre = ro.filter(x => nk(x.n).startsWith(k));
+  const hit = ro.find(x => nk(x.n) === k) || (pre.length === 1 ? pre[0] : null);
+  if (hit) return shortName(t, hit.n);
+  return /\s/.test(n) ? shortName(t, n) : n;
+}
 function pwName(t, name, fallback) {
-  if (!isPawa() || !name) return esc(name || "");
+  if (!isPawa() || !name) return esc(callName(t, name));
   const gr = rosterGroups(t, name, fallback);
-  return `<span class="ptile sptile ${TILEC[gr[0]] || "pi"}" style="${tileStyle(gr)}"><b>${esc(name)}</b></span>`;
+  return `<span class="ptile sptile ${TILEC[gr[0]] || "pi"}" style="${tileStyle(gr)}"><b>${esc(callName(t, name))}</b></span>`;
 }
 function flowHTML(f, atk) {
   if (!f) return `<div class="flow"><p class="fnone">この回の流れはまだ取得できていません</p></div>`;
@@ -3579,7 +3589,7 @@ function detailHTML(g) {
     }
   }
   if (g.st === "live" && PD[g.d + gkey(g)]) h += pitchHTML(g);
-  else if (d.now && g.st === "live") h += `<div class="nowbat"><span class="lv">● ${esc(d.now.half)}</span><b>${esc(d.now.order)} ${esc(d.now.name)}</b><span class="sit">${esc(d.now.sit)}</span></div>`;
+  else if (d.now && g.st === "live") h += `<div class="nowbat"><span class="lv">● ${esc(d.now.half)}</span><b>${esc(d.now.order)} ${esc(callName(/表/.test(d.now.half || "") ? g.a : g.h, d.now.name))}</b><span class="sit">${esc(d.now.sit)}</span></div>`;
   h += lineupHTML(g, d);
   h += pitchingHTML(g, d);
   // 得点シーンの一覧は出さない（スコア表の得点マスをタップすると、その回の流れが開く）
@@ -4205,6 +4215,8 @@ function posGroups(t, name, fallback) {
   const R = (((DATA.fpos || {}).roles || {})[t] || {});
   let role = R[key];
   if (!role) { const hits = Object.keys(R).filter(k => k.startsWith(key)); if (hits.length === 1) role = R[hits[0]]; }
+  // 今季の一軍の登板がない投手：戦力外・引退の選手は、過去の一軍の成績から決めた役割（データ更新で調べたもの）
+  if (!role && typeof offOf === "function") { const o = offOf(t, name); if (o && o.role) role = [o.role]; }
   // 役割の形：{先: 先発数, 中/抑: 救援登板数}（スポナビの登板・先発から）または ["先","中"]（推定）
   let roleList = null;
   if (role && !Array.isArray(role)) {
