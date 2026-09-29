@@ -1180,6 +1180,47 @@ async def pitch_tile_check(browser):
         await pg.close()
 
 
+async def makeup_check(browser):
+    """雨などで中止になって振替日が決まっていない試合（振替待ち）も、残り試合に数えるか（順位表・戦況の表・確定の条件）"""
+    for lg in ["C", "P"]:
+        label = f"[振替待ちの残り試合 {lg}]"
+        pg, errs = await open_page(browser, 390, "")
+        if lg == "P":
+            await pg.evaluate("switchLeague('P')")
+            await pg.wait_for_timeout(200)
+        r = await pg.evaluate("""() => {
+          const ng = [], fin = periods()[periods().length - 1];
+          // 最後の月度の、まだ行っていない同じリーグどうしの試合を1つ選び、その日を「今日」にする
+          const g = DATA.games.filter(x => x.st === 'sched' && CL.includes(x.h) && CL.includes(x.a) && fin.months.includes(monthOf(x.d))).sort((a, b) => a.d < b.d ? -1 : 1)[0];
+          if (!g) return ng;
+          jst = () => ({ y: +g.d.slice(0, 4), m: +g.d.slice(5, 7), d: +g.d.slice(8), iso: g.d }); S.period = null; S.periodPicked = false;
+          const read = () => { renderAll(); setTab('magic');
+            const std = {}; document.querySelectorAll('#std tbody tr').forEach(tr => { const t = CL.find(x => tr.querySelector('.tnm').textContent.includes(fn(x))); if (t) std[t] = tr.lastElementChild.textContent.trim(); });
+            const a = analyze(DATA.games, S.period, CONFIG), mag = {}; a.rows.forEach(r => mag[r.t] = r.rem);
+            return { std, mag }; };
+          const b0 = read();
+          g.st = 'canc';
+          const b1 = read();
+          for (const t of [g.h, g.a]) {
+            if (b0.std[t] !== b1.std[t]) ng.push(`中止になると順位表の${fn(t)}の残試合が変わる（${b0.std[t]}→${b1.std[t]}）`);
+            if (b0.mag[t] !== undefined && b0.mag[t] !== b1.mag[t]) ng.push(`中止になると戦況の${fn(t)}の残試合が変わる（${b0.mag[t]}→${b1.mag[t]}）`);
+          }
+          const chips = [...document.querySelectorAll('#condBody .left span')].map(s => s.textContent);
+          // 中止になった試合の球団の「確定の条件」があれば、その残り試合に「振替」が出る
+          const cards = [...document.querySelectorAll('#condBody .cond')].filter(c => [g.h, g.a].some(t => (c.querySelector('.ch b') || {}).textContent === fn(t)));
+          if (cards.length && !cards.every(c => [...c.querySelectorAll('.left span')].some(s => s.textContent.startsWith('振替')))) ng.push('確定の条件の残り試合に「振替」が出ない');
+          // 次の試合の一覧に、日付の決まっていない仮の試合が出ない
+          setTab('game'); if ([...document.querySelectorAll('#today .tg')].some(c => c.textContent.includes('undefined'))) ng.push('今日の試合に仮の試合が出ている');
+          g.st = 'sched'; renderAll();
+          return ng;
+        }""")
+        for m in r:
+            bad(f"{label} {m}")
+        for e in errs:
+            bad(f"{label}: 画面のエラー {e}")
+        await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -1244,6 +1285,7 @@ async def main():
         await weather_stop_check(browser)
         await call_name_check(browser)
         await pitch_tile_check(browser)
+        await makeup_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
