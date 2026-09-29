@@ -877,6 +877,7 @@ async def offseason_check(browser):
                     const ro = (DATA.rosters[t] || []).slice().sort((a, b) => b.n.length - a.n.length);
                     if (ro[0]) items.push({ t, n: ro[0].n, no: ro[0].no, dev: false, kind: 'offer', date: '2026-09-29', url: 'https://example.com/a', title: '' });
                     if (ro[1] && i % 2 === 0) items.push({ t, n: ro[1].n, no: ro[1].no, dev: false, kind: 'retire', date: '2026-09-23', url: 'https://example.com/b', title: '' });
+                    if (i === 1) items.push({ t, n: 'テスト 監督太郎', no: '99', dev: false, kind: 'mgr', role: '監督', date: '2026-09-29', url: '', title: '' });
                   });
                   DATA.offseason = { season: 2026, checked_at: '2026-09-29T15:00:00+09:00', items, teams: {}, seen: {} };
                   jst = () => ({ y: 2026, m: 10, d: 1, iso: '2026-10-01' });
@@ -889,8 +890,13 @@ async def offseason_check(browser):
                   if (tbb.some(b => b.right > innerWidth)) ng.push('タブバーが画面からはみ出している');
                   const rows = blk.querySelectorAll('.ofr');
                   if (rows.length !== items.length) ng.push(`一覧の人数が違う（${rows.length}／${items.length}）`);
+                  // 監督の退任：球団のいちばん上に出て、名前は押せない（成績がないため）
+                  const mrow = [...rows].find(r => r.textContent.includes('テスト 監督太郎'));
+                  if (!mrow) ng.push('監督の退任が出ない');
+                  else { if (mrow.querySelector('[data-pl]')) ng.push('監督の名前が押せてしまう'); if (mrow.previousElementSibling && mrow.previousElementSibling.classList.contains('ofr')) ng.push('監督の退任が球団のいちばん上にない'); }
                   // パワプロ風は、名前が守備位置の色のタイルになっているか
                   if (isPawa() && [...rows].some(r => !r.querySelector('.onm .ptile'))) ng.push('パワプロ風なのに、名前がタイルになっていない');
+                  if (items.some(x => x.kind === 'mgr' && offOf(x.t, x.n))) ng.push('監督に選手の札が付く');
                   const W = blk.getBoundingClientRect().right + 1;
                   blk.querySelectorAll('.ofr, .ofr *').forEach(e => { const b = e.getBoundingClientRect(); if (b.width && b.right > W) ng.push(`一覧が横にはみ出し：${e.className}`); });
                   blk.querySelectorAll('.oln, .onm').forEach(e => { const b = e.getBoundingClientRect(); if (e.matches('.oln') && (b.height < 43.5 || b.width < 43.5)) ng.push(`「発表」が小さい ${Math.round(b.width)}×${Math.round(b.height)}`); });
@@ -950,6 +956,19 @@ async def offseason_check(browser):
     old, why = ud.off_article("E", "u", "来季の選手契約について", "<h1>来季の選手契約について</h1><p>2025/10/05</p><p>酒居 知史投手と来季の契約を結ばない</p>", roster, 2026)
     if old:
         bad("[戦力外・引退の読み取り] 去年の発表を今年のものとして拾っている")
+    # 監督：NPBの選手一覧の「監督」の欄から名前を取り、辞任の発表で退任として拾う（二軍監督の話・選手の発表の中の監督のコメントは拾わない）
+    mgr = ud.parse_manager('<table><tr><th>No.</th><th>監督</th></tr><tr><td>99</td><td>井上 一樹</td></tr><tr><th>No.</th><th>投手</th></tr><tr><td>11</td><td>中西 聖輝</td></tr></table>')
+    if not mgr or mgr.get("n") != "井上 一樹":
+        bad(f"[戦力外・引退の読み取り] NPBの選手一覧から監督の名前を取れない：{mgr}")
+    ttl = [t for _, t in ud.off_links("https://www.example.jp/news/", '<a href="/1">井上一樹監督 辞任のお知らせ</a><a href="/2">二軍監督 退任について</a>')]
+    if ttl != ["井上一樹監督 辞任のお知らせ"]:
+        bad(f"[戦力外・引退の読み取り] 監督の辞任の発表を正しく選べない：{ttl}")
+    got, _ = ud.off_article("D", "u", "井上一樹監督 辞任のお知らせ", "<h1>井上一樹監督 辞任のお知らせ</h1><p>2026.09.29</p><p>井上一樹監督から今季限りで辞任したいとの申し入れがあり、受理しました。</p>", roster, 2026, mgr)
+    if [(x["n"], x["kind"]) for x in got] != [("井上 一樹", "mgr")]:
+        bad(f"[戦力外・引退の読み取り] 監督の辞任を拾えない：{[(x['n'], x['kind']) for x in got]}")
+    got, _ = ud.off_article("E", "u", "来季の選手契約について", "<h1>来季の選手契約について</h1><p>2026.09.29</p><p>今野 龍太投手と来季の契約を結ばない。井上一樹監督のコメント</p>", roster, 2026, mgr)
+    if any(x["kind"] == "mgr" for x in got):
+        bad("[戦力外・引退の読み取り] 選手の発表の中の監督のコメントを、監督の退任として拾っている")
 
 
 async def main():
