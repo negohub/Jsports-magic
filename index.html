@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260929144005">
+<meta name="build" content="20260929151144">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -2222,7 +2222,7 @@ html.theme-pawa .swhint{color:#1D3E7C}
     <div class="songhead" id="songHead"></div>
     <input class="songq" id="songQ" type="search" placeholder="名前・背番号でさがす" autocomplete="off">
     <div id="songList"></div>
-    <p class="foot">個別の応援歌がある選手だけを表示しています（それ以外の選手は共通の応援歌）。「聴く」でYouTube検索、「公式」で公式の応援歌ページが開きます（阪神は選手・曲ごとのページ、中日は公式PDF、西武は応援歌まとめサイトの選手ごとのページ、ほかの球団は公式ページ。球団によってはその選手・曲の位置に移動します）。下にはチャンステーマ・チーム応援歌も並べています。応援歌の歌詞・音源は各応援団などの著作物のため、このサイトには載せていません。選手一覧はNPB公式から3月〜7月の間、毎日自動で更新します。</p>
+    <p class="foot">個別の応援歌がある選手だけを表示しています（それ以外の選手は共通の応援歌）。「聴く」でYouTube検索、「応援歌」で応援歌のページが開きます（阪神は選手・曲ごとのページ、中日は公式PDF、西武は応援歌まとめサイトの選手ごとのページ、ほかの球団は公式ページ。球団によってはその選手・曲の位置に移動します）。下にはチャンステーマ・チーム応援歌も並べています。応援歌の歌詞・音源は各応援団などの著作物のため、このサイトには載せていません。選手一覧はNPB公式から3月〜7月の間、毎日自動で更新します。</p>
   </section>
   <section class="view" id="v-off" aria-label="オフの動き" hidden>
     <h2 id="offHead">今オフの動き<small id="offAsof"></small></h2>
@@ -4326,7 +4326,7 @@ const jump = (t, url, text) => {
 // su：データ更新で見つけた、その選手の応援歌ページ（公式に応援歌ページがない西武など）。あればそれを優先
 const okUrl = u => typeof u === "string" && /^https:\/\/[^"'<>\s]+$/.test(u);
 const songLink = (t, x) => okUrl(x.su) ? x.su : SONG_ONE[t] ? SONG_ONE[t](x) : SONG_PAGE[t] ? jump(t, SONG_PAGE[t][0], x.n) : null;
-const songLabel = t => (SONG_UNOFFICIAL.has(t) ? "応援歌" : "公式");
+const songLabel = () => "応援歌";   // 応援歌のページを開くボタン：どの球団も「応援歌」にそろえる
 S.songTeam = store("songTeam") || "T"; S.songQ = "";
 // 起動したときのリーグの外の球団が選ばれていたら、そのリーグの先頭の球団にする
 if (!CL.includes(S.songTeam)) S.songTeam = CONFIG.calOrder[0];
@@ -4571,7 +4571,7 @@ function renderSong() {
     const base = CHANCE_PAGE[t] || (SONG_PAGE[t] && SONG_PAGE[t][0]);
     html += `<div class="sgrp"><div class="sgt">チャンステーマ・チーム応援歌<small>${ch.length}曲</small></div>${CHANCE_NOTE[t] ? `<p class="snote">${CHANCE_NOTE[t]}</p>` : ""}${ch.map(([n, url, q2]) => `<div class="srow ch" style="${tv(t)}">
       <span class="sno">♪</span><span class="snm">${esc(n)}</span>
-      <span class="sbtn">${url || base ? `<a class="sof" href="${(url || base) + (q2 ? `#:~:text=${frag(q2)}` : "")}" target="_blank" rel="noopener">公式</a>` : ""}<a class="sgo" href="https://www.youtube.com/results?search_query=${encodeURIComponent(`${TEAM[t].n} ${n} 応援歌`)}" target="_blank" rel="noopener">聴く</a></span></div>`).join("")}</div>`;
+      <span class="sbtn">${url || base ? `<a class="sof" href="${(url || base) + (q2 ? `#:~:text=${frag(q2)}` : "")}" target="_blank" rel="noopener">応援歌</a>` : ""}<a class="sgo" href="https://www.youtube.com/results?search_query=${encodeURIComponent(`${TEAM[t].n} ${n} 応援歌`)}" target="_blank" rel="noopener">聴く</a></span></div>`).join("")}</div>`;
   }
   if (!roster.length) { $("songList").innerHTML = `<div class="rempty">選手一覧は次の自動更新のあとに表示されます。</div>` + html; return; }
   $("songList").innerHTML = (judged ? `<p class="scount num">個別の応援歌がある選手 ${all.length}人</p>` : `<p class="scount">個別の応援歌の判定は次の自動更新で入ります（今は全選手を表示）</p>`) + (html || `<div class="rempty">見つかりませんでした。</div>`);
