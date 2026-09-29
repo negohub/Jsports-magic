@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260929170108">
+<meta name="build" content="20260929171541">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1317,7 +1317,7 @@ th.srt.on{color:#fff}
 .ytab tr.ex td.tnm small{display:inline-block;font-size:9.5px;font-weight:600;color:#BDBDBD;border:1px solid #444;border-radius:4px;padding:0 4px;margin-left:6px;opacity:1}
 .ytab tr.ex{background:none !important}
 .ytab tr.ex td.tnm{box-shadow:inset 3px 0 0 color-mix(in srgb,var(--tc) 45%,#000)}
-/* 直近の勝敗：○●を少し大きく、はっきりした色に */
+/* 直近5試合：○●を少し大きく、はっきりした色に */
 .ftab td.fr b{font-size:17px !important;line-height:1.1;font-weight:700}
 .ftab td.fr.w b{color:#fff !important}
 .ftab td.fr.l b{color:#A8A8A8 !important}
@@ -1353,7 +1353,7 @@ th.srt.on{color:#fff}
 /* 見出し：タイトルは1行、補足は入りきらなければ下の行へ */
 h2{flex-wrap:wrap;white-space:nowrap;row-gap:4px}
 h2 small{white-space:normal;margin-left:10px;line-height:1.5}
-/* 順位の推移：凡例はグラフの下に */
+/* 順位推移：凡例はグラフの下に */
 .tcap{font-size:11.5px;color:var(--muted);margin:6px 2px 0;line-height:1.6}
 .tcap i{display:inline-block;width:16px;height:8px;border-radius:2px;background:rgba(255,43,43,.3);margin-right:4px;vertical-align:0}
 .tcap u{display:inline-block;width:16px;border-top:2px dashed #C0392B;margin:0 4px 0 10px;vertical-align:3px;text-decoration:none}
@@ -2175,11 +2175,11 @@ html.theme-pawa .swhint{color:#1D3E7C}
       <div id="mh2h"></div>
     </section>
     <section class="blk" id="trendBlk">
-      <h2>順位の推移<small id="trendNote"></small></h2>
+      <h2>順位推移<small id="trendNote"></small></h2>
       <div class="trend" id="trend"></div>
     </section>
     <section class="blk" id="formBlk">
-      <h2>直近の勝敗</h2>
+      <h2>直近5試合</h2>
       <div class="form" id="form"></div>
     </section>
     <details class="rules conds" id="conds"><summary>確定の条件と残り試合</summary><div id="condBody"></div></details>
@@ -2193,7 +2193,7 @@ html.theme-pawa .swhint{color:#1D3E7C}
       <p>M は、どの試合で勝っても最下位回避が確定する残りの勝ち数。自力で決められない（残り全勝でも最下位の可能性が残る）球団は「自力脱出消滅」と表示します。★は回避確定、赤い「<span class="cl-only">支払い</span><span class="pl-only">最下位</span>」は最下位確定。</p>
       <p>勝差は1位とのゲーム差。</p>
     </details>
-    <details class="howto"><summary>見方</summary><ul><li class="cl-only">順位表：勝差は1位とのゲーム差、残試合はこの月度の残り試合。広島は参考として薄く表示（対象外なので順位・マジック・支払いは広島を除く5球団で計算）。球団名をタップすると公式サイト。</li><li class="pl-only">順位表：勝差は1位とのゲーム差、残試合はこの月度の残り試合。球団名をタップすると公式サイト。</li><li>マジック：最下位を回避するまでの勝ち数。★は回避確定、赤い「<span class="cl-only">支払い</span><span class="pl-only">最下位</span>」は最下位確定、「自力脱出消滅」は、残り試合に全部勝っても、ほかの球団の結果しだいで最下位の可能性が残る状態（自力での最下位脱出ができない）。</li><li>月度の切り替え：上の月度ボタンを押すか、帯・あなたの状況・順位表のあたりを左右にスワイプ（左へで次の月度、右へで前の月度）。それ以外の場所の左右スワイプはタブの切り替えです。</li><li>確定の条件と残り試合：各球団の説明に名前が出てくる相手（いちばん抜きやすい相手）との直接対決は、残り試合の中で<span class="th-s">白枠</span><span class="th-p">青い枠</span>で表示。勝てば自分の勝ちと相手の負けで、1試合で2つ進みます。</li><li>対戦成績：左の球団から見た、この月度だけの勝数-負数（引分数）。<span class="cl-only">広島は参考として薄く表示。</span></li><li class="cl-only">順位の推移：広島（参考）は、5球団の勝率のあいだの位置に点線で表示（5球団の順位には関係しません）。</li><li>直近の勝敗：○は勝ち、●は負け、△は引き分け。下の文字は対戦相手。右が最新。並びは前年の順位順。</li><li>日程の天気は、試合開始時刻の球場の予報（約2週間先まで）。％は試合中の降水確率の最大値です。天気予報：Open-Meteo。</li><li class="cl-only">勝率で並んだときは、セ・リーグの規定（勝利数→当該球団間の対戦勝率→交流戦を除く勝率→前年度順位）で順位を決めます。</li><li class="pl-only">勝率で並んだときは、パ・リーグの規定（当該球団間の対戦勝率→交流戦を除く勝率→前年度順位）で順位を決めます。</li><li>振替待ちは、中止になって振替日がまだ決まっていない試合です。シーズン最後の月度（9・10月度）は、振替の試合も必ずこの月度に行われるので、残試合とマジックに入れて計算します（確定の条件の残り試合には「振替」と出ます）。それより前の月度は、振替日が決まって日程に入るとマジックが変わります。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li class="cl-only">順位表：勝差は1位とのゲーム差、残試合はこの月度の残り試合。広島は参考として薄く表示（対象外なので順位・マジック・支払いは広島を除く5球団で計算）。球団名をタップすると公式サイト。</li><li class="pl-only">順位表：勝差は1位とのゲーム差、残試合はこの月度の残り試合。球団名をタップすると公式サイト。</li><li>マジック：最下位を回避するまでの勝ち数。★は回避確定、赤い「<span class="cl-only">支払い</span><span class="pl-only">最下位</span>」は最下位確定、「自力脱出消滅」は、残り試合に全部勝っても、ほかの球団の結果しだいで最下位の可能性が残る状態（自力での最下位脱出ができない）。</li><li>月度の切り替え：上の月度ボタンを押すか、帯・あなたの状況・順位表のあたりを左右にスワイプ（左へで次の月度、右へで前の月度）。それ以外の場所の左右スワイプはタブの切り替えです。</li><li>確定の条件と残り試合：各球団の説明に名前が出てくる相手（いちばん抜きやすい相手）との直接対決は、残り試合の中で<span class="th-s">白枠</span><span class="th-p">青い枠</span>で表示。勝てば自分の勝ちと相手の負けで、1試合で2つ進みます。</li><li>対戦成績：左の球団から見た、この月度だけの勝数-負数（引分数）。<span class="cl-only">広島は参考として薄く表示。</span></li><li class="cl-only">順位推移：広島（参考）は、5球団の勝率のあいだの位置に点線で表示（5球団の順位には関係しません）。</li><li>直近5試合：○は勝ち、●は負け、△は引き分け。下の文字は対戦相手。右が最新。並びは前年の順位順。</li><li>日程の天気は、試合開始時刻の球場の予報（約2週間先まで）。％は試合中の降水確率の最大値です。天気予報：Open-Meteo。</li><li class="cl-only">勝率で並んだときは、セ・リーグの規定（勝利数→当該球団間の対戦勝率→交流戦を除く勝率→前年度順位）で順位を決めます。</li><li class="pl-only">勝率で並んだときは、パ・リーグの規定（当該球団間の対戦勝率→交流戦を除く勝率→前年度順位）で順位を決めます。</li><li>振替待ちは、中止になって振替日がまだ決まっていない試合です。シーズン最後の月度（9・10月度）は、振替の試合も必ずこの月度に行われるので、残試合とマジックに入れて計算します（確定の条件の残り試合には「振替」と出ます）。それより前の月度は、振替日が決まって日程に入るとマジックが変わります。</li></ul></details>
   </section>
 
   <section class="view" id="v-cal" aria-label="日程" hidden>
@@ -2216,15 +2216,15 @@ html.theme-pawa .swhint{color:#1D3E7C}
     <div id="bracketBox"></div>
     <h2>対戦成績<small>勝-敗（引分）</small></h2>
     <div id="h2h"></div>
-    <h2 class="cl-only">月度ごとの支払い</h2>
+    <h2 class="cl-only">月度別 支払い</h2>
     <div class="hist cl-only" id="hist"></div>
-    <h2 class="cl-only">担当者ごとの年間成績</h2>
+    <h2 class="cl-only">担当者別 年間成績</h2>
     <div class="tot cl-only" id="tot"></div>
     <details class="howto"><summary>見方</summary><ul><li>順位表：勝差は1位とのゲーム差。1位の勝差の欄は優勝マジック。</li><li>クライマックスシリーズ・日本シリーズ：勝ち上がり表で、各ステージの勝敗（ファイナルステージの1位は1勝のアドバンテージ込み）と1試合ずつの結果（上の球団から見て○勝ち・●負け・△引き分け）を出します。シーズン終了までは今の順位で表示します。</li><li>順位表の残試合は、日程に入っている試合と、振替待ち（中止になって振替日がまだ決まっていない試合）を合わせた数です。</li><li>優勝ライン：首位と、まだ優勝の可能性がある球団の、残り試合の勝敗ごとの最終勝率。赤字は首位がこの成績以上なら優勝（優勝マジックと同じ）、黄色の背景は今の勝率のペースを保った場合。優勝が決まると表示されなくなります。</li><li>対戦成績：左の球団から見た勝数-負数（引分数）。<span class="cl-only">例：神の行・巨の列＝阪神の巨人戦。</span><span class="pl-only">例：ソの行・日の列＝ソフトバンクの日本ハム戦。</span></li><li class="cl-only">月度ごとの支払い：順位は左から1位で、一番右が最下位（支払い）。広島は対象外。</li><li class="cl-only">担当者ごとの年間成績：数字は各月度の順位（<span class="th-s">白</span><span class="th-p">金色</span>＝1位、赤＝最下位、点線の枠＝集計中）。支払いの少ない順、同じなら平均順位の順。MVPはいちばん上の人、「最多」は支払いの回数がいちばん多い人。</li></ul></details>
   </section>
   <section class="view" id="v-game" aria-label="今日の試合" hidden>
     <section class="blk" id="todayBlk">
-      <h2 id="todayTtl">今日の試合</h2>
+      <h2 id="todayTtl">試合速報</h2>
       <div id="today"></div>
     </section>
     <div class="rempty" id="noGame" hidden>対象の球団の試合はしばらくありません。</div>
@@ -2239,10 +2239,10 @@ html.theme-pawa .swhint{color:#1D3E7C}
     <p class="foot">個別の応援歌がある選手だけを表示しています（それ以外の選手は共通の応援歌）。「聴く」でYouTube検索、「応援歌」で応援歌のページが開きます（阪神は選手・曲ごとのページ、中日は公式PDF、西武は応援歌まとめサイトの選手ごとのページ、ほかの球団は公式ページ。球団によってはその選手・曲の位置に移動します）。下にはチャンステーマ・チーム応援歌も並べています。応援歌の歌詞・音源は各応援団などの著作物のため、このサイトには載せていません。選手一覧はNPB公式から3月〜7月の間、毎日自動で更新します。</p>
   </section>
   <section class="view" id="v-off" aria-label="オフの動き" hidden>
-    <h2 id="offHead">今オフの動き<small id="offAsof"></small></h2>
+    <h2 id="offHead">オフシーズン情報<small id="offAsof"></small></h2>
     <div class="chips2 offcats" id="offCats"></div>
     <div id="offList"></div>
-    <details class="howto"><summary>見方</summary><ul><li>各球団の公式サイトの発表（来季の選手契約について・現役引退など）を自動で集めて、表示しているリーグの球団ごとに並べます。選手名をタップすると今季の成績が出ます。成績タブのチーム内の成績・応援歌・選手の成績画面の名前の横にも「戦力外」「引退」の札が付きます。集め始めたばかりの球団は、発表から反映まで少し時間がかかることがあります。</li><li>監督の辞任・退任、コーチ（二軍監督を含む）の退団・就任・配置転換も、各球団の公式サイトの発表から拾って「首脳陣」として出します（監督は球団ごとのいちばん上。コーチの名前と役職はNPB公式の監督・コーチ一覧と照らします）。監督の名前をタップすると、監督としての通算成績（NPB公式の年度別成績から、今季の分も含む）が出ます。パワプロ風では、監督の名前は現役時代のポジションの色のタイルです。</li><li>戦力外・引退・首脳陣（監督・コーチの退団・就任・配置転換）のほか、トレード・FA（宣言と移籍）・新外国人・そのほかの加入（各球団の公式発表から）と、ドラフト会議の指名選手（NPB公式から）も出します。球団ごとに「退団」「FA宣言（残るか移籍か未定）」「入団」に分けて並べます。移籍は、退団する球団と入団する球団の両方に出ます。</li><li>このタブは、戦力外通告が始まる9月後半から12月までだけ表示します（発表があればそれより前でも）。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li>各球団の公式サイトの発表（来季の選手契約について・現役引退など）を自動で集めて、表示しているリーグの球団ごとに並べます。選手名をタップすると今季の成績が出ます。成績タブのチーム別成績・応援歌・選手の成績画面の名前の横にも「戦力外」「引退」の札が付きます。集め始めたばかりの球団は、発表から反映まで少し時間がかかることがあります。</li><li>監督の辞任・退任、コーチ（二軍監督を含む）の退団・就任・配置転換も、各球団の公式サイトの発表から拾って「首脳陣」として出します（監督は球団ごとのいちばん上。コーチの名前と役職はNPB公式の監督・コーチ一覧と照らします）。監督の名前をタップすると、監督としての通算成績（NPB公式の年度別成績から、今季の分も含む）が出ます。パワプロ風では、監督の名前は現役時代のポジションの色のタイルです。</li><li>戦力外・引退・首脳陣（監督・コーチの退団・就任・配置転換）のほか、トレード・FA（宣言と移籍）・新外国人・そのほかの加入（各球団の公式発表から）と、ドラフト会議の指名選手（NPB公式から）も出します。球団ごとに「退団」「FA宣言（残るか移籍か未定）」「入団」に分けて並べます。移籍は、退団する球団と入団する球団の両方に出ます。</li><li>このタブは、戦力外通告が始まる9月後半から12月までだけ表示します（発表があればそれより前でも）。</li></ul></details>
   </section>
 
   <section class="view" id="v-stats" aria-label="成績" hidden>
@@ -2253,12 +2253,12 @@ html.theme-pawa .swhint{color:#1D3E7C}
     <div class="rkbar"><div class="seg" id="rkSeg"><button type="button" data-k="bat" aria-pressed="true">打者</button><button type="button" data-k="pit" aria-pressed="false">投手</button></div>
       <label class="catsel"><select id="catSel" aria-label="項目"></select></label></div>
     <div id="rankList"></div>
-    <h2>チーム内の成績<small id="ptAsof"></small></h2>
+    <h2>チーム別成績<small id="ptAsof"></small></h2>
     <div class="teams" id="ptTeams"></div>
     <div class="rkbar"><div class="seg" id="ptSeg"><button type="button" data-k="bat" aria-pressed="true">打者</button><button type="button" data-k="pit" aria-pressed="false">投手</button></div>
       <label class="catsel"><select id="ptCat" aria-label="並べ替える項目"></select></label></div>
     <div id="ptList"></div>
-    <details class="howto"><summary>見方</summary><ul><li>並べ替え：チーム成績・個人ランキング・チーム内の成績は、見出し（小さな上下の三角が付いた項目）をタップするとその項目で並べ替え、もう一度タップすると昇順／降順が入れ替わります。</li><li>チーム成績：<span class="th-s">黄色</span><span class="th-p">オレンジ</span>の太字が各項目のリーグトップ。得点・失点・得失点差は試合結果からすぐに計算しています。</li><li>チーム内の成績：球団ボタンでチームを選ぶと、そのチームで出場した全選手の今季成績を並べます（NPB公式）。最初は出場の多い順。右上のメニューで項目（打者22・投手26）を選ぶと、その項目で並べ替えます（表にない項目は、いちばん右の列に入れて出します。見出しでは K/9＝奪三振率、H＝ホールド、S＝セーブ などと短く書きます）。打率・OPSで並べるときは30打席未満、防御率で並べるときは10投球回未満の選手を下にまとめます。選手名をタップすると詳しい成績が出ます。</li><li>個人ランキング：スポーツナビの個人成績と同じ全項目（打者24・投手27）。右上のメニューで項目を選べます（選んだ項目の上位を並べます）。打率・出塁率・長打率・OPS・得点圏打率は規定打席以上、防御率・勝率・奪三振率・被打率・K/BB・WHIPは規定投球回以上の選手が対象。各項目の10位まで（同じ順位の選手はすべて表示）。出典：スポーツナビ。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li>並べ替え：チーム成績・個人ランキング・チーム別成績は、見出し（小さな上下の三角が付いた項目）をタップするとその項目で並べ替え、もう一度タップすると昇順／降順が入れ替わります。</li><li>チーム成績：<span class="th-s">黄色</span><span class="th-p">オレンジ</span>の太字が各項目のリーグトップ。得点・失点・得失点差は試合結果からすぐに計算しています。</li><li>チーム別成績：球団ボタンでチームを選ぶと、そのチームで出場した全選手の今季成績を並べます（打者の表は打者だけ、投手の表は投手だけ。出典：スポーツナビ）。最初は出場の多い順。右上のメニューで個人ランキングと同じ項目（打者24・投手27）を選ぶと、その項目で並べ替えます（表にない項目は、いちばん右の列に入れて出します。見出しでは K/9＝奪三振率、H＝ホールド、S＝セーブ などと短く書きます）。打率・OPSで並べるときは30打席未満、防御率で並べるときは10投球回未満の選手を下にまとめます。選手名をタップすると詳しい成績が出ます。</li><li>個人ランキング：スポーツナビの個人成績と同じ全項目（打者24・投手27）。右上のメニューで項目を選べます（選んだ項目の上位を並べます）。打率・出塁率・長打率・OPS・得点圏打率は規定打席以上、防御率・勝率・奪三振率・被打率・K/BB・WHIPは規定投球回以上の選手が対象。各項目の10位まで（同じ順位の選手はすべて表示）。出典：スポーツナビ。</li></ul></details>
   </section>
   <p class="note" id="note"></p>
 </main>
@@ -3723,7 +3723,7 @@ function renderToday(a) {
   $("todayBlk").hidden = !day || a.finished;
   if (!day || a.finished) return;
   const [yy, mm, dd] = day.split("-").map(Number);
-  $("todayTtl").innerHTML = day === today ? "今日の試合" : `次の試合<small>${mm}/${dd}（${WD[new Date(yy, mm - 1, dd).getDay()]}）</small>`;
+  $("todayTtl").innerHTML = day === today ? "試合速報" : `次戦<small>${mm}/${dd}（${WD[new Date(yy, mm - 1, dd).getDay()]}）</small>`;
   $("todayTtl").classList.toggle("same", day === today);
   const lowB = a.rows[a.rows.length - 1].t;
   const effects = (g, homeWin) => {
@@ -3917,7 +3917,7 @@ function renderTrend(a) {
   const X = i => pl + (n === 1 ? pw / 2 : (i * pw) / (n - 1));
   const Y = r => pt + (r * ph) / (targets.length - 1);
   const lowY = Y(targets.length - 1);
-  let svg = `<svg viewBox="0 0 ${VW} ${VH}" role="img" aria-label="順位の推移">`;
+  let svg = `<svg viewBox="0 0 ${VW} ${VH}" role="img" aria-label="順位推移">`;
   svg += `<rect x="${pl - 6}" y="${lowY - ph / 8}" width="${pw + 12}" height="${ph / 4}" fill="rgba(255,43,43,.14)"/>`;
   targets.forEach((_, r) => {
     svg += `<line x1="${pl}" x2="${pl + pw}" y1="${Y(r)}" y2="${Y(r)}" stroke="#222" stroke-width="1"/>`;
@@ -4770,7 +4770,7 @@ function renderOff() {
   }
   if (!show) { if (S.tab === "off") setTab("magic"); return; }
   const cut = items.filter(x => x.kind === "cut" || x.kind === "offer").length, ret = items.filter(x => x.kind === "retire").length, mg = items.filter(x => x.kind === "mgr").length;
-  $("offHead").firstChild.textContent = isPL() ? "パ・リーグのオフの動き" : "セ・リーグのオフの動き";
+  $("offHead").firstChild.textContent = isPL() ? "パ・リーグ オフシーズン情報" : "セ・リーグ オフシーズン情報";
   $("offCats").hidden = cats.length < 3;   // 種類が1つだけなら出さない
   $("offCats").innerHTML = cats.map(([k, l]) => `<button type="button" data-oc="${k}" aria-pressed="${k === S.offCat}">${l}</button>`).join("");
   $("offCats").querySelectorAll("button").forEach(b => (b.onclick = () => { S.offCat = b.dataset.oc; renderOff(); }));
@@ -4810,7 +4810,7 @@ function renderOff() {
     const fas = all.filter(x => x.kind === "fa_decl").sort(byDate);
     const ins = all.filter(x => OFF_IN.has(x.kind)).sort((a, b) => (b.kind === "coach_in") - (a.kind === "coach_in") || (a.kind === "draft") - (b.kind === "draft") || byDate(a, b) || (parseInt((a.round || "").replace("育成", "9")) || 99) - (parseInt((b.round || "").replace("育成", "9")) || 99));
     const sec = (label, list) => list.length ? `${ins.length || fas.length || moves.length ? `<div class="ofsec">${label}</div>` : ""}${list.map(row).join("")}` : "";
-    return `<div class="ofteam" style="${tv(t)}"><div class="ofh"><span class="badge">${sn(t)}</span>${fn(t)}</div>${sec("退団", outs)}${sec("FA宣言（残るか移籍か未定）", fas)}${sec("入団", ins)}${sec("首脳陣の配置転換", moves)}</div>`;
+    return `<div class="ofteam" style="${tv(t)}"><div class="ofh"><span class="badge">${sn(t)}</span>${fn(t)}</div>${sec("退団", outs)}${sec("FA宣言（残るか移籍か未定）", fas)}${sec("入団", ins)}${sec("首脳陣 配置転換", moves)}</div>`;
   }).join("") : `<p class="ofnone">まだ発表はありません。</p>`) + (has.length && none.length && S.offCat === "all" ? `<p class="ofnone">まだ発表なし：${none.map(fn).join("・")}</p>` : "");
 }
 // ================= チーム内の成績（球団ごとの全選手。NPB公式の個人成績を中継プログラム経由で） =================
@@ -4848,22 +4848,22 @@ const PT_COLS = {
 };
 // チーム内の成績で並べ替えられる項目（NPB公式の個人成績の表の項目＋計算で出すもの）。[名前, 値の取り方, 種類（rate/era＝率・少ないほど良い）]
 const ipOf = r => ipNum(r["投球回"]);
-const PT_ITEMS = {
-  bat: [["試合", r => r["試合"]], ["打率", r => r["打率"], "rate"], ["本塁打", r => r["本塁打"]], ["打点", r => r["打点"]],
-    ["OPS", r => (r["出塁率"] != null && r["長打率"] != null ? f3(Number(r["出塁率"]) + Number(r["長打率"])) : null), "rate"],
-    ["打席", r => r["打席"]], ["打数", r => r["打数"]], ["安打", r => r["安打"]], ["二塁打", r => r["二塁打"]], ["三塁打", r => r["三塁打"]],
-    ["塁打", r => r["塁打"]], ["得点", r => r["得点"]], ["盗塁", r => r["盗塁"]], ["盗塁死", r => r["盗塁刺"]], ["犠打", r => r["犠打"]],
-    ["犠飛", r => r["犠飛"]], ["四球", r => r["四球"]], ["死球", r => r["死球"]], ["三振", r => r["三振"]], ["併殺打", r => r["併殺打"]],
-    ["出塁率", r => r["出塁率"], "rate"], ["長打率", r => r["長打率"], "rate"]],
-  pit: [["登板", r => r["登板"]], ["投球回", r => r["投球回"], "ip"], ["防御率", r => r["防御率"], "era"], ["勝敗", r => `${r["勝利"] ?? "-"}-${r["敗北"] ?? "-"}`, "wl"], ["奪三振", r => r["三振"]],
-    ["勝利", r => r["勝利"]], ["敗北", r => r["敗北"]], ["セーブ", r => r["セーブ"]], ["ホールド", r => r["ホールド"]], ["HP", r => r["HP"]],
-    ["勝率", r => r["勝率"], "rate"], ["完投", r => r["完投"]], ["完封", r => r["完封勝"]], ["無四球", r => r["無四球"]], ["打者", r => r["打者"]],
-    ["被安打", r => r["安打"]], ["被本塁打", r => r["本塁打"]], ["与四球", r => r["四球"]], ["与死球", r => r["死球"]], ["暴投", r => r["暴投"]],
-    ["ボーク", r => r["ボーク"]], ["失点", r => r["失点"]], ["自責点", r => r["自責点"]],
-    ["奪三振率", r => (ipOf(r) > 0 && r["三振"] != null ? (Number(r["三振"]) * 9 / ipOf(r)).toFixed(2) : null), "rate"],
-    ["K/BB", r => (Number(r["四球"]) > 0 && r["三振"] != null ? (Number(r["三振"]) / Number(r["四球"])).toFixed(2) : null), "rate"],
-    ["WHIP", r => (ipOf(r) > 0 && r["安打"] != null && r["四球"] != null ? ((Number(r["安打"]) + Number(r["四球"])) / ipOf(r)).toFixed(2) : null), "era"]],
+// NPBの表（スポナビのデータがまだないとき）での項目名の違い
+const PT_NPB = { "盗塁死": "盗塁刺", "敗戦": "敗北", "被安打": "安打", "被本塁打": "本塁打", "奪三振": "三振", "与四球": "四球", "与死球": "死球", "完封": "完封勝" };
+const PT_CALC = {
+  "OPS": r => (r["出塁率"] != null && r["長打率"] != null ? f3(Number(r["出塁率"]) + Number(r["長打率"])) : null),
+  "奪三振率": r => (ipOf(r) > 0 && r["三振"] != null ? (Number(r["三振"]) * 9 / ipOf(r)).toFixed(2) : null),
+  "K/BB": r => (Number(r["四球"]) > 0 && r["三振"] != null ? (Number(r["三振"]) / Number(r["四球"])).toFixed(2) : null),
+  "WHIP": r => (ipOf(r) > 0 && r["安打"] != null && r["四球"] != null ? ((Number(r["安打"]) + Number(r["四球"])) / ipOf(r)).toFixed(2) : null),
 };
+const ptGet = label => r => { const v = r[label] ?? r[PT_NPB[label]]; return v != null && v !== "" ? v : PT_CALC[label] ? PT_CALC[label](r) : null; };
+const PT_LOW = new Set(["防御率", "被打率", "WHIP"]);   // 少ないほど良い（小さい順に並べる）
+// 並べ替えられる項目：個人ランキングとまったく同じ（打者24・投手27）
+const PT_ITEMS = Object.fromEntries(["bat", "pit"].map(k => [k, CATS[k].map(([key, label]) =>
+  [label, ptGet(label), PT_LOW.has(label) ? "era" : label === "投球回" ? "ip" : QUAL.has(key) ? "rate" : undefined])]));
+// 表のいつもの5列（投手の「勝敗」は勝利-敗戦）
+const PT_BASE = { bat: ["試合", "打率", "本塁打", "打点", "OPS"], pit: ["登板", "投球回", "防御率", "勝敗", "奪三振"] };
+const PT_WL = ["勝敗", r => `${r["勝利"] ?? "-"}-${r["敗戦"] ?? r["敗北"] ?? "-"}`, "wl"];
 // 表の見出しに入りきらない長い項目名の短い書き方（メニューには正式な名前）
 const PT_SHORT = { "奪三振率": "K/9", "ホールド": "H", "被本塁打": "被本", "被安打": "被安", "与四球": "与四", "与死球": "与死", "盗塁死": "盗死", "併殺打": "併殺", "自責点": "自責", "セーブ": "S", "無四球": "無四" };
 function ptTeam() { if (!CL.includes(S.ptTeam)) S.ptTeam = CL.includes(ME()) ? ME() : calOrder()[0]; return S.ptTeam; }
@@ -4873,6 +4873,8 @@ function renderTeamIn() {
   $("ptTeams").innerHTML = calOrder().map(k => `<button class="tbtn" type="button" data-t="${k}" style="${tv(k)}" aria-pressed="${k === t}"><span class="badge">${sn(k)}</span>${fn(k)}</button>`).join("");
   $("ptTeams").querySelectorAll(".tbtn").forEach(b => (b.onclick = () => { S.ptTeam = b.dataset.t; store("ptTeam", S.ptTeam); S.ptAll = false; renderTeamIn(); }));
   document.querySelectorAll("#ptSeg button").forEach(b => { b.setAttribute("aria-pressed", String(b.dataset.k === S.ptKind)); b.onclick = () => { if (S.ptKind === b.dataset.k) return; S.ptKind = b.dataset.k; S.ptAll = false; saveStatsUI(); renderTeamIn(); }; });
+  const ys = yahooTeamStats(t);
+  if (ys) { drawTeamIn(t, ys); return; }   // スポナビの球団ごとの成績（データ更新で3時間ごと）があればそれを使う
   const c = PST[t];
   if (c) drawTeamIn(t, c.d);
   else { $("ptAsof").textContent = ""; $("ptList").innerHTML = `<div class="rempty">${S.tab === "stats" ? "読み込み中…" : ""}</div>`; }
@@ -4885,25 +4887,35 @@ function renderTeamIn() {
     else if (!PST[t]) $("ptList").innerHTML = `<div class="rempty">成績を読み込めませんでした。少し時間をおいて、もう一度開いてください。</div>`;
   });
 }
+// スポナビの球団ごとの成績（DATA.tstats）を { bat: {名前: {項目: 値, 位置}}, pit: …, asof } の形に
+function yahooTeamStats(t) {
+  const ts = DATA && DATA.tstats, tm = ts && ts.teams && ts.teams[t];
+  if (!tm || !(tm.bat || tm.pit)) return null;
+  const conv = k => Object.fromEntries((tm[k] || []).map(row => [row[0], Object.fromEntries([["位置", row[1]], ...(ts.cols[k] || []).map((h, i) => [h, row[i + 2]])])]));
+  return { bat: conv("bat"), pit: conv("pit"), asof: ts.asof || "" };
+}
 function drawTeamIn(t, d) {
   const kind = S.ptKind, tbl = (d && d[kind]) || {}, items = PT_ITEMS[kind];
   // 並べ替えの状態：{ kind, item（項目の名前）, dir }。選んだ項目が表の5項目になければ、いちばん右の列をその項目に入れ替える（列の数はいつも5つ）
   const skItem = S.ptSort && S.ptSort.kind === kind && items.find(c => c[0] === S.ptSort.item) ? S.ptSort : null;
-  const cols = PT_COLS[kind].map(c => items.find(x => x[0] === c[0]) || c);
+  const cols = PT_BASE[kind].map(l => l === "勝敗" ? PT_WL : items.find(x => x[0] === l));
   if (skItem && !cols.some(c => c[0] === skItem.item)) cols[cols.length - 1] = items.find(c => c[0] === skItem.item);
   const sk = skItem ? { ...skItem, col: cols.findIndex(c => c[0] === skItem.item) } : null;
   // 項目のメニュー
-  $("ptCat").innerHTML = `<option value="">出場の多い順</option>` + items.filter(c => c[2] !== "wl").map(c => `<option value="${c[0]}"${sk && sk.item === c[0] ? " selected" : ""}>${c[0]}</option>`).join("");
+  $("ptCat").innerHTML = `<option value="">出場の多い順</option>` + items.map(c => `<option value="${c[0]}"${sk && sk.item === c[0] ? " selected" : ""}>${c[0]}</option>`).join("");
   $("ptCat").onchange = e => {
     const v = e.target.value, c = items.find(x => x[0] === v);
     S.ptSort = c ? { kind, item: v, dir: c[2] === "era" ? "asc" : "desc" } : null;
     saveStatsUI(); drawTeamIn(t, d);
   };
   $("ptAsof").textContent = d && d.asof ? `${d.asof} ${/\d:\d\d/.test(d.asof) ? "更新" : "時点"}` : "";
+  const src = DATA && DATA.tstats && DATA.tstats.teams && DATA.tstats.teams[t] ? "スポナビ" : "NPB公式";
   const vol = r => kind === "bat" ? Number(r["打席"]) || 0 : ipNum(r["投球回"]);
   const low = r => kind === "bat" ? vol(r) < 30 : vol(r) < 10;   // 率で並べるときに下へまとめる選手
   const sortVal = (c, r) => c[2] === "ip" ? ipNum(r["投球回"]) : c[2] === "wl" ? Number(r["勝利"]) : num(c[1](r));
-  let rows = Object.entries(tbl).map(([n, r]) => ({ n, r })).filter(x => vol(x.r) > 0 || Number(x.r["試合"] || x.r["登板"]) > 0);
+  // 打者の表は打者だけ・投手の表は投手だけ（スポナビの「位置」、なければ名簿の守備位置）
+  const isPit = (n, r) => r["位置"] ? r["位置"] === "投" : (((DATA.rosters || {})[t] || []).find(x => nk(x.n) === nk(n)) || {}).p === "投手";
+  let rows = Object.entries(tbl).map(([n, r]) => ({ n, r })).filter(x => (vol(x.r) > 0 || Number(x.r["試合"] || x.r["登板"]) > 0) && (kind === "pit" ? isPit(x.n, x.r) : !isPit(x.n, x.r)));
   if (!sk) rows.sort((a, b) => vol(b.r) - vol(a.r));
   else {
     const c = cols[sk.col], rate = c[2] === "rate" || c[2] === "era" || /率$/.test(c[0]);
