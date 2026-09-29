@@ -147,7 +147,7 @@ CHECK_JS = r"""
 }
 """
 
-TABS = ["magic", "game", "cal", "std", "stats", "song"]
+TABS = ["magic", "game", "cal", "std", "stats", "song", "off"]   # off：戦力外・引退（オフだけ出るタブ）
 
 
 async def open_page(browser, width, theme, me="S", touch=False):
@@ -501,7 +501,7 @@ async def wording_check(browser):
             if lg == "P":
                 await pg.evaluate("switchLeague('P')")
                 await pg.wait_for_timeout(200)
-            for tab in ["magic", "game", "cal", "std", "stats", "song"]:
+            for tab in ["magic", "game", "cal", "std", "stats", "song", "off"]:
                 txt = await pg.evaluate("""(tab) => { setTab(tab); const v = document.getElementById('v-' + tab); v.querySelectorAll('details').forEach(d => d.open = true); return v.innerText; }""", tab)
                 for line in txt.split("\n"):
                     if lg == "P" and OK_P in line:
@@ -576,7 +576,7 @@ async def tap_target_check(browser):
                 if lg == "P":
                     await pg.evaluate("switchLeague('P')")
                     await pg.wait_for_timeout(200)
-                for tab in ["magic", "game", "cal", "std", "stats", "song"]:
+                for tab in ["magic", "game", "cal", "std", "stats", "song", "off"]:
                     r = await pg.evaluate("""(tab) => {
                       setTab(tab);
                       const v = document.getElementById('v-' + tab), ng = new Set();
@@ -880,9 +880,13 @@ async def offseason_check(browser):
                   });
                   DATA.offseason = { season: 2026, checked_at: '2026-09-29T15:00:00+09:00', items, teams: {}, seen: {} };
                   jst = () => ({ y: 2026, m: 10, d: 1, iso: '2026-10-01' });
-                  setTab('stats'); renderStats();
-                  const blk = document.getElementById('offBlk');
-                  if (blk.hidden) { ng.push('一覧が出ない'); return ng; }
+                  renderAll(); setTab('off');
+                  const tb = document.querySelector('.tabbar button[data-tab="off"]'), blk = document.getElementById('v-off');
+                  if (tb.hidden || blk.hidden) { ng.push('戦力外のタブが出ない'); return ng; }
+                  if (getComputedStyle(document.querySelector('.tabbar nav')).gridTemplateColumns.split(' ').length !== 7) ng.push('タブが7つ並んでいない');
+                  const tbb = [...document.querySelectorAll('.tabbar button:not([hidden])')].map(b => b.getBoundingClientRect());
+                  if (tbb.some((b, i) => i && b.left < tbb[i - 1].right - 1)) ng.push('タブのボタンが重なっている');
+                  if (tbb.some(b => b.right > innerWidth)) ng.push('タブバーが画面からはみ出している');
                   const rows = blk.querySelectorAll('.ofr');
                   if (rows.length !== items.length) ng.push(`一覧の人数が違う（${rows.length}／${items.length}）`);
                   // パワプロ風は、名前が守備位置の色のタイルになっているか
@@ -893,13 +897,28 @@ async def offseason_check(browser):
                   // 札：チーム内の成績・応援歌・選手の成績画面
                   const it = items[0], k = it.n.replace(/\\s+/g, '');
                   PST[it.t] = { at: Date.now(), d: { bat: { [k]: { 試合: '1', 打席: '9', 打率: '.1', 本塁打: '0', 打点: '0', 出塁率: '.1', 長打率: '.1' } }, pit: { [k]: { 登板: '1', 投球回: '1', 防御率: '1.00', 勝利: '0', 敗北: '0', 三振: '1' } }, asof: '9/28' } };
-                  S.ptTeam = it.t; renderTeamIn();
+                  setTab('stats'); S.ptTeam = it.t; renderTeamIn();
                   if (!document.querySelector('#ptTbl .offtag')) ng.push('チーム内の成績に札が出ない');
+                  if (document.getElementById('offList').closest('#v-stats')) ng.push('一覧が成績タブに残っている');
                   const over = [...document.querySelectorAll('#ptTbl td, #ptTbl th')].filter(c => c.scrollWidth > c.clientWidth + 1).length;
                   if (over) ng.push(`札を付けたチーム内の成績で、文字がマスからはみ出したセルが ${over} 個`);
                   return ng;
                 }""")
                 for m in r[:6]:
+                    bad(f"{label} {m}")
+                # オフでない時期（発表もない）はタブが消えて6つに戻り、戦力外のタブを見ていたら戦況に戻る
+                r2 = await pg.evaluate("""() => {
+                  const keep = DATA.offseason, keepJst = jst;
+                  setTab('off'); DATA.offseason = null; jst = () => ({ y: 2026, m: 6, d: 1, iso: '2026-06-01' }); renderAll();
+                  const ng = [];
+                  if (!document.querySelector('.tabbar button[data-tab="off"]').hidden) ng.push('オフでないのに戦力外のタブが出ている');
+                  if (getComputedStyle(document.querySelector('.tabbar nav')).gridTemplateColumns.split(' ').length !== 6) ng.push('タブが6つに戻らない');
+                  if (S.tab !== 'magic') ng.push('戦力外のタブが消えたのに、その画面のまま');
+                  if (tabOrder().includes('off')) ng.push('消えたタブにスワイプで行ける');
+                  DATA.offseason = keep; jst = keepJst; renderAll();   // 元に戻す
+                  return ng;
+                }""")
+                for m in r2:
                     bad(f"{label} {m}")
                 # 選手の成績画面の札
                 ok = await pg.evaluate("""async () => { const it = DATA.offseason.items[0]; await openPlayer(it.t, it.n); return !!document.querySelector('#songPick .sp-h .offtag'); }""")
