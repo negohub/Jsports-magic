@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260929163831">
+<meta name="build" content="20260929170108">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -2000,6 +2000,16 @@ th.srt{height:44px}
 @keyframes ptrspin{to{transform:rotate(360deg)}}
 html.theme-pawa .ptr{background:#fff;color:#13264A;border:2px solid #1D3E7C}
 
+/* ===== 設定：担当者の名前の色（ポジション） ===== */
+.op-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:8px 0;border-bottom:1px solid var(--line,#2A2A2A)}
+.op-row b{font-size:14px;min-width:3em}
+.op-btns{display:flex;flex-wrap:wrap;gap:6px;width:100%}
+.op-b{display:inline-flex;align-items:center;gap:5px;min-height:36px;padding:0 10px;border-radius:999px;border:1px solid var(--line,#3A3A3A);background:transparent;color:inherit;font-size:12px;font-weight:700}
+.op-b i{width:12px;height:12px;border-radius:50%;background:var(--c)}
+.op-b[aria-pressed="true"]{background:var(--c);color:#13264A;border-color:var(--c)}
+html.theme-pawa .op-row{border-bottom:1px solid #C9D8EC}
+html.theme-pawa .op-b{border:2px solid #C9D8EC;background:#fff;color:#13264A}
+html.theme-pawa .op-b[aria-pressed="true"]{background:var(--c);border-color:#1D3E7C}
 /* ===== 前のシーズンの記録を見ているときの帯 ===== */
 .archbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top,0px));
   background:#FFD21F;color:#1A1400;font-size:13px;font-weight:800}
@@ -2242,13 +2252,13 @@ html.theme-pawa .swhint{color:#1D3E7C}
     <h2>個人ランキング</h2>
     <div class="rkbar"><div class="seg" id="rkSeg"><button type="button" data-k="bat" aria-pressed="true">打者</button><button type="button" data-k="pit" aria-pressed="false">投手</button></div>
       <label class="catsel"><select id="catSel" aria-label="項目"></select></label></div>
-    <div class="chips2 quick" id="catQuick"></div>
     <div id="rankList"></div>
     <h2>チーム内の成績<small id="ptAsof"></small></h2>
     <div class="teams" id="ptTeams"></div>
-    <div class="seg" id="ptSeg"><button type="button" data-k="bat" aria-pressed="true">打者</button><button type="button" data-k="pit" aria-pressed="false">投手</button></div>
+    <div class="rkbar"><div class="seg" id="ptSeg"><button type="button" data-k="bat" aria-pressed="true">打者</button><button type="button" data-k="pit" aria-pressed="false">投手</button></div>
+      <label class="catsel"><select id="ptCat" aria-label="並べ替える項目"></select></label></div>
     <div id="ptList"></div>
-    <details class="howto"><summary>見方</summary><ul><li>並べ替え：チーム成績・個人ランキング・チーム内の成績は、見出し（小さな上下の三角が付いた項目）をタップするとその項目で並べ替え、もう一度タップすると昇順／降順が入れ替わります。</li><li>チーム成績：<span class="th-s">黄色</span><span class="th-p">オレンジ</span>の太字が各項目のリーグトップ。得点・失点・得失点差は試合結果からすぐに計算しています。</li><li>チーム内の成績：球団ボタンでチームを選ぶと、そのチームで出場した全選手の今季成績を並べます（NPB公式）。最初は出場の多い順。打率・OPSで並べるときは30打席未満、防御率で並べるときは10投球回未満の選手を下にまとめます。選手名をタップすると詳しい成績が出ます。</li><li>個人ランキング：スポーツナビの個人成績と同じ全項目（打者24・投手27）。右上のメニューで項目を選べます。打率・出塁率・長打率・OPS・得点圏打率は規定打席以上、防御率・勝率・奪三振率・被打率・K/BB・WHIPは規定投球回以上の選手が対象。各項目の10位まで（同じ順位の選手はすべて表示）。出典：スポーツナビ。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li>並べ替え：チーム成績・個人ランキング・チーム内の成績は、見出し（小さな上下の三角が付いた項目）をタップするとその項目で並べ替え、もう一度タップすると昇順／降順が入れ替わります。</li><li>チーム成績：<span class="th-s">黄色</span><span class="th-p">オレンジ</span>の太字が各項目のリーグトップ。得点・失点・得失点差は試合結果からすぐに計算しています。</li><li>チーム内の成績：球団ボタンでチームを選ぶと、そのチームで出場した全選手の今季成績を並べます（NPB公式）。最初は出場の多い順。右上のメニューで項目（打者22・投手26）を選ぶと、その項目で並べ替えます（表にない項目は、いちばん右の列に入れて出します。見出しでは K/9＝奪三振率、H＝ホールド、S＝セーブ などと短く書きます）。打率・OPSで並べるときは30打席未満、防御率で並べるときは10投球回未満の選手を下にまとめます。選手名をタップすると詳しい成績が出ます。</li><li>個人ランキング：スポーツナビの個人成績と同じ全項目（打者24・投手27）。右上のメニューで項目を選べます（選んだ項目の上位を並べます）。打率・出塁率・長打率・OPS・得点圏打率は規定打席以上、防御率・勝率・奪三振率・被打率・K/BB・WHIPは規定投球回以上の選手が対象。各項目の10位まで（同じ順位の選手はすべて表示）。出典：スポーツナビ。</li></ul></details>
   </section>
   <p class="note" id="note"></p>
 </main>
@@ -2276,6 +2286,11 @@ html.theme-pawa .swhint{color:#1D3E7C}
     <section class="sh-sec">
       <div class="sh-lab">テーマ</div>
       <div class="themeSeg" id="themeSeg"><button type="button" data-theme="">スタイリッシュ</button><button type="button" data-theme="pawa">パワプロ風</button></div>
+    </section>
+    <section class="sh-sec" id="opSec" hidden>
+      <div class="sh-lab">名前の色（パワプロ風）</div>
+      <div id="opList"></div>
+      <p class="sh-note">パワプロ風のときの担当者の名前のタイルを、好きなポジションの色にできます（この端末だけの設定です）。</p>
     </section>
     <section class="sh-sec" id="archSec" hidden>
       <div class="sh-lab">シーズン</div>
@@ -2724,9 +2739,13 @@ const ownP = t => (CONFIG.owners[t] ? `（${CONFIG.owners[t]}）` : "");
 const yen = n => n.toLocaleString("ja-JP") + "円";
 // 担当者の名前：パワプロ風テーマのときは守備位置の色のタイル
 const isPawa = () => document.documentElement.classList.contains("theme-pawa");
+// 担当者の名前のタイルの色（パワプロ風）：設定で各自が選んだポジション（この端末に保存）、なければ最初の設定
+const OWNER_POS_CHOICES = [["先", "先発"], ["中", "リリーフ"], ["捕", "捕手"], ["内", "内野手"], ["外", "外野手"]];
+function ownerPosPicked() { try { const o = JSON.parse(localStorage.getItem("ownerPos") || "{}"); return o && typeof o === "object" ? o : {}; } catch { return {}; } }
+function ownerPosOf(t) { const p = ownerPosPicked()[t]; return OWNER_POS_CHOICES.some(([k]) => k === p) ? p : (CONFIG.ownerPos || {})[t]; }
 const ownT = t => {
   if (!isPawa() || !own(t)) return own(t);
-  const c = { "投": "pp", "中": "pp", "抑": "pp", "先": "ps", "捕": "pc", "内": "pi", "外": "po" }[(CONFIG.ownerPos || {})[t]] || "pi";
+  const c = { "投": "pp", "中": "pp", "抑": "pp", "先": "ps", "捕": "pc", "内": "pi", "外": "po" }[ownerPosOf(t)] || "pi";
   return `<span class="ptile otile ${c}${own(t).length <= 2 ? " sp" : ""}"><b>${own(t)}</b></span>`;
 };
 const payLine = t => own(t) === CONFIG.payee ? `${own(t)}が ${yen(CONFIG.fee)} 支払い` : `${own(t)} → ${CONFIG.payee}へ ${yen(CONFIG.fee)}`;
@@ -4819,7 +4838,7 @@ function saveStatsUI() {
   const okSort = (o, keys) => o && typeof o === "object" && dir(o.dir) && keys.every(k => o[k] != null);
   if (okSort(u.tmSort, ["kind", "col"]) && kind(u.tmSort.kind) && Number.isInteger(u.tmSort.col)) S.tmSort = u.tmSort;
   if (okSort(u.rkSort, ["cat", "by"]) && (u.rkSort.by === "t" || u.rkSort.by === "v")) S.rkSort = u.rkSort;
-  if (okSort(u.ptSort, ["kind", "col"]) && kind(u.ptSort.kind) && Number.isInteger(u.ptSort.col)) S.ptSort = u.ptSort;
+  if (okSort(u.ptSort, ["kind", "item"]) && kind(u.ptSort.kind) && typeof u.ptSort.item === "string") S.ptSort = u.ptSort;
 })();
 uiSaved = uiNow();   // 開いた時点の状態（覚えていた内容、なければ最初の状態）は書き直さない
 const PT_COLS = {
@@ -4827,6 +4846,26 @@ const PT_COLS = {
     ["OPS", r => (r["出塁率"] != null && r["長打率"] != null ? f3(Number(r["出塁率"]) + Number(r["長打率"])) : null), "rate"]],
   pit: [["登板", r => r["登板"]], ["投球回", r => r["投球回"], "ip"], ["防御率", r => r["防御率"], "era"], ["勝敗", r => `${r["勝利"] ?? "-"}-${r["敗北"] ?? "-"}`, "wl"], ["奪三振", r => r["三振"]]],
 };
+// チーム内の成績で並べ替えられる項目（NPB公式の個人成績の表の項目＋計算で出すもの）。[名前, 値の取り方, 種類（rate/era＝率・少ないほど良い）]
+const ipOf = r => ipNum(r["投球回"]);
+const PT_ITEMS = {
+  bat: [["試合", r => r["試合"]], ["打率", r => r["打率"], "rate"], ["本塁打", r => r["本塁打"]], ["打点", r => r["打点"]],
+    ["OPS", r => (r["出塁率"] != null && r["長打率"] != null ? f3(Number(r["出塁率"]) + Number(r["長打率"])) : null), "rate"],
+    ["打席", r => r["打席"]], ["打数", r => r["打数"]], ["安打", r => r["安打"]], ["二塁打", r => r["二塁打"]], ["三塁打", r => r["三塁打"]],
+    ["塁打", r => r["塁打"]], ["得点", r => r["得点"]], ["盗塁", r => r["盗塁"]], ["盗塁死", r => r["盗塁刺"]], ["犠打", r => r["犠打"]],
+    ["犠飛", r => r["犠飛"]], ["四球", r => r["四球"]], ["死球", r => r["死球"]], ["三振", r => r["三振"]], ["併殺打", r => r["併殺打"]],
+    ["出塁率", r => r["出塁率"], "rate"], ["長打率", r => r["長打率"], "rate"]],
+  pit: [["登板", r => r["登板"]], ["投球回", r => r["投球回"], "ip"], ["防御率", r => r["防御率"], "era"], ["勝敗", r => `${r["勝利"] ?? "-"}-${r["敗北"] ?? "-"}`, "wl"], ["奪三振", r => r["三振"]],
+    ["勝利", r => r["勝利"]], ["敗北", r => r["敗北"]], ["セーブ", r => r["セーブ"]], ["ホールド", r => r["ホールド"]], ["HP", r => r["HP"]],
+    ["勝率", r => r["勝率"], "rate"], ["完投", r => r["完投"]], ["完封", r => r["完封勝"]], ["無四球", r => r["無四球"]], ["打者", r => r["打者"]],
+    ["被安打", r => r["安打"]], ["被本塁打", r => r["本塁打"]], ["与四球", r => r["四球"]], ["与死球", r => r["死球"]], ["暴投", r => r["暴投"]],
+    ["ボーク", r => r["ボーク"]], ["失点", r => r["失点"]], ["自責点", r => r["自責点"]],
+    ["奪三振率", r => (ipOf(r) > 0 && r["三振"] != null ? (Number(r["三振"]) * 9 / ipOf(r)).toFixed(2) : null), "rate"],
+    ["K/BB", r => (Number(r["四球"]) > 0 && r["三振"] != null ? (Number(r["三振"]) / Number(r["四球"])).toFixed(2) : null), "rate"],
+    ["WHIP", r => (ipOf(r) > 0 && r["安打"] != null && r["四球"] != null ? ((Number(r["安打"]) + Number(r["四球"])) / ipOf(r)).toFixed(2) : null), "era"]],
+};
+// 表の見出しに入りきらない長い項目名の短い書き方（メニューには正式な名前）
+const PT_SHORT = { "奪三振率": "K/9", "ホールド": "H", "被本塁打": "被本", "被安打": "被安", "与四球": "与四", "与死球": "与死", "盗塁死": "盗死", "併殺打": "併殺", "自責点": "自責", "セーブ": "S", "無四球": "無四" };
 function ptTeam() { if (!CL.includes(S.ptTeam)) S.ptTeam = CL.includes(ME()) ? ME() : calOrder()[0]; return S.ptTeam; }
 let ptSeq = 0;
 function renderTeamIn() {
@@ -4847,16 +4886,27 @@ function renderTeamIn() {
   });
 }
 function drawTeamIn(t, d) {
-  const kind = S.ptKind, tbl = (d && d[kind]) || {}, cols = PT_COLS[kind];
+  const kind = S.ptKind, tbl = (d && d[kind]) || {}, items = PT_ITEMS[kind];
+  // 並べ替えの状態：{ kind, item（項目の名前）, dir }。選んだ項目が表の5項目になければ、いちばん右の列をその項目に入れ替える（列の数はいつも5つ）
+  const skItem = S.ptSort && S.ptSort.kind === kind && items.find(c => c[0] === S.ptSort.item) ? S.ptSort : null;
+  const cols = PT_COLS[kind].map(c => items.find(x => x[0] === c[0]) || c);
+  if (skItem && !cols.some(c => c[0] === skItem.item)) cols[cols.length - 1] = items.find(c => c[0] === skItem.item);
+  const sk = skItem ? { ...skItem, col: cols.findIndex(c => c[0] === skItem.item) } : null;
+  // 項目のメニュー
+  $("ptCat").innerHTML = `<option value="">出場の多い順</option>` + items.filter(c => c[2] !== "wl").map(c => `<option value="${c[0]}"${sk && sk.item === c[0] ? " selected" : ""}>${c[0]}</option>`).join("");
+  $("ptCat").onchange = e => {
+    const v = e.target.value, c = items.find(x => x[0] === v);
+    S.ptSort = c ? { kind, item: v, dir: c[2] === "era" ? "asc" : "desc" } : null;
+    saveStatsUI(); drawTeamIn(t, d);
+  };
   $("ptAsof").textContent = d && d.asof ? `${d.asof} ${/\d:\d\d/.test(d.asof) ? "更新" : "時点"}` : "";
   const vol = r => kind === "bat" ? Number(r["打席"]) || 0 : ipNum(r["投球回"]);
   const low = r => kind === "bat" ? vol(r) < 30 : vol(r) < 10;   // 率で並べるときに下へまとめる選手
   const sortVal = (c, r) => c[2] === "ip" ? ipNum(r["投球回"]) : c[2] === "wl" ? Number(r["勝利"]) : num(c[1](r));
-  const sk = S.ptSort && S.ptSort.kind === kind && cols[S.ptSort.col] ? S.ptSort : null;
   let rows = Object.entries(tbl).map(([n, r]) => ({ n, r })).filter(x => vol(x.r) > 0 || Number(x.r["試合"] || x.r["登板"]) > 0);
   if (!sk) rows.sort((a, b) => vol(b.r) - vol(a.r));
   else {
-    const c = cols[sk.col], rate = c[2] === "rate" || c[2] === "era";
+    const c = cols[sk.col], rate = c[2] === "rate" || c[2] === "era" || /率$/.test(c[0]);
     rows.sort((a, b) => {
       if (rate && low(a.r) !== low(b.r)) return low(a.r) ? 1 : -1;
       const x = sortVal(c, a.r), y = sortVal(c, b.r);
@@ -4879,12 +4929,12 @@ function drawTeamIn(t, d) {
   // 名前の長さで文字の大きさを変える（長い名前も省略せず、必要なら2行に折り返す）
   function lenC(nm) { const n = [...nm].length; return n >= 7 ? " n7" : n >= 5 ? " n5" : ""; }
   const cell = v => esc(v == null || v === "" ? "-" : v);
-  $("ptList").innerHTML = `<div class="ywrap"><table class="ytab rtab tst" id="ptTbl"><colgroup><col class="pc-n">${cols.map(() => "<col>").join("")}</colgroup><thead><tr><th class="tnm">選手名</th>${cols.map((c, j) => `<th class="srt${sk && j === sk.col ? " on" : ""}" data-col="${j}">${c[0]}${sortIco(sk && j === sk.col ? sk.dir : "none")}</th>`).join("")}</tr></thead><tbody>` +
+  $("ptList").innerHTML = `<div class="ywrap"><table class="ytab rtab tst" id="ptTbl"><colgroup><col class="pc-n">${cols.map(() => "<col>").join("")}</colgroup><thead><tr><th class="tnm">選手名</th>${cols.map((c, j) => `<th class="srt${sk && j === sk.col ? " on" : ""}" data-col="${j}"${PT_SHORT[c[0]] ? ` aria-label="${c[0]}"` : ""}>${PT_SHORT[c[0]] || c[0]}${sortIco(sk && j === sk.col ? sk.dir : "none")}</th>`).join("")}</tr></thead><tbody>` +
     view.map(x => `<tr style="${tv(t)}"><td class="pnm" data-pl="${t}|${esc(x.n)}|${kind}">${pawaT ? tile(x.n) : `<span class="ptn${lenC(rankName(t, x.n))}">${esc(rankName(t, x.n))}${offTag(t, x.n)}</span>`}</td>${cols.map(c => `<td class="num v">${cell(c[1](x.r))}</td>`).join("")}</tr>`).join("") +
     `</tbody></table></div>` + (rows.length > N ? `<button type="button" class="ptmore" id="ptMore">${S.ptAll ? "上位だけ表示" : `全員を表示（${rows.length}人）`}</button>` : "");
   $("ptList").querySelectorAll("th.srt").forEach(th => (th.onclick = () => {
     const j = +th.dataset.col, c = cols[j], first = c[2] === "era" ? "asc" : "desc";
-    S.ptSort = { kind, col: j, dir: sk && sk.col === j ? (sk.dir === "desc" ? "asc" : "desc") : first };
+    S.ptSort = { kind, item: c[0], dir: sk && sk.col === j ? (sk.dir === "desc" ? "asc" : "desc") : first };
     saveStatsUI();
     drawTeamIn(t, d);
   }));
@@ -4936,8 +4986,6 @@ function renderStats(fromLive) {
   if (!list.some(([k]) => k === S.cat)) S.cat = list[0][0];
   $("catSel").innerHTML = list.map(([k, l]) => `<option value="${k}"${k === S.cat ? " selected" : ""}>${l}</option>`).join("");
   $("catSel").onchange = e => { S.cat = e.target.value; renderStats(); };
-  $("catQuick").innerHTML = list.slice(0, S.rkKind === "bat" ? 12 : 12).map(([k, l]) => `<button type="button" data-k="${k}" aria-pressed="${k === S.cat}">${l}</button>`).join("");
-  $("catQuick").querySelectorAll("button").forEach(b => (b.onclick = () => { S.cat = b.dataset.k; renderStats(); }));
   const rows = L[S.cat] || L[LEGACY[S.cat]] || [];
   const lbl = [...CATS.bat, ...CATS.pit].find(([k]) => k === S.cat);
   // 並べ替え：順位・数字は昇順／降順、チームは球団ごと（同じ見出しをもう一度で逆順）
@@ -5103,8 +5151,22 @@ async function viewArchive(y) {
   } catch { alert(`${y}年の記録を読み込めませんでした。少し時間をおいて、もう一度開いてください。`); }
 }
 $("archBack").onclick = () => location.replace(location.pathname);
+function renderOwnerPos() {
+  const teams = calOrder().filter(t => (CONFIG.owners || {})[t]);
+  $("opSec").hidden = isPL() || !teams.length;
+  if ($("opSec").hidden) return;
+  $("opList").innerHTML = teams.map(t => `<div class="op-row" style="${tv(t)}"><span class="badge">${sn(t)}</span><b>${esc(CONFIG.owners[t])}</b>
+      <div class="op-btns">${OWNER_POS_CHOICES.map(([k, l]) => `<button type="button" class="op-b" data-op="${t}|${k}" aria-pressed="${ownerPosOf(t) === k}" aria-label="${esc(CONFIG.owners[t])}：${l}" style="--c:${PCOL[k]}"><i></i>${l}</button>`).join("")}</div></div>`).join("");
+  $("opList").querySelectorAll(".op-b").forEach(b => (b.onclick = () => {
+    const [t, k] = b.dataset.op.split("|"), o = ownerPosPicked();
+    o[t] = k;
+    try { localStorage.setItem("ownerPos", JSON.stringify(o)); } catch {}
+    renderOwnerPos(); renderAll();
+  }));
+}
 function openSheet() {
-  loadArchIndex(); $("meNow").textContent = ME() ? `${own(ME())}（${fn(ME())}）` : "選んでいない"; $("sheet").hidden = false; requestAnimationFrame(() => $("sheet").classList.add("open")); renderHealth(); }
+  loadArchIndex();
+  renderOwnerPos(); $("meNow").textContent = ME() ? `${own(ME())}（${fn(ME())}）` : "選んでいない"; $("sheet").hidden = false; requestAnimationFrame(() => $("sheet").classList.add("open")); renderHealth(); }
 function closeSheet() { $("sheet").classList.remove("open"); setTimeout(() => ($("sheet").hidden = true), 280); }
 $("gearBtn").onclick = openSheet;
 $("hWarn").onclick = openSheet;
