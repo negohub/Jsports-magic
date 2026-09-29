@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260929044008">
+<meta name="build" content="20260929052853">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -1984,6 +1984,34 @@ th.srt{height:44px}
 @keyframes ptrspin{to{transform:rotate(360deg)}}
 html.theme-pawa .ptr{background:#fff;color:#13264A;border:2px solid #1D3E7C}
 
+/* ===== 今オフの戦力外・引退 ===== */
+.offtag{display:inline-flex;align-items:center;height:18px;padding:0 6px;margin-left:6px;border-radius:5px;font-size:10.5px;font-weight:800;letter-spacing:0;vertical-align:2px;white-space:nowrap;background:#E5484D;color:#fff}
+.offtag.k-retire{background:#8A8F98}
+.offtag.k-offer{background:#E5484D}
+#offList .ofteam{margin:10px 0 0;border-radius:var(--r-md,14px);overflow:hidden;background:rgba(255,255,255,.04);border:1px solid var(--line,#2A2A2A)}
+#offList .ofh{display:flex;align-items:center;gap:8px;padding:9px 12px;font-weight:800;font-size:14px;border-left:4px solid var(--tc)}
+#offList .ofh small{margin-left:auto;font-size:11.5px;color:var(--muted,#8B8B95);font-weight:700}
+#offList .ofr{display:flex;align-items:center;gap:10px;min-height:52px;padding:6px 8px 6px 12px;border-top:1px solid var(--line,#2A2A2A);font-size:14px}
+#offList .ofr .offtag{margin:0;flex:0 0 auto}
+#offList .ofr .omain{flex:1 1 auto;min-width:0}
+#offList .ofr .on1{display:flex;align-items:baseline;gap:6px;min-width:0}
+#offList .ofr .onm{font-weight:800;font-size:15px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+#offList .ofr .ono{font-size:11.5px;color:var(--muted,#8B8B95);flex:0 0 auto}
+#offList .ofr .okd{margin-top:2px;font-size:11.5px;line-height:1.35;color:var(--muted,#8B8B95)}
+#offList .ofr .odt{white-space:nowrap}
+#offList .ofr a.oln{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;padding:0 4px;font-size:12px;font-weight:700;color:inherit;text-decoration:underline;text-underline-offset:3px}
+#offList .ofnone{margin:10px 2px 0;font-size:12.5px;color:var(--muted,#8B8B95)}
+html.theme-pawa #offList .ofteam{background:#fff;border:2px solid #1D3E7C;box-shadow:0 3px 0 rgba(29,62,124,.25)}
+html.theme-pawa #offList .ofh{color:#13264A;background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 22%,#fff),#fff)}
+html.theme-pawa #offList .ofr{color:#13264A;border-top-color:#DCE6F2}
+html.theme-pawa #offList .ofr .ono,html.theme-pawa #offList .ofr .okd,html.theme-pawa #offList .ofh small,html.theme-pawa #offList .ofnone{color:#4A5B7A}
+/* 応援歌の選手タイルに付ける札：タイルの右上の内側に小さく（タイルの外にはみ出すと切れるため） */
+.ptile{position:relative}
+.ptile .offtag{position:absolute;top:4px;right:4px;height:15px;padding:0 4px;margin:0;font-size:9px;z-index:2;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+/* チーム内の成績（パワプロ風）：札は名前のタイルのすぐ下に */
+#ptTbl td.pnm > .offtag{display:flex;width:max-content;margin:4px auto 0}
+/* 一覧の札は同じ幅にそろえて、名前の位置をそろえる */
+#offList .ofr .offtag{min-width:46px;justify-content:center}
 /* ===== スワイプで切り替えたとき：いつもの「ふわっと」は出さず、指の動きの続きですべり込む ===== */
 .view.swin:not([hidden]){animation:none !important}
 /* ===== 戦況：月度のスワイプの案内（最初の1回だけ） ===== */
@@ -2086,6 +2114,10 @@ html.theme-pawa .swhint{color:#1D3E7C}
     <h2>チーム成績<small id="stAsof"></small></h2>
     <div class="seg" id="tmSeg"><button type="button" data-k="bat" aria-pressed="true">打撃</button><button type="button" data-k="pit" aria-pressed="false">投手</button></div>
     <div class="ywrap"><table class="ytab tst" id="tmTbl"></table></div>
+    <div id="offBlk" hidden>
+      <h2>今オフの戦力外・引退<small id="offAsof"></small></h2>
+      <div id="offList"></div>
+    </div>
     <h2>個人ランキング</h2>
     <div class="rkbar"><div class="seg" id="rkSeg"><button type="button" data-k="bat" aria-pressed="true">打者</button><button type="button" data-k="pit" aria-pressed="false">投手</button></div>
       <label class="catsel"><select id="catSel" aria-label="項目"></select></label></div>
@@ -2095,7 +2127,7 @@ html.theme-pawa .swhint{color:#1D3E7C}
     <div class="teams" id="ptTeams"></div>
     <div class="seg" id="ptSeg"><button type="button" data-k="bat" aria-pressed="true">打者</button><button type="button" data-k="pit" aria-pressed="false">投手</button></div>
     <div id="ptList"></div>
-    <details class="howto"><summary>見方</summary><ul><li>並べ替え：チーム成績・個人ランキング・チーム内の成績は、見出し（小さな上下の三角が付いた項目）をタップするとその項目で並べ替え、もう一度タップすると昇順／降順が入れ替わります。</li><li>チーム成績：<span class="th-s">黄色</span><span class="th-p">オレンジ</span>の太字が各項目のリーグトップ。得点・失点・得失点差は試合結果からすぐに計算しています。</li><li>チーム内の成績：球団ボタンでチームを選ぶと、そのチームで出場した全選手の今季成績を並べます（NPB公式）。最初は出場の多い順。打率・OPSで並べるときは30打席未満、防御率で並べるときは10投球回未満の選手を下にまとめます。選手名をタップすると詳しい成績が出ます。</li><li>個人ランキング：スポーツナビの個人成績と同じ全項目（打者24・投手27）。右上のメニューで項目を選べます。打率・出塁率・長打率・OPS・得点圏打率は規定打席以上、防御率・勝率・奪三振率・被打率・K/BB・WHIPは規定投球回以上の選手が対象。各項目の10位まで（同じ順位の選手はすべて表示）。出典：スポーツナビ。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li>並べ替え：チーム成績・個人ランキング・チーム内の成績は、見出し（小さな上下の三角が付いた項目）をタップするとその項目で並べ替え、もう一度タップすると昇順／降順が入れ替わります。</li><li>チーム成績：<span class="th-s">黄色</span><span class="th-p">オレンジ</span>の太字が各項目のリーグトップ。得点・失点・得失点差は試合結果からすぐに計算しています。</li><li>今オフの戦力外・引退：各球団の公式サイトの発表（来季の選手契約について・現役引退など）を自動で集めて、表示しているリーグの球団ごとに並べます（9月後半〜12月だけ表示）。選手名をタップすると今季の成績、「発表」で球団の公式の発表が開きます。チーム内の成績・応援歌・選手の成績画面の名前の横にも「戦力外」「引退」の札が付きます。集め始めたばかりの球団は、発表から反映まで少し時間がかかることがあります。</li><li>チーム内の成績：球団ボタンでチームを選ぶと、そのチームで出場した全選手の今季成績を並べます（NPB公式）。最初は出場の多い順。打率・OPSで並べるときは30打席未満、防御率で並べるときは10投球回未満の選手を下にまとめます。選手名をタップすると詳しい成績が出ます。</li><li>個人ランキング：スポーツナビの個人成績と同じ全項目（打者24・投手27）。右上のメニューで項目を選べます。打率・出塁率・長打率・OPS・得点圏打率は規定打席以上、防御率・勝率・奪三振率・被打率・K/BB・WHIPは規定投球回以上の選手が対象。各項目の10位まで（同じ順位の選手はすべて表示）。出典：スポーツナビ。</li></ul></details>
   </section>
   <p class="note" id="note"></p>
 </main>
@@ -4186,7 +4218,7 @@ async function openPlayer(t, name, opt = {}) {
   const nameHtml = isPawa()
     ? `<span class="ptile pstile ${TILEC[gr[0]] || "pi"}" style="${tileStyle(gr)}"><b>${esc(full)}</b></span>`
     : `<b>${esc(full)}</b>`;
-  const head = `<div class="sp-h" style="${tv(t)}"><span class="badge">${sn(t)}</span>${nameHtml}${no ? `<small class="num">#${esc(no)}</small>` : ""}<span class="ps-poss">${chips}</span></div>`;
+  const head = `<div class="sp-h" style="${tv(t)}"><span class="badge">${sn(t)}</span>${nameHtml}${offTag(t, full)}${no ? `<small class="num">#${esc(no)}</small>` : ""}<span class="ps-poss">${chips}</span></div>`;
   $("songPick").innerHTML = head + `<div class="ps-body"><div class="ps-load">今季の成績を読み込み中…</div></div>` + btns;
   $("songSheet").querySelector(".sheet-head b").textContent = "選手の成績";
   $("songSheet").hidden = false; requestAnimationFrame(() => $("songSheet").classList.add("open"));
@@ -4224,12 +4256,12 @@ function renderSong() {
   const hit = x => !q || x.n.replace(/\s+/g, "").includes(q) || x.no === q;
   const groups = [["捕手", false], ["内野手", false], ["外野手", false], ["投手", false], [null, true]];
   const row = x => `<div class="srow" style="${tv(t)}">
-      <span class="sno num">${esc(x.no)}</span><span class="snm">${esc(x.n)}</span>
+      <span class="sno num">${esc(x.no)}</span><span class="snm">${esc(x.n)}${offTag(t, x.n)}</span>
       <span class="sbtn">${songLink(t, x) ? `<a class="sof" href="${songLink(t, x)}" target="_blank" rel="noopener">${songLabel(t)}</a>` : ""}<a class="sgo" href="${ytUrl(t, x.n)}" target="_blank" rel="noopener">聴く</a></span></div>`;
   const pawa = document.documentElement.classList.contains("theme-pawa");
   const POSC = { "投手": "pp", "捕手": "pc", "内野手": "pi", "外野手": "po" };
   const PLBL = { "投": "投手", "先": "先発", "中": "中継ぎ", "抑": "抑え", "捕": "捕手", "内": "内野", "外": "外野" };
-  const tile = x => { const sur = shortName(t, x.n), gr = posGroups(t, x.n, x.p); return `<button type="button" class="ptile ${TILEC[gr[0]] || POSC[x.p] || "pp"}${sur.length <= 2 ? " sp" : sur.length >= 5 ? " lg" : ""}" style="${tileStyle(gr)};${tv(t)}" data-song="${esc(x.no)}|${esc(x.n)}"><small class="num">${esc(x.no)}</small><i class="twm num" aria-hidden="true">${esc(x.no)}</i><b>${esc(sur)}</b><em class="tpos">${gr.map(k => PLBL[k] || k).join("・")}</em></button>`; };
+  const tile = x => { const sur = shortName(t, x.n), gr = posGroups(t, x.n, x.p); return `<button type="button" class="ptile ${TILEC[gr[0]] || POSC[x.p] || "pp"}${sur.length <= 2 ? " sp" : sur.length >= 5 ? " lg" : ""}" style="${tileStyle(gr)};${tv(t)}" data-song="${esc(x.no)}|${esc(x.n)}"><small class="num">${esc(x.no)}</small><i class="twm num" aria-hidden="true">${esc(x.no)}</i><b>${esc(sur)}</b><em class="tpos">${gr.map(k => PLBL[k] || k).join("・")}</em>${offTag(t, x.n)}</button>`; };
   let html = "";
   for (const [pos, dev] of groups) {
     const list = all.filter(x => x.dev === dev && (dev || x.p === pos) && hit(x)).sort((a, b) => Number(a.no) - Number(b.no) || a.no.length - b.no.length);
@@ -4351,6 +4383,36 @@ async function liveStats(key) {
   const res = await Promise.all(jobs);
   if (res.some(Boolean) && S.tab === "stats") renderStats(true);
 }
+// ================= 今オフの戦力外・引退（各球団の公式発表を自動で集めたもの） =================
+const OFF_LABEL = { cut: "戦力外", offer: "戦力外", retire: "引退" };
+const offItems = () => (((DATA && DATA.offseason) || {}).items || []).filter(x => OFF_LABEL[x.kind] && TEAM[x.t]);
+// 名前（名簿の名前・NPBの表の名前・名字だけ）から、その選手の発表を探す
+function offOf(t, name) {
+  if (!name) return null;
+  const k = nk(name), list = offItems().filter(x => x.t === t);
+  return list.find(x => nk(x.n) === k) || (list.filter(x => nk(x.n).startsWith(k)).length === 1 ? list.find(x => nk(x.n).startsWith(k)) : null);
+}
+const offTag = (t, name) => { const o = offOf(t, name); return o ? `<span class="offtag k-${o.kind}">${OFF_LABEL[o.kind]}</span>` : ""; };
+// 出す期間：9月後半〜12月（発表があれば9月前半でも）
+function offSeason() { const j = jst(); return (j.m === 9 && j.d >= 15) || j.m >= 10; }
+function renderOff() {
+  const items = offItems().filter(x => CL.includes(x.t));
+  const show = offSeason() || items.length > 0;
+  $("offBlk").hidden = !show;
+  if (!show) return;
+  const o = (DATA && DATA.offseason) || {};
+  $("offAsof").textContent = o.checked_at ? `${Number(o.checked_at.slice(5, 7))}/${Number(o.checked_at.slice(8, 10))} ${o.checked_at.slice(11, 16)} 確認` : "";
+  const md = d => d ? `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}` : "";
+  const kindText = x => x.kind === "retire" ? "現役引退" : x.kind === "offer" ? "来季の契約を結ばない（育成で再契約を打診）" : x.dev ? "育成選手の来季の契約を結ばない" : "来季の契約を結ばない";
+  const teams = calOrder().filter(t => CL.includes(t));
+  const has = teams.filter(t => items.some(x => x.t === t)), none = teams.filter(t => !items.some(x => x.t === t));
+  // 1行目：札・名前・背番号、2行目：内容・発表日。右に公式の発表へのリンク
+  const row = x => `<div class="ofr"><span class="offtag k-${x.kind}">${OFF_LABEL[x.kind]}</span><div class="omain"><div class="on1"><span class="onm" data-pl="${x.t}|${esc(x.n)}|">${esc(x.n)}</span>${x.no ? `<span class="ono num">#${esc(x.no)}</span>` : ""}</div><div class="okd">${kindText(x)}${x.date ? `<span class="odt num">・${md(x.date)}</span>` : ""}</div></div>${x.url && /^https:\/\//.test(x.url) ? `<a class="oln" href="${esc(x.url)}" target="_blank" rel="noopener">発表</a>` : ""}</div>`;
+  $("offList").innerHTML = (has.length ? has.map(t => {
+    const list = items.filter(x => x.t === t).sort((a, b) => (b.date || "").localeCompare(a.date || "") || (a.kind === "retire") - (b.kind === "retire"));
+    return `<div class="ofteam" style="${tv(t)}"><div class="ofh"><span class="badge">${sn(t)}</span>${fn(t)}<small>${list.filter(x => x.kind !== "retire").length ? `戦力外 ${list.filter(x => x.kind !== "retire").length}人` : ""}${list.some(x => x.kind === "retire") ? `${list.some(x => x.kind !== "retire") ? "・" : ""}引退 ${list.filter(x => x.kind === "retire").length}人` : ""}</small></div>${list.map(row).join("")}</div>`;
+  }).join("") : `<p class="ofnone">まだ発表はありません。</p>`) + (has.length && none.length ? `<p class="ofnone">まだ発表なし：${none.map(fn).join("・")}</p>` : "");
+}
 // ================= チーム内の成績（球団ごとの全選手。NPB公式の個人成績を中継プログラム経由で） =================
 S.ptKind = "bat"; S.ptAll = false; S.ptSort = null; S.ptTeam = store("ptTeam");
 // 成績タブの表示のしかた（打者/投手・項目・並べ替え）を覚えておき、次に開いたときも同じにする
@@ -4431,13 +4493,13 @@ function drawTeamIn(t, d) {
     if (kind === "pit") { const pg = gr.filter(k => PIT.includes(k)); gr = pg.length ? pg : ["投"]; }
     else { const bg = gr.filter(k => !PIT.includes(k)); gr = bg.length ? bg : gr; }
     const nm = rankName(t, n);
-    return `<span class="ptile ${TILEC[gr[0]] || "pi"}${nm.length <= 2 ? " sp" : ""}${lenC(nm)}" style="${tileStyle(gr)}"><b>${esc(nm)}</b></span>`;
+    return `<span class="ptile ${TILEC[gr[0]] || "pi"}${nm.length <= 2 ? " sp" : ""}${lenC(nm)}" style="${tileStyle(gr)}"><b>${esc(nm)}</b></span>${offTag(t, n)}`;
   };
   // 名前の長さで文字の大きさを変える（長い名前も省略せず、必要なら2行に折り返す）
   function lenC(nm) { const n = [...nm].length; return n >= 7 ? " n7" : n >= 5 ? " n5" : ""; }
   const cell = v => esc(v == null || v === "" ? "-" : v);
   $("ptList").innerHTML = `<div class="ywrap"><table class="ytab rtab tst" id="ptTbl"><colgroup><col class="pc-n">${cols.map(() => "<col>").join("")}</colgroup><thead><tr><th class="tnm">選手名</th>${cols.map((c, j) => `<th class="srt${sk && j === sk.col ? " on" : ""}" data-col="${j}">${c[0]}${sortIco(sk && j === sk.col ? sk.dir : "none")}</th>`).join("")}</tr></thead><tbody>` +
-    view.map(x => `<tr style="${tv(t)}"><td class="pnm" data-pl="${t}|${esc(x.n)}|${kind}">${pawaT ? tile(x.n) : `<span class="ptn${lenC(rankName(t, x.n))}">${esc(rankName(t, x.n))}</span>`}</td>${cols.map(c => `<td class="num v">${cell(c[1](x.r))}</td>`).join("")}</tr>`).join("") +
+    view.map(x => `<tr style="${tv(t)}"><td class="pnm" data-pl="${t}|${esc(x.n)}|${kind}">${pawaT ? tile(x.n) : `<span class="ptn${lenC(rankName(t, x.n))}">${esc(rankName(t, x.n))}${offTag(t, x.n)}</span>`}</td>${cols.map(c => `<td class="num v">${cell(c[1](x.r))}</td>`).join("")}</tr>`).join("") +
     `</tbody></table></div>` + (rows.length > N ? `<button type="button" class="ptmore" id="ptMore">${S.ptAll ? "上位だけ表示" : `全員を表示（${rows.length}人）`}</button>` : "");
   $("ptList").querySelectorAll("th.srt").forEach(th => (th.onclick = () => {
     const j = +th.dataset.col, c = cols[j], first = c[2] === "era" ? "asc" : "desc";
@@ -4449,7 +4511,7 @@ function drawTeamIn(t, d) {
 }
 function renderStats(fromLive) {
   saveStatsUI();
-  if (!fromLive) renderTeamIn();
+  if (!fromLive) { renderOff(); renderTeamIn(); }
   if (!fromLive && S.tab === "stats") setTimeout(() => liveStats(S.cat), 0);
   const st = statsData();
   if (!st) { $("tmTbl").innerHTML = ""; $("rankList").innerHTML = `<div class="rempty">成績データはまだありません。自動更新のあとに表示されます。</div>`; return; }
