@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260929081707">
+<meta name="build" content="20260929082412">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -2141,7 +2141,7 @@ html.theme-pawa .swhint{color:#1D3E7C}
   <section class="view" id="v-off" aria-label="戦力外・引退" hidden>
     <h2 id="offHead">今オフの戦力外・引退<small id="offAsof"></small></h2>
     <div id="offList"></div>
-    <details class="howto"><summary>見方</summary><ul><li>各球団の公式サイトの発表（来季の選手契約について・現役引退など）を自動で集めて、表示しているリーグの球団ごとに並べます。選手名をタップすると今季の成績、「発表」で球団の公式の発表が開きます。成績タブのチーム内の成績・応援歌・選手の成績画面の名前の横にも「戦力外」「引退」の札が付きます。集め始めたばかりの球団は、発表から反映まで少し時間がかかることがあります。</li><li>監督の辞任・退任も、各球団の公式サイトの発表から拾って、球団ごとのいちばん上に「退任」として出します（二軍監督・コーチは出しません）。</li><li>このタブは、戦力外通告が始まる9月後半から12月までだけ表示します（発表があればそれより前でも）。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li>各球団の公式サイトの発表（来季の選手契約について・現役引退など）を自動で集めて、表示しているリーグの球団ごとに並べます。選手名をタップすると今季の成績が出ます。成績タブのチーム内の成績・応援歌・選手の成績画面の名前の横にも「戦力外」「引退」の札が付きます。集め始めたばかりの球団は、発表から反映まで少し時間がかかることがあります。</li><li>監督の辞任・退任も、各球団の公式サイトの発表から拾って、球団ごとのいちばん上に「退任」として出します（二軍監督・コーチは出しません）。</li><li>このタブは、戦力外通告が始まる9月後半から12月までだけ表示します（発表があればそれより前でも）。</li></ul></details>
   </section>
 
   <section class="view" id="v-stats" aria-label="成績" hidden>
@@ -4418,7 +4418,8 @@ async function liveStats(key) {
 }
 // ================= 今オフの戦力外・引退（各球団の公式発表を自動で集めたもの） =================
 const OFF_LABEL = { cut: "戦力外", offer: "戦力外", retire: "引退", mgr: "退任" };
-const offItems = () => (((DATA && DATA.offseason) || {}).items || []).filter(x => OFF_LABEL[x.kind] && TEAM[x.t]);
+// 「公示 任意引退・自由契約」のページ（去年の一覧）から拾ってしまったものは出さない（データ更新でも消すが、念のため画面側でも）
+const offItems = () => (((DATA && DATA.offseason) || {}).items || []).filter(x => OFF_LABEL[x.kind] && TEAM[x.t] && !/\/announce\//.test(x.url || ""));
 // 名前（名簿の名前・NPBの表の名前・名字だけ）から、その選手の発表を探す
 function offOf(t, name) {
   if (!name) return null;
@@ -4457,8 +4458,8 @@ function renderOff() {
     const gr = posGroups(x.t, x.n, ro ? ro.p : "投手"), len = [...x.n.replace(/\s+/g, "")].length;
     return `<span class="ptile otl ${TILEC[gr[0]] || "pp"}${len >= 6 ? " n7" : len >= 5 ? " n5" : ""}" style="${tileStyle(gr)}"><b>${esc(x.n)}</b></span>`;
   };
-  // 1行目：札・名前・背番号、2行目：内容・発表日。右に公式の発表へのリンク
-  const row = x => `<div class="ofr"><span class="offtag k-${x.kind}">${OFF_LABEL[x.kind]}</span><div class="omain"><div class="on1"><span class="onm"${x.kind === "mgr" ? "" : ` data-pl="${x.t}|${esc(x.n)}|"`}>${nameHtml(x)}</span>${x.kind === "mgr" ? `<span class="ono">${esc(x.role || "監督")}</span>` : x.no ? `<span class="ono num">#${esc(x.no)}</span>` : ""}</div><div class="okd">${kindText(x)}${x.date ? `<span class="odt num">・${md(x.date)}</span>` : ""}</div></div>${x.url && /^https:\/\//.test(x.url) ? `<a class="oln" href="${esc(x.url)}" target="_blank" rel="noopener">発表</a>` : ""}</div>`;
+  // 1行目：札・名前・背番号、2行目：内容・発表日
+  const row = x => `<div class="ofr"><span class="offtag k-${x.kind}">${OFF_LABEL[x.kind]}</span><div class="omain"><div class="on1"><span class="onm"${x.kind === "mgr" ? "" : ` data-pl="${x.t}|${esc(x.n)}|"`}>${nameHtml(x)}</span>${x.kind === "mgr" ? `<span class="ono">${esc(x.role || "監督")}</span>` : x.no ? `<span class="ono num">#${esc(x.no)}</span>` : ""}</div><div class="okd">${kindText(x)}${!x.date ? "" : o.season && x.date.slice(0, 4) < String(o.season) ? `<span class="odt num">（${md(x.date)}に表明）</span>` : `<span class="odt num">・${md(x.date)}</span>`}</div></div></div>`;
   $("offList").innerHTML = (has.length ? has.map(t => {
     const list = items.filter(x => x.t === t).sort((a, b) => (b.kind === "mgr") - (a.kind === "mgr") || (b.date || "").localeCompare(a.date || "") || (a.kind === "retire") - (b.kind === "retire"));
     return `<div class="ofteam" style="${tv(t)}"><div class="ofh"><span class="badge">${sn(t)}</span>${fn(t)}<small>${[["cut", "offer"], ["retire"], ["mgr"]].map((ks, i) => { const n = list.filter(x => ks.includes(x.kind)).length; return n ? (i === 2 ? "監督退任" : `${["戦力外", "引退"][i]} ${n}人`) : ""; }).filter(Boolean).join("・")}</small></div>${list.map(row).join("")}</div>`;
