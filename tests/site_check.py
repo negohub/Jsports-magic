@@ -627,23 +627,27 @@ async def swipe_check(browser):
         list_ = await pg.evaluate("periods().map(p => p.id)")
         i = list_.index(before)
         await pg.evaluate(SWIPE_JS, ["#cards", 160, 0])      # 右へ：前の月度
-        await pg.wait_for_timeout(200)
+        await pg.wait_for_timeout(800)
         after = await pg.evaluate("[S.tab, S.period.id]")
         if i > 0 and (after[0] != "magic" or after[1] != list_[i - 1]):
             bad(f"{label} 順位表を右へスワイプしても前の月度にならない（{before}→{after}）")
         await pg.evaluate(SWIPE_JS, ["#cards", -160, 0])     # 左へ：元の月度
-        await pg.wait_for_timeout(200)
+        await pg.wait_for_timeout(800)
         after = await pg.evaluate("[S.tab, S.period.id]")
         if after != ["magic", before]:
             bad(f"{label} 順位表を左へスワイプしても元の月度に戻らない（{after}）")
         await pg.evaluate(SWIPE_JS, ["#cards", 30, 0])       # 少しだけ：変わらない
-        await pg.wait_for_timeout(200)
+        await pg.wait_for_timeout(800)
         if await pg.evaluate("S.period.id") != before:
             bad(f"{label} 少し動かしただけで月度が変わる")
         await pg.evaluate(SWIPE_JS, ["#formBlk", -160, 0])   # 順位表以外：タブが変わる
-        await pg.wait_for_timeout(300)
+        await pg.wait_for_timeout(800)
         if await pg.evaluate("S.tab") != "game":
             bad(f"{label} 順位表以外の場所を左へスワイプしてもタブが変わらない")
+        # 動き終わったあと、画面がずれたり透明のまま残ったりしていないか
+        left = await pg.evaluate("[...document.querySelectorAll('.view, #alert, #meCard, #cards')].filter(el => el.style.transform || el.style.opacity).map(el => el.id)")
+        if left:
+            bad(f"{label} スワイプのあと、画面の位置や透明度が元に戻っていない：{left}")
         for e in errs:
             bad(f"{label}: 画面のエラー {e}")
         await pg.close()
@@ -801,6 +805,32 @@ async def next_day_check(browser):
     await pg.close()
 
 
+async def name_center_check(browser):
+    """パワプロ風の選手名のタイル（チーム内の成績）で、名前がタイルの真ん中にあるか（字間の分がずれていないか）"""
+    for width in [390, 320]:
+        pg, errs = await open_page(browser, width, "pawa")
+        r = await pg.evaluate("""() => {
+          setTab('stats'); const t = CL[0], bat = {}, pit = {};
+          (DATA.rosters[t] || []).forEach((x, i) => { const k = x.n.replace(/\\s+/g, ''); if (x.p === '投手') pit[k] = { 登板: '9', 投球回: '9', 防御率: '1.00', 勝利: '1', 敗北: '1', 三振: '9' }; else bat[k] = { 試合: '9', 打席: String(600 - i), 打率: '.300', 本塁打: '9', 打点: '9', 出塁率: '.4', 長打率: '.5' }; });
+          PST[t] = { at: Date.now(), d: { bat, pit, asof: '9/28' } }; S.ptTeam = t; S.ptAll = true;
+          const ng = [];
+          for (const k of ['bat', 'pit']) {
+            S.ptKind = k; renderTeamIn();
+            document.querySelectorAll('#ptTbl .ptile').forEach(tl => {
+              const b = tl.querySelector('b'), r = document.createRange(); r.selectNodeContents(b);
+              const ls = parseFloat(getComputedStyle(b).letterSpacing) || 0, tr = tl.getBoundingClientRect(), c = (tr.left + tr.right) / 2;
+              for (const rc of r.getClientRects()) { const off = (rc.left + rc.right - ls) / 2 - c; if (Math.abs(off) > 1.5) { ng.push(`${b.textContent} が ${off.toFixed(1)}px ずれている`); break; } }
+            });
+          }
+          return ng.slice(0, 5);
+        }""")
+        for m in r:
+            bad(f"[名前の位置 パワプロ風 幅{width}] {m}")
+        for e in errs:
+            bad(f"[名前の位置 パワプロ風 幅{width}]: 画面のエラー {e}")
+        await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -859,6 +889,7 @@ async def main():
         await loser_wording_check(browser)
         await next_day_check(browser)
         await home_screen_check(browser)
+        await name_center_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
