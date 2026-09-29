@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="J SPORTS ペナントレース">
 <meta name="twitter:image" content="https://negohub.github.io/Jsports-magic/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260929132323">
+<meta name="build" content="20260929135336">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 <style>
 :root{
@@ -2056,6 +2056,7 @@ html.theme-pawa .bi.fin.canc b{color:#C62828}
 .offtag{display:inline-flex;align-items:center;height:18px;padding:0 6px;margin-left:6px;border-radius:5px;font-size:10.5px;font-weight:800;letter-spacing:0;vertical-align:2px;white-space:nowrap;background:#E5484D;color:#fff}
 .offtag.k-retire{background:#8A8F98}
 .offtag.k-mgr{background:#3B5BA9}
+.offcats{margin:10px 0 0}
 .offtag.k-out{background:#8E44AD}.offtag.k-fa_decl{background:#E67E22}.offtag.k-in{background:#16A085}.offtag.k-draft{background:#2E9E44}
 #offList .ofsec{padding:6px 12px;font-size:11.5px;font-weight:800;color:var(--muted,#8B8B95);border-top:1px solid var(--line,#2A2A2A);background:rgba(255,255,255,.03)}
 html.theme-pawa #offList .ofsec{color:#1D3E7C;background:#E3ECF7;border-top:2px solid #1D3E7C}
@@ -2115,7 +2116,7 @@ html.theme-pawa .mgtab td.best{color:#E06A00}
 .mg-sub{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 2px 0;font-size:12.5px;font-weight:700;color:var(--muted,#8B8B95)}
 .mg-sub .ps-pos{white-space:nowrap}
 html.theme-pawa .mg-sub{color:#4A5B7A}
-html.theme-pawa #offList .ofr .offtag{min-width:56px}
+html.theme-pawa #offList .ofr .offtag{min-width:62px}
 html.theme-pawa #offList .ofr .ono,html.theme-pawa #offList .ofr .okd,html.theme-pawa #offList .ofh small,html.theme-pawa #offList .ofnone{color:#4A5B7A}
 /* 応援歌の選手タイルに付ける札：タイルの右上の内側に小さく（タイルの外にはみ出すと切れるため） */
 .ptile{position:relative}
@@ -2123,7 +2124,7 @@ html.theme-pawa #offList .ofr .ono,html.theme-pawa #offList .ofr .okd,html.theme
 /* チーム内の成績（パワプロ風）：札は名前のタイルのすぐ下に */
 #ptTbl td.pnm > .offtag{display:flex;width:max-content;margin:4px auto 0}
 /* 一覧の札は同じ幅にそろえて、名前の位置をそろえる */
-#offList .ofr .offtag{min-width:46px;justify-content:center}
+#offList .ofr .offtag{min-width:58px;justify-content:center}
 /* ===== スワイプで切り替えたとき：いつもの「ふわっと」は出さず、指の動きの続きですべり込む ===== */
 .view.swin:not([hidden]){animation:none !important}
 /* ===== 戦況：月度のスワイプの案内（最初の1回だけ） ===== */
@@ -2225,8 +2226,9 @@ html.theme-pawa .swhint{color:#1D3E7C}
   </section>
   <section class="view" id="v-off" aria-label="オフの動き" hidden>
     <h2 id="offHead">今オフの動き<small id="offAsof"></small></h2>
+    <div class="chips2 offcats" id="offCats"></div>
     <div id="offList"></div>
-    <details class="howto"><summary>見方</summary><ul><li>各球団の公式サイトの発表（来季の選手契約について・現役引退など）を自動で集めて、表示しているリーグの球団ごとに並べます。選手名をタップすると今季の成績が出ます。成績タブのチーム内の成績・応援歌・選手の成績画面の名前の横にも「戦力外」「引退」の札が付きます。集め始めたばかりの球団は、発表から反映まで少し時間がかかることがあります。</li><li>監督の辞任・退任も、各球団の公式サイトの発表から拾って、球団ごとのいちばん上に「退任」として出します（二軍監督・コーチは出しません）。監督の名前をタップすると、監督としての通算成績（NPB公式の年度別成績から、今季の分も含む）が出ます。パワプロ風では、監督の名前は現役時代のポジションの色のタイルです。</li><li>戦力外・引退・監督の退任のほか、トレード・FA（宣言と移籍）・新外国人・そのほかの加入（各球団の公式発表から）と、ドラフト会議の指名選手（NPB公式から）も出します。球団ごとに「出ていく」「FA宣言（残るか移籍か未定）」「入ってくる」に分けて並べます。移籍は、出ていく球団と入ってくる球団の両方に出ます。</li><li>このタブは、戦力外通告が始まる9月後半から12月までだけ表示します（発表があればそれより前でも）。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li>各球団の公式サイトの発表（来季の選手契約について・現役引退など）を自動で集めて、表示しているリーグの球団ごとに並べます。選手名をタップすると今季の成績が出ます。成績タブのチーム内の成績・応援歌・選手の成績画面の名前の横にも「戦力外」「引退」の札が付きます。集め始めたばかりの球団は、発表から反映まで少し時間がかかることがあります。</li><li>監督の辞任・退任も、各球団の公式サイトの発表から拾って、球団ごとのいちばん上に「退任」として出します（二軍監督・コーチは出しません）。監督の名前をタップすると、監督としての通算成績（NPB公式の年度別成績から、今季の分も含む）が出ます。パワプロ風では、監督の名前は現役時代のポジションの色のタイルです。</li><li>戦力外・引退・監督の退任のほか、トレード・FA（宣言と移籍）・新外国人・そのほかの加入（各球団の公式発表から）と、ドラフト会議の指名選手（NPB公式から）も出します。球団ごとに「退団」「FA宣言（残るか移籍か未定）」「入団」に分けて並べます。移籍は、退団する球団と入団する球団の両方に出ます。</li><li>このタブは、戦力外通告が始まる9月後半から12月までだけ表示します（発表があればそれより前でも）。</li></ul></details>
   </section>
 
   <section class="view" id="v-stats" aria-label="成績" hidden>
@@ -2854,6 +2856,8 @@ function makeSwiper(o) {
       if (Math.abs(mx) < 10 && Math.abs(my) < 10) return;
       lock = Math.abs(mx) > Math.abs(my) * 1.4 ? "x" : "y";   // 斜めの動きは縦のスクロールとして扱う
       if (lock === "y") { on = false; return; }
+      // その向きにもう切り替える先がない（最初・最後の月度など）ときは、ほかのスワイプ（タブの切り替え）に引き継ぐ
+      if (o.fallback && o.edge(mx) && o.fallback.adopt(sx, sy, hist[0] ? hist[0][0] : e.timeStamp)) { on = false; return; }
       els = o.els();
       els.forEach(el => { el.style.willChange = "transform,opacity"; el.style.transition = "none"; });
     }
@@ -2894,10 +2898,20 @@ function makeSwiper(o) {
   };
   window.addEventListener("touchend", end, { passive: true });
   window.addEventListener("touchcancel", end, { passive: true });
+  // ほかのスワイプから途中で引き継ぐ（指を置いた位置から、横の動きとして始める）
+  return {
+    adopt(x0, y0, t0) {
+      if (busy) return false;
+      sx = x0; sy = y0; dx = 0; hist = [[t0, 0]]; on = true; lock = "x";
+      els = o.els();
+      els.forEach(el => { el.style.willChange = "transform,opacity"; el.style.transition = "none"; });
+      return true;
+    },
+  };
 }
 // タブの切り替え：戦況の順位表のあたり（月度の切り替えに使う）以外の場所
 const tabOrder = () => [...document.querySelectorAll(".tabbar button")].filter(b => !b.hidden).map(b => b.dataset.tab);
-makeSwiper({
+const tabSwiper = makeSwiper({
   canStart: e => !e.target.closest(".tabbar, input, select, textarea, .fld, .fwrap") && !hScrollableAt(e.target) && !(S.tab === "magic" && e.target.closest(MONTH_ZONE)),
   els: () => [$("v-" + S.tab)],
   edge: dx => { const t = tabOrder(), i = t.indexOf(S.tab); return (dx > 0 && i === 0) || (dx < 0 && i === t.length - 1); },
@@ -2914,6 +2928,7 @@ makeSwiper({
   edge: dx => { const l = periods(), i = periodIdx(); return (dx > 0 && i <= 0) || (dx < 0 && i >= l.length - 1); },
   target: dir => { const l = periods(), i = periodIdx(); return i < 0 ? null : l[i + dir] || null; },
   commit: p => { pickPeriod(p, true); hideSwipeHint(); },   // 帯の登場の動きは出さない（すべり込む動きと重なるため）
+  fallback: tabSwiper,   // 最後の月度で左へ（次の月度がない）→ 試合タブへ。最初の月度で右へ → 何もしない（戦況が最初のタブ）
 });
 // 月度のスワイプの案内：戦況を初めて開いたときに、月度ボタンの下に一度だけ出す
 function showSwipeHint() {
@@ -4522,7 +4537,9 @@ function renderSong() {
   $("songHead").innerHTML = `<div class="sh" style="${tv(t)}"><span class="badge">${sn(t)}</span><b>${TEAM[t].n}</b>${pg ? `<a href="${pg[0]}" target="_blank" rel="noopener">${SONG_UNOFFICIAL.has(t) ? "応援歌のページ" : "公式の応援歌ページ"}</a>` : ""}</div>`;
   const roster = ((DATA.rosters || {})[t] || []);
   const judged = roster.some(x => "song" in x);
-  const all = judged ? roster.filter(x => x.song) : roster;
+  // 応援歌がある選手だけ（応援歌の情報を読めていない球団は、全員を並べずに何も出さない）。ほかの球団へ移籍した選手は出さない
+  const moved = x => { const o = offOf(t, x.n); return !!(o && o.kind === "out"); };
+  const all = judged ? roster.filter(x => x.song && !moved(x)) : [];
 
   const q = S.songQ.replace(/\s+/g, "");
   const hit = x => !q || x.n.replace(/\s+/g, "").includes(q) || x.no === q;
@@ -4657,7 +4674,7 @@ async function liveStats(key) {
 }
 // ================= 今オフの戦力外・引退（各球団の公式発表を自動で集めたもの） =================
 const OFF_LABEL = { cut: "戦力外", offer: "戦力外", retire: "引退", mgr: "退任", out: "移籍", fa_decl: "FA宣言", in: "加入", draft: "ドラフト" };
-const OFF_IN = new Set(["in", "draft"]);   // 入ってくる選手（ほかは出ていく・残るかどうか未定）
+const OFF_IN = new Set(["in", "draft"]);   // 入団する選手（ほかは退団・残るかどうか未定）
 // 監督の現役時代のポジション（パワプロ風の名前のタイルの色に使う）。名前は空白なし
 const MGR_POS = { "藤川球児": "投", "阿部慎之助": "捕", "相川亮二": "捕", "井上一樹": "外", "新井貴浩": "内", "池山隆寛": "内",
   "小久保裕紀": "内", "新庄剛志": "外", "岸田護": "投", "三木肇": "内", "西口文也": "投", "サブロー": "外", "橋上秀樹": "外" };
@@ -4674,8 +4691,23 @@ function offOf(t, name) {
 const offTag = (t, name) => { const o = offOf(t, name); return o ? `<span class="offtag k-${o.kind}">${OFF_LABEL[o.kind]}</span>` : ""; };
 // 出す期間：9月後半〜12月（発表があれば9月前半でも）
 function offSeason() { const j = jst(); return (j.m === 9 && j.d >= 15) || j.m >= 10; }
+// オフの動きの種類（上のボタンで絞り込む）
+const OFF_CATS = [["all", "すべて"], ["cut", "戦力外"], ["retire", "引退"], ["mgr", "監督"], ["trade", "トレード"], ["fa", "FA"], ["draft", "ドラフト"], ["newfor", "新外国人"], ["move", "そのほかの移籍"]];
+function offCat(x) {
+  if (x.kind === "cut" || x.kind === "offer") return "cut";
+  if (x.kind === "retire" || x.kind === "mgr" || x.kind === "draft") return x.kind;
+  if (x.kind === "fa_decl" || x.via === "fa") return "fa";
+  if (x.via === "trade") return "trade";
+  if (x.via === "newfor") return "newfor";
+  return "move";
+}
+S.offCat = "all";
 function renderOff() {
-  const items = offItems().filter(x => CL.includes(x.t));
+  const allItems = offItems().filter(x => CL.includes(x.t));
+  // 種類のボタン：その種類の発表があるものだけ
+  const cats = OFF_CATS.filter(([k]) => k === "all" || allItems.some(x => offCat(x) === k));
+  if (!cats.some(([k]) => k === S.offCat)) S.offCat = "all";
+  const items = S.offCat === "all" ? allItems : allItems.filter(x => offCat(x) === S.offCat);
   const show = offSeason() || offItems().length > 0;
   // 戦力外のタブはオフ（9月後半〜12月、または発表があるとき）だけ出す。タブの数に合わせてタブバーを並べ直す
   const btn = document.querySelector('.tabbar button[data-tab="off"]');
@@ -4687,9 +4719,12 @@ function renderOff() {
   if (!show) { if (S.tab === "off") setTab("magic"); return; }
   const cut = items.filter(x => x.kind === "cut" || x.kind === "offer").length, ret = items.filter(x => x.kind === "retire").length, mg = items.filter(x => x.kind === "mgr").length;
   $("offHead").firstChild.textContent = isPL() ? "パ・リーグのオフの動き" : "セ・リーグのオフの動き";
+  $("offCats").hidden = cats.length < 3;   // 種類が1つだけなら出さない
+  $("offCats").innerHTML = cats.map(([k, l]) => `<button type="button" data-oc="${k}" aria-pressed="${k === S.offCat}">${l}</button>`).join("");
+  $("offCats").querySelectorAll("button").forEach(b => (b.onclick = () => { S.offCat = b.dataset.oc; renderOff(); }));
   const nIn = items.filter(x => OFF_IN.has(x.kind)).length, nOut = items.filter(x => ["out"].includes(x.kind)).length, nFa = items.filter(x => x.kind === "fa_decl").length;
   const o = (DATA && DATA.offseason) || {};
-  $("offAsof").textContent = [items.length ? [cut ? `戦力外${cut}人` : "", ret ? `引退${ret}人` : "", mg ? `監督退任${mg}人` : "", nOut ? `移籍${nOut}人` : "", nFa ? `FA宣言${nFa}人` : "", nIn ? `加入${nIn}人` : ""].filter(Boolean).join("・") : "", o.checked_at ? `${Number(o.checked_at.slice(5, 7))}/${Number(o.checked_at.slice(8, 10))} ${o.checked_at.slice(11, 16)} 確認` : ""].filter(Boolean).join("　");
+  $("offAsof").textContent = [o.checked_at ? `${Number(o.checked_at.slice(5, 7))}/${Number(o.checked_at.slice(8, 10))} ${o.checked_at.slice(11, 16)} 確認` : ""].filter(Boolean).join("　");
   // 発表日：今季の日付は「9/28」、去年の秋に表明した引退などは「2025/11/24」
   const md = d => !d ? "" : (o.season && d.slice(0, 4) !== String(o.season) ? `${d.slice(0, 4)}/` : "") + `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
   const VIA = { trade: "トレード", fa: "FA", genekidraft: "現役ドラフト", move: "", newfor: "" };
@@ -4714,14 +4749,13 @@ function renderOff() {
   $("offList").innerHTML = (has.length ? has.map(t => {
     const all = items.filter(x => x.t === t);
     const byDate = (a, b) => (b.date || "").localeCompare(a.date || "");
-    // 出ていく（監督・戦力外・移籍・引退）／FA宣言（残るか未定）／入ってくる（ドラフト・加入）に分けて並べる
+    // 退団（監督・戦力外・移籍・引退）／FA宣言（残るか未定）／入団（ドラフト・加入）に分けて並べる
     const outs = all.filter(x => !OFF_IN.has(x.kind) && x.kind !== "fa_decl").sort((a, b) => (b.kind === "mgr") - (a.kind === "mgr") || byDate(a, b) || (a.kind === "retire") - (b.kind === "retire"));
     const fas = all.filter(x => x.kind === "fa_decl").sort(byDate);
     const ins = all.filter(x => OFF_IN.has(x.kind)).sort((a, b) => (a.kind === "draft") - (b.kind === "draft") || byDate(a, b) || (parseInt((a.round || "").replace("育成", "9")) || 99) - (parseInt((b.round || "").replace("育成", "9")) || 99));
     const sec = (label, list) => list.length ? `${ins.length || fas.length ? `<div class="ofsec">${label}</div>` : ""}${list.map(row).join("")}` : "";
-    const sum = [["cut", "offer"], ["retire"], ["mgr"], ["out"], ["fa_decl"], ["in", "draft"]].map((ks, i) => { const n = all.filter(x => ks.includes(x.kind)).length; return n ? (i === 2 ? "監督退任" : `${["戦力外", "引退", "", "移籍", "FA宣言", "加入"][i]} ${n}人`) : ""; }).filter(Boolean).join("・");
-    return `<div class="ofteam" style="${tv(t)}"><div class="ofh"><span class="badge">${sn(t)}</span>${fn(t)}<small>${sum}</small></div>${sec("出ていく", outs)}${sec("FA宣言（残るか移籍か未定）", fas)}${sec("入ってくる", ins)}</div>`;
-  }).join("") : `<p class="ofnone">まだ発表はありません。</p>`) + (has.length && none.length ? `<p class="ofnone">まだ発表なし：${none.map(fn).join("・")}</p>` : "");
+    return `<div class="ofteam" style="${tv(t)}"><div class="ofh"><span class="badge">${sn(t)}</span>${fn(t)}</div>${sec("退団", outs)}${sec("FA宣言（残るか移籍か未定）", fas)}${sec("入団", ins)}</div>`;
+  }).join("") : `<p class="ofnone">まだ発表はありません。</p>`) + (has.length && none.length && S.offCat === "all" ? `<p class="ofnone">まだ発表なし：${none.map(fn).join("・")}</p>` : "");
 }
 // ================= チーム内の成績（球団ごとの全選手。NPB公式の個人成績を中継プログラム経由で） =================
 S.ptKind = "bat"; S.ptAll = false; S.ptSort = null; S.ptTeam = store("ptTeam");
