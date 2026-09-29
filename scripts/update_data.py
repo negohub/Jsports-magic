@@ -533,8 +533,9 @@ OFF_LISTS = {
 OFF_TITLE = re.compile(r"契約|退団|戦力外|自由契約|選手について|選手に関して")
 OFF_TITLE_MGR = re.compile(r"監督.{0,20}(辞任|退任|解任)|(辞任|退任|解任).{0,20}監督")   # 監督の辞任・退任
 # 移籍・加入（オフの動き）：トレード・FA・新外国人・入団・獲得など
-OFF_TITLE_MOVE = re.compile(r"トレード|FA|フリーエージェント|新外国人|外国人選手|入団|獲得|加入|移籍|現役ドラフト")
-OFF_TITLE_MOVE_NG = re.compile(r"グッズ|チケット|販売|ファンクラブ|イベント|記念|会見の(?:お知らせ|模様)|テスト|募集|タイトル|受賞|賞|達成|記録|ドラフト会議|指名|入団式|キャンプ|放送|配信")
+FA_RE = re.compile(r"(?<![A-Za-z])FA(?![A-Za-z])|フリーエージェント")
+OFF_TITLE_MOVE = re.compile(r"トレード|(?<![A-Za-z])FA(?![A-Za-z])|フリーエージェント|新外国人|外国人選手|入団|獲得|加入|移籍|現役ドラフト")
+OFF_TITLE_MOVE_NG = re.compile(r"FANCLUB|FAN CLUB|推し|会員|新入団選手|入団選手情報|グッズ|チケット|販売|ファンクラブ|イベント|記念|会見の(?:お知らせ|模様)|テスト|募集|タイトル|受賞|賞|達成|記録|ドラフト会議|指名|入団式|キャンプ|放送|配信")
 OFF_TITLE_NG = re.compile(r"更改|合意|締結|獲得|入団|加入|新外国人|育成選手契約を結ぶ|スポンサー|パートナー|協定|提携|ファンクラブ|チケット|グッズ|放送|配信|中継|販売|募集|キャンプ|約款|規約|観戦|公示|登録|抹消|出演|誕生日|登場曲|達成|記録|受賞|選出|手術|負傷|故障|けが|怪我|復帰|結婚|入籍|出産")
 OFF_URL_NG = re.compile(r"/announce/|/stadium/|/ticket|/fanclub|/shop|/goods|/company/|/recruit")
 # 本文の終わりの目印（ここから後ろは「関連ニュース」などなので見ない）
@@ -696,7 +697,7 @@ def off_moves(t, url, list_title, html, rosters, season):
             return []   # オフより前の記事
         date = f"{y:04d}-{mo:02d}-{d:02d}"
         break
-    via = "trade" if "トレード" in title else "fa" if re.search(r"FA|フリーエージェント", title) else "genekidraft" if "現役ドラフト" in title else "move"
+    via = "trade" if "トレード" in title else "fa" if FA_RE.search(title) else "genekidraft" if "現役ドラフト" in title else "move"
     fa_decl = via == "fa" and re.search(r"宣言|行使|権利", title) and not re.search(r"獲得|入団|加入|合意", title)
     base = {"date": date, "url": url, "title": title[:80]}
     out, found = [], {}
@@ -733,6 +734,34 @@ DRAFT_ROW = re.compile(r"^(育成)?\s*(\d{1,2})\s*位\s+(.+?)\s+(投手|捕手|�
 FULLNAME = {"福岡ソフトバンクホークス": "H", "北海道日本ハムファイターズ": "F", "オリックス・バファローズ": "B", "東北楽天ゴールデンイーグルス": "E",
             "埼玉西武ライオンズ": "L", "千葉ロッテマリーンズ": "M", "阪神タイガース": "T", "横浜DeNAベイスターズ": "DB", "読売ジャイアンツ": "G",
             "中日ドラゴンズ": "D", "広島東洋カープ": "C", "東京ヤクルトスワローズ": "S"}
+
+
+TRADE_TEAM = dict(TEAMS + [("読売", "G")])
+TRADE_TEAM_RE = re.compile("|".join(re.escape(n) for n in sorted(TRADE_TEAM, key=len, reverse=True)))
+
+
+def parse_trades(html, season):
+    """NPBの公示「トレード」の表：日付・名前・守備・元の背番号・元の球団 → 新しい背番号・新しい球団"""
+    out = []
+    for tr in BeautifulSoup(html, "html.parser").find_all("tr"):
+        cells = [norm(c.get_text(" ", strip=True)) for c in tr.find_all(["td", "th"])]
+        if len(cells) < 7:
+            continue
+        m = re.match(r"^(\d{4})/(\d{1,2})/(\d{1,2})$", cells[0])
+        if not m or int(m.group(1)) != season or int(m.group(2)) < 2:   # その年の2月以降（前のオフの分は入れない）
+            continue
+        try:
+            i = cells.index("→")
+        except ValueError:
+            continue
+        fr = TRADE_TEAM_RE.search(cells[i - 1]) if i >= 1 else None
+        to = TRADE_TEAM_RE.search(" ".join(cells[i + 1:])) if i + 1 < len(cells) else None
+        if not fr or not to:
+            continue
+        out.append({"d": f"{m.group(1)}-{int(m.group(2)):02d}-{int(m.group(3)):02d}", "n": re.sub(r"\s+", " ", cells[1]).strip(),
+                    "pos": re.sub(r"\s+", "", cells[2]), "no_from": cells[3] if i >= 2 else "", "from": TRADE_TEAM[fr.group()],
+                    "no_to": cells[i + 1] if re.fullmatch(r"\d{1,3}", cells[i + 1] or "") else "", "to": TRADE_TEAM[to.group()]})
+    return out
 
 
 def parse_draft(html):
@@ -860,6 +889,23 @@ def fetch_offseason(season, old, rosters, force=False, any_month=False):
                 st["found"] += 1
             print(f"  [戦力外・引退 {t}] {ltitle[:40]} → {len(found)}人{('（' + why + '）') if why else ''}")
         teams[t] = st
+    # 前の回に、関係のないページ（ファンクラブの記事・新入団選手の一覧など）から拾ってしまった移籍・加入は消す
+    for k in [k for k, it in items.items() if it.get("kind") in ("in", "out") and (OFF_TITLE_MOVE_NG.search(it.get("title", "")) or "/newcomer" in it.get("url", ""))]:
+        del items[k]
+    # トレード（NPB公式の公示）：シーズン中のトレードも入れる。戦力外・引退などのあとの発表があれば、そちらを残す
+    trades = []
+    for y in (season, season + 1):
+        html = fetch(f"https://npb.jp/announcement/{y}/pn_traded.html")
+        trades += parse_trades(html, y) if html else []
+    for x in trades:
+        base = {"date": x["d"], "url": f"https://npb.jp/announcement/{x['d'][:4]}/pn_traded.html", "title": "トレード（NPB公示）", "via": "trade"}
+        for key, it in (((x["from"], x["n"]), {"t": x["from"], "n": x["n"], "no": x["no_from"], "dev": False, "kind": "out", "to": x["to"], **base}),
+                        ((x["to"], x["n"]), {"t": x["to"], "n": x["n"], "no": x["no_to"], "dev": False, "kind": "in", "from": x["from"], "pos": x["pos"], **base})):
+            cur = items.get(key)
+            if not cur or cur.get("kind") in ("in", "out") or cur.get("date", "") < x["d"]:
+                items[key] = it
+    if trades:
+        print(f"[トレード] {len(trades)}人（NPB公示）")
     # ドラフト会議の指名選手（10月〜）
     draft_st = {}
     if now.month >= 10 or any_month:
