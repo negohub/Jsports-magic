@@ -1415,6 +1415,41 @@ async def song_list_check(browser):
     await pg.close()
 
 
+async def consistency_check(browser):
+    """言葉・書き方の統一：同じものを別の書き方で出していないか（全タブ・設定・選手の画面）"""
+    NG = [(r"\d{1,2}:\d{2} 確認", "時刻の後ろは「更新」にそろえる（「確認」になっている）"),
+          (r"\d+月\d+日時点", "日付は「M/D 時点」にそろえる（「○月○日時点」になっている）"),
+          (r"現在$", "「現在」ではなく「時点」「更新」にそろえる"),
+          (r"取得できませんでした|開き直して", "読み込めなかったときの文言がそろっていない"),
+          (r"^支払$|^消滅$|自力消滅", "「支払い」「自力脱出消滅」にそろえる（略した書き方が残っている）"),
+          (r"^公式$", "応援歌のボタンは「応援歌」にそろえる")]
+    for lg in ["C", "P"]:
+        pg, errs = await open_page(browser, 390, "")
+        if lg == "P":
+            await pg.evaluate("switchLeague('P')")
+            await pg.wait_for_timeout(200)
+        texts = await pg.evaluate("""() => {
+          const out = [];
+          for (const t of ['magic', 'game', 'cal', 'std', 'stats', 'song', 'off']) {
+            setTab(t);
+            document.querySelectorAll('#v-' + t + ' *').forEach(e => { if (!e.children.length || /^(SMALL|P|B|SPAN|EM)$/.test(e.tagName)) { const x = e.innerText ? e.innerText.trim() : ''; if (x && x.length < 200) out.push(t + '｜' + x); } });
+          }
+          return out;
+        }""")
+        import re as _re
+        seen = set()
+        for line in texts:
+            tab, _, x = line.partition("｜")
+            for pat, why in NG:
+                for part in x.split("\n"):
+                    if _re.search(pat, part.strip()) and (why, part) not in seen:
+                        seen.add((why, part))
+                        bad(f"[言葉の統一 {lg}] {why}：{tab}「{part.strip()[:40]}」")
+        for e in errs:
+            bad(f"[言葉の統一 {lg}]: 画面のエラー {e}")
+        await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -1483,6 +1518,7 @@ async def main():
         await post_bracket_check(browser)
         await archive_check(browser)
         await song_list_check(browser)
+        await consistency_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
