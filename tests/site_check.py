@@ -641,6 +641,14 @@ async def swipe_check(browser):
         await pg.wait_for_timeout(800)
         if await pg.evaluate("S.period.id") != before:
             bad(f"{label} 少し動かしただけで月度が変わる")
+        # 最後の月度で順位表を左へ（次の月度がない）：試合タブへ進む
+        if i == len(list_) - 1:
+            await pg.evaluate(SWIPE_JS, ["#cards", -160, 0])
+            await pg.wait_for_timeout(800)
+            if await pg.evaluate("S.tab") != "game":
+                bad(f"{label} 最後の月度で順位表を左へスワイプしても試合タブへ進まない")
+            await pg.evaluate("setTab('magic'); window.scrollTo(0, 0)")
+            await pg.wait_for_timeout(300)
         await pg.evaluate(SWIPE_JS, ["#formBlk", -160, 0])   # 順位表以外：タブが変わる
         await pg.wait_for_timeout(800)
         if await pg.evaluate("S.tab") != "game":
@@ -927,10 +935,15 @@ async def offseason_check(browser):
                   renderOff();
                   const blk2 = document.getElementById('offList'), card = [...blk2.querySelectorAll('.ofteam')].find(c => c.textContent.includes(fn(t0)));
                   const secs = card ? [...card.querySelectorAll('.ofsec')].map(x => x.textContent) : [];
-                  if (!secs.some(x => x.startsWith('出ていく')) || !secs.some(x => x.startsWith('FA宣言')) || !secs.some(x => x.startsWith('入ってくる'))) ng.push(`オフの動きの「出ていく／FA宣言／入ってくる」の分け方が出ない（${secs}）`);
+                  if (!secs.some(x => x === '退団') || !secs.some(x => x.startsWith('FA宣言')) || !secs.some(x => x === '入団')) ng.push(`オフの動きの「退団／FA宣言／入団」の分け方が出ない（${secs}）`);
                   if (card && [...card.querySelectorAll('.ofr')].some(r => /テスト 新人|ジョン・テスト/.test(r.textContent) && r.querySelector('[data-pl]'))) ng.push('名簿にいない加入選手の名前が押せてしまう');
                   if (card && !card.textContent.includes('ドラフト1位指名（テスト大）')) ng.push('ドラフトの内容の書き方が違う');
                   if (card && !card.textContent.includes(fn(CL[1]) + 'へトレードで移籍')) ng.push('トレードで出ていく書き方が違う');
+                  // 種類のボタン：ドラフトを押すとドラフトだけ、人数の説明は出さない
+                  const bt = document.querySelector('#offCats button[data-oc="draft"]');
+                  if (!bt) ng.push('種類の切り替えボタン（ドラフト）が出ない');
+                  else { bt.click(); const rows2 = [...document.querySelectorAll('#offList .ofr')]; if (!rows2.length || rows2.some(r => !r.querySelector('.offtag.k-draft'))) ng.push('ドラフトで絞り込んでも、ほかの種類が混ざる'); document.querySelector('#offCats button[data-oc="all"]').click(); }
+                  if (/\\d+人/.test(document.getElementById('offAsof').textContent + [...document.querySelectorAll('#offList .ofh')].map(h => h.textContent).join(''))) ng.push('人数の説明が残っている');
                   DATA.offseason.items.splice(-4, 4); renderOff();
                   // 今季の一軍の登板がない投手は、データ更新で調べた過去の役割（先発）の色になるか
                   const pr = (DATA.rosters[CL[0]] || []).find(x => x.p === '投手' && !DATA.offseason.items.some(y => y.t === CL[0] && y.n === x.n) && posGroups(CL[0], x.n, '投手').join() === '投');
@@ -1357,6 +1370,32 @@ def datetime_month():
     return (_dt.datetime.utcnow() + _dt.timedelta(hours=9)).month
 
 
+async def song_list_check(browser):
+    """応援歌タブ：応援歌がある選手だけを出し、ほかの球団へ移籍した選手は出さない"""
+    pg, errs = await open_page(browser, 390, "")
+    r = await pg.evaluate("""() => {
+      const ng = [], t = 'T', ro = DATA.rosters[t] || [];
+      const withSong = ro.filter(x => x.song), noSong = ro.filter(x => 'song' in x && !x.song);
+      if (!withSong.length) return ng;
+      const mv = withSong[0];
+      DATA.offseason = { season: 2026, items: [{ t, n: mv.n, no: mv.no, kind: 'out', via: 'trade', to: 'G', date: '2026-11-10' }], teams: {}, seen: {} };
+      S.songTeam = t; S.songQ = ''; setTab('song'); renderSong();
+      const txt = document.getElementById('v-song').innerText.replace(/\\s+/g, '');
+      if (txt.includes(mv.n.replace(/\\s+/g, '')) || txt.includes(shortName(t, mv.n) + '内野') && false) ng.push(`移籍した選手（${mv.n}）が応援歌タブに出ている`);
+      const tiles = [...document.querySelectorAll('#v-song [data-song]')].map(b => b.dataset.song.split('|')[1]);
+      if (tiles.includes(mv.n)) ng.push(`移籍した選手（${mv.n}）が応援歌タブに出ている`);
+      const extra = tiles.filter(n => noSong.some(x => x.n === n));
+      if (extra.length) ng.push(`応援歌がない選手が出ている：${extra.slice(0, 3).join('、')}`);
+      DATA.offseason = null; renderSong();
+      return ng;
+    }""")
+    for m in r:
+        bad(f"[応援歌の選手] {m}")
+    for e in errs:
+        bad(f"[応援歌の選手]: 画面のエラー {e}")
+    await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -1424,6 +1463,7 @@ async def main():
         await makeup_check(browser)
         await post_bracket_check(browser)
         await archive_check(browser)
+        await song_list_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
