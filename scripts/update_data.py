@@ -533,6 +533,9 @@ OFF_LISTS = {
 OFF_TITLE = re.compile(r"契約|退団|戦力外|自由契約|選手について|選手に関して")
 OFF_TITLE_MGR = re.compile(r"監督.{0,20}(辞任|退任|解任)|(辞任|退任|解任).{0,20}監督")   # 監督の辞任・退任
 # 移籍・加入（オフの動き）：トレード・FA・新外国人・入団・獲得など
+# コーチ・首脳陣（退団・就任・配置転換）
+OFF_TITLE_COACH = re.compile(r"コーチ|首脳陣|組閣|スタッフ|二軍監督|ファーム監督")
+OFF_TITLE_COACH_NG = re.compile(r"グッズ|チケット|販売|イベント|教室|スクール|アカデミー|ジュニア|野球教室|トークショー|サイン会|出演|放送|配信|ハニーズ|チアリーダー|DJ|MC|ボールパーク")
 FA_RE = re.compile(r"(?<![A-Za-z])FA(?![A-Za-z])|フリーエージェント")
 OFF_TITLE_MOVE = re.compile(r"トレード|(?<![A-Za-z])FA(?![A-Za-z])|フリーエージェント|新外国人|外国人選手|入団|獲得|加入|移籍|現役ドラフト")
 OFF_TITLE_MOVE_NG = re.compile(r"FANCLUB|FAN CLUB|推し|会員|新入団選手|入団選手情報|グッズ|チケット|販売|ファンクラブ|イベント|記念|会見の(?:お知らせ|模様)|テスト|募集|タイトル|受賞|賞|達成|記録|ドラフト会議|指名|入団式|キャンプ|放送|配信")
@@ -578,7 +581,8 @@ def off_links(list_url, html, hosts=None):
         retire = "引退" in title and not re.search(r"公示|グッズ|チケット|販売", title)
         mgr = bool(OFF_TITLE_MGR.search(title)) and not re.search(r"公示|グッズ|チケット|販売|二軍|ファーム", title)
         move = bool(OFF_TITLE_MOVE.search(title)) and not OFF_TITLE_MOVE_NG.search(title)
-        if not retire and not mgr and not move and not (OFF_TITLE.search(title) and not OFF_TITLE_NG.search(title)):
+        coach = bool(OFF_TITLE_COACH.search(title)) and not OFF_TITLE_COACH_NG.search(title)
+        if not retire and not mgr and not move and not coach and not (OFF_TITLE.search(title) and not OFF_TITLE_NG.search(title)):
             continue
         url = re.sub(r"^http://", "https://", urljoin(list_url, a["href"]).split("#")[0])   # 同じ記事を http と https で2回読まないように
         if urlparse(url).netloc.replace("www.", "") not in ok_hosts or url in seen or url.rstrip("/") == list_url.rstrip("/") or OFF_URL_NG.search(url):
@@ -764,6 +768,83 @@ def parse_trades(html, season):
     return out
 
 
+def parse_staff(html):
+    """NPBの「監督・コーチ一覧」の表（位置・番号・氏名）。「〜以降の動き」の表は読まない"""
+    soup = BeautifulSoup(html, "html.parser")
+    out = []
+    for table in soup.find_all("table"):
+        prev = table.find_previous(["h4", "h5", "h3"])
+        if prev and "動き" in prev.get_text():
+            continue
+        for tr in table.find_all("tr"):
+            c = [norm(x.get_text(" ", strip=True)) for x in tr.find_all(["td", "th"])]
+            if len(c) >= 3 and ("コーチ" in c[0] or "監督" in c[0] or "コーディネーター" in c[0]) and c[2] and c[0] != "位置":
+                out.append({"role": c[0], "no": c[1], "n": re.sub(r"\s+", " ", c[2]).strip()})
+        if out:
+            break
+    return out
+
+
+COACH_ROLE = r"(?:一軍|二軍|三軍|四軍|ファーム)?[^\s、。（）()「」]{0,16}?(?:コーチ|監督|コーディネーター)"
+COACH_NEW = re.compile(r"(" + COACH_ROLE + r")\s*[：:　 ]\s*([一-龥々]{1,4}[ 　][一-龥々ぁ-んァ-ヶー]{1,5}|[ァ-ヶー]{2,}(?:・[ァ-ヶー]{2,})+)")
+
+
+def off_coach(t, url, list_title, html, staff, known, season):
+    """コーチ・首脳陣の発表：今の首脳陣（NPBの一覧）の名前が出てきたら、近くの言葉で退団・就任・配置転換を決める。
+    一覧にいない人は「○○コーチ　名前」の並びから就任として拾う（発表の見出しに就任・新任・スタッフなどがあるときだけ）"""
+    soup = BeautifulSoup(html, "html.parser")
+    h = soup.find("h1") or soup.find("title")
+    title = re.sub(r"\s+", " ", norm(h.get_text(" "))).strip() if h else ""
+    title = title if len(title) >= 4 and OFF_TITLE_COACH.search(title) else list_title
+    for tag in soup(["script", "style", "noscript", "header", "footer", "nav", "aside", "form"]):
+        tag.decompose()
+    text = norm(soup.get_text("\n"))
+    e = OFF_END.search(text, 200)
+    if e:
+        text = text[:e.start()]
+    date = ""
+    for m in OFF_DATE.finditer(text[:600]):
+        y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        if y < season or (y == season and mo < 9):
+            return []   # オフより前の記事（シーズン中の配置転換などは入れない）
+        date = f"{y:04d}-{mo:02d}-{d:02d}"
+        break
+    base = {"date": date, "url": url, "title": title[:80]}
+    flat = re.sub(r"\s+", "", text)
+    out, got = [], set()
+    for s_ in staff:
+        if s_["role"] == "監督":
+            continue   # 一軍の監督はこれまで通り（監督の退任）
+        k = squash(s_["n"])
+        i = flat.find(k)
+        if len(k) < 2 or i < 0:
+            continue
+        # 名前にいちばん近い言葉で決める（前の文の「退団」などを拾わないように）。留任・続投は変化なし
+        lo, hi = max(0, i - 40), i + len(k) + 60
+        best, kind = None, ""
+        for kd, pat in (("", r"留任|残留|続投"), ("coach_out", r"退団|退任|辞任|契約を結ばない|契約満了|勇退"),
+                        ("coach_move", r"配置転換|担当変更|異動|へ変更|に変更|兼任"), ("coach_in", r"就任|新任|入閣|復帰")):
+            for m in re.finditer(pat, flat[lo:hi]):
+                pos = lo + m.start()
+                dist = pos - (i + len(k)) if pos >= i + len(k) else (i - pos) * 1.5   # 名前の後ろの言葉を少し優先
+                if best is None or dist < best:
+                    best, kind = dist, kd
+        if best is None and re.search(r"退団|退任", title):
+            kind = "coach_out"
+        if kind:
+            out.append({"t": t, "n": s_["n"], "no": s_.get("no", ""), "dev": False, "kind": kind, "role": s_["role"], **base})
+            got.add(k)
+    if re.search(r"就任|新任|入閣|コーチングスタッフ|首脳陣|組閣", title):
+        for m in COACH_NEW.finditer(text):
+            role, n = m.group(1).strip(), re.sub(r"[ 　]+", " ", m.group(2)).strip()
+            k = squash(n)
+            if k in got or k in known or k in {squash(x["n"]) for x in staff}:   # 選手・今の首脳陣（留任など）は新任ではない
+                continue
+            got.add(k)
+            out.append({"t": t, "n": n, "no": "", "dev": False, "kind": "coach_in", "role": role, **base})
+    return out
+
+
 def parse_draft(html):
     soup = BeautifulSoup(html, "html.parser")
     out, cur = [], None
@@ -809,6 +890,7 @@ def fetch_offseason(season, old, rosters, force=False, any_month=False):
     items = {(x["t"], x["n"]): x for x in prev.get("items", []) if not OFF_URL_NG.search(x.get("url") or "")}
     # 各球団の監督の名前（NPBの選手一覧ページから、1日1回）
     managers = dict(prev.get("managers") or {})
+    staff = dict(prev.get("staff") or {})   # 今の首脳陣（NPBの監督・コーチ一覧）
     player_ids = {}
     if prev.get("managers_date") != now.strftime("%Y-%m-%d") or not managers:
         for t, code in ROSTER_CODE.items():
@@ -818,6 +900,10 @@ def fetch_offseason(season, old, rosters, force=False, any_month=False):
                 managers[t] = m
             if html:
                 player_ids[t] = parse_player_ids(html)
+            sh = fetch(f"https://npb.jp/announcement/{season}/managers_{code}.html")
+            st_ = parse_staff(sh) if sh else []
+            if st_:
+                staff[t] = st_
         print(f"[監督] {len(managers)}球団: " + " ".join(f"{t}:{m['n']}" for t, m in managers.items()))
     # 監督としての通算成績（NPBの12球団の年度別成績ページから、今の監督と退任する監督の分だけ。1日1回）
     mgr_rec = dict(prev.get("mgr_rec") or {})
@@ -878,6 +964,9 @@ def fetch_offseason(season, old, rosters, force=False, any_month=False):
             found, why = off_article(t, url, ltitle, html, roster, season, managers.get(t))
             if OFF_TITLE_MOVE.search(ltitle) and not OFF_TITLE_MOVE_NG.search(ltitle):
                 found += off_moves(t, url, ltitle, html, rosters, season)
+            if OFF_TITLE_COACH.search(ltitle) and not OFF_TITLE_COACH_NG.search(ltitle):
+                known = {squash(r.get("n", "")) for ro in rosters.values() for r in ro}
+                found += off_coach(t, url, ltitle, html, staff.get(t) or [], known, season)
             seen[url] = today
             st["new"] += 1
             for it in found:
@@ -930,7 +1019,7 @@ def fetch_offseason(season, old, rosters, force=False, any_month=False):
         if html:
             player_ids[t] = parse_player_ids(html)
     for (t, n), it in items.items():
-        if it.get("role") or it.get("kind") in ("mgr", "draft", "in") or looked >= 30:
+        if it.get("role") or it.get("kind") in ("mgr", "draft", "in", "coach_out", "coach_in", "coach_move") or looked >= 30:
             continue
         ro = next((r for r in rosters.get(t) or [] if squash(r.get("n", "")) == squash(n)), None)
         if not ro or ro.get("p") != "投手":
@@ -984,7 +1073,7 @@ def fetch_offseason(season, old, rosters, force=False, any_month=False):
     return {"season": season, "checked_at": now.isoformat(timespec="seconds"), "items": out, "teams": teams, "seen": seen,
             "managers": managers, "managers_date": now.strftime("%Y-%m-%d") if managers else prev.get("managers_date"),
             "mgr_rec": mgr_rec, "mgr_rec_date": now.strftime("%Y-%m-%d") if mgr_rec else prev.get("mgr_rec_date"),
-            "draft_status": draft_st or prev.get("draft_status")}
+            "draft_status": draft_st or prev.get("draft_status"), "staff": staff}
 
 
 def fetch_fpos(season, old):
