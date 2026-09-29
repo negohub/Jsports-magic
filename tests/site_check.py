@@ -975,6 +975,100 @@ async def offseason_check(browser):
         bad("[戦力外・引退の読み取り] 選手の発表の中の監督のコメントを、監督の退任として拾っている")
 
 
+async def weather_stop_check(browser):
+    """雨などによる中断・開始の遅れ・中止・ノーゲーム・コールド：中継プログラムから届いたら試合カードに帯が出るか。
+    中止の試合も今日の試合に並ぶか（「勝ったら」は出さない）。パ・リーグで「西武（西武）」のように球団名が重ならないか。
+    あわせて、中継プログラム（worker/worker.js があれば）の見つけ方を、いろいろな書き方で確かめる"""
+    for theme in ["", "pawa"]:
+        for lg in ["C", "P"]:
+            label = f"[中断・中止 {'パワプロ風' if theme else 'スタイリッシュ'} {lg}]"
+            pg, errs = await open_page(browser, 390, theme)
+            if lg == "P":
+                await pg.evaluate("switchLeague('P')")
+                await pg.wait_for_timeout(200)
+            r = await pg.evaluate("""async () => {
+              const ng = [];
+              // 表示中のリーグの試合が2試合以上ある、いちばん新しい日を「今日」にする
+              const cnt = {}; DATA.games.filter(g => inLg(g) && CL.includes(g.h) && CL.includes(g.a)).forEach(g => cnt[g.d] = (cnt[g.d] || 0) + 1);
+              const today = Object.keys(cnt).filter(d => cnt[d] >= 2).sort().pop();
+              if (!today) return ['試験に使える日（2試合以上ある日）がない'];
+              jst = () => ({ y: +today.slice(0, 4), m: +today.slice(5, 7), d: +today.slice(8), iso: today });
+              S.period = null; S.periodPicked = false; renderAll();
+              const games = DATA.games.filter(g => g.d === today && inLg(g) && CL.includes(g.h) && CL.includes(g.a));
+              const [g1, g2] = games;
+              // 中継プログラムの返事をまねる：1試合目は試合中に降雨で中断、2試合目は降雨で中止
+              const body = { games: [
+                { d: today, h: g1.h, a: g1.a, st: 'live', hs: 1, as: 0, inn: '5回表', w: { kind: '中断', reason: '降雨', at: '19:05' } },
+                { d: today, h: g2.h, a: g2.a, st: 'canc', w: { kind: '中止', reason: '降雨' } } ] };
+              const of = window.fetch;
+              window.fetch = async (u, o) => String(u).includes('games=') ? new Response(JSON.stringify(body)) : of(u, o);
+              g1.st = 'sched'; g2.st = 'sched';
+              await pollLive();
+              window.fetch = of;
+              setTab('game'); renderGame();
+              const cards = [...document.querySelectorAll('#today .tg')];
+              const cardOf = g => cards.find(c => c.textContent.includes(fn(g.h)) && c.textContent.includes(fn(g.a)));
+              const c1 = cardOf(g1), c2 = cardOf(g2);
+              if (!c1 || !(c1.querySelector('.wxb') || {}).textContent?.includes('降雨のため試合中断中（19:05〜）')) ng.push('中断の帯が出ない');
+              if (!c2) ng.push('中止になった試合が今日の試合から消えている');
+              else {
+                if (!(c2.querySelector('.wxb') || {}).textContent?.includes('降雨のため試合中止')) ng.push('中止の帯が出ない');
+                if (c2.querySelector('.tgo')) ng.push('中止になった試合に「勝ったら」が出ている');
+                if (!c2.querySelector('.bi.canc')) ng.push('中止の試合の右側が「試合中止」になっていない');
+              }
+              // ほかの状態の書き方
+              const k = today + g1.h + g1.a;
+              const cases = [['再開', { kind: '再開', reason: '降雨', from: '19:05', at: '19:40' }, '19:40に試合再開（降雨のため19:05から中断）'],
+                ['遅延', { kind: '遅延', reason: '雷雨' }, '雷雨のため試合開始が遅れています'],
+                ['ノーゲーム', { kind: 'ノーゲーム', reason: '降雨' }, '降雨のためノーゲーム'],
+                ['コールド', { kind: 'コールド', reason: '降雨' }, '降雨のためコールドゲーム']];
+              for (const [n, w, want] of cases) {
+                GSTOP[k] = w; g1.st = n === '遅延' ? 'sched' : n === 'ノーゲーム' ? 'canc' : 'live';
+                const t = wxHTML(g1);
+                if (!t.includes(want)) ng.push(`${n}の帯の文言が違う：${t.replace(/<[^>]+>/g, '')}`);
+              }
+              // パ・リーグ（担当者なし）で球団名が「西武（西武）」のように重ならない
+              const dup = [...document.querySelectorAll('#today li')].map(li => li.textContent).find(t => CL.some(tm => t.includes(`${fn(tm)}（${fn(tm)}）`)));
+              if (dup) ng.push(`球団名が重なっている：${dup}`);
+              return ng;
+            }""")
+            for m in r:
+                bad(f"{label} {m}")
+            for e in errs:
+                bad(f"{label}: 画面のエラー {e}")
+            await pg.close()
+    # 中継プログラムの見つけ方（worker/worker.js がある環境だけ）
+    wk = ROOT / "worker" / "worker.js"
+    if not wk.exists():
+        print("  （中継プログラムの試験は、worker/worker.js がないため省略）")
+        return
+    import subprocess, tempfile
+    src = wk.read_text(encoding="utf-8") + "\nexport { weatherOf, parse };\n"
+    test = r"""
+import { weatherOf, parse } from "./w.mjs";
+const ok = (n, got, want) => { if (JSON.stringify(got) !== JSON.stringify(want)) console.log("NG " + n + " " + JSON.stringify(got)); };
+const k = l => (weatherOf(l) || {}).kind || null;
+ok("中断", k(["19:05 降雨のため試合中断"]), "中断");
+ok("再開", k(["19:40 試合再開", "19:05 降雨のため試合中断"]), "再開");
+ok("遅延", k(["雷雨のため試合開始を遅らせています"]), "遅延");
+ok("中止", k(["降雨のため試合中止"]), "中止");
+ok("ノーゲーム", k(["5回表 降雨ノーゲーム"]), "ノーゲーム");
+ok("コールド", k(["7回裏 降雨コールドゲーム"]), "コールド");
+ok("案内は拾わない", k(["試合中止時の払い戻しについて", "雨天中止の場合のチケット"]), null);
+ok("関係ない中断", k(["ビデオ判定のため中断"]), null);
+const g = parse('<a href="/scores/2026/0929/t-s-24/">阪神 1 - 0 ヤクルト 5回表 中断 降雨</a><a href="/scores/2026/0929/g-c-25/">巨人 - 広島 中止</a>');
+ok("NPB 中断", [g[0].st, g[0].w && g[0].w.kind], ["live", "中断"]);
+ok("NPB 中止", g[1].st, "canc");
+"""
+    with tempfile.TemporaryDirectory() as d:
+        (Path(d) / "w.mjs").write_text(src, encoding="utf-8")
+        (Path(d) / "t.mjs").write_text(test, encoding="utf-8")
+        out = subprocess.run(["node", str(Path(d) / "t.mjs")], capture_output=True, text=True, timeout=60)
+        for line in (out.stdout + out.stderr).splitlines():
+            if line.strip():
+                bad(f"[中継プログラムの中断・中止の見つけ方] {line.strip()[:160]}")
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -1036,6 +1130,7 @@ async def main():
         await name_center_check(browser)
         await tabbar_check(browser)
         await offseason_check(browser)
+        await weather_stop_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
