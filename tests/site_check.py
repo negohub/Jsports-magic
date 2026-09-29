@@ -918,6 +918,20 @@ async def offseason_check(browser):
                     }
                     document.getElementById('songSheet').hidden = true; document.getElementById('songSheet').classList.remove('open');
                   }
+                  // オフの動き：移籍・FA宣言・加入・ドラフトの並びと札
+                  const t0 = CL[0], ro0 = DATA.rosters[t0] || [];
+                  DATA.offseason.items.push({ t: t0, n: ro0[3].n, no: ro0[3].no, kind: 'out', via: 'trade', to: CL[1], date: '2026-11-10' },
+                    { t: t0, n: ro0[4].n, no: ro0[4].no, kind: 'fa_decl', date: '2026-11-05' },
+                    { t: t0, n: 'テスト 新人', kind: 'draft', round: '1位', pos: '投手', from: 'テスト大', date: '2026-10-22' },
+                    { t: t0, n: 'ジョン・テスト', kind: 'in', via: 'newfor', pos: '外野手', date: '2026-12-01' });
+                  renderOff();
+                  const blk2 = document.getElementById('offList'), card = [...blk2.querySelectorAll('.ofteam')].find(c => c.textContent.includes(fn(t0)));
+                  const secs = card ? [...card.querySelectorAll('.ofsec')].map(x => x.textContent) : [];
+                  if (!secs.some(x => x.startsWith('出ていく')) || !secs.some(x => x.startsWith('FA宣言')) || !secs.some(x => x.startsWith('入ってくる'))) ng.push(`オフの動きの「出ていく／FA宣言／入ってくる」の分け方が出ない（${secs}）`);
+                  if (card && [...card.querySelectorAll('.ofr')].some(r => /テスト 新人|ジョン・テスト/.test(r.textContent) && r.querySelector('[data-pl]'))) ng.push('名簿にいない加入選手の名前が押せてしまう');
+                  if (card && !card.textContent.includes('ドラフト1位指名（テスト大）')) ng.push('ドラフトの内容の書き方が違う');
+                  if (card && !card.textContent.includes(fn(CL[1]) + 'へトレードで移籍')) ng.push('トレードで出ていく書き方が違う');
+                  DATA.offseason.items.splice(-4, 4); renderOff();
                   // 今季の一軍の登板がない投手は、データ更新で調べた過去の役割（先発）の色になるか
                   const pr = (DATA.rosters[CL[0]] || []).find(x => x.p === '投手' && !DATA.offseason.items.some(y => y.t === CL[0] && y.n === x.n) && posGroups(CL[0], x.n, '投手').join() === '投');
                   if (pr && isPawa()) {
@@ -989,6 +1003,21 @@ async def offseason_check(browser):
     old, why = ud.off_article("E", "u", "来季の選手契約について", "<h1>来季の選手契約について</h1><p>2025/10/05</p><p>酒居 知史投手と来季の契約を結ばない</p>", roster, 2026)
     if old:
         bad("[戦力外・引退の読み取り] 去年の発表を今年のものとして拾っている")
+    # オフの動き：トレード（出る・入る）・FA宣言・新外国人・ドラフト
+    R2 = {"T": [{"n": "阪神 太郎", "no": "1", "p": "投手"}, {"n": "阪神 次郎", "no": "2", "p": "内野手"}], "G": [{"n": "巨人 三郎", "no": "3", "p": "外野手"}]}
+    got = ud.off_moves("T", "u", "トレードのお知らせ", "<h1>トレードのお知らせ</h1><p>2026/11/10</p><p>阪神 太郎選手と巨人 三郎選手の交換トレードが成立</p>", R2, 2026)
+    want = {("T", "巨人 三郎", "in"), ("G", "巨人 三郎", "out"), ("T", "阪神 太郎", "out"), ("G", "阪神 太郎", "in")}
+    if {(x["t"], x["n"], x["kind"]) for x in got} != want:
+        bad(f"[オフの動きの読み取り] トレードを正しく読めない：{[(x['t'], x['n'], x['kind']) for x in got]}")
+    got = ud.off_moves("T", "u", "阪神 次郎選手 FA権行使について", "<h1>阪神 次郎選手 FA権行使について</h1><p>2026/11/05</p><p>阪神 次郎選手がFA権を行使</p>", R2, 2026)
+    if [(x["n"], x["kind"]) for x in got] != [("阪神 次郎", "fa_decl")]:
+        bad(f"[オフの動きの読み取り] FA宣言を正しく読めない：{[(x['n'], x['kind']) for x in got]}")
+    got = ud.off_moves("T", "u", "新外国人選手 ジョン・スミス投手 契約合意のお知らせ", "<h1>新外国人選手 ジョン・スミス投手 契約合意のお知らせ</h1><p>2026/12/10</p>", R2, 2026)
+    if [(x["n"], x["kind"], x.get("via"), x.get("pos")) for x in got] != [("ジョン・スミス", "in", "newfor", "投手")]:
+        bad(f"[オフの動きの読み取り] 新外国人を正しく読めない：{got}")
+    dr = ud.parse_draft("<h3>阪神タイガース</h3><table><tr><td>1位</td><td>立石 正広</td><td>内野手</td><td>創価大</td></tr><tr><td>育成1位</td><td>山田 太郎</td><td>投手</td><td>○○高</td></tr></table><h3>読売ジャイアンツ</h3><table><tr><td>1位</td><td>竹丸 和幸</td><td>投手</td><td>鷺宮製作所</td></tr></table>")
+    if [(x["t"], x["n"], x["round"]) for x in dr] != [("T", "立石 正広", "1位"), ("T", "山田 太郎", "育成1位"), ("G", "竹丸 和幸", "1位")]:
+        bad(f"[オフの動きの読み取り] ドラフトの指名選手を正しく読めない：{dr}")
     # 監督の通算成績：NPBの年度別成績（表の行でも箇条書きの行でも）から、年度・監督・順位・勝敗を読む
     rows, asof = ud.parse_yearly('<ul><li>2026年9月28日(月) 現在</li><li>1936※ 池田 豊 16 7 9 0 .438 .237 9 5.72</li><li>1939 根本・小西 6 96 38 53 5 .418 27.5</li><li>2025 井上 一樹 4 143 63 78 2 .447 23.0 .232 83 2.97</li></ul>')
     got = [(r["y"], r["m"], r["rank"], r["g"], r["w"], r["l"], r["d"]) for r in rows]
@@ -1225,6 +1254,109 @@ async def makeup_check(browser):
         await pg.close()
 
 
+async def post_bracket_check(browser):
+    """CS・日本シリーズの勝ち上がり表：勝ち数（ファイナルの1位はアドバンテージ込み）・勝ち上がり・並んだときの扱い・はみ出し"""
+    for theme in ["", "pawa"]:
+        for lg in ["C", "P"]:
+            label = f"[勝ち上がり表 {'パワプロ風' if theme else 'スタイリッシュ'} {lg}]"
+            pg, errs = await open_page(browser, 390, theme)
+            if lg == "P":
+                await pg.evaluate("switchLeague('P')")
+                await pg.wait_for_timeout(200)
+            r = await pg.evaluate("""(lg) => {
+              const ng = [], P = DATA.post || [];
+              if (!P.some(g => g.stage === 'CS1' && (g.lg || 'C') === lg)) return ng;
+              jst = () => ({ y: 2026, m: 10, d: 20, iso: '2026-10-20' });
+              DATA.games.forEach(g => { if (g.st !== 'final' && g.st !== 'canc') { g.st = 'final'; g.hs = 2; g.as = 1; } });
+              const rk = lgRank(lg).rk, mine = st => P.filter(g => g.stage === st && (g.lg || 'C') === lg).sort((a, b) => a.no - b.no);
+              const c1 = mine('CS1'), cf = mine('CSF');
+              // ファースト：1勝1敗1分 → 並んだので2位が勝ち上がり
+              Object.assign(c1[0], { h: rk[1], a: rk[2], hs: 3, as: 1, st: 'final' }); Object.assign(c1[1], { h: rk[1], a: rk[2], hs: 2, as: 5, st: 'final' }); Object.assign(c1[2], { h: rk[1], a: rk[2], hs: 4, as: 4, st: 'final' });
+              // ファイナル：1位が3勝（＋アドバンテージ1＝4）で勝ち上がり
+              for (let i = 0; i < 3; i++) Object.assign(cf[i], { h: rk[0], a: rk[1], hs: 5, as: 1, st: 'final' });
+              renderAll(); setTab('std');
+              const s = lgPost(lg);
+              if (s.s1.win !== rk[1]) ng.push(`ファーストステージで並んだのに2位が勝ち上がらない（${s.s1.win}）`);
+              if (s.sf.wh !== 4 || s.sf.win !== rk[0]) ng.push(`ファイナルの1位の勝ち数（アドバンテージ込み）・勝ち上がりが違う（${s.sf.wh}・${s.sf.win}）`);
+              const box = document.getElementById('bracketBox'), txt = box.innerText;
+              if (!txt.includes(fn(rk[1]) + 'がファイナルステージへ')) ng.push('ファーストステージの勝ち上がりの文言が出ない');
+              if (!txt.includes(fn(rk[0]) + 'が日本シリーズへ')) ng.push('ファイナルステージの勝ち上がりの文言が出ない');
+              if (!/○ 3-1/.test(txt) || !/● 2-5/.test(txt) || !/△ 4-4/.test(txt)) ng.push('1試合ずつの結果（○●△）が出ない');
+              const W = box.getBoundingClientRect().right + 1;
+              box.querySelectorAll('*').forEach(e => { const b = e.getBoundingClientRect(); if (b.width && b.right > W) ng.push(`はみ出し：${e.className}`); });
+              return [...new Set(ng)].slice(0, 6);
+            }""", lg)
+            for m in r:
+                bad(f"{label} {m}")
+            for e in errs:
+                bad(f"{label}: 画面のエラー {e}")
+            await pg.close()
+
+
+async def archive_check(browser):
+    """前のシーズンの記録：設定から切り替えて見られるか・ライブや自動の差し替えが止まるか・今季に戻れるか"""
+    import http.server, threading, functools
+    class Quiet(http.server.SimpleHTTPRequestHandler):
+        def log_message(self, *a):
+            pass
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=str(ROOT)))
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{srv.server_port}/"
+    try:
+        d = json.loads((ROOT / "data" / "latest.json").read_text(encoding="utf-8"))
+        a = dict(d, season=2025, games=[dict(g, d=g["d"].replace(str(d["season"]), "2025"), st=("canc" if g["st"] == "canc" else "final"), hs=g.get("hs", 2), **{"as": g.get("as", 1)}) for g in d["games"]])
+        pg = await browser.new_page(viewport={"width": 390, "height": 844})
+        errs = []
+        pg.on("pageerror", lambda e: errs.append(str(e)))
+        await pg.add_init_script("localStorage.setItem('me','T'); localStorage.setItem('league','C')")
+        await pg.route("https://**", lambda r: r.abort())
+        await pg.route("**/data/archive/index.json*", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps({"seasons": [d["season"], 2025]})))
+        await pg.route("**/data/archive/2025.json*", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps(a, ensure_ascii=False)))
+        await pg.goto(base + "index.html")
+        await pg.wait_for_timeout(800)
+        if not await pg.evaluate("document.getElementById('archBar').hidden"):
+            bad("[シーズンの記録] ふだんから「記録を表示中」の帯が出ている")
+        await pg.evaluate("openSheet()")
+        await pg.wait_for_timeout(500)
+        if await pg.evaluate("document.getElementById('archSec').hidden"):
+            bad("[シーズンの記録] 設定に「シーズン」の切り替えが出ない")
+        else:
+            await pg.click('#archSeg button[data-arch="2025"]')
+            await pg.wait_for_timeout(800)
+            r = await pg.evaluate("[ARCH, String(DATA.season), document.getElementById('archBar').hidden, liveWanted(), jst().iso.slice(0, 4)]")
+            if r != [2025, "2025", False, False, "2025"]:
+                bad(f"[シーズンの記録] 2025年の記録に切り替わらない（{r}）")
+            txt = await pg.evaluate("setTab('std'), document.getElementById('v-std').innerText")
+            if "undefined" in txt or "NaN" in txt:
+                bad("[シーズンの記録] 記録の表示におかしな文字が出る")
+        for e in errs:
+            bad(f"[シーズンの記録]: 画面のエラー {e}")
+        await pg.close()
+    finally:
+        srv.shutdown()
+    # データ更新側：公式戦が全部終わったら data/archive/<年>.json と index.json を作る
+    try:
+        import sys as _s, tempfile
+        _s.path.insert(0, str(ROOT / "scripts"))
+        import update_data as ud
+    except ImportError:
+        return
+    with tempfile.TemporaryDirectory() as tmp:
+        ud.ARCH_DIR = str(Path(tmp) / "archive")
+        ud.write_archive(dict(d, games=[dict(g, st="sched") for g in d["games"][:3]]))
+        if (Path(tmp) / "archive").exists() and any((Path(tmp) / "archive").iterdir()) and datetime_month() < 11:
+            bad("[シーズンの記録] 試合が残っているのに記録を保存している")
+        ud.write_archive(dict(d, season=2025), force=True)
+        idx = json.loads((Path(tmp) / "archive" / "index.json").read_text(encoding="utf-8"))
+        if 2025 not in idx.get("seasons", []) or not (Path(tmp) / "archive" / "2025.json").exists():
+            bad(f"[シーズンの記録] 記録のファイルができない（{idx}）")
+
+
+def datetime_month():
+    import datetime as _dt
+    return (_dt.datetime.utcnow() + _dt.timedelta(hours=9)).month
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -1290,6 +1422,8 @@ async def main():
         await call_name_check(browser)
         await pitch_tile_check(browser)
         await makeup_check(browser)
+        await post_bracket_check(browser)
+        await archive_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
