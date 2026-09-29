@@ -911,6 +911,9 @@ async def offseason_check(browser):
                       if (!/284/.test(txt) || !/122/.test(txt) || !/158/.test(txt) || !/[.]436/.test(txt)) ng.push('監督の通算成績の数字が違う（284試合122勝158敗.436のはず）');
                       if (!txt.includes('1回')) ng.push('リーグ優勝の回数が違う');
                       if (sp.scrollWidth > sp.clientWidth + 1) ng.push('監督の成績画面が横にはみ出している');
+                      // 年度ごとの表：文字がマスからはみ出さない（年度の4桁が隣の列に食い込まない）
+                      const over = [...sp.querySelectorAll('.mgtab td, .mgtab th')].filter(c => { const r = document.createRange(); r.selectNodeContents(c); const rr = r.getBoundingClientRect(), cr = c.getBoundingClientRect(); return rr.width && (rr.left < cr.left - 0.5 || rr.right > cr.right + 0.5); }).map(c => c.textContent.trim());
+                      if (over.length) ng.push(`監督の年度ごとの表で文字がマスからはみ出している：${over.slice(0, 3).join('、')}`);
                     }
                     document.getElementById('songSheet').hidden = true; document.getElementById('songSheet').classList.remove('open');
                   }
