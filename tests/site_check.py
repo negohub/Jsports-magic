@@ -914,6 +914,15 @@ async def offseason_check(browser):
                     }
                     document.getElementById('songSheet').hidden = true; document.getElementById('songSheet').classList.remove('open');
                   }
+                  // 今季の一軍の登板がない投手は、データ更新で調べた過去の役割（先発）の色になるか
+                  const pr = (DATA.rosters[CL[0]] || []).find(x => x.p === '投手' && !DATA.offseason.items.some(y => y.t === CL[0] && y.n === x.n) && posGroups(CL[0], x.n, '投手').join() === '投');
+                  if (pr && isPawa()) {
+                    DATA.offseason.items.push({ t: CL[0], n: pr.n, no: pr.no, dev: false, kind: 'cut', role: '先', date: '2026-09-29', url: '', title: '' });
+                    renderOff();
+                    const row = [...document.querySelectorAll('#offList .ofr')].find(r => r.textContent.includes(pr.n));
+                    if (!row || !row.querySelector('.onm .ptile.ps')) ng.push(`今季の一軍の登板がない投手（${pr.n}）が、過去の役割（先発）の色になっていない`);
+                    DATA.offseason.items.pop(); renderOff();
+                  }
                   // パワプロ風は、名前が守備位置の色のタイルになっているか
                   if (isPawa() && [...rows].some(r => !r.querySelector('.onm .ptile'))) ng.push('パワプロ風なのに、名前がタイルになっていない');
                   if (items.some(x => x.kind === 'mgr' && offOf(x.t, x.n))) ng.push('監督に選手の札が付く');
@@ -1092,6 +1101,49 @@ ok("NPB 中止", g[1].st, "canc");
                 bad(f"[中継プログラムの中断・中止の見つけ方] {line.strip()[:160]}")
 
 
+async def call_name_check(browser):
+    """一球速報・スコア・打順の名前は苗字（同じ球団に同じ苗字がいれば区別）"""
+    pg, errs = await open_page(browser, 390, "")
+    r = await pg.evaluate("""() => {
+      const ng = [];
+      for (const t of Object.keys(DATA.rosters || {})) {
+        for (const x of (DATA.rosters[t] || []).slice(0, 40)) {
+          const want = shortName(t, x.n);
+          if (callName(t, x.n) !== want) ng.push(`${x.n}（フルネーム）→ ${callName(t, x.n)}（${want} のはず）`);
+          if (callName(t, x.n.replace(/\\s+/g, '')) !== want) ng.push(`${x.n}（空白なし）→ ${callName(t, x.n.replace(/\\s+/g, ''))}`);
+          if (ng.length > 4) return ng;
+        }
+      }
+      // 速報の表示（パワプロ風でなくても）に空白入りのフルネームが出ない
+      const t = Object.keys(DATA.rosters)[0], x = DATA.rosters[t].find(y => /\\s/.test(y.n));
+      if (x && /\\s/.test(pwName(t, x.n).replace(/<[^>]+>/g, ''))) ng.push(`速報の名前がフルネームのまま：${pwName(t, x.n)}`);
+      return ng;
+    }""")
+    for m in r:
+        bad(f"[速報の名前] {m}")
+    for e in errs:
+        bad(f"[速報の名前]: 画面のエラー {e}")
+    await pg.close()
+    # データ更新側：過去の一軍の成績から役割（先発・中継ぎ・抑え）を決める
+    try:
+        import sys as _s
+        _s.path.insert(0, str(ROOT / "scripts"))
+        import update_data as ud
+    except ImportError:
+        return
+    def page(rows):
+        head = "<tr><th>年度</th><th>所属球団</th><th>登板</th><th>勝利</th><th>敗北</th><th>セーブ</th><th>H</th><th>HP</th><th>完投</th><th>完封勝</th><th>無四球</th><th>勝率</th><th>打者</th><th>投球回</th></tr>"
+        body = "".join(f"<tr><td>{y}</td><td>阪 神</td><td>{g}</td><td>{w}</td><td>{l}</td><td>{sv}</td><td>0</td><td>0</td><td>{cg}</td><td>0</td><td>0</td><td>.500</td><td>1</td><td><table><tr><td>6</td><td>.1</td></tr></table></td></tr>" for y, g, w, l, sv, cg in rows)
+        return "<table>" + head + body + "</table>"
+    cases = {"先": [(2023, 18, 8, 6, 0, 0), (2024, 12, 2, 3, 0, 0), (2025, 3, 0, 2, 0, 0)],
+             "中": [(2023, 51, 1, 2, 1, 0), (2024, 40, 2, 3, 0, 0), (2025, 30, 1, 1, 0, 0)],
+             "抑": [(2024, 50, 3, 2, 30, 0), (2025, 45, 2, 3, 25, 0)]}
+    for want, rows in cases.items():
+        got = ud.pitcher_role(page(rows))
+        if got != want:
+            bad(f"[過去の役割の読み取り] {want} のはずが {got}")
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -1154,6 +1206,7 @@ async def main():
         await tabbar_check(browser)
         await offseason_check(browser)
         await weather_stop_check(browser)
+        await call_name_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
