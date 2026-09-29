@@ -1028,6 +1028,12 @@ async def offseason_check(browser):
     got = ud.off_moves("T", "u", "新外国人選手 ジョン・スミス投手 契約合意のお知らせ", "<h1>新外国人選手 ジョン・スミス投手 契約合意のお知らせ</h1><p>2026/12/10</p>", R2, 2026)
     if [(x["n"], x["kind"], x.get("via"), x.get("pos")) for x in got] != [("ジョン・スミス", "in", "newfor", "投手")]:
         bad(f"[オフの動きの読み取り] 新外国人を正しく読めない：{got}")
+    # トレード（NPB公式の公示）：シーズン中のトレードも。前のオフ（1月）の分は入れない。「FANCLUB」は FA ではない
+    tr = ud.parse_trades('<table><tr><td>2026/5/13</td><td>山本 祐大</td><td>捕 手</td><td>50</td><td>横浜DeNA</td><td>→</td><td>39</td><td>福岡ソフトバンク</td></tr><tr><td>2026/5/13</td><td>尾形 崇斗</td><td>投 手</td><td>39</td><td>福岡ソフトバンク</td><td>→</td><td>36</td><td>横浜DeNA</td></tr><tr><td>2026/1/30</td><td>田中 千晴</td><td>投 手</td><td>48</td><td>読売</td><td>→</td><td>29</td><td>東北楽天</td></tr></table>', 2026)
+    if [(x["n"], x["from"], x["to"], x["d"]) for x in tr] != [("山本 祐大", "DB", "H", "2026-05-13"), ("尾形 崇斗", "H", "DB", "2026-05-13")]:
+        bad(f"[オフの動きの読み取り] NPBのトレードの公示を正しく読めない：{tr}")
+    if ud.OFF_TITLE_MOVE.search("FANCLUB 2026/9/25 あなたの推し") or not ud.OFF_TITLE_MOVE_NG.search("新入団選手情報"):
+        bad("[オフの動きの読み取り] ファンクラブの記事や新入団選手の一覧を、移籍の発表として読んでしまう")
     dr = ud.parse_draft("<h3>阪神タイガース</h3><table><tr><td>1位</td><td>立石 正広</td><td>内野手</td><td>創価大</td></tr><tr><td>育成1位</td><td>山田 太郎</td><td>投手</td><td>○○高</td></tr></table><h3>読売ジャイアンツ</h3><table><tr><td>1位</td><td>竹丸 和幸</td><td>投手</td><td>鷺宮製作所</td></tr></table>")
     if [(x["t"], x["n"], x["round"]) for x in dr] != [("T", "立石 正広", "1位"), ("T", "山田 太郎", "育成1位"), ("G", "竹丸 和幸", "1位")]:
         bad(f"[オフの動きの読み取り] ドラフトの指名選手を正しく読めない：{dr}")
