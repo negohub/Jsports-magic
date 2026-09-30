@@ -43,7 +43,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260930132110">
+<meta name="build" content="20260930153715">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -2333,6 +2333,10 @@ html.theme-pawa .pcnt{background:rgba(19,38,74,.1);color:#13264A}
 html.theme-pawa .pbox.v2 .pnx3{border-top-color:#DCE7F5;background:#F4F9FF}
 html.theme-pawa .pbox.v2 .pnx3.up{background:#FFF3C4}
 @media (max-width:374px){.pbox.v2 .pinn b{font-size:17px}.pln b{font-size:15px}.pln{gap:3px 10px}}
+/* 選手の画面：今日の試合 */
+.ps-today .ps-main + .ps-main{margin-top:8px}
+.ps-today .ps-res{margin-top:10px}
+html.theme-pawa .ps-today{background:#FFF8DC;border-radius:14px;padding:10px 12px}
 </style>
 </head>
 <body>
@@ -4924,6 +4928,24 @@ function statGrid(title, main, sub) {
     <div class="ps-main">${main.map(([k, v]) => `<div><small>${k}</small><b class="num">${c(v)}</b></div>`).join("")}</div>
     <div class="ps-sub">${sub.map(([k, v]) => `<div><small>${k}</small><span class="num">${c(v)}</span></div>`).join("")}</div></div>`;
 }
+// 今日の試合の出場成績（一球速報の打順・投手成績と同じデータ）。出ていなければ空
+function todayLine(t, full) {
+  const today = jst().iso, k0 = nk(full);
+  const g = DATA.games.find(x => x.d === today && (x.h === t || x.a === t) && (x.st === "live" || x.st === "final"));
+  const d = g && GD[g.d + gkey(g)];
+  if (!d) return "";
+  const side = g.a === t ? 0 : 1;   // 出場成績はビジターが先
+  const hit = n => { const a = nk(n); return a === k0 || (a.length >= 2 && k0.startsWith(a)) || (k0.length >= 2 && a.startsWith(k0)); };
+  const bt = ((d.lineups || [])[side] || []).find(x => hit(x.name));
+  const pt = ((d.pitchers || [])[side] || []).find(x => hit(x.name));
+  if (!bt && !pt) return "";
+  const live = g.st === "live" ? "（試合中）" : "";
+  const cell = (k, v) => `<div><small>${k}</small><b class="num">${esc(v == null || v === "" ? "-" : String(v))}</b></div>`;
+  let h = "";
+  if (pt) h += `<div class="ps-main">${cell("投球回", pt.ip)}${cell("球数", pt.np)}${cell("被安打", pt.h)}${cell("奪三振", pt.so)}</div><div class="ps-main">${cell("与四死球", (Number(pt.bb) || 0) + (Number(pt.hbp) || 0))}${cell("失点", pt.r)}${cell("自責点", pt.er)}${cell("防御率", pt.era)}</div>`;
+  if (bt && (bt.results || []).length) h += `<div class="ps-main">${cell("打数", bt.ab)}${cell("安打", bt.hit)}${cell("打点", bt.rbi)}${cell("打率", bt.avg)}</div><div class="pres3 ps-res">${bt.results.map((r, i) => rcChip(r, (bt.rbis || [])[i])).join("")}</div>`;
+  return h ? `<div class="ps-sec ps-today"><div class="ps-t">今日の試合${live}・${esc(fn(g.h === t ? g.a : g.h))}戦</div>${h}</div>` : "";
+}
 async function openPlayer(t, name, opt = {}) {
   const ro = ((DATA.rosters || {})[t] || []);
   const k = nk(name);
@@ -4949,11 +4971,14 @@ async function openPlayer(t, name, opt = {}) {
   const b = findRow(d.bat, full, t), pi = findRow(d.pit, full, t);
   const pitcherFirst = opt.kind === "pit" || (me && me.p === "投手");
   const parts = [];
+  // 今日の試合（試合中・試合後）：その試合の出場成績をいちばん上に（今季の成績はまだ今日の分が入っていないことがあるため）
+  const tg = todayLine(t, full);
+  if (tg) parts.push(tg);
   if (pitcherFirst && pi) parts.push(pitGrid(pi.r));
   if (b && Number(b.r["打席"] || 0) > 0) parts.push(batGrid(b.r));
   if (!pitcherFirst && pi) parts.push(pitGrid(pi.r));
   body.innerHTML = parts.length
-    ? parts.join("") + `<p class="ps-note">NPB公式 ${d.asof ? d.asof + " 時点" : ""}の成績${(b && b.many) || (pi && pi.many) ? "（同じ名字の選手がいるため、名簿で一番近い選手を表示しています）" : ""}</p>`
+    ? parts.join("") + `<p class="ps-note">${d.src === "sponavi" ? `今季の成績：スポーツナビ（${esc(d.at || "")} 確認）` : `NPB公式 ${d.asof ? d.asof + " 時点" : ""}の成績`}${(b && b.many) || (pi && pi.many) ? "（同じ名字の選手がいるため、名簿で一番近い選手を表示しています）" : ""}</p>`
     : `<div class="ps-load">今季の一軍の出場記録はまだありません。</div>`;
 }
 // 監督としての通算成績（NPB公式の球団の年度別成績から、データ更新で集めたもの）
