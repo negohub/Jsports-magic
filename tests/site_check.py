@@ -2187,6 +2187,17 @@ async def night_check(browser):
     await pg.evaluate("(async () => { const t = CL[0], ro = DATA.rosters[t].find(x => x.p === '投手'); await openPlayer(t, ro.n, { kind: 'pit' }); })()")
     await pg.wait_for_timeout(900)
     ng += await pg.evaluate(NIGHT_CONTRAST_JS, "選手の画面")
+    # 夜は色を紺の1系統に：表の地は紺だけ（球団の色で塗り分けない）、見出しは緑にしない、タブバーは紺のガラス
+    await pg.evaluate("S.open = {}; renderAll(); setTab('std')"); await pg.wait_for_timeout(600)
+    ng += await pg.evaluate("""() => { const ng = [];
+      const hue = c => { const m = c.match(/\\d+(\\.\\d+)?/g); if (!m) return null; const [r, g, b] = m.map(Number); const mx = Math.max(r, g, b), mn = Math.min(r, g, b); return { r, g, b, l: (mx + mn) / 510, blue: b >= r && b >= g }; };
+      const tds = [...document.querySelectorAll('#v-std .ytab tbody td, #v-magic .ytab tbody td')].filter(e => e.getBoundingClientRect().width);
+      const odd = tds.map(e => hue(getComputedStyle(e).backgroundColor)).filter(c => c && (!c.blue || c.l > .4));
+      if (odd.length) ng.push(`表の地に紺以外の色がある（${odd.length}マス）`);
+      const h2 = document.querySelector('#v-std h2'); if (h2 && /98, 216, 115|31, 168, 58/.test(getComputedStyle(h2).backgroundImage)) ng.push('見出しが緑のまま');
+      const tb = getComputedStyle(document.querySelector('.tabbar')).backgroundImage; const m = tb.match(/rgba?\\(([^)]+)\\)/);
+      if (m) { const [r, g, b] = m[1].split(',').map(parseFloat); if ((r + g + b) / 3 > 150) ng.push('タブバーが明るいガラスのまま'); }
+      return ng; }""")
     for m in list(dict.fromkeys(ng))[:10]:
         bad(f"[パワプロ風（夜）] {m}")
     await ctx.close()
@@ -2216,6 +2227,11 @@ async def light_check(browser):
             ng += await pg.evaluate(NIGHT_CONTRAST_JS, tab)
     await pg.evaluate("window.scrollTo(0,0); openSheet()"); await pg.wait_for_timeout(500)
     ng += await pg.evaluate(NIGHT_CONTRAST_JS, "設定")
+    # ガラス（タブバー・上の小さい見出し）もライトは明るく
+    ng += await pg.evaluate("""() => { const ng = [];
+      for (const sel of ['.tabbar', '.minibar']) { const e = document.querySelector(sel); if (!e) continue; const m = getComputedStyle(e).backgroundImage.match(/rgba?\\(([^)]+)\\)/);
+        if (m) { const [r, g, b] = m[1].split(',').map(parseFloat); if ((r + g + b) / 3 < 150) ng.push(`${sel === '.tabbar' ? '下のタブバー' : '上の小さい見出し'}のガラスが暗いまま`); } }
+      return ng; }""")
     for m in list(dict.fromkeys(ng))[:10]:
         bad(f"[スタイリッシュ（ライト）] {m}")
     await ctx.close()
