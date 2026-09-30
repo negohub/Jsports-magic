@@ -43,7 +43,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260930165729">
+<meta name="build" content="20260930172811">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -4674,6 +4674,33 @@ function postGames() {
   }
   return list;
 }
+// その球団が3位以内（CS出場）に入る可能性があるか：シーズンが終わっていれば順位で、途中なら勝率の上限・下限で
+function canTop3(t) {
+  if (!CL.includes(t)) return false;
+  if (seasonOver()) return seasonTable(DATA.games, calOrder()).map(r => r.t).indexOf(t) < 3;
+  const st = {}; CL.forEach(x => (st[x] = { w: 0, l: 0, r: 0 }));
+  DATA.games.filter(inLg).forEach(g => {
+    if (!st[g.h] || !st[g.a]) return;
+    if (g.st === "final") { if (g.hs > g.as) { st[g.h].w++; st[g.a].l++; } else if (g.hs < g.as) { st[g.a].w++; st[g.h].l++; } }
+    else if (g.st !== "canc") { st[g.h].r++; st[g.a].r++; }
+  });
+  const pct = (w, l) => (w + l ? w / (w + l) : 0), me = st[t], best = pct(me.w + me.r, me.l);
+  return CL.filter(u => u !== t && pct(st[u].w, st[u].l + st[u].r) > best).length < 3;   // 自分が全部勝っても、確実に上にいるチームが3つあれば圏外
+}
+// その球団が、このポストシーズンの試合に出る（出る可能性がある）か。出ない球団の日程には出さない
+function postMayPlay(g, t) {
+  if (g.h && g.a) return g.h === t || g.a === t;
+  if (!canTop3(t)) return false;
+  const P = lgPost(isPL() ? "P" : "C"), rk = P.rk || [];
+  if (g.stage === "CS1") return P.done ? t === rk[1] || t === rk[2] : true;
+  if (g.stage === "CSF") return P.done ? (t === rk[0] || (P.s1.win ? t === P.s1.win : t === rk[1] || t === rk[2])) : true;
+  if (g.stage === "JS") {
+    if (P.sf.win) return t === P.sf.win;
+    if (P.done) return t === rk[0] || (P.s1.win ? t === P.s1.win : t === rk[1] || t === rk[2]);
+    return true;
+  }
+  return true;
+}
 function postPlace(g) {
   if (g.stage === "CS1") return "2位 vs 3位（2位の本拠地）";
   if (g.stage === "CSF") return "1位 vs ファーストステージ勝者（1位の本拠地）";
@@ -4702,7 +4729,7 @@ function renderCal() {
 
   const games = DATA.games.filter(g => monthOf(g.d) === m && (g.h === t || g.a === t));
   const postByDay = {};
-  postGames().filter(g => monthOf(g.d) === m).forEach(g => (postByDay[g.d] = g));
+  postGames().filter(g => monthOf(g.d) === m && postMayPlay(g, t)).forEach(g => (postByDay[g.d] = g));   // CS・日本シリーズに出ない球団には出さない
   const byDay = {};
   games.forEach(g => (byDay[g.d] = byDay[g.d] || []).push(g));
   let w = 0, l = 0, d = 0;
