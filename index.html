@@ -42,7 +42,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260930093858">
+<meta name="build" content="20260930095148">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -800,6 +800,8 @@ h2{font-weight:700;margin-top:30px}
 .fld .bs{fill:#F2F2F2}
 .fld .bs.on{fill:#FF3B3B}
 .pvs3{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#1A1A1A;border-top:1px solid #1A1A1A}
+/* ホームのチームは左：ホームの攻撃中（〇回裏）は、左に打者（ホーム）、右に投手（ビジター） */
+.pvs3.hbat .pc3.pcp{order:2}
 .pc3{position:relative;overflow:hidden;padding:12px 12px 12px;background:linear-gradient(160deg,color-mix(in srgb,var(--tc) 26%,#0A0A0A) 0%,#0A0A0A 55%)}
 .pc3::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--tc)}
 .pc3 .wm{position:absolute;right:-4px;top:-6px;font-size:64px;font-weight:700;color:rgba(255,255,255,.06);line-height:1;letter-spacing:-.04em;pointer-events:none}
@@ -3745,8 +3747,8 @@ function pitchHTML(g) {
       <div class="bso3"><div><span>B</span>${lamp(p.b || 0, 3, "b")}</div><div><span>S</span>${lamp(p.s || 0, 2, "s")}</div><div><span>O</span>${lamp(p.o || 0, 2, "o")}</div></div>
     </div>
     <div class="fwrap">${fieldHTML}</div>
-    <div class="pvs3">
-      <div class="pc3" style="${tv(def)}"><span class="wm num">${esc(p.pitcher ? p.pitcher.no : "")}</span>
+    <div class="pvs3${atk === g.h ? " hbat" : ""}">
+      <div class="pc3 pcp" style="${tv(def)}"><span class="wm num">${esc(p.pitcher ? p.pitcher.no : "")}</span>
         <div class="pr3">PITCHER<em>${fn(def)}</em></div>
         ${p.pitcher ? `<div class="pn3" data-pl="${def}|${esc(p.pitcher.name)}|pit"><b>${pwName(def, p.pitcher.name, "投手")}</b>${hand(p.pitcher.hand)}</div>
         <div class="pg3">${pcell("防", p.pitcher.era)}${pcell("球", pg ? pg.np : p.pitcher.np)}${pcell("回", pg && pg.ip)}${pcell("安", pg && pg.h)}${pcell("振", pg && pg.so)}${pcell("四", pg && pg.bb)}${pcell("失", pg && pg.r)}${pcell("打", pg ? pg.bf : p.pitcher.bf)}</div>` : ""}
