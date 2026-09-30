@@ -2087,6 +2087,28 @@ async def league_switch_check(browser):
     await pg.close()
 
 
+async def cal_post_check(browser):
+    """日程：CS・日本シリーズに出ない（出る可能性がない）球団の日程には、ポストシーズンの試合を出さない"""
+    pg, errs = await open_page(browser, 390, "pawa")
+    r = await pg.evaluate("""() => { const ng = [];
+      if (!(DATA.post || []).length) return ['ポストシーズンの日程がない（検査できない）'];
+      // シーズンを最後まで終わらせる（残りは全部ホームの勝ち）→ 順位が決まる
+      DATA.games.forEach(g => { if (inLg(g) && g.st !== 'final') { g.st = 'final'; g.hs = 3; g.as = 1; } });
+      const rk = seasonTable(DATA.games, calOrder()).map(r => r.t);
+      const cnt = t => { const ms = calMonths(); let n = 0; for (const m of ms) n += postGames().filter(g => monthOf(g.d) === m && postMayPlay(g, t)).length; return n; };
+      if (cnt(rk[4]) || cnt(rk[5] || rk[4])) ng.push(`4位以下の球団（${fn(rk[4])}）の日程にポストシーズンが出ている`);
+      if (!cnt(rk[0])) ng.push(`1位の球団（${fn(rk[0])}）の日程にポストシーズンが出ない`);
+      if (!postGames().some(g => g.stage === 'CS1' && postMayPlay(g, rk[1]))) ng.push(`2位の球団（${fn(rk[1])}）の日程にファーストステージが出ない`);
+      if (postGames().some(g => g.stage === 'CS1' && postMayPlay(g, rk[0]))) ng.push(`1位の球団の日程にファーストステージが出ている`);
+      S.calTeam = rk[4]; setTab('cal'); renderCal();
+      return ng; }""")
+    for m in r:
+        bad(f"[日程のポストシーズン] {m}")
+    for e in errs:
+        bad(f"[日程のポストシーズン]: 画面のエラー {e}")
+    await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -2168,6 +2190,7 @@ async def main():
         await player_today_check(browser)
         await peek_check(browser)
         await league_switch_check(browser)
+        await cal_post_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
