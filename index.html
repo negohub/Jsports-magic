@@ -42,7 +42,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260930073856">
+<meta name="build" content="20260930082706">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -1652,7 +1652,8 @@ html.theme-pawa .bcv{color:#13264A}
 .sth{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;margin:0 0 4px;color:#F2F2F4}
 .stl{list-style:none;margin:0;padding:0;display:grid;gap:3px}
 .stl li,.stpit{display:grid;grid-template-columns:14px 20px minmax(0,1fr) auto;align-items:center;gap:4px;min-height:28px;cursor:pointer}
-.stpit{margin-top:5px;padding-top:5px;border-top:1px dashed rgba(255,255,255,.12);grid-template-columns:30px minmax(0,1fr) auto}
+.stpit{margin-top:5px;padding-top:5px;border-top:1px dashed rgba(255,255,255,.12)}
+.stpit .stk{grid-column:1 / span 2}
 .sto{font-size:11px;color:var(--muted);text-align:right;font-weight:700}
 .stp{display:inline-grid;place-items:center;height:18px;border-radius:5px;background:var(--c);color:#13264A;font-size:10.5px;font-weight:800}
 .stk{font-size:10.5px;font-weight:800;color:var(--muted)}
@@ -1663,8 +1664,10 @@ html.theme-pawa .stm{background:#F4F9FF;border:2px solid #DCE7F5}
 html.theme-pawa .stm summary,html.theme-pawa .sth,html.theme-pawa .stnm{color:#13264A}
 html.theme-pawa .stm summary small,html.theme-pawa .sto,html.theme-pawa .sta,html.theme-pawa .stk,html.theme-pawa .stn,html.theme-pawa .stm summary::after{color:#4A6390}
 html.theme-pawa .stpit{border-top-color:#C9D8EC}
-html.theme-pawa .stnm .sptile{height:24px;padding:0 7px;max-width:100%}
-html.theme-pawa .stnm .sptile b{font-size:12px}
+/* 名前の枠は全員同じ大きさ（列の幅いっぱい）。長い名前は文字を小さくして収める */
+html.theme-pawa .stnm{container-type:inline-size;overflow:visible}
+html.theme-pawa .stnm .sptile{display:flex;justify-content:center;width:100%;height:26px;padding:0 4px;box-sizing:border-box}
+html.theme-pawa .stnm .sptile b{font-size:min(13px, calc((100cqw - 10px) / var(--n, 3)));letter-spacing:.02em;overflow:hidden;text-overflow:clip}
 /* 担当者の名前タイル（パワプロ風） */
 .ptile.otile{display:inline-flex;height:auto;min-width:64px;padding:3px 12px;vertical-align:middle;cursor:default;border-radius:8px}
 .ptile.otile b{font-size:inherit;font-weight:700;letter-spacing:.06em}
