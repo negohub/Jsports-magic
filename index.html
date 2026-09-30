@@ -42,7 +42,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260930101811">
+<meta name="build" content="20260930110804">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -1602,6 +1602,9 @@ html.theme-pawa .sp-h .pstile.xlong b{font-size:12px;letter-spacing:0}
 /* 速報の選手名のタイル（パワプロ風） */
 html.theme-pawa .ptile.sptile{display:inline-flex;height:28px;padding:0 10px;min-width:0;vertical-align:middle;cursor:default;border-radius:7px}
 html.theme-pawa .ptile.sptile b{font-size:13.5px;letter-spacing:.04em;color:#1F2A44 !important;white-space:nowrap}
+/* 名前の字間は成績タブの札と同じ：2文字は広く（.7em）、3文字は少し（.08em）。最後の文字の後ろの字間は右の余白で打ち消して真ん中に */
+html.theme-pawa .ptile.sptile.sp b,.ptile.rtile.sp b{letter-spacing:.7em !important;margin-right:-.7em !important}
+html.theme-pawa .ptile.sptile:not(.sp):not(.n5):not(.n7) b,.ptile.rtile:not(.sp):not(.n5):not(.n7) b{letter-spacing:.08em;margin-right:-.08em}
 html.theme-pawa .flow .fb b .sptile{margin-left:4px}
 html.theme-pawa .pn3 .sptile{height:32px;padding:0 12px}
 html.theme-pawa .lnm .sptile,html.theme-pawa .putab td.pnx .sptile{height:26px;padding:0 9px}
@@ -3844,7 +3847,7 @@ function runnerTiles(list) {
   if (!isPawa() || !list.length) return "";
   return list.map(({ t, x, y, full, short }) => {
     const gr = rosterGroups(t, full);
-    return `<span class="ptile rtile ${TILEC[gr[0]] || "pi"}${nmLen(short)}" data-pl="${t}|${esc(full)}" style="--n:${[...short].length};left:${(x / 300 * 100).toFixed(2)}%;top:${(y / 190 * 100).toFixed(2)}%;${tileStyle(gr)}"><b>${esc(short)}</b></span>`;
+    return `<span class="ptile rtile ${TILEC[gr[0]] || "pi"}${nmLen(short)}${[...short].length <= 2 ? " sp" : ""}" data-pl="${t}|${esc(full)}" style="--n:${[...short].length};left:${(x / 300 * 100).toFixed(2)}%;top:${(y / 190 * 100).toFixed(2)}%;${tileStyle(gr)}"><b>${esc(short)}</b></span>`;
   }).join("");
 }
 // 速報の呼び名：名簿で探して苗字にする（同じ球団に同じ苗字がいれば「佐藤輝」のように区別）。名簿にいなければそのまま
@@ -3862,7 +3865,7 @@ const nmLen = nm => { const n = [...String(nm || "")].length; return n >= 7 ? " 
 function pwName(t, name, fallback) {
   if (!isPawa() || !name) return esc(callName(t, name));
   const gr = rosterGroups(t, name, fallback), nm = callName(t, name);
-  return `<span class="ptile sptile ${TILEC[gr[0]] || "pi"}${nmLen(nm)}" style="--n:${[...nm].length};${tileStyle(gr)}"><b>${esc(nm)}</b></span>`;
+  return `<span class="ptile sptile ${TILEC[gr[0]] || "pi"}${nmLen(nm)}${[...nm].length <= 2 ? " sp" : ""}" style="--n:${[...nm].length};${tileStyle(gr)}"><b>${esc(nm)}</b></span>`;
 }
 function flowHTML(f, atk) {
   if (!f) return `<div class="flow"><p class="fnone">この回の流れはまだ取得できていません</p></div>`;
