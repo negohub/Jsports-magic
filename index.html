@@ -14,6 +14,20 @@
 <meta name="robots" content="noindex, nofollow, noarchive">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preload" href="splash.jpg" as="image">
+<!-- ホーム画面から開いた瞬間（ページを読み込む前）に iPhone が出す起動画面：アイコンの絵（機種ごとの大きさ） -->
+<link rel="apple-touch-startup-image" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/launch-1320x2868.jpg">
+<link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/launch-1290x2796.jpg">
+<link rel="apple-touch-startup-image" media="(device-width: 420px) and (device-height: 912px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/launch-1260x2736.jpg">
+<link rel="apple-touch-startup-image" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/launch-1206x2622.jpg">
+<link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/launch-1179x2556.jpg">
+<link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/launch-1284x2778.jpg">
+<link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/launch-1170x2532.jpg">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/launch-1125x2436.jpg">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/launch-1242x2688.jpg">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash/launch-828x1792.jpg">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/launch-1242x2208.jpg">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash/launch-750x1334.jpg">
+<link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash/launch-640x1136.jpg">
 <link rel="manifest" href="manifest.json">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="hobby baseball">
@@ -28,7 +42,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260929200517">
+<meta name="build" content="20260929203015">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -2016,10 +2030,15 @@ html{touch-action:manipulation}
 @keyframes spRing{0%{transform:scale(1);opacity:1}100%{transform:scale(6);opacity:0;border-width:1px}}
 @keyframes spDot{0%{opacity:1;transform:rotate(var(--a)) translate3d(0,-150px,0) scale(1.3)}100%{opacity:0;transform:rotate(var(--a)) translate3d(0,calc(var(--d) * -1.6),0) scale(.3)}}
 @keyframes spBg{0%,62%{opacity:1}100%{opacity:0}}
+/* ホーム画面から開いたとき：最初からアイコンが出ている（起動画面とつながる） */
+#splash.sp-launch .sp-icon{transform:scale(1);opacity:1;animation-name:spIconL}
+@keyframes spIconL{0%{transform:scale(1);opacity:1}30%{transform:scale(1);opacity:1}40%{transform:scale(1.07);opacity:1}50%{transform:scale(.98);opacity:1}
+  56%{transform:scale(1);opacity:1;filter:blur(0)}76%{transform:scale(3.4);opacity:1;filter:blur(0)}100%{transform:scale(8);opacity:0;filter:blur(10px)}}
+/* 「視差効果を減らす」がオンの人にも、同じ演出を出す（開いたときの一度だけなので） */
 /* 演出のあいだ、下のサイトは少し奥から出てくる */
 html.splashing main,html.splashing .top{transform:scale(.96);opacity:0}
 html.splash-out main,html.splash-out .top{transition:transform .6s cubic-bezier(.2,1,.3,1),opacity .5s ease}
-@media (prefers-reduced-motion:reduce){#splash{display:none}}
+
 /* 設定：データの状態（折りたたみ） */
 .sh-det summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;min-height:44px;font-size:12.5px;font-weight:700;color:var(--muted,#8B8B95)}
 .sh-det summary::-webkit-details-marker{display:none}
@@ -2182,8 +2201,10 @@ html.theme-pawa .swhint{color:#1D3E7C}
 // 自動の検査・動きを減らす設定・新しい版への切り替え（?v=）のときは出さない
 (function () {
   var sp = document.getElementById("splash");
-  var skip = navigator.webdriver || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) || /[?&]v=/.test(location.search);
+  var skip = navigator.webdriver || /[?&]v=/.test(location.search);
   if (skip) { sp.remove(); return; }
+  // ホーム画面から開いたとき：iPhone の起動画面と同じ所にアイコンが出ている状態から始める（ポンと出る動きはなし）
+  if (navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches)) sp.classList.add("sp-launch");
   document.documentElement.classList.add("splashing");
   setTimeout(function () { var h = document.documentElement; h.classList.add("splash-out"); h.classList.remove("splashing"); setTimeout(function () { h.classList.remove("splash-out"); }, 700); }, 1050);
   setTimeout(function () { sp.remove(); }, 1800);
