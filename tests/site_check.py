@@ -1337,6 +1337,12 @@ async def pitch_tile_check(browser):
           }
           box.querySelectorAll('.ptile').forEach(e => { const b = e.querySelector('b'), r = document.createRange(); r.selectNodeContents(b); const rr = r.getBoundingClientRect(), tr = e.getBoundingClientRect(); if (rr.width && (rr.left < tr.left + 0.5 || rr.right > tr.right - 0.5)) ng.push(`名前が札からはみ出している：${b.textContent}`); });
           box.querySelectorAll('.pn3').forEach(e => { const tl = e.querySelector('.ptile'), h = e.querySelector('.hd'); if (tl && h && Math.abs(tl.getBoundingClientRect().top - h.getBoundingClientRect().top) > 12) ng.push('名前の札と「右投」などが同じ行に並んでいない'); });
+          // ホームのチームは左：〇回裏（ホームの攻撃）は左が打者、〇回表（ビジターの攻撃）は左が投手
+          const side = () => { const c = [...document.querySelectorAll('.tgd .pvs3 .pc3')].sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left);
+            return c.length === 2 ? (c[0].classList.contains('pcp') ? 'pitcher' : 'batter') : ''; };
+          if (side() !== 'batter') ng.push('ホームの攻撃中（裏）なのに、左が打者（ホーム）になっていない');
+          PD[k].half = '6回表'; g.inn = '6回表'; renderGame();
+          if (side() !== 'pitcher') ng.push('ビジターの攻撃中（表）なのに、左が投手（ホーム）になっていない');
           return ng.slice(0, 6);
         }""")
         for m in r:
