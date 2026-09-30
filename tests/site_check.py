@@ -1337,6 +1337,10 @@ async def pitch_tile_check(browser):
           }
           box.querySelectorAll('.ptile').forEach(e => { const b = e.querySelector('b'), r = document.createRange(); r.selectNodeContents(b); const rr = r.getBoundingClientRect(), tr = e.getBoundingClientRect(); if (rr.width && (rr.left < tr.left + 0.5 || rr.right > tr.right - 0.5)) ng.push(`名前が札からはみ出している：${b.textContent}`); });
           box.querySelectorAll('.pn3').forEach(e => { const tl = e.querySelector('.ptile'), h = e.querySelector('.hd'); if (tl && h && Math.abs(tl.getBoundingClientRect().top - h.getBoundingClientRect().top) > 12) ng.push('名前の札と「右投」などが同じ行に並んでいない'); });
+          // 打順の上の色の説明は出さない（色で分かる）。一球速報はシンプル版（投手は球数・回・安・振・失・防御率、打者は打率・今日の結果だけ）
+          if (document.querySelector('.tgd .rleg')) ng.push('打順の上に色の説明が出ている');
+          if (!box.querySelector('.pbox.v2') && !box.closest('.pbox.v2') && !document.querySelector('.tgd .pbox.v2')) ng.push('一球速報がシンプル版になっていない');
+          if (document.querySelector('.tgd .pg3')) ng.push('一球速報に細かい成績の表が残っている');
           // NEXT の打者もパワプロ風の札。スコアボードは赤い枠なし・攻撃中のマスは「-」
           if (!box.querySelector('.pnx3 .ptile')) ng.push('NEXT の打者がパワプロ風の札になっていない');
           if (document.querySelector('.ls td.cur, .ls th.cur')) ng.push('スコアボードに今の回の枠（赤）が残っている');
