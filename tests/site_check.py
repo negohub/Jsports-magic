@@ -2026,6 +2026,34 @@ async def player_today_check(browser):
     await pg.close()
 
 
+async def peek_check(browser):
+    """長押しでのぞく：選手の名前・試合のカード・順位表のチーム・日程の日にち。長押しで出て、指を離すと閉じ、そのあとのタップは無視"""
+    LP = """async (sel) => { const el = document.querySelector(sel); if (!el) return ['見つからない']; el.scrollIntoView({ block: 'center' }); await new Promise(r => setTimeout(r, 150));
+      const r = el.getBoundingClientRect(), x = r.left + Math.min(20, r.width / 2), y = r.top + r.height / 2;
+      const tt = new Touch({ identifier: 1, target: el, clientX: x, clientY: y });
+      el.dispatchEvent(new TouchEvent('touchstart', { touches: [tt], targetTouches: [tt], changedTouches: [tt], bubbles: true, cancelable: true }));
+      await new Promise(r => setTimeout(r, 600));
+      const ng = [], card = document.querySelector('#peek .pk-card');
+      if (!PEEK.open || !card || !card.textContent.trim()) ng.push('長押ししても中身が出ない');
+      else { const cr = card.getBoundingClientRect(); if (cr.left < 0 || cr.right > innerWidth + 1) ng.push('のぞく画面が画面からはみ出す'); }
+      el.dispatchEvent(new TouchEvent('touchend', { changedTouches: [tt], bubbles: true, cancelable: true }));
+      if (PEEK.open) ng.push('指を離しても閉じない');
+      if (Date.now() >= PEEK.until) ng.push('指を離したあとのタップを無視していない');
+      return ng; }"""
+    for theme in ["pawa", ""]:
+        for width in [320, 390]:
+            pg, errs = await open_page(browser, width, theme, touch=True)
+            for tab, sel, what in [("magic", "tr[data-tm]", "戦況のチーム"), ("game", "[data-gk]", "試合のカード"), ("std", "#v-std tr[data-tm]", "順位表のチーム"),
+                                   ("stats", "#rankList [data-pl]", "選手の名前"), ("cal", ".day.has", "日程の日にち"), ("song", ".ptile[data-song]", "応援歌の選手")]:
+                await pg.evaluate(f"setTab('{tab}')"); await pg.wait_for_timeout(600)
+                for m in await pg.evaluate(LP, sel):
+                    bad(f"[長押し {'パワプロ風' if theme else 'スタイリッシュ'} 幅{width}] {what}：{m}")
+                await pg.wait_for_timeout(500)
+            for e in errs:
+                bad(f"[長押し]: 画面のエラー {e}")
+            await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -2105,6 +2133,7 @@ async def main():
         await default_theme_check(browser)
         await live_off_check(browser)
         await player_today_check(browser)
+        await peek_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
