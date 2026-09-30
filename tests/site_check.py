@@ -1748,7 +1748,8 @@ async def speed_health_check(browser):
         if await pg.evaluate("document.getElementById('meCard').innerText.trim()"):
             bad("[あなたの担当] パ・リーグの戦況に「あなた」のカードが出ている")
         await pg.evaluate("switchLeague('C')")
-        # スタイリッシュでは「名前の色（パワプロ風）」の欄を出さない
+        # スタイリッシュでは「名前の色（パワプロ風）」の欄を出さない（最初はパワプロ風なので、スタイリッシュに切り替えてから見る）
+        await pg.evaluate("document.querySelector('#themeSeg button[data-theme=\"\"]').click(); openSheet()")
         if not await pg.evaluate("document.getElementById('opSec').hidden"):
             bad("[名前の色] スタイリッシュでも「名前の色（パワプロ風）」の欄が出ている")
         for e in errs:
@@ -1958,6 +1959,27 @@ async def uniform_check(browser):
         await pg.close()
 
 
+async def default_theme_check(browser):
+    """まだテーマを選んでいない人はパワプロ風。スタイリッシュを選んだ人はスタイリッシュのまま。LINEの画像もテーマに合わせる"""
+    ctx = await browser.new_context(viewport={"width": 390, "height": 844})
+    pg = await ctx.new_page()
+    await pg.add_init_script("Object.defineProperty(navigator, 'webdriver', { get: () => true }); if (!sessionStorage.getItem('x')) { localStorage.clear(); sessionStorage.setItem('x', '1'); }")
+    await pg.goto(f"file://{ROOT}/index.html"); await pg.wait_for_timeout(700)
+    if not await pg.evaluate("document.documentElement.classList.contains('theme-pawa')"):
+        bad("[最初のテーマ] まだ選んでいない人がパワプロ風になっていない")
+    px = await pg.evaluate("(() => { const c = drawCard(analyze(DATA.games, S.period, CONFIG)); const d = c.getContext('2d').getImageData(10, 10, 1, 1).data; return [d[0], d[1], d[2]]; })()")
+    if not (px[2] > 180 and px[0] < 120):
+        bad(f"[LINEの画像] パワプロ風のとき空色の画像になっていない（左上の色 {px}）")
+    await pg.evaluate("localStorage.setItem('theme', '')")
+    await pg.reload(); await pg.wait_for_timeout(700)
+    if await pg.evaluate("document.documentElement.classList.contains('theme-pawa')"):
+        bad("[最初のテーマ] スタイリッシュを選んだ人がパワプロ風に戻っている")
+    px = await pg.evaluate("(() => { const c = drawCard(analyze(DATA.games, S.period, CONFIG)); const d = c.getContext('2d').getImageData(10, 10, 1, 1).data; return [d[0], d[1], d[2]]; })()")
+    if max(px) > 40:
+        bad(f"[LINEの画像] スタイリッシュのとき黒い画像になっていない（左上の色 {px}）")
+    await ctx.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -2034,6 +2056,7 @@ async def main():
         await pre_game_check(browser)
         await player_head_check(browser)
         await uniform_check(browser)
+        await default_theme_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
