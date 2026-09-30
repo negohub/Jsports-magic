@@ -1081,6 +1081,17 @@ async def offseason_check(browser):
     got = ud.off_coach("D", "u", "コーチングスタッフについて", "<h1>コーチングスタッフについて</h1><p>2026/10/08</p><p>嶋基宏ヘッドコーチが今季限りで退団することになりました。</p><p>また飯山裕志二軍監督は来季、一軍内野守備走塁コーチへ配置転換となります。</p><p>投手コーチ　山井 大介（留任）</p><p>新任 打撃コーチ　立浪 和義</p>", st, set(), 2026)
     if sorted((x["n"], x["kind"]) for x in got) != sorted([("嶋 基宏", "coach_out"), ("飯山 裕志", "coach_move"), ("立浪 和義", "coach_in")]):
         bad(f"[オフの動きの読み取り] コーチの退団・配置転換・就任を正しく読めない：{[(x['n'], x['kind']) for x in got]}")
+    # 応援歌：移籍して出ていった選手は元の球団の応援歌なし。移籍してきた選手は背番号だけでは判定しない
+    _bk = (ud.SONG_SOURCES, ud.SONG_BY_NUMBER, ud.SONG_LINK_PAGE, ud.SONG_EXTRA, ud.fetch)
+    try:
+        ud.SONG_SOURCES, ud.SONG_BY_NUMBER, ud.SONG_LINK_PAGE, ud.SONG_EXTRA = {"DB": ["x"]}, {"x"}, {}, {}
+        ud.fetch = lambda url: "<p>" + ("背番号40 前の選手 かっとばせー " * 20) + "背番号50 山本祐大 背番号2 牧秀悟</p>"
+        rows = [{"n": "井上 朋也", "no": "40", "dev": False}, {"n": "山本 祐大", "no": "50", "dev": False}, {"n": "牧 秀悟", "no": "2", "dev": False}]
+        ud.mark_songs("DB", rows, {ud.squash("井上 朋也")}, {ud.squash("山本 祐大")})
+        if [(r["n"], r["song"]) for r in rows] != [("井上 朋也", False), ("山本 祐大", False), ("牧 秀悟", True)]:
+            bad(f"[応援歌の判定] 移籍した選手の扱いが違う：{[(r['n'], r['song']) for r in rows]}")
+    finally:
+        ud.SONG_SOURCES, ud.SONG_BY_NUMBER, ud.SONG_LINK_PAGE, ud.SONG_EXTRA, ud.fetch = _bk
     dr = ud.parse_draft("<h3>阪神タイガース</h3><table><tr><td>1位</td><td>立石 正広</td><td>内野手</td><td>創価大</td></tr><tr><td>育成1位</td><td>山田 太郎</td><td>投手</td><td>○○高</td></tr></table><h3>読売ジャイアンツ</h3><table><tr><td>1位</td><td>竹丸 和幸</td><td>投手</td><td>鷺宮製作所</td></tr></table>")
     if [(x["t"], x["n"], x["round"]) for x in dr] != [("T", "立石 正広", "1位"), ("T", "山田 太郎", "育成1位"), ("G", "竹丸 和幸", "1位")]:
         bad(f"[オフの動きの読み取り] ドラフトの指名選手を正しく読めない：{dr}")
@@ -1452,6 +1463,12 @@ async def song_list_check(browser):
       const labels = new Set([...document.querySelectorAll('#v-song a.sof')].map(a => a.textContent.trim()));
       if (labels.size && (labels.size > 1 || !labels.has('応援歌'))) ng.push(`応援歌のボタンの文字がそろっていない：${[...labels].join('・')}`);
       for (const tt of ['L', 'H', 'T']) { const x = (DATA.rosters[tt] || []).find(r => r.song); if (x) { openPlayer(tt, x.n); const a = document.querySelector('#songPick a.sof'); if (a && a.textContent.trim() !== '応援歌') ng.push(`選手の画面の応援歌のボタンが「${a.textContent.trim()}」（${tt}）`); } }
+      document.getElementById('songSheet').hidden = true; document.getElementById('songSheet').classList.remove('open');
+      // 移籍した選手を開いても、元の球団の応援歌のボタンは出ない
+      DATA.offseason = { season: 2026, items: [{ t, n: mv.n, no: mv.no, kind: 'out', via: 'trade', to: 'G', date: '2026-05-13' }], teams: {}, seen: {} };
+      openPlayer(t, mv.n);
+      if (document.querySelector('#songPick .sof, #songPick .sgo')) ng.push(`移籍した選手（${mv.n}）の画面に、元の球団の応援歌のボタンが出ている`);
+      if (songLink(t, mv)) ng.push('移籍した選手に応援歌のリンクが作られる');
       document.getElementById('songSheet').hidden = true; document.getElementById('songSheet').classList.remove('open');
       DATA.offseason = null; renderSong();
       return ng;
