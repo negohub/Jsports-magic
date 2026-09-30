@@ -1222,8 +1222,10 @@ def parse_transfer(html, season):
                 kind = "retire"
             elif re.search(r"育成.{0,3}再契約|育成契約を打診|育成.{0,4}打診", note):
                 kind = "offer"
-            elif re.search(r"自由契約|退団|戦力外", note):
+            elif re.search(r"自由契約|戦力外", note):
                 kind = "cut"
+            elif "退団" in note:
+                kind = "leave"   # 自由契約・引退・移籍ではない退団（「退団」とだけあるもの）
             else:
                 continue
             out.append({"t": t, "n": name, "dev": dev, "kind": kind, "date": date, "note": note})
@@ -1245,7 +1247,7 @@ def merge_transfer(off, season, rosters, now=None):
         cur = items.get(key)
         if cur:
             # 戦力外→引退などに変わったとき（新しい日付のとき）だけ直す。移籍・監督などの項目には手を出さない
-            if cur.get("kind") in ("cut", "offer", "retire") and cur.get("kind") != x["kind"] and x["date"] > (cur.get("date") or ""):
+            if cur.get("kind") in ("cut", "offer", "retire", "leave") and cur.get("kind") != x["kind"] and x["date"] > (cur.get("date") or ""):
                 cur["kind"], cur["date"] = x["kind"], x["date"]
                 upd += 1
             continue
