@@ -1909,6 +1909,46 @@ async def player_head_check(browser):
             await pg.close()
 
 
+async def uniform_check(browser):
+    """同じ種類の部品は、どの画面でも同じ見た目か（パワプロ風）
+    名前の札：字間（2文字以下 .7em・3〜4文字 .08em・5〜6文字 0・7文字以上 -.02em）・太さ・色がそろう。一覧の札は高さ34px・文字14px（5文字以上は小さく）
+    切り替えボタン：文字14px。打席の結果の札：同じ大きさ"""
+    for width in [390, 320]:
+        label = f"[見た目の統一 パワプロ風 幅{width}]"
+        pg, errs = await open_page(browser, width, "pawa")
+        ng = []
+        for tab in ["magic", "game", "cal", "std", "stats", "song", "off"]:
+            await pg.evaluate(f"setTab('{tab}')")
+            await pg.wait_for_timeout(700)
+            if tab == "game":
+                await pg.evaluate("""() => { const t = CL[0], o = CL[1]; const g = DATA.games.find(x => x.h === t && x.a === o) || DATA.games.find(x => x.h === t);
+                  const today = g.d; jst = () => ({ y: +today.slice(0, 4), m: +today.slice(5, 7), d: +today.slice(8), iso: today }); liveWanted = () => false;
+                  Object.assign(g, { st: 'live', hs: 3, as: 2, inn: '4回裏' }); S.open[g.d + gkey(g)] = true; renderAll(); setTab('game'); }""")
+                await pg.wait_for_timeout(1200)
+            if tab == "off":
+                await pg.evaluate("""() => { const t = CL[0], ro = DATA.rosters[t];
+                  DATA.offseason = { season: 2026, items: ro.slice(0, 10).map(x => ({ t, n: x.n, no: x.no, kind: 'cut', date: '2026-09-29', url: '', title: '' })), teams: {}, seen: {} }; renderAll(); setTab('off'); }""")
+                await pg.wait_for_timeout(700)
+            ng += await pg.evaluate("""(tab) => { const ng = [];
+              for (const b of document.querySelectorAll('.ptile b')) { const tile = b.closest('.ptile'), r = tile.getBoundingClientRect(); if (!r.width) continue;
+                const cs = getComputedStyle(b), n = [...b.textContent.replace(/\\s/g, '')].length, fs = parseFloat(cs.fontSize), ls = (parseFloat(cs.letterSpacing) || 0) / fs;
+                const want = n <= 2 ? .7 : n <= 4 ? .08 : n <= 6 ? 0 : -.02;
+                if (Math.abs(ls - want) > .015) ng.push(`${tab}：名前の札の字間がほかと違う（${b.textContent} ${ls.toFixed(2)}em）`);
+                if (cs.color !== 'rgb(31, 42, 68)' || cs.fontWeight !== '700') ng.push(`${tab}：名前の札の文字の色・太さがほかと違う（${b.textContent}）`);
+                if (tile.closest('#rankList, #songList, #offList, #ptTbl, .sp-h, .pn3')) {
+                  if (Math.round(r.height) < 34) ng.push(`${tab}：一覧の名前の札の高さがほかと違う（${b.textContent} ${Math.round(r.height)}px）`);
+                  if (n <= 4 && fs !== 14) ng.push(`${tab}：一覧の名前の札の文字の大きさがほかと違う（${b.textContent} ${fs}px）`); } }
+              for (const e of document.querySelectorAll('.chip, .chips2 button, .seg button')) if (e.getBoundingClientRect().width && getComputedStyle(e).fontSize !== '14px') ng.push(`${tab}：切り替えボタンの文字の大きさがほかと違う（${e.textContent.trim()}）`);
+              const rcs = [...document.querySelectorAll('.rc')].filter(e => e.getBoundingClientRect().width).map(e => getComputedStyle(e).fontSize + '/' + Math.round(e.getBoundingClientRect().height));
+              if (new Set(rcs).size > 1) ng.push(`${tab}：打席の結果の札の大きさがそろっていない（${[...new Set(rcs)].join('・')}）`);
+              return ng; }""", tab)
+        for m in list(dict.fromkeys(ng))[:8]:
+            bad(f"{label} {m}")
+        for e in errs:
+            bad(f"{label}: 画面のエラー {e}")
+        await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -1984,6 +2024,7 @@ async def main():
         await brand_check(browser)
         await pre_game_check(browser)
         await player_head_check(browser)
+        await uniform_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
