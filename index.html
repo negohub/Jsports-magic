@@ -42,7 +42,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260930110804">
+<meta name="build" content="20260930112026">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -2265,6 +2265,37 @@ html.theme-pawa #offList .ofr .ono,html.theme-pawa #offList .ofr .okd,html.theme
 .swhint{margin:8px 0 0;text-align:center;font-size:12px;font-weight:700;color:var(--muted,#8B8B95);transition:opacity .5s ease}
 .swhint.off{opacity:0}
 html.theme-pawa .swhint{color:#1D3E7C}
+
+/* ===== 名前の札（パワプロ風）：サイト全体で同じ決まり =====
+   字間：2文字以下 .7em（「度　会」）・3〜4文字 .08em・5〜6文字 0・7文字以上 -.02em（最後の文字の後ろの字間は右の余白で打ち消して真ん中に）
+   大きさ：一覧の札（個人ランキング・チーム別成績・応援歌・オフの動き・選手の画面・一球速報の投手と打者）は高さ34px・文字14px
+           行の中の札（打順・スタメン・ベンチ入り・投手成績・走者・担当者の表）は高さ26px・文字13px
+   文字：太さ700・色 #1F2A44 */
+html.theme-pawa .ptile b:not(#z){font-weight:700 !important;color:#1F2A44 !important;letter-spacing:.08em !important;margin-right:-.08em !important}
+html.theme-pawa .ptile.sp b:not(#z){letter-spacing:.7em !important;margin-right:-.7em !important}
+html.theme-pawa .ptile.n5 b:not(#z){letter-spacing:0 !important;margin-right:0 !important}
+html.theme-pawa .ptile.n7 b:not(#z){letter-spacing:-.02em !important;margin-right:.02em !important}
+html.theme-pawa #rankList .ptile,html.theme-pawa #songList .ptile,html.theme-pawa #offList .ptile.otl,html.theme-pawa .sp-h .pstile,html.theme-pawa .pn3 .sptile{height:34px !important;min-height:34px !important}
+html.theme-pawa #ptTbl td.pnm .ptile{min-height:34px !important}
+html.theme-pawa #rankList .ptile b,html.theme-pawa #songList .ptile b,html.theme-pawa #offList .ptile.otl b,html.theme-pawa .sp-h .pstile b,html.theme-pawa #ptTbl td.pnm .ptile b{font-size:14px !important}
+html.theme-pawa #rankList .ptile.n5 b,html.theme-pawa #songList .ptile.n5 b,html.theme-pawa #offList .ptile.otl.n5 b,html.theme-pawa .sp-h .pstile.n5 b,html.theme-pawa #ptTbl td.pnm .ptile.n5 b{font-size:13px !important}
+html.theme-pawa #rankList .ptile.n7 b,html.theme-pawa #songList .ptile.n7 b,html.theme-pawa #offList .ptile.otl.n7 b,html.theme-pawa .sp-h .pstile.n7 b,html.theme-pawa #ptTbl td.pnm .ptile.n7 b{font-size:11.5px !important}
+html.theme-pawa .pn3 .sptile{--fs:14px !important}
+/* 一覧の札の幅：名前の長さで変えない */
+html.theme-pawa #offList .ptile.otl{width:116px !important;min-width:0 !important;max-width:none !important;padding:0 6px !important;box-sizing:border-box}
+html.theme-pawa .sp-h .pstile{width:128px !important;min-width:0 !important;padding:0 6px !important;box-sizing:border-box}
+/* 行の中の札 */
+html.theme-pawa .ptile.sptile:not(.pn3 .sptile),html.theme-pawa .ptile.rtile,html.theme-pawa #hist .ptile.otile,html.theme-pawa #tot .ptile.otile{height:26px !important;min-height:26px !important}
+html.theme-pawa .pn3 .ptile.sptile{height:34px !important}
+html.theme-pawa .stnm .sptile b{font-size:min(13px, calc((100cqw - 10px) / var(--n, 3))) !important}
+html.theme-pawa #hist .ptile.otile b,html.theme-pawa #tot .ptile.otile b{font-size:13px !important}
+
+/* ===== 同じ種類の部品は、どの画面でも同じ大きさ ===== */
+/* 切り替えボタン（戦況の月度・成績の打者／投手・オフの種類など）：文字14px */
+.chip,.chips2 button,.seg button{font-size:14px !important}
+/* 打席の結果の札（打順・一球速報の打者の欄）：同じ大きさ */
+html .pres3 .rc:not(#z){font-size:11.5px !important;min-width:44px !important;padding:3px 8px !important}
+html:not(.theme-pawa) .pres3 .rc:not(#z){min-width:40px !important;padding:2px 8px !important}
 </style>
 </head>
 <body>
@@ -2884,7 +2915,7 @@ function ownerPosOf(t) { const p = ownerPosPicked()[t]; return OWNER_POS_CHOICES
 const ownT = t => {
   if (!isPawa() || !own(t)) return own(t);
   const c = { "投": "pp", "中": "pp", "抑": "pp", "先": "ps", "捕": "pc", "内": "pi", "外": "po" }[ownerPosOf(t)] || "pi";
-  return `<span class="ptile otile ${c}${own(t).length <= 2 ? " sp" : ""}"><b>${own(t)}</b></span>`;
+  return `<span class="ptile otile ${c}${nmCls(own(t))}"><b>${own(t)}</b></span>`;
 };
 const payLine = t => own(t) === CONFIG.payee ? `${own(t)}が ${yen(CONFIG.fee)} 支払い` : `${own(t)} → ${CONFIG.payee}へ ${yen(CONFIG.fee)}`;
 // 日本時間の今日（1秒間は同じ結果を使い回す：描画中に何百回も呼ばれるため）
@@ -3847,7 +3878,7 @@ function runnerTiles(list) {
   if (!isPawa() || !list.length) return "";
   return list.map(({ t, x, y, full, short }) => {
     const gr = rosterGroups(t, full);
-    return `<span class="ptile rtile ${TILEC[gr[0]] || "pi"}${nmLen(short)}${[...short].length <= 2 ? " sp" : ""}" data-pl="${t}|${esc(full)}" style="--n:${[...short].length};left:${(x / 300 * 100).toFixed(2)}%;top:${(y / 190 * 100).toFixed(2)}%;${tileStyle(gr)}"><b>${esc(short)}</b></span>`;
+    return `<span class="ptile rtile ${TILEC[gr[0]] || "pi"}${nmCls(short)}" data-pl="${t}|${esc(full)}" style="--n:${[...short].length};left:${(x / 300 * 100).toFixed(2)}%;top:${(y / 190 * 100).toFixed(2)}%;${tileStyle(gr)}"><b>${esc(short)}</b></span>`;
   }).join("");
 }
 // 速報の呼び名：名簿で探して苗字にする（同じ球団に同じ苗字がいれば「佐藤輝」のように区別）。名簿にいなければそのまま
@@ -3861,11 +3892,13 @@ function callName(t, name) {
   return /\s/.test(n) ? shortName(t, n) : n;
 }
 // 名前の長さの目印（パワプロ風の札は大きさをそろえ、長い名前は文字を小さくする）
+// 名前の札の字間・文字の大きさの目印（サイト全体で共通）：2文字以下 sp・3〜4文字 なし・5〜6文字 n5・7文字以上 n7（空白は数えない）
+const nmCls = nm => { const n = [...String(nm || "").replace(/\s+/g, "")].length; return n <= 2 ? " sp" : n >= 7 ? " n7" : n >= 5 ? " n5" : ""; };
 const nmLen = nm => { const n = [...String(nm || "")].length; return n >= 7 ? " n7" : n >= 5 ? " n5" : ""; };
 function pwName(t, name, fallback) {
   if (!isPawa() || !name) return esc(callName(t, name));
   const gr = rosterGroups(t, name, fallback), nm = callName(t, name);
-  return `<span class="ptile sptile ${TILEC[gr[0]] || "pi"}${nmLen(nm)}${[...nm].length <= 2 ? " sp" : ""}" style="--n:${[...nm].length};${tileStyle(gr)}"><b>${esc(nm)}</b></span>`;
+  return `<span class="ptile sptile ${TILEC[gr[0]] || "pi"}${nmCls(nm)}" style="--n:${[...nm].length};${tileStyle(gr)}"><b>${esc(nm)}</b></span>`;
 }
 function flowHTML(f, atk) {
   if (!f) return `<div class="flow"><p class="fnone">この回の流れはまだ取得できていません</p></div>`;
@@ -4756,7 +4789,7 @@ async function openPlayer(t, name, opt = {}) {
   const btns = song ? `<div class="sp-b">${of ? `<a class="sof" href="${of}" target="_blank" rel="noopener">${songLabel(t)}</a>` : ""}<a class="sgo" href="${ytUrl(t, full)}" target="_blank" rel="noopener">応援歌を聴く</a></div>` : "";
   // パワプロ風：名前も守備位置の色のタイル（2つ以上守る選手は塗り分け）
   const nameHtml = isPawa()
-    ? `<span class="ptile pstile ${TILEC[gr[0]] || "pi"}${[...full.replace(/\s/g, "")].length >= 9 ? " xlong" : [...full.replace(/\s/g, "")].length >= 6 ? " long" : ""}" style="${tileStyle(gr)}"><b>${esc(full)}</b></span>`
+    ? `<span class="ptile pstile ${TILEC[gr[0]] || "pi"}${nmCls(full)}${[...full.replace(/\s/g, "")].length >= 9 ? " xlong" : [...full.replace(/\s/g, "")].length >= 6 ? " long" : ""}" style="${tileStyle(gr)}"><b>${esc(full)}</b></span>`
     : `<b>${esc(full)}</b>`;
   const head = `<div class="sp-h" style="${tv(t)}"><span class="badge">${sn(t)}</span>${nameHtml}${offTag(t, full)}${no ? `<small class="num">#${esc(no)}</small>` : ""}<span class="ps-poss">${chips}</span></div>`;
   $("songPick").innerHTML = head + `<div class="ps-body"><div class="ps-load">今季の成績を読み込み中…</div></div>` + btns;
@@ -4854,7 +4887,7 @@ function renderSong() {
   const pawa = document.documentElement.classList.contains("theme-pawa");
   const POSC = { "投手": "pp", "捕手": "pc", "内野手": "pi", "外野手": "po" };
   const PLBL = { "投": "投手", "先": "先発", "中": "中継ぎ", "抑": "抑え", "捕": "捕手", "内": "内野", "外": "外野" };
-  const tile = x => { const sur = shortName(t, x.n), gr = posGroups(t, x.n, x.p); return `<button type="button" class="ptile ${TILEC[gr[0]] || POSC[x.p] || "pp"}${sur.length <= 2 ? " sp" : sur.length >= 5 ? " lg" : ""}" style="${tileStyle(gr)};${tv(t)}" data-song="${esc(x.no)}|${esc(x.n)}"><small class="num">${esc(x.no)}</small><i class="twm num" aria-hidden="true">${esc(x.no)}</i><b>${esc(sur)}</b><em class="tpos">${gr.map(k => PLBL[k] || k).join("・")}</em>${offTag(t, x.n)}</button>`; };
+  const tile = x => { const sur = shortName(t, x.n), gr = posGroups(t, x.n, x.p); return `<button type="button" class="ptile ${TILEC[gr[0]] || POSC[x.p] || "pp"}${nmCls(sur)}${[...sur].length >= 5 ? " lg" : ""}" style="${tileStyle(gr)};${tv(t)}" data-song="${esc(x.no)}|${esc(x.n)}"><small class="num">${esc(x.no)}</small><i class="twm num" aria-hidden="true">${esc(x.no)}</i><b>${esc(sur)}</b><em class="tpos">${gr.map(k => PLBL[k] || k).join("・")}</em>${offTag(t, x.n)}</button>`; };
   let html = "";
   for (const [pos, dev] of groups) {
     const list = all.filter(x => x.dev === dev && (dev || x.p === pos) && hit(x)).sort((a, b) => Number(a.no) - Number(b.no) || a.no.length - b.no.length);
@@ -4985,7 +5018,7 @@ const OFF_STAFF = new Set(["mgr", "coach_out", "coach_in", "coach_move"]);   // 
 const MGR_POS = { "藤川球児": "投", "阿部慎之助": "捕", "相川亮二": "捕", "井上一樹": "外", "新井貴浩": "内", "池山隆寛": "内",
   "小久保裕紀": "内", "新庄剛志": "外", "岸田護": "投", "三木肇": "内", "西口文也": "投", "サブロー": "外", "橋上秀樹": "外" };
 const mgrPos = n => MGR_POS[nk(n)] || "内";
-const mgrTile = (n, cls = "") => { const p = mgrPos(n); return `<span class="ptile ${cls} ${TILEC[p] || "pi"}" style="${tileStyle([p])}"><b>${esc(n)}</b></span>`; };
+const mgrTile = (n, cls = "") => { const p = mgrPos(n); return `<span class="ptile ${cls} ${TILEC[p] || "pi"}${nmCls(n)}" style="${tileStyle([p])}"><b>${esc(n)}</b></span>`; };
 // 「公示 任意引退・自由契約」のページ（去年の一覧）から拾ってしまったものは出さない（データ更新でも消すが、念のため画面側でも）
 const offItems = () => (((DATA && DATA.offseason) || {}).items || []).filter(x => OFF_LABEL[x.kind] && TEAM[x.t] && !/\/announce\//.test(x.url || ""));
 // 名前（名簿の名前・NPBの表の名前・名字だけ）から、その選手の発表を探す
@@ -5052,7 +5085,7 @@ function renderOff() {
     if (!pawa) return esc(x.n);
     const ro = ((DATA.rosters || {})[x.t] || []).find(r => nk(r.n) === nk(x.n));
     const gr = ro ? posGroups(x.t, x.n, ro.p) : [PKEY[x.pos] || "投"], len = [...x.n.replace(/\s+/g, "")].length;
-    return `<span class="ptile otl ${TILEC[gr[0]] || "pp"}${len >= 6 ? " n7" : len >= 5 ? " n5" : ""}" style="${tileStyle(gr)}"><b>${esc(x.n)}</b></span>`;
+    return `<span class="ptile otl ${TILEC[gr[0]] || "pp"}${nmCls(x.n)}" style="${tileStyle(gr)}"><b>${esc(x.n)}</b></span>`;
   };
   // 1行目：札・名前・背番号、2行目：内容・発表日
   const row = x => `<div class="ofr"><span class="offtag k-${x.kind}">${OFF_LABEL[x.kind]}</span><div class="omain"><div class="on1"><span class="onm"${x.kind === "mgr" ? ` data-mgr="${x.t}|${esc(x.n)}"` : OFF_STAFF.has(x.kind) ? "" : OFF_IN.has(x.kind) && !((DATA.rosters || {})[x.t] || []).some(r => nk(r.n) === nk(x.n)) ? "" : ` data-pl="${x.t}|${esc(x.n)}|"`}>${nameHtml(x)}</span>${x.kind === "mgr" ? `<span class="ono">${esc(x.role || "監督")}</span>` : OFF_STAFF.has(x.kind) ? `<span class="ono">${x.no ? `#${esc(x.no)}` : "コーチ"}</span>` : x.no ? `<span class="ono num">#${esc(x.no)}</span>` : ""}</div><div class="okd">${kindText(x)}${!x.date ? "" : o.season && x.date.slice(0, 4) < String(o.season) ? `<span class="odt num">（${md(x.date)}に表明）</span>` : `<span class="odt num">・${md(x.date)}</span>`}</div></div></div>`;
@@ -5216,7 +5249,7 @@ function drawTeamIn(t, d) {
     if (kind === "pit") { const pg = gr.filter(k => PIT.includes(k)); gr = pg.length ? pg : ["投"]; }
     else { const bg = gr.filter(k => !PIT.includes(k)); gr = bg.length ? bg : gr; }
     const nm = rankName(t, n);
-    return `<span class="ptile ${TILEC[gr[0]] || "pi"}${nm.length <= 2 ? " sp" : ""}${lenC(nm)}" style="${tileStyle(gr)}"><b>${esc(nm)}</b></span>${offTag(t, n)}`;
+    return `<span class="ptile ${TILEC[gr[0]] || "pi"}${nmCls(nm)}" style="${tileStyle(gr)}"><b>${esc(nm)}</b></span>${offTag(t, n)}`;
   };
   // 名前の長さで文字の大きさを変える（長い名前も省略せず、必要なら2行に折り返す）
   function lenC(nm) { const n = [...nm].length; return n >= 7 ? " n7" : n >= 5 ? " n5" : ""; }
@@ -5301,7 +5334,7 @@ function renderStats(fromLive) {
     if (S.rkKind === "pit") { const pg = gr.filter(k => PIT.includes(k)); gr = pg.length ? pg : ["投"]; } // 投手部門は投手の色（役割つき）
     else { const bg = gr.filter(k => !PIT.includes(k)); gr = bg.length ? bg : gr; }
     const nm = rankName(r.t, r.n);
-    return `<span class="ptile ${TILEC[gr[0]] || "pi"}${nm.length <= 2 ? " sp" : nm.length >= 5 ? " lg" : ""}" style="${tileStyle(gr)}"><b>${esc(nm)}</b></span>`;
+    return `<span class="ptile ${TILEC[gr[0]] || "pi"}${nmCls(nm)}" style="${tileStyle(gr)}"><b>${esc(nm)}</b></span>`;
   };
   $("rankList").innerHTML = rows.length ? `<div class="ywrap"><table class="ytab rtab"><thead><tr><th>順位</th><th class="tnm">選手名</th><th class="tnm srt${rs.by === "t" ? " on" : ""}" data-by="t">チーム${arrow("t")}</th><th class="srt${rs.by === "v" ? " on" : ""}" data-by="v">${lbl ? lbl[1] : ""}${arrow("v")}</th></tr></thead><tbody>` +
     view.map(r => `<tr class="${r.r === 1 ? "lead" : ""}" style="${tv(r.t)}"><td class="num"><span class="rkm r${r.r <= 3 ? r.r : 0}">${r.r}</span></td><td class="pnm" data-pl="${r.t}|${esc(r.n)}|${S.rkKind}">${pawaT ? rkTile(r) : esc(rankName(r.t, r.n))}</td><td class="tnm">${fn(r.t)}</td><td class="num v">${esc(r.v)}</td></tr>`).join("") +
