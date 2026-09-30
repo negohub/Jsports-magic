@@ -1695,6 +1695,14 @@ async def brand_check(browser):
                 bad(f"[サイト名・アイコン] アイコンの画像がない：{i['src']}")
     except (OSError, ValueError) as e:
         bad(f"[サイト名・アイコン] manifest.json を読めない：{e}")
+    # ホーム画面から開いた瞬間の起動画面（機種ごと）：指定があって、画像がそろっているか
+    import re as _re
+    starts = _re.findall(r'<link rel="apple-touch-startup-image" media="[^"]+" href="([^"]+)">', html)
+    if len(starts) < 10:
+        bad(f"[サイト名・アイコン] 起動画面（apple-touch-startup-image）の指定が足りない：{len(starts)}")
+    for f in starts:
+        if not (ROOT / f).exists():
+            bad(f"[サイト名・アイコン] 起動画面の画像がない：{f}")
     for f in ["ogp.png", "apple-touch-icon.png", "favicon.png", "splash.jpg"]:
         if not (ROOT / f).exists():
             bad(f"[サイト名・アイコン] {f} がない")
@@ -1715,7 +1723,8 @@ async def brand_check(browser):
         bad(f"[サイト名・アイコン] {m}")
     await pg.close()
     # 演出が出て、終わると消えるか（自動の検査ではない状態をまねる）
-    pg = await browser.new_page(viewport={"width": 390, "height": 844})
+    # 「視差効果を減らす」がオンでも出す
+    pg = await browser.new_page(viewport={"width": 390, "height": 844}, reduced_motion="reduce")
     await pg.add_init_script("Object.defineProperty(navigator, 'webdriver', { get: () => false })")
     await pg.goto(URL)
     await pg.wait_for_timeout(200)
