@@ -503,7 +503,11 @@ SONG_EXTRA = {
 }
 # 公式に応援歌ページがない球団：まとめサイトの球団ページの表から、選手ごとのページ（なければ表の位置）を拾う
 SONG_LINK_PAGE = {"L": "https://www.yakyu-ouen.net/lions/"}
-SONG_REV = 5  # 判定のしかたを変えたら数字を上げる（上げると時期に関係なく1回やり直す）
+SONG_REV = 6  # 判定のしかたを変えたら数字を上げる（上げると時期に関係なく1回やり直す）
+# 選手ごとの応援歌が見出し（1人1つ）になっているページ：見出しの選手だけを「応援歌あり」にする
+# （DeNA公式：ページの中に「選手の呼び方」の表があり、テーマ曲（汎用）を使う選手の名前も並んでいるので、本文に名前があるだけでは判定しない）
+SONG_HEADINGS = {"https://sp.baystars.co.jp/player_songs/index"}
+SONG_HEAD_NG = re.compile(r"テーマ|その他|代打|汎用|呼び方|投手|野手|監督|コーチ|応援歌|チャンス")
 # 背番号で並んでいるページ（ヤクルト公式）は背番号でも照合する
 SONG_BY_NUMBER = {"https://www.yakult-swallows.co.jp/players/song"}
 VARIANT = str.maketrans({"髙": "高", "﨑": "崎", "濵": "浜", "德": "徳", "瀨": "瀬", "邊": "辺", "邉": "辺", "塚": "塚", "・": "", "＝": "", "=": ""})
@@ -529,17 +533,49 @@ def song_links(url, html):
     return out
 
 
+def song_heads(html):
+    """見出し（h2〜h4）のうち、選手の名前のもの（「J.エンカーナシオン」は「エンカーナシオン」）"""
+    out = []
+    for h in BeautifulSoup(html, "html.parser").find_all(["h2", "h3", "h4"]):
+        x = squash(h.get_text(" "))
+        x = re.sub(r"^[A-Za-z]{1,2}\.", "", x)
+        if 2 <= len(x) <= 12 and not SONG_HEAD_NG.search(x):
+            out.append(x)
+    return out
+
+
+def song_hit(name, heads):
+    """名簿の名前が、個別の応援歌の選手名（見出し・表）のどれかと同じか（外国人選手は短い呼び名と長い名前のずれを許す）"""
+    for h in heads:
+        if name == h or (len(name) >= 3 and len(h) >= 3 and (name.endswith(h) or h.endswith(name))):
+            return True
+    return False
+
+
 def mark_songs(t, rows, moved_in=(), moved_out=()):
     """応援歌ページに名前（または背番号）が出てくる選手に song=True を付ける。どのページも読めなければ None
     SONG_LINK_PAGE の球団は、応援歌がある選手に su（タップしたときに開くページ）も付ける"""
     texts, numbers, ok = [squash(" ".join(SONG_EXTRA.get(t, [])))], set(), bool(SONG_EXTRA.get(t))
-    links = []
+    links, heads, official = [], [], []
     for url in SONG_SOURCES.get(t, []):
         html = fetch(url)
         if not html:
             continue
+        tl = song_links(url, html) if "yakyu-ouen.net" in url else []
         if SONG_LINK_PAGE.get(t) == url:
-            links = song_links(url, html)
+            links = tl
+        # 見出しが選手ごとの公式ページ：見出しの選手だけ（読めたら、この球団はこのページが正）
+        if url in SONG_HEADINGS:
+            hs = song_heads(html)
+            if len(hs) >= 5:
+                official += hs
+                ok = True
+                continue
+        # まとめサイト：選手の応援歌の表（背番号｜名前）の選手だけ。本文には「〇〇選手の応援歌を流用」などほかの選手の名前も出てくるので使わない
+        if tl and len(tl) >= 5:
+            heads += [x[1] for x in tl]
+            ok = True
+            continue
         text = squash(BeautifulSoup(html, "html.parser").get_text(" "))
         if len(text) < 200:
             continue
@@ -549,6 +585,9 @@ def mark_songs(t, rows, moved_in=(), moved_out=()):
             numbers |= set(re.findall(r"背番号(\d{1,3})", text))
     if not ok:
         return None
+    if official:
+        # 公式の見出しが読めた球団は、まとめサイトの表や本文は使わない（公式にない選手を入れない）
+        heads, texts, numbers = official, [], set()
     blob = "\n".join(texts)
     n = 0
     for r in rows:
@@ -558,7 +597,7 @@ def mark_songs(t, rows, moved_in=(), moved_out=()):
             r["song"] = False
             continue
         # 移籍してきた選手は、背番号だけでは判定しない（その背番号の前の選手の応援歌を拾ってしまうため）。名前が出ているときだけ
-        r["song"] = (len(name) >= 2 and name in blob) or (name not in moved_in and not r["dev"] and r["no"] in numbers)
+        r["song"] = song_hit(name, heads) or (len(name) >= 2 and name in blob) or (name not in moved_in and not r["dev"] and r["no"] in numbers)
         n += r["song"]
         if r["song"] and links:
             # 名前が含まれる行を優先、なければ背番号が同じ行（表の名前が短い「ネビン」など）
