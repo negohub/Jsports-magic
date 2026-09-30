@@ -1337,6 +1337,11 @@ async def pitch_tile_check(browser):
           }
           box.querySelectorAll('.ptile').forEach(e => { const b = e.querySelector('b'), r = document.createRange(); r.selectNodeContents(b); const rr = r.getBoundingClientRect(), tr = e.getBoundingClientRect(); if (rr.width && (rr.left < tr.left + 0.5 || rr.right > tr.right - 0.5)) ng.push(`名前が札からはみ出している：${b.textContent}`); });
           box.querySelectorAll('.pn3').forEach(e => { const tl = e.querySelector('.ptile'), h = e.querySelector('.hd'); if (tl && h && Math.abs(tl.getBoundingClientRect().top - h.getBoundingClientRect().top) > 12) ng.push('名前の札と「右投」などが同じ行に並んでいない'); });
+          // NEXT の打者もパワプロ風の札。スコアボードは赤い枠なし・攻撃中のマスは「-」
+          if (!box.querySelector('.pnx3 .ptile')) ng.push('NEXT の打者がパワプロ風の札になっていない');
+          if (document.querySelector('.ls td.cur, .ls th.cur')) ng.push('スコアボードに今の回の枠（赤）が残っている');
+          const nowTd = document.querySelector('.ls td.now');
+          if (!nowTd) ng.push('スコアボードの攻撃中のマスが分からない'); else if (!nowTd.textContent.trim()) ng.push('スコアボードの攻撃中のマスに「-」がない');
           // 名前の字間は成績タブの札と同じ（2文字は .7em）
           box.querySelectorAll('.pn3 .sptile.sp b, .lnm .sptile.sp b').forEach(b => { const cs = getComputedStyle(b); if (Math.abs(parseFloat(cs.letterSpacing) - parseFloat(cs.fontSize) * 0.7) > 0.6) ng.push(`2文字の名前の字間が成績タブと違う：${b.textContent}（${cs.letterSpacing}）`); });
           // 球数：投球ごとの「通算」がいちばん新しい（出場成績や投手の欄より大きければ、そちらを出す）
