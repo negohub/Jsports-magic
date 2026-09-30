@@ -43,7 +43,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260930155610">
+<meta name="build" content="20260930162145">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -2337,6 +2337,39 @@ html.theme-pawa .pbox.v2 .pnx3.up{background:#FFF3C4}
 .ps-today .ps-main + .ps-main{margin-top:8px}
 .ps-today .ps-res{margin-top:10px}
 html.theme-pawa .ps-today{background:#FFF8DC;border-radius:14px;padding:10px 12px}
+
+/* ===== 長押しでのぞく ===== */
+[data-pl],.ptile[data-song],[data-gk],tr[data-tm],.day.has{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+#peek{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:24px;background:rgba(10,14,24,.28);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);opacity:0;transition:opacity .16s ease;pointer-events:none}
+#peek.on{opacity:1}
+#peek .pk-card{width:min(360px,100%);max-height:78vh;overflow:hidden;border-radius:22px;padding:14px 14px 10px;background:#141418;border:1px solid #2A2A30;box-shadow:0 24px 60px rgba(0,0,0,.45);transform:scale(.92);transition:transform .2s cubic-bezier(.2,.9,.3,1.2)}
+#peek.on .pk-card{transform:scale(1)}
+.pk-h{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pk-h small{margin-left:auto;font-size:12px;color:#9A9AA5;font-weight:700;white-space:nowrap}
+.pk-tn{font-size:18px;font-weight:900}
+.pk-t{margin:10px 0 6px;font-size:11px;font-weight:800;letter-spacing:.08em;color:#9A9AA5}
+.pk-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.pk-row>div{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:12px;background:rgba(255,255,255,.06)}
+.pk-row small{font-size:10.5px;color:#9A9AA5;font-weight:700;white-space:nowrap}
+.pk-row b{font-size:16px;font-weight:900;white-space:nowrap}
+.pk-note{font-size:12.5px;color:#C9C9D1;margin:6px 2px 0;line-height:1.5}
+.pk-sit{display:flex;align-items:baseline;gap:10px;margin:10px 2px 4px}
+.pk-sit b{font-size:16px}.pk-sit span{font-size:12px;color:#9A9AA5}
+.pk-vs{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;font-weight:700;margin:4px 2px}
+.pk-last{font-size:13px;margin:6px 2px 0}.pk-last b{margin-left:4px}
+.pk-form{display:flex;gap:6px}
+.pk-f{font-style:normal;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:900;background:rgba(255,255,255,.08)}
+.pk-f.w{color:#FF5A5A}.pk-f.l{color:#5AA7FF}
+.pk-today .ps-sec{margin:0}.pk-today .ps-t{font-size:11px}
+.pk-game .bug{pointer-events:none}
+.pk-hint{margin:12px 0 0;text-align:center;font-size:10.5px;color:#7A7A85}
+html.theme-pawa #peek{background:rgba(30,80,160,.22)}
+html.theme-pawa #peek .pk-card{background:#fff;border:6px solid #1D3E7C;box-shadow:0 8px 0 rgba(19,38,74,.28),0 24px 60px rgba(19,38,74,.35)}
+html.theme-pawa .pk-h small,html.theme-pawa .pk-t,html.theme-pawa .pk-row small,html.theme-pawa .pk-sit span,html.theme-pawa .pk-hint{color:#4A6390}
+html.theme-pawa .pk-row>div{background:#F4F9FF;border:2px solid #DCE7F5}
+html.theme-pawa .pk-row b,html.theme-pawa .pk-tn,html.theme-pawa .pk-sit b,html.theme-pawa .pk-vs,html.theme-pawa .pk-last{color:#13264A}
+html.theme-pawa .pk-note{color:#2A3F66}
+html.theme-pawa .pk-f{background:#F4F9FF;border:2px solid #DCE7F5}
 </style>
 </head>
 <body>
@@ -3281,7 +3314,7 @@ function renderSeasonEnd() {
       <div class="se-box" style="${tv(people[0].t)}"><span class="se-l">年間MVP</span><b>${ownT(people[0].t)}</b><small>${fn(people[0].t)}・支払い${people[0].n}回・平均${people[0].avg.toFixed(1)}位</small></div>
       <div class="se-box" style="${tv(champ.t)}"><span class="se-l">セ・リーグ優勝</span><b>${fn(champ.t)}</b><small>${champ.w}勝${champ.l}敗${champ.d}分</small></div>
     </div>
-    <div class="ywrap"><table class="ytab se-tab"><thead><tr><th>順位</th><th class="tnm">担当</th><th>支払い</th><th>金額</th></tr></thead><tbody>${people.map((x, i) => `<tr style="${tv(x.t)}"><td class="num">${i + 1}</td><td class="tnm">${own(x.t)}<small>${fn(x.t)}</small></td><td class="num">${x.n}回</td><td class="num">${x.n ? yen(x.n * CONFIG.fee) : "-"}</td></tr>`).join("")}</tbody></table></div>
+    <div class="ywrap"><table class="ytab se-tab"><thead><tr><th>順位</th><th class="tnm">担当</th><th>支払い</th><th>金額</th></tr></thead><tbody>${people.map((x, i) => `<tr style="${tv(x.t)}" data-tm="${x.t}"><td class="num">${i + 1}</td><td class="tnm">${own(x.t)}<small>${fn(x.t)}</small></td><td class="num">${x.n}回</td><td class="num">${x.n ? yen(x.n * CONFIG.fee) : "-"}</td></tr>`).join("")}</tbody></table></div>
     <div class="se-foot">${hist.map(([p, t]) => `<span style="${tv(t)}"><em>${p.label.replace("月度", "")}</em>${own(t)}</span>`).join("")}</div>
     <p class="se-sum">庄村のもとに集まったJ SPORTS代　<b class="num">${yen(total)}</b></p>`;
 }
@@ -3597,6 +3630,111 @@ async function loadStarters(force) {
 }
 const ykOf = g => YK[`${g.d}|${g.h}|${g.a}`] || null;
 document.addEventListener("toggle", e => { const d = e.target; if (d && d.matches && d.matches("details.stm")) S.stmOpen[d.dataset.stm] = d.open; }, true);
+
+// ===== 長押しでのぞく（iPhone の「触覚タッチ」のように） =====
+// 選手の名前・試合のカード・順位表のチーム・日程の日にちを長押しすると、中身を小さく先に見せる。指を離すと閉じる（タップは今まで通り）
+const PEEK = { timer: 0, x: 0, y: 0, open: false, until: 0, id: 0 };
+function haptic() {
+  try { if (navigator.vibrate) navigator.vibrate(12); } catch {}
+  try { const l = document.getElementById("hapt"); if (l) l.click(); } catch {}   // iPhone（iOS 18 以降）：スイッチを切り替えると軽く振動する
+}
+function peekTarget(el) {
+  if (!el || !el.closest) return null;
+  const pl = el.closest("[data-pl]"); if (pl) { const [t, n, k] = pl.dataset.pl.split("|"); return n ? { kind: "pl", t, n, pk: k } : null; }
+  const sg = el.closest(".ptile[data-song]"); if (sg) { const [, n] = sg.dataset.song.split("|"); return { kind: "pl", t: S.songTeam, n }; }
+  const gk = el.closest("[data-gk]"); if (gk && !el.closest(".tgd")) { const [d, h, a] = gk.dataset.gk.split("|"); return { kind: "game", d, h, a }; }
+  const tm = el.closest("tr[data-tm]"); if (tm) return { kind: "team", t: tm.dataset.tm };
+  const dy = el.closest(".day.has[data-d]"); if (dy) return { kind: "day", d: dy.dataset.d };
+  return null;
+}
+const peekCell = (k, v) => `<div><small>${k}</small><b class="num">${esc(v == null || v === "" ? "-" : String(v))}</b></div>`;
+function peekPlayer(x, id) {
+  const ro = ((DATA.rosters || {})[x.t] || []), k = nk(x.n);
+  const me = ro.find(r => nk(r.n) === k) || (ro.filter(r => nk(r.n).startsWith(k)).length === 1 ? ro.find(r => nk(r.n).startsWith(k)) : null);
+  const full = me ? me.n : x.n, pit = x.pk === "pit" || (me && me.p === "投手");
+  const main = d => {
+    const b = d && findRow(d.bat, full, x.t), p = d && findRow(d.pit, full, x.t);
+    if (pit && p) return `<div class="pk-row">${peekCell("防御率", p.r["防御率"])}${peekCell("勝敗", `${p.r["勝利"] || 0}-${p.r["敗北"] || 0}`)}${peekCell("セーブ", p.r["セーブ"])}${peekCell("奪三振", p.r["三振"])}</div>`;
+    if (b && Number(b.r["打席"] || 0) > 0) return `<div class="pk-row">${peekCell("打率", b.r["打率"])}${peekCell("本塁打", b.r["本塁打"])}${peekCell("打点", b.r["打点"])}${peekCell("OPS", f3(Number(b.r["出塁率"]) + Number(b.r["長打率"])))}</div>`;
+    if (p) return `<div class="pk-row">${peekCell("防御率", p.r["防御率"])}${peekCell("勝敗", `${p.r["勝利"] || 0}-${p.r["敗北"] || 0}`)}${peekCell("セーブ", p.r["セーブ"])}${peekCell("奪三振", p.r["三振"])}</div>`;
+    return d ? `<p class="pk-note">今季の一軍の出場記録はまだありません</p>` : `<p class="pk-note">今季の成績を読み込み中…</p>`;
+  };
+  const c = PST[x.t];
+  if (!c) teamStats(x.t).then(d => { if (PEEK.open && PEEK.id === id && d) { const e = document.querySelector("#peek .pk-main"); if (e) e.innerHTML = main(d); } });
+  const today = typeof todayLine === "function" ? todayLine(x.t, full) : "";
+  const pos = me ? posGroups(x.t, full, me.p).map(g => ({ "投": "投手", "先": "先発", "中": "中継ぎ", "抑": "抑え", "捕": "捕手", "内": "内野手", "外": "外野手" })[g]).filter(Boolean).join("・") : "";
+  return `<div class="pk-h" style="${tv(x.t)}"><span class="badge">${sn(x.t)}</span>${pwName(x.t, full, me ? me.p : pit ? "投手" : "内野手")}<small>${me && me.no ? `#${esc(me.no)} ` : ""}${esc(pos)}</small></div>
+    ${today ? `<div class="pk-today">${today}</div>` : ""}<div class="pk-t">今季の成績</div><div class="pk-main">${main(c && c.d)}</div>`;
+}
+function peekGame(x) {
+  const g = DATA.games.find(y => y.d === x.d && y.h === x.h && y.a === x.a) || (typeof postToday === "function" ? postToday().find(y => y.d === x.d && y.h === x.h && y.a === x.a) : null);
+  if (!g) return "";
+  const k = g.d + gkey(g), p = PD[k], pre = typeof preOf === "function" ? preOf(g) : null, y = ykOf(g);
+  let body = "";
+  if (g.st === "live" && p) {
+    const last = (p.pitches || [])[(p.pitches || []).length - 1];
+    body += `<div class="pk-sit"><b>${esc(p.half || g.inn || "")}</b><span>B${p.b || 0} S${p.s || 0} O${p.o || 0}</span></div>`;
+    if (p.pitcher || p.batter) body += `<div class="pk-vs"><span>投 ${p.pitcher ? esc(callName(p.half && /裏/.test(p.half) ? g.a : g.h, p.pitcher.name)) : "-"}</span><span>打 ${p.batter ? esc(callName(p.half && /裏/.test(p.half) ? g.h : g.a, p.batter.name)) : "-"}</span></div>`;
+    if (last) body += `<div class="pk-last">${last.n}球目 ${esc(last.type || "")} ${kmh(last.speed) ? kmh(last.speed) + "km" : ""} <b>${esc(last.res || "")}</b></div>`;
+  } else if (g.st === "sched") {
+    body += `<div class="pk-sit"><b>試合前</b><span>${esc(venueName(g.v))}</span></div>`;
+    if (y) body += `<div class="pk-vs"><span>${esc(sn(g.h))} 先発 ${esc(y.h || "未定")}</span><span>${esc(sn(g.a))} 先発 ${esc(y.a || "未定")}</span></div>`;
+    if (pre && (pre.tv || pre.net)) body += `<div class="pk-note">${esc([pre.tv, pre.net].filter(Boolean).join("、"))}</div>`;
+  } else if (g.st === "final") {
+    const d = GD[k], dec = [];
+    ((d && d.pitchers) || []).forEach((list, i) => (list || []).forEach(q => { if (/勝|敗|S/.test(q.dec || "")) dec.push(`${(q.dec || "").replace(/[()（）]/g, "")} ${callName(i === 0 ? g.a : g.h, q.name)}`); }));
+    body += `<div class="pk-sit"><b>試合終了</b><span>${esc(venueName(g.v))}</span></div>${dec.length ? `<div class="pk-note">${esc(dec.join("・"))}</div>` : ""}`;
+  }
+  return `<div class="pk-game">${bugHTML(g, "")}</div>${body}`;
+}
+function peekTeam(x) {
+  const t = x.t, a = analyze(DATA.games, S.period, CONFIG), i = a.rows.findIndex(r => r.t === t), r = a.rows[i];
+  if (!r) return "";
+  const mg = r.eliminated ? (isPL() ? "最下位" : "支払い") : r.safe ? "★ 回避確定" : r.self === null ? "自力脱出消滅" : "マジック " + r.self;
+  const last = DATA.games.filter(g => g.st === "final" && (g.h === t || g.a === t)).sort((p, q) => (p.d < q.d ? 1 : -1)).slice(0, 5).reverse();
+  const nx = DATA.games.filter(g => g.st === "sched" && (g.h === t || g.a === t) && g.d >= jst().iso).sort((p, q) => (p.d > q.d ? 1 : -1))[0];
+  const form = last.map(g => { const w = resultOf(g, t); return `<i class="pk-f ${w}">${w === "w" ? "○" : w === "l" ? "●" : "△"}</i>`; }).join("");
+  return `<div class="pk-h" style="${tv(t)}"><span class="badge">${sn(t)}</span><b class="pk-tn">${fn(t)}</b>${!isPL() && own(t) ? `<small>${ownT(t)}</small>` : ""}</div>
+    <div class="pk-row">${peekCell("順位", `${i + 1}位`)}${peekCell("勝-敗-分", `${r.w}-${r.l}-${r.d}`)}${peekCell("残り", `${r.rem}試合`)}${peekCell(isPL() ? "マジック" : "回避", mg)}</div>
+    ${form ? `<div class="pk-t">最近の5試合</div><div class="pk-form">${form}</div>` : ""}
+    ${nx ? `<div class="pk-t">次の試合</div><div class="pk-note">${+nx.d.slice(5, 7)}/${+nx.d.slice(8)} ${esc(nx.t || "")} ${nx.h === t ? "vs" : "@"} ${esc(fn(nx.h === t ? nx.a : nx.h))}</div>` : ""}`;
+}
+function peekDay(x) {
+  const t = S.calTeam || CL[0];
+  const g = DATA.games.find(y => y.d === x.d && (y.h === t || y.a === t)) || DATA.games.find(y => y.d === x.d);
+  return g ? peekGame({ d: g.d, h: g.h, a: g.a }) : "";
+}
+function openPeek(x) {
+  const html = x.kind === "pl" ? peekPlayer(x, ++PEEK.id) : x.kind === "game" ? peekGame(x) : x.kind === "team" ? peekTeam(x) : x.kind === "day" ? peekDay(x) : "";
+  if (!html) return false;
+  let el = document.getElementById("peek");
+  if (!el) { el = document.createElement("div"); el.id = "peek"; el.setAttribute("role", "dialog"); document.body.appendChild(el); }
+  el.innerHTML = `<div class="pk-card">${html}<p class="pk-hint">指を離すと閉じます・タップで詳しく</p></div>`;
+  el.hidden = false; requestAnimationFrame(() => el.classList.add("on"));
+  PEEK.open = true; haptic();
+  return true;
+}
+function closePeek() {
+  const el = document.getElementById("peek");
+  if (el) { el.classList.remove("on"); setTimeout(() => { if (!PEEK.open) el.hidden = true; }, 180); }
+  if (PEEK.open) PEEK.until = Date.now() + 450;   // 指を離したあとのタップ（クリック）は無視する
+  PEEK.open = false;
+}
+document.addEventListener("touchstart", e => {
+  if (e.touches.length !== 1) return;
+  const x = peekTarget(e.target); if (!x) return;
+  const tc0 = e.touches[0]; PEEK.x = tc0.clientX; PEEK.y = tc0.clientY;
+  clearTimeout(PEEK.timer);
+  PEEK.timer = setTimeout(() => openPeek(x), 430);
+}, { passive: true });
+document.addEventListener("touchmove", e => {
+  if (PEEK.open) { e.preventDefault(); return; }
+  const tc0 = e.touches[0]; if (tc0 && Math.hypot(tc0.clientX - PEEK.x, tc0.clientY - PEEK.y) > 10) clearTimeout(PEEK.timer);
+}, { passive: false });
+document.addEventListener("touchend", () => { clearTimeout(PEEK.timer); if (PEEK.open) closePeek(); });
+document.addEventListener("touchcancel", () => { clearTimeout(PEEK.timer); if (PEEK.open) closePeek(); });
+document.addEventListener("click", e => { if (Date.now() < PEEK.until) { e.preventDefault(); e.stopPropagation(); } }, true);
+document.addEventListener("contextmenu", e => { if (peekTarget(e.target)) e.preventDefault(); });
 // ===== 今日の試合の放送予定・スタメン（スポナビの試合トップ。スタメンは発表されたら） =====
 let PRE = {}, preAt = 0, preBusy = false;
 S.stmOpen = S.stmOpen || {};   // スタメンの折りたたみ（試合ごと。閉じたら覚える）
@@ -4103,7 +4241,7 @@ function renderToday(a) {
       <div class="tgo${lead === "h" ? " now" : ""}" style="${tv(g.h)}"><b>${fn(g.h)}が勝ったら${lead === "h" ? `<em>このまま終われば</em>` : ""}</b><ul>${effects(g, true)}</ul></div>
       <div class="tgo${lead === "a" ? " now" : ""}" style="${tv(g.a)}"><b>${fn(g.a)}が勝ったら${lead === "a" ? `<em>このまま終われば</em>` : ""}</b><ul>${effects(g, false)}</ul></div>`;
     const k = g.d + gkey(g), canOpen = (live || fin) && CONFIG.liveApi, open = canOpen && S.open[k];
-    return `<div class="tg${live ? " islive" : ""}${canOpen ? " can" : ""}${open ? " open" : ""}"${canOpen ? ` data-open="${k}"` : ""}>
+    return `<div class="tg${live ? " islive" : ""}${canOpen ? " can" : ""}${open ? " open" : ""}" data-gk="${g.d}|${g.h}|${g.a}"${canOpen ? ` data-open="${k}"` : ""}>
       ${bugHTML(g, `${live ? `<span class="lv"><i class="ldot"></i>LIVE</span>` : ""}<span class="vn">${esc(venueName(g.v))}</span>${both ? `<span class="vsb">直接対決</span>` : ""}`)}
       ${canOpen ? `<div class="tgx">${open ? "閉じる" : live ? "タップで一球速報・スコア・打順" : "タップでスコア・打順"}<i></i></div>` : ""}
       ${open ? `<div class="tgd">${detailHTML(g)}</div>` : ""}${outs}
@@ -4723,7 +4861,7 @@ function renderStd() {
   const best = people[0], maxN = Math.max(...people.map(x => x.n));
   const short = lbl => lbl.replace("月度", "");
   $("tot").innerHTML = `<div class="ywrap"><table class="ytbl ytab"><colgroup><col class="cn">${per.map(() => `<col class="cm">`).join("")}<col class="cp"></colgroup><thead><tr><th class="yn">担当</th>${per.map(({ p, a }) => `<th class="${a.finished ? "" : "cur"}">${short(p.label)}</th>`).join("")}<th class="ya">支払い</th></tr></thead><tbody>` +
-    people.map(x => `<tr style="${tv(x.t)}">
+    people.map(x => `<tr style="${tv(x.t)}" data-tm="${x.t}">
       <td class="yn"><span class="badge">${sn(x.t)}</span><span class="ynm"><b>${ownT(x.t)}${x === best ? `<span class="ytag mvp">MVP</span>` : ""}</b><small class="num">平均${x.avg < 9 ? x.avg.toFixed(1) : "-"}位</small></span></td>
       ${x.ranks.map(v => `<td class="yc2${v.done && v.r === 1 ? " first" : ""}${v.done && v.r === 5 ? " last" : ""}${v.done ? "" : " now"}"><b class="num">${v.r}</b></td>`).join("")}
       <td class="ya num">${x.n ? `<b>${yen(x.n * CONFIG.fee)}</b><small>${x.n}回${maxN > 0 && x.n === maxN ? `<span class="ytag bad">最多</span>` : ""}</small>` : `<small>なし</small>`}</td>
@@ -5498,7 +5636,7 @@ function renderStats(fromLive) {
   teams.sort((a, b) => { const x = num(sc[1](a)), y = num(sc[1](b)); if (x == null) return 1; if (y == null) return -1; return sk.dir === "desc" ? y - x : x - y; });
   const best = cols.map(c => { const vs = teams.map(t => num(c[1](t))).filter(v => v != null); return vs.length ? (c[2] === "hi" ? Math.max(...vs) : Math.min(...vs)) : null; });
   $("tmTbl").innerHTML = `<thead><tr><th>順位</th><th class="tnm">チーム名</th>${cols.map((c, j) => `<th class="srt${j === sk.col ? " on" : ""}" data-col="${j}">${c[0]}${sortIco(j === sk.col ? sk.dir : "none")}</th>`).join("")}</tr></thead><tbody>` +
-    teams.map((t, i) => `<tr style="${tv(t)}"><td class="num">${i + 1}</td><td class="tnm"><a href="${TEAM_URL[t]}" target="_blank" rel="noopener">${fn(t)}</a></td>${cols.map((c, j) => {
+    teams.map((t, i) => `<tr style="${tv(t)}" data-tm="${t}"><td class="num">${i + 1}</td><td class="tnm"><a href="${TEAM_URL[t]}" target="_blank" rel="noopener">${fn(t)}</a></td>${cols.map((c, j) => {
       const v = c[1](t); const isB = v != null && best[j] != null && num(v) === best[j];
       return `<td class="num v${isB ? " best" : ""}">${v == null ? "-" : esc(v)}</td>`;
     }).join("")}</tr>`).join("") + `</tbody>`;
@@ -5941,5 +6079,6 @@ setInterval(pollLive, 30 * 1000); // 試合がある日だけ、30秒ごとに�
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { check(true); pollLive(); } });
 window.addEventListener("pageshow", e => { if (e.persisted) check(true); });
 </script>
+<label id="hapt" aria-hidden="true" style="position:fixed;left:-200px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none"><input type="checkbox" switch tabindex="-1"></label>
 </body>
 </html>
