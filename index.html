@@ -43,7 +43,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260930162145">
+<meta name="build" content="20260930165729">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -2370,6 +2370,11 @@ html.theme-pawa .pk-row>div{background:#F4F9FF;border:2px solid #DCE7F5}
 html.theme-pawa .pk-row b,html.theme-pawa .pk-tn,html.theme-pawa .pk-sit b,html.theme-pawa .pk-vs,html.theme-pawa .pk-last{color:#13264A}
 html.theme-pawa .pk-note{color:#2A3F66}
 html.theme-pawa .pk-f{background:#F4F9FF;border:2px solid #DCE7F5}
+
+/* 設定からリーグ・テーマを切り替えたとき：画面をふわっと差し替える */
+main{transition:opacity .18s ease,transform .18s ease}
+main.swapping{opacity:0;transform:translateY(6px)}
+@media (prefers-reduced-motion:reduce){main{transition:opacity .12s linear}main.swapping{transform:none}}
 </style>
 </head>
 <body>
@@ -3022,7 +3027,7 @@ $("meSheet").addEventListener("click", e => {
   const b = e.target.closest("[data-me]");
   if (b) {
     S.me = b.dataset.me; store("me", S.me);
-    if (ME()) { S.calTeam = ME(); store("calTeam", S.calTeam); S.songTeam = ME(); store("songTeam", S.songTeam); S.calSel = null; }
+    if (ME()) { S.calTeam = ME(); keepTeam("calTeam", S.calTeam); S.songTeam = ME(); keepTeam("songTeam", S.songTeam); S.calSel = null; }
     closeMePick(); renderAll(); return;
   }
   if (e.target.closest("[data-meclose]")) closeMePick();
@@ -4688,7 +4693,7 @@ function renderCal() {
   if (!S.calMonth || !ms.includes(S.calMonth)) { const m = jst().m; S.calMonth = ms.includes(m) ? m : ms[ms.length - 1]; }
   const t = S.calTeam, y = DATA.season || jst().y, m = S.calMonth;
   $("teamSel").innerHTML = calOrder().map(k => `<button class="tbtn" type="button" data-t="${k}" style="${tv(k)}" aria-pressed="${k === t}"><span class="badge">${sn(k)}</span>${CONFIG.owners[k] || (isPL() ? fn(k) : "&nbsp;")}</button>`).join("");
-  $("teamSel").querySelectorAll(".tbtn").forEach(b => (b.onclick = () => { S.calTeam = b.dataset.t; store("calTeam", S.calTeam); S.calSel = null; renderCal(); }));
+  $("teamSel").querySelectorAll(".tbtn").forEach(b => (b.onclick = () => { S.calTeam = b.dataset.t; keepTeam("calTeam", S.calTeam); S.calSel = null; renderCal(); }));
   $("mTitle").textContent = `${y}年${m}月`;
   const idx = ms.indexOf(m);
   $("mPrev").disabled = idx <= 0; $("mNext").disabled = idx >= ms.length - 1;
@@ -4932,9 +4937,16 @@ const movedOut = (t, n) => { const o = typeof offOf === "function" ? offOf(t, n)
 const songLink = (t, x) => movedOut(t, x.n) ? null : okUrl(x.su) ? x.su : SONG_ONE[t] ? SONG_ONE[t](x) : SONG_PAGE[t] ? jump(t, SONG_PAGE[t][0], x.n) : null;
 const songLabel = () => "応援歌";   // 応援歌のページを開くボタン：どの球団も「応援歌」にそろえる
 S.songTeam = store("songTeam") || "T"; S.songQ = "";
-// 起動したときのリーグの外の球団が選ばれていたら、そのリーグの先頭の球団にする
-if (!CL.includes(S.songTeam)) S.songTeam = CONFIG.calOrder[0];
-if (!CL.includes(S.calTeam)) S.calTeam = CONFIG.calOrder[0];
+// 選んだ球団（日程・応援歌・チーム別成績）はリーグごとに覚える。起動したとき、今のリーグで前に選んだ球団に戻す
+const lgNow = () => (isPL() ? "P" : "C");
+function keepTeam(key, v) { store(key, v); if (v) store(`${key}_${lgNow()}`, v); }
+function restoreTeams() {
+  const pick = key => { const v = store(`${key}_${lgNow()}`); return CL.includes(v) ? v : null; };
+  S.calTeam = pick("calTeam") || (CL.includes(S.calTeam) ? S.calTeam : ME() || CONFIG.calOrder[0]);
+  S.songTeam = pick("songTeam") || (CL.includes(S.songTeam) ? S.songTeam : ME() || CONFIG.calOrder[0]);
+  const pt = pick("ptTeam"); if (pt) S.ptTeam = pt; else if (!CL.includes(S.ptTeam)) { S.ptTeam = null; S.ptAll = false; }
+}
+restoreTeams();
 const ytUrl = (t, n) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(`${TEAM[t].n} ${n.replace(/\s+/g, "")} 応援歌`);
 // 選手の呼び名（タイル・ランキング用）
 function shortName(t, full) {
@@ -5179,7 +5191,7 @@ document.addEventListener("click", e => {
 function renderSong() {
   const t = S.songTeam;
   $("songTeams").innerHTML = calOrder().map(k => `<button class="tbtn" type="button" data-t="${k}" style="${tv(k)}" aria-pressed="${k === t}"><span class="badge">${sn(k)}</span>${fn(k)}</button>`).join("");
-  $("songTeams").querySelectorAll(".tbtn").forEach(b => (b.onclick = () => { S.songTeam = b.dataset.t; store("songTeam", S.songTeam); renderSong(); }));
+  $("songTeams").querySelectorAll(".tbtn").forEach(b => (b.onclick = () => { S.songTeam = b.dataset.t; keepTeam("songTeam", S.songTeam); renderSong(); }));
   const pg = SONG_PAGE[t];
   $("songHead").innerHTML = `<div class="sh" style="${tv(t)}"><span class="badge">${sn(t)}</span><b>${TEAM[t].n}</b>${pg ? `<a href="${pg[0]}" target="_blank" rel="noopener">${SONG_UNOFFICIAL.has(t) ? "応援歌のページ" : "公式の応援歌ページ"}</a>` : ""}</div>`;
   const roster = ((DATA.rosters || {})[t] || []);
@@ -5500,7 +5512,7 @@ let ptSeq = 0;
 function renderTeamIn() {
   const t = ptTeam();
   $("ptTeams").innerHTML = calOrder().map(k => `<button class="tbtn" type="button" data-t="${k}" style="${tv(k)}" aria-pressed="${k === t}"><span class="badge">${sn(k)}</span>${fn(k)}</button>`).join("");
-  $("ptTeams").querySelectorAll(".tbtn").forEach(b => (b.onclick = () => { S.ptTeam = b.dataset.t; store("ptTeam", S.ptTeam); S.ptAll = false; renderTeamIn(); }));
+  $("ptTeams").querySelectorAll(".tbtn").forEach(b => (b.onclick = () => { S.ptTeam = b.dataset.t; keepTeam("ptTeam", S.ptTeam); S.ptAll = false; renderTeamIn(); }));
   document.querySelectorAll("#ptSeg button").forEach(b => { b.setAttribute("aria-pressed", String(b.dataset.k === S.ptKind)); b.onclick = () => { if (S.ptKind === b.dataset.k) return; S.ptKind = b.dataset.k; S.ptAll = false; saveStatsUI(); renderTeamIn(); }; });
   // スポナビの球団ごとの成績（データ更新で3時間ごと・data/tstats.json）があれば、それだけを使う
   const ys = yahooTeamStats(t);
@@ -5798,16 +5810,20 @@ function applyTheme(t) {
   document.querySelectorAll("#themeSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.theme === t)));
 }
 applyTheme(store("theme") == null ? "pawa" : store("theme"));   // まだ選んでいない人はパワプロ風
-document.querySelectorAll("#themeSeg button").forEach(b => (b.onclick = () => { store("theme", b.dataset.theme); applyTheme(b.dataset.theme); renderAll(); if (typeof renderOwnerPos === "function") renderOwnerPos(); }));
+document.querySelectorAll("#themeSeg button").forEach(b => (b.onclick = () => {
+  if (b.dataset.theme === (isPawa() ? "pawa" : "")) { closeSheet(); return; }
+  document.querySelectorAll("#themeSeg button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  store("theme", b.dataset.theme);
+  applyFromSheet(() => { applyTheme(b.dataset.theme); renderAll(); if (typeof renderOwnerPos === "function") renderOwnerPos(); });
+}));
 // リーグの切り替え：選んだリーグはこのiPhoneに保存。日程・応援歌の選択中の球団や月度も、新しいリーグに合わせる
 function paintLgSeg() { document.querySelectorAll("#lgSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lg === (isPL() ? "P" : "C")))); }
 function switchLeague(lg) {
   if ((isPL() ? "P" : "C") === lg) return;
+  // 今のリーグで選んでいた球団を覚えてから切り替え、切り替えた先のリーグで前に選んでいた球団に戻す
+  ["calTeam", "songTeam", "ptTeam"].forEach(k => { if (S[k] && CL.includes(S[k])) store(`${k}_${lgNow()}`, S[k]); });
   store("league", lg); applyLeague(lg);
-  const first = calOrder()[0];
-  if (!CL.includes(S.calTeam)) { S.calTeam = ME() || first; S.calSel = null; }
-  if (!CL.includes(S.songTeam)) S.songTeam = ME() || first;
-  if (!CL.includes(S.ptTeam)) { S.ptTeam = null; S.ptAll = false; }
+  restoreTeams(); S.calSel = null;
   S.period = null; S.periodPicked = false; S.cat = S.cat || "b_avg";
   Object.keys(liveStatAt).forEach(k => delete liveStatAt[k]);
   paintLgSeg(); renderAll(); moveLens(true);
@@ -5817,7 +5833,24 @@ function switchLeague(lg) {
   if (S.tab === "game" || S.tab === "cal") loadStarters(true);
   pollLive();
 }
-document.querySelectorAll("#lgSeg button").forEach(b => (b.onclick = () => switchLeague(b.dataset.lg)));
+// 設定からの切り替え：押したボタンをすぐ選んだ状態にして、設定を閉じる → 閉じ終わるころに画面をふわっと差し替える
+function applyFromSheet(apply) {
+  closeSheet();
+  const main = document.querySelector("main");
+  setTimeout(() => {
+    if (main) main.classList.add("swapping");
+    setTimeout(() => {
+      apply();
+      window.scrollTo({ top: 0 });
+      requestAnimationFrame(() => requestAnimationFrame(() => { if (main) main.classList.remove("swapping"); }));
+    }, 140);
+  }, 200);
+}
+document.querySelectorAll("#lgSeg button").forEach(b => (b.onclick = () => {
+  if (b.dataset.lg === lgNow()) { closeSheet(); return; }
+  document.querySelectorAll("#lgSeg button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  applyFromSheet(() => switchLeague(b.dataset.lg));
+}));
 paintLgSeg();
 // ===== シーズンの記録（data/archive/<年>.json）：設定から前のシーズンに切り替えて見る =====
 async function loadArchIndex() {
@@ -5848,8 +5881,7 @@ async function viewArchive(y) {
     $("archTxt").textContent = `${y}年シーズンの記録を表示中`;
     $("archBar").hidden = false;
     document.documentElement.classList.add("arch");
-    closeSheet();
-    renderAll(); setTab("magic");
+    applyFromSheet(() => { renderAll(); setTab("magic"); });
   } catch { alert(`${y}年の記録を読み込めませんでした。少し時間をおいて、もう一度開いてください。`); }
 }
 $("archBack").onclick = () => location.replace(location.pathname);
