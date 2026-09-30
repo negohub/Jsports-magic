@@ -626,7 +626,7 @@ OFF_SEED = [
 OFF_KEY = re.compile(r"結ばない|行わない|締結しない|更新しない|結ばず|行わず|戦力外|自由契約|退団|引退|辞任|退任|解任")
 OFF_JUNK = re.compile(r"side|related|recommend|ranking|breadcrumb|pickup|banner|share|sns|pager|pagination|footer|header|menu|gnav|global|topics-list|news-list|other", re.I)
 OFF_DATE = re.compile(r"(20\d\d)\s*[./年-]\s*(\d{1,2})\s*[./月-]\s*(\d{1,2})")
-OFF_EVERY = 3 * 3600   # 球団サイトを見に行く間隔（秒）。15分ごとの自動更新のたびには見に行かない
+OFF_EVERY = 3600   # 球団サイトを見に行く間隔（秒）。15分ごとの自動更新のたびには見に行かない（戦力外の発表が続く時期なので1時間ごと）
 
 
 def off_links(list_url, html, hosts=None):
@@ -1138,6 +1138,88 @@ def fetch_offseason(season, old, rosters, force=False, any_month=False):
             "draft_status": draft_st or prev.get("draft_status"), "staff": staff}
 
 
+# ===== スポナビの「入退団情報」（12球団の退団・入団を1ページにまとめた表）=====
+# 球団のサイトが読めないとき（巨人・広島・ソフトバンクなど）や、発表の記事を見に行く前の回でも、戦力外・引退を拾えるように
+# 毎回（15分ごと）1ページだけ読む。表：更新日｜状況（退団・入団）｜選手名（育成は「※」）｜守備｜備考（自由契約・引退・トレードなど）
+TRANSFER_URL = "https://baseball.yahoo.co.jp/npb/transfer"
+YTEAM_SHORT = {"阪神": "T", "DeNA": "DB", "巨人": "G", "中日": "D", "広島": "C", "ヤクルト": "S", "ソフトバンク": "H", "日本ハム": "F",
+               "オリックス": "B", "楽天": "E", "西武": "L", "ロッテ": "M"}
+
+
+def parse_transfer(html, season):
+    """入退団情報の表から、今オフ（今季の9月以降）の退団（戦力外・引退・育成再契約の打診）を取り出す"""
+    soup = BeautifulSoup(html, "html.parser")
+    ids = {str(v): k for k, v in YAHOO_TEAM.items()}
+    out = []
+    for tb in soup.find_all("table"):
+        # どの球団の表か：直前の見出し（「阪神」など）か、まわりの id（スポナビの球団番号）
+        t = None
+        h = tb.find_previous(["h2", "h3", "h4"])
+        if h:
+            t = YTEAM_SHORT.get(norm(h.get_text(" ")).strip())
+        if not t:
+            par = tb.find_parent(id=True)
+            t = ids.get(str(par.get("id"))) if par else None
+        if not t:
+            continue
+        for tr in tb.find_all("tr"):
+            c = [re.sub(r"\s+", " ", norm(td.get_text(" "))).strip() for td in tr.find_all(["td", "th"])]
+            if len(c) < 5 or c[1] != "退団":
+                continue
+            m = re.match(r"(\d{4})/(\d{1,2})/(\d{1,2})", c[0])
+            if not m:
+                continue
+            date = f"{int(m.group(1)):04d}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
+            if date < f"{season}-09-01":   # 今オフの分だけ（シーズン中の退団・去年のオフは使わない）
+                continue
+            note = c[4]
+            dev = "※" in c[2]
+            name = c[2].replace("※", "").strip()
+            if not name:
+                continue
+            if re.search(r"トレード|現役ドラフト|FA|ポスティング|人的補償", note):
+                continue   # 移籍はNPBの公示・球団の発表から
+            if "引退" in note:
+                kind = "retire"
+            elif re.search(r"育成.{0,3}再契約|育成契約を打診|育成.{0,4}打診", note):
+                kind = "offer"
+            elif re.search(r"自由契約|退団|戦力外", note):
+                kind = "cut"
+            else:
+                continue
+            out.append({"t": t, "n": name, "dev": dev, "kind": kind, "date": date, "note": note})
+    return out
+
+
+def merge_transfer(off, season, rosters, now=None):
+    """スポナビの入退団情報を、オフシーズン情報に足す（すでに球団の発表から見つけている選手はそのまま。種類が変わったときだけ直す）"""
+    now = now or datetime.now(JST)
+    if now.month < 9 or not off or off.get("season") != season:
+        return off
+    html = fetch(TRANSFER_URL)
+    got = parse_transfer(html, season) if html else []
+    items = {(x["t"], squash(x["n"])): x for x in off.get("items") or []}
+    add = upd = 0
+    for x in got:
+        ro = next((r for r in rosters.get(x["t"]) or [] if squash(r.get("n", "")) == squash(x["n"])), None)
+        key = (x["t"], squash(x["n"]))
+        cur = items.get(key)
+        if cur:
+            # 戦力外→引退などに変わったとき（新しい日付のとき）だけ直す。移籍・監督などの項目には手を出さない
+            if cur.get("kind") in ("cut", "offer", "retire") and cur.get("kind") != x["kind"] and x["date"] > (cur.get("date") or ""):
+                cur["kind"], cur["date"] = x["kind"], x["date"]
+                upd += 1
+            continue
+        items[key] = {"t": x["t"], "n": (ro or {}).get("n") or x["n"], "no": (ro or {}).get("no", ""), "dev": bool((ro or {}).get("dev")) or x["dev"],
+                      "kind": x["kind"], "date": x["date"], "url": TRANSFER_URL, "title": "スポーツナビ 入退団情報", "src": "sponavi"}
+        add += 1
+    off = dict(off)
+    off["items"] = sorted(items.values(), key=lambda x: (x["date"], x["t"], x["n"]), reverse=True)
+    off["transfer"] = {"at": now.isoformat(timespec="seconds"), "rows": len(got) if html else "開けない", "added": add}
+    print(f"[入退団情報（スポナビ）] 今オフの退団 {len(got) if html else '開けない'}件 → 追加 {add}人・種類の更新 {upd}人")
+    return off
+
+
 def fetch_fpos(season, old):
     """各球団の個人守備成績から、選手ごとに今季守ったポジション（投・捕・内・外）と試合数を取る（1日1回）"""
     today = datetime.now(JST).strftime("%Y-%m-%d")
@@ -1521,6 +1603,8 @@ def main():
     # Actions の画面で「Run workflow」を押したとき（手動で実行したとき）は、3時間の間隔を待たずに球団サイトを見に行く
     off_force = os.environ.get("OFF_FORCE") == "1" or os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch"
     offseason = safe("戦力外・引退", lambda: fetch_offseason(season, old, rosters, off_force, os.environ.get("OFF_FORCE") == "1"), (old or {}).get("offseason"))
+    # スポナビの入退団情報（毎回。球団のサイトが読めない球団の分も拾う）
+    offseason = safe("入退団情報", lambda: merge_transfer(offseason, season, rosters), offseason)
     if (old and old_games == all_games and old_stats == stats and old.get("prev_order") == prev_order
             and old_stats_p == stats_p and old.get("prev_order_p") == prev_order_p
             and old.get("checked") == month and old.get("rosters") == rosters and old.get("song_rev") == SONG_REV
