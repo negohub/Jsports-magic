@@ -1980,6 +1980,28 @@ async def default_theme_check(browser):
     await ctx.close()
 
 
+async def live_off_check(browser):
+    """オフのタブ：GitHub の自動更新を待たずに、スポナビの入退団情報（中継プログラム経由）で入っていない選手を足す"""
+    pg, errs = await open_page(browser, 390, "pawa")
+    r = await pg.evaluate("""() => { const ng = [], t = CL[0], ro = DATA.rosters[t] || [];
+      DATA.offseason = { season: 2026, items: [{ t, n: ro[0].n, no: ro[0].no, kind: 'cut', date: '2026-09-29', url: 'x', title: '' }], teams: {}, seen: {} };
+      LIVE_OFF.items = [{ t, n: ro[0].n, kind: 'cut', date: '2026-09-29' }, { t, n: ro[1].n, kind: 'cut', date: '2026-09-30' }, { t, n: 'テスト 退団', kind: 'leave', date: '2026-09-30' }];
+      LIVE_OFF.checked = new Date().toISOString();
+      const it = offItems().filter(x => x.t === t);
+      if (it.length !== 3) ng.push(`入退団情報の最新が足されていない（${it.length}人）`);
+      if (it.filter(x => x.n === ro[0].n).length !== 1) ng.push('同じ選手が2回入っている');
+      if (!it.some(x => x.kind === 'leave')) ng.push('「退団」が入っていない');
+      jst = () => ({ y: 2026, m: 10, d: 1, iso: '2026-10-01' }); renderAll(); setTab('off'); renderOff();
+      const txt = document.getElementById('offList').innerText;
+      if (!txt.includes('退団')) ng.push('オフの一覧に「退団」が出ない');
+      LIVE_OFF.items = []; return ng; }""")
+    for m in r:
+        bad(f"[オフの最新] {m}")
+    for e in errs:
+        bad(f"[オフの最新]: 画面のエラー {e}")
+    await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -2057,6 +2079,7 @@ async def main():
         await player_head_check(browser)
         await uniform_check(browser)
         await default_theme_check(browser)
+        await live_off_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
