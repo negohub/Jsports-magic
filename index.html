@@ -1,11 +1,12 @@
 <!doctype html>
-<html lang="ja">
+<html lang="ja" class="theme-pawa">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>hobby baseball</title>
 <meta name="description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#2F8BE8">
+<script>try { if (localStorage.getItem("theme") === "") document.documentElement.classList.remove("theme-pawa"); } catch (e) {}</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="hobby baseball">
@@ -42,7 +43,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260930121233">
+<meta name="build" content="20260930125416">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -4105,8 +4106,112 @@ function renderToday(a) {
   }).join("") ;
 }
 
+/* ---------- 画像にしてLINEで送る（パワプロ風） ----------
+   サイトのパワプロ風と同じ見た目：空色の背景・紺の太い枠の白いパネル・青い見出しの表・担当者はポジション色の札 */
+function drawCardPawa(a) {
+  const W = 1080, P = 56, rowH = 116, headH = 76, tableY = 520;
+  const rows = a.rows, H = tableY + 16 + headH + rows.length * rowH + 16 + 150;
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const x = c.getContext("2d");
+  const F = (w, s) => `${w} ${s}px "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, "Noto Sans JP", sans-serif`;
+  const NAVY = "#13264A", FRAME = "#1D3E7C", RED = "#E53935";
+  const rr = (X, Y, w, h, r) => { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); };
+  // パワプロの札（上から下へのグラデーション・縁・下の影・字間）
+  const TILE = { pp: ["#FFD3DF", "#F7A9BE", "#DB7F97"], pc: ["#A6ECFB", "#4FC8EC", "#2FA3C8"], pi: ["#FFEB9A", "#F7C948", "#D6A21E"], po: ["#B5EDA8", "#63CC5E", "#3FA43A"], ps: ["#FFAE9F", "#F07A69", "#CF5A4A"] };
+  const tileOf = t => ({ "投": "pp", "中": "pp", "抑": "pp", "先": "ps", "捕": "pc", "内": "pi", "外": "po" }[ownerPosOf(t)] || "pi");
+  const tile = (X, Y, w, h, cls, text, fs) => {
+    const [c1, c2, bd] = TILE[cls] || TILE.pi;
+    x.fillStyle = "rgba(19,38,74,.22)"; rr(X, Y + 4, w, h, 12); x.fill();
+    const gr = x.createLinearGradient(0, Y, 0, Y + h); gr.addColorStop(0, c1); gr.addColorStop(1, c2);
+    x.fillStyle = gr; rr(X, Y, w, h, 12); x.fill();
+    x.lineWidth = 3; x.strokeStyle = bd; rr(X + 1.5, Y + 1.5, w - 3, h - 3, 11); x.stroke();
+    x.fillStyle = "rgba(255,255,255,.45)"; rr(X + 6, Y + 5, w - 12, h * .32, 8); x.fill();
+    const n = [...text].length, ls = n <= 2 ? .7 : .08;   // 字間はサイトの札と同じ決まり
+    x.font = F(800, fs); x.fillStyle = "#1F2A44"; x.textAlign = "left"; x.textBaseline = "middle";
+    const cw = [...text].map(ch => x.measureText(ch).width), tw = cw.reduce((p, q) => p + q, 0) + fs * ls * (n - 1);
+    let cx = X + (w - tw) / 2; [...text].forEach((ch, k) => { x.fillText(ch, cx, Y + h / 2 + 1); cx += cw[k] + fs * ls; });
+    x.textBaseline = "alphabetic";
+  };
+  const panel = (X, Y, w, h) => { x.fillStyle = "rgba(19,38,74,.28)"; rr(X, Y + 8, w, h, 30); x.fill(); x.fillStyle = "#fff"; rr(X, Y, w, h, 30); x.fill(); x.lineWidth = 7; x.strokeStyle = FRAME; rr(X + 3.5, Y + 3.5, w - 7, h - 7, 27); x.stroke(); };
+  const badge = (cx, cy, r, t, fs) => { x.fillStyle = FRAME; x.beginPath(); x.arc(cx, cy, r + 5, 0, 7); x.fill(); x.fillStyle = "#fff"; x.beginPath(); x.arc(cx, cy, r + 2.5, 0, 7); x.fill();
+    x.fillStyle = tc(t); x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill(); x.fillStyle = TEAM[t].i || "#fff"; x.font = F(900, fs); x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(sn(t), cx, cy + 2); x.textBaseline = "alphabetic"; x.textAlign = "left"; };
+  // 背景：空色
+  const bg = x.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#2F8BE8"); bg.addColorStop(.35, "#6CC6FF"); bg.addColorStop(1, "#BDEBFF");
+  x.fillStyle = bg; x.fillRect(0, 0, W, H);
+  x.fillStyle = "rgba(255,255,255,.18)"; [[900, 120, 180], [140, 60, 120], [980, 420, 140]].forEach(([cx, cy, r]) => { x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill(); });
+  // 見出し
+  const cur = defaultPeriod(periods());
+  const ttl = S.period.id === cur.id ? "今月の戦況" : `${S.period.label}の戦況`;
+  x.fillStyle = "rgba(255,255,255,.9)"; x.font = F(800, 30); x.fillText("hobby baseball", P, 84);
+  x.fillStyle = "#fff"; x.font = F(900, 84); x.lineWidth = 12; x.strokeStyle = FRAME; x.lineJoin = "round"; x.strokeText(ttl, P - 2, 182); x.fillText(ttl, P - 2, 182);
+  const u = liveChangedAt && (!DATA.updated || liveChangedAt > new Date(DATA.updated)) ? liveChangedAt : DATA.updated ? new Date(DATA.updated) : null;
+  if (u) { x.textAlign = "right"; x.fillStyle = "#fff"; x.font = F(700, 26); x.fillText(`${jp(u).m}/${jp(u).d} ${jp(u).hm} 更新`, W - P, 84); x.textAlign = "left"; }
+  // 球団の色の帯
+  const lg = rows.map(r => r.t), sw = (W - 2 * P) / lg.length;
+  lg.forEach((t, i) => { x.fillStyle = tc(t); rr(P + i * sw + 4, 214, sw - 8, 12, 6); x.fill(); });
+  // このままだと支払い
+  const low = rows[rows.length - 1], done = a.finished || low.eliminated;
+  const bY = 262, bH = 214;
+  panel(P, bY, W - 2 * P, bH);
+  x.fillStyle = done ? "#FFE0E0" : "#FFF1F1"; rr(P + 14, bY + 14, W - 2 * P - 28, bH - 28, 20); x.fill();
+  badge(P + 92, bY + bH / 2, 48, low.t, 48);
+  // パ・リーグは担当者・支払いがないので「最下位」とチーム名だけ
+  const pl = isPL(), hasOwn = !pl && own(low.t) && own(low.t) !== fn(low.t);
+  x.fillStyle = RED; x.font = F(900, 30);
+  x.fillText(pl ? (a.finished ? `${S.period.label}の最下位` : done ? "最下位が確定" : "このままだと最下位") : a.finished ? `${S.period.label}の支払い` : done ? "支払いが確定" : "このままだと支払い", P + 170, bY + 66);
+  if (hasOwn) { tile(P + 170, bY + 88, 196, 72, tileOf(low.t), own(low.t), 40); x.fillStyle = NAVY; x.font = F(800, 30); x.fillText(fn(low.t), P + 386, bY + 136); }
+  else { x.fillStyle = NAVY; x.font = F(900, 52); x.fillText(fn(low.t), P + 170, bY + 142); }
+  if (!done) { const up = rows[rows.length - 2], gg = ((up.w - low.w) + (low.l - up.l)) / 2;
+    x.fillStyle = "#4A6390"; x.font = F(700, 24); x.fillText(`残り${low.rem}試合・${fn(up.t)}まで${gg.toFixed(1)}差`, P + 170, bY + 190); }
+  if (!pl) { x.textAlign = "right"; x.fillStyle = NAVY; x.font = F(900, 58); x.fillText(yen(CONFIG.fee), W - P - 40, bY + 124);
+    x.fillStyle = "#4A6390"; x.font = F(700, 26); x.fillText(own(low.t) === CONFIG.payee ? "支払い" : `→ ${CONFIG.payee}`, W - P - 40, bY + 166); x.textAlign = "left"; }
+  // 順位表（白いパネル・青い見出し）
+  const cols = [["順位", 80], ["チーム", 272], ["試合", 72], ["勝", 64], ["負", 64], ["分", 58], ["勝率", 100], ["差", 70], ["残", 62], ["マジック", 126]];
+  const tW = W - 2 * P - 32, sum = cols.reduce((p, q) => p + q[1], 0), k = tW / sum;
+  const colX = []; let cx = P + 16; cols.forEach(cl => { cl[1] *= k; colX.push(cx); cx += cl[1]; });
+  const pY = tableY, pH = 16 + headH + rows.length * rowH + 16;
+  panel(P, pY, W - 2 * P, pH);
+  const hy = pY + 16, hg = x.createLinearGradient(0, hy, 0, hy + headH); hg.addColorStop(0, "#4DA3F2"); hg.addColorStop(1, "#1E6FD0");
+  x.fillStyle = hg; rr(P + 16, hy, tW, headH, 14); x.fill();
+  x.fillStyle = "#fff"; x.font = F(800, 25); x.textAlign = "center";
+  cols.forEach(([h, w], i) => x.fillText(h, colX[i] + w / 2, hy + headH / 2 + 9));
+  rows.forEach((r, i) => {
+    const y = hy + headH + i * rowH, t = r.t;
+    x.fillStyle = i % 2 ? "#F4F9FF" : "#fff"; x.fillRect(P + 16, y, tW, rowH);
+    x.fillStyle = tc(t); x.fillRect(colX[1], y + 10, 10, rowH - 20);
+    const paid = r.eliminated || (a.finished && i === rows.length - 1);
+    const mg = paid ? (isPL() ? "最下位" : "支払い") : r.safe ? "★" : r.self === null ? "自力脱出消滅" : "M" + r.self;
+    const t0 = rows[0], gbv = ((t0.w - r.w) + (r.l - t0.l)) / 2;
+    const vals = [String(i + 1), "", String(r.w + r.l + r.d), String(r.w), String(r.l), String(r.d), pctOf(r.w, r.l), i === 0 ? "-" : gbv.toFixed(1), String(r.rem)];
+    // 順位は丸
+    x.fillStyle = i === 0 ? "#F7C948" : "#DCE7F5"; x.beginPath(); x.arc(colX[0] + cols[0][1] / 2, y + rowH / 2, 26, 0, 7); x.fill();
+    x.fillStyle = NAVY; x.font = F(900, 30); x.textAlign = "center"; x.fillText(vals[0], colX[0] + cols[0][1] / 2, y + rowH / 2 + 11);
+    x.font = F(700, 32);
+    vals.forEach((v, j) => { if (j < 2) return; x.textAlign = "right"; x.fillStyle = NAVY; x.fillText(v, colX[j] + cols[j][1] - 10, y + rowH / 2 + 12); });
+    // チーム：球団の丸・名前・担当者の札
+    badge(colX[1] + 52, y + rowH / 2, 26, t, 26);
+    const hasO = !isPL() && own(t) && own(t) !== fn(t), nmFs = [...fn(t)].length >= 5 ? 28 : 34;
+    x.textAlign = "left"; x.fillStyle = NAVY; x.font = F(900, nmFs); x.fillText(fn(t), colX[1] + 92, hasO ? y + 50 : y + rowH / 2 + nmFs * .36);
+    if (hasO) tile(colX[1] + 92, y + 64, 112, 38, tileOf(t), own(t), 22);
+    // マジック
+    x.textAlign = "center"; const mx = colX[9] + cols[9][1] / 2;
+    if (mg === "自力脱出消滅") { x.fillStyle = RED; x.font = F(900, 22); x.fillText("自力脱出", mx, y + rowH / 2 - 4); x.fillText("消滅", mx, y + rowH / 2 + 22); }
+    else if (mg === "★") { x.fillStyle = "#E0A800"; x.font = F(900, 44); x.fillText("★", mx, y + rowH / 2 + 15); }
+    else { x.fillStyle = paid ? RED : NAVY; x.font = F(900, paid ? 30 : 38); x.fillText(mg, mx, y + rowH / 2 + 13); }
+    x.textAlign = "left";
+    if (i) { x.strokeStyle = "#DCE7F5"; x.lineWidth = 2; x.beginPath(); x.moveTo(P + 16, y); x.lineTo(P + 16 + tW, y); x.stroke(); }
+  });
+  // フッター
+  const fy = pY + pH + 70;
+  x.fillStyle = NAVY; x.font = F(700, 24); x.fillText(isPL() ? "★＝最下位回避確定　M＝マジック" : "★＝最下位回避確定　M＝回避マジック", P, fy);
+  x.textAlign = "right"; x.fillText(`${location.host}${location.pathname}`, W - P, fy); x.textAlign = "left";
+  lg.forEach((t, i) => { x.fillStyle = tc(t); x.fillRect(i * (W / lg.length), H - 18, W / lg.length, 18); });
+  return c;
+}
+
 /* ---------- 画像にしてLINEで送る ---------- */
 function drawCard(a) {
+  if (isPawa()) return drawCardPawa(a);
   const W = 1080, P = 64, rowH = 112, headH = 84, tableY = 480;
   const rows = a.rows, H = tableY + headH + rows.length * rowH + 150;
   const c = document.createElement("canvas"); c.width = W; c.height = H;
@@ -5493,7 +5598,7 @@ function applyTheme(t) {
   document.querySelector('meta[name="theme-color"]') && document.querySelector('meta[name="theme-color"]').setAttribute("content", t === "pawa" ? "#2F8BE8" : "#000000");
   document.querySelectorAll("#themeSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.theme === t)));
 }
-applyTheme(store("theme") || "");
+applyTheme(store("theme") == null ? "pawa" : store("theme"));   // まだ選んでいない人はパワプロ風
 document.querySelectorAll("#themeSeg button").forEach(b => (b.onclick = () => { store("theme", b.dataset.theme); applyTheme(b.dataset.theme); renderAll(); if (typeof renderOwnerPos === "function") renderOwnerPos(); }));
 // リーグの切り替え：選んだリーグはこのiPhoneに保存。日程・応援歌の選択中の球団や月度も、新しいリーグに合わせる
 function paintLgSeg() { document.querySelectorAll("#lgSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lg === (isPL() ? "P" : "C")))); }
