@@ -43,7 +43,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260930125416">
+<meta name="build" content="20260930132110">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -2199,7 +2199,7 @@ html.theme-pawa .offtag.k-out{color:#fff;background:linear-gradient(180deg,#B57B
 html.theme-pawa .offtag.k-fa_decl{color:#fff;background:linear-gradient(180deg,#F6B26B,#D35400);border-color:#873600}
 html.theme-pawa .offtag.k-in{color:#fff;background:linear-gradient(180deg,#48C9B0,#138D75);border-color:#0B5345}
 html.theme-pawa .offtag.k-draft{color:#fff;background:linear-gradient(180deg,#6FD17F,#1E8449);border-color:#145A32}
-.offtag.k-offer{background:#E5484D}
+.offtag.k-offer,.offtag.k-leave{background:#E5484D}
 #offList .ofteam{margin:10px 0 0;border-radius:var(--r-md,14px);overflow:hidden;background:rgba(255,255,255,.04);border:1px solid var(--line,#2A2A2A)}
 #offList .ofh{display:flex;align-items:center;gap:8px;padding:9px 12px;font-weight:800;font-size:14px;border-left:4px solid var(--tc)}
 #offList .ofh small{margin-left:auto;font-size:11.5px;color:var(--muted,#8B8B95);font-weight:700}
@@ -3206,6 +3206,7 @@ function setTab(t) {
   if (t === "stats") setTimeout(() => { liveStats(S.cat); renderTeamIn(); }, 260);
   if (t === "game" || t === "cal") setTimeout(() => loadStarters(), 260);
   if (t === "game") setTimeout(() => loadPre(), 300);
+  if (t === "off") setTimeout(() => loadLiveOff(), 280);
   $("kicker").textContent = TAB_TITLE[t][0];
   $("ttl").textContent = TAB_TITLE[t][1];
   requestAnimationFrame(() => moveLens());
@@ -5156,7 +5157,7 @@ async function liveStats(key) {
   if (res.some(Boolean) && S.tab === "stats") renderStats(true);
 }
 // ================= 今オフの戦力外・引退（各球団の公式発表を自動で集めたもの） =================
-const OFF_LABEL = { cut: "戦力外", offer: "戦力外", retire: "引退", mgr: "退任", out: "移籍", fa_decl: "FA宣言", in: "加入", draft: "ドラフト",
+const OFF_LABEL = { cut: "戦力外", offer: "戦力外", leave: "退団", retire: "引退", mgr: "退任", out: "移籍", fa_decl: "FA宣言", in: "加入", draft: "ドラフト",
   coach_out: "退団", coach_in: "就任", coach_move: "配置転換" };
 const OFF_IN = new Set(["in", "draft", "coach_in"]);
 const OFF_STAFF = new Set(["mgr", "coach_out", "coach_in", "coach_move"]);   // 首脳陣（監督・コーチ）   // 入団する選手（ほかは退団・残るかどうか未定）
@@ -5166,7 +5167,37 @@ const MGR_POS = { "藤川球児": "投", "阿部慎之助": "捕", "相川亮二
 const mgrPos = n => MGR_POS[nk(n)] || "内";
 const mgrTile = (n, cls = "") => { const p = mgrPos(n); return `<span class="ptile ${cls} ${TILEC[p] || "pi"}${nmCls(n)}" style="${tileStyle([p])}"><b>${esc(n)}</b></span>`; };
 // 「公示 任意引退・自由契約」のページ（去年の一覧）から拾ってしまったものは出さない（データ更新でも消すが、念のため画面側でも）
-const offItems = () => (((DATA && DATA.offseason) || {}).items || []).filter(x => OFF_LABEL[x.kind] && TEAM[x.t] && !/\/announce\//.test(x.url || ""));
+const offItems = () => offMerged().filter(x => OFF_LABEL[x.kind] && TEAM[x.t] && !/\/announce\//.test(x.url || ""));
+// 今オフの退団：GitHub の自動更新（15分ごとの予定だが、GitHub の都合で1〜数時間あくことがある）を待たずに、
+// 中継プログラム経由でスポナビの「入退団情報」をその場で読み、まだ入っていない選手を足す（10分ごと・オフのタブを開いたとき）
+let LIVE_OFF = { at: 0, items: [], checked: null }, liveOffBusy = false;
+async function loadLiveOff(force) {
+  if (!CONFIG.liveApi || liveOffBusy || !offSeason() || (!force && Date.now() - LIVE_OFF.at < 10 * 60e3)) return;
+  liveOffBusy = true;
+  try {
+    const d = await (await fetch(`${CONFIG.liveApi}?transfer=1`)).json();
+    LIVE_OFF.at = Date.now();
+    if (d && Array.isArray(d.items)) {
+      const before = JSON.stringify(LIVE_OFF.items);
+      LIVE_OFF.items = d.items; LIVE_OFF.checked = d.at || new Date().toISOString();
+      if (before !== JSON.stringify(d.items)) renderOff();
+    }
+  } catch {} finally { liveOffBusy = false; }
+}
+function offMerged() {
+  const base = ((DATA && DATA.offseason) || {}).items || [];
+  if (!LIVE_OFF.items.length) return base;
+  const have = new Set(base.map(x => x.t + "|" + nk(x.n)));
+  const add = [];
+  for (const x of LIVE_OFF.items) {
+    if (!TEAM[x.t] || have.has(x.t + "|" + nk(x.n))) continue;
+    const ro = ((DATA.rosters || {})[x.t] || []).find(r => nk(r.n) === nk(x.n));
+    add.push({ t: x.t, n: ro ? ro.n : x.n, no: ro ? ro.no : "", dev: ro ? !!ro.dev : !!x.dev, kind: x.kind, date: x.date,
+      url: "https://baseball.yahoo.co.jp/npb/transfer", title: "スポーツナビ 入退団情報", src: "live" });
+  }
+  return add.length ? base.concat(add) : base;
+}
+setInterval(() => { if (!document.hidden && (S.tab === "off" || S.tab === "song" || S.tab === "stats")) loadLiveOff(); }, 60e3);
 // 名前（名簿の名前・NPBの表の名前・名字だけ）から、その選手の発表を探す
 function offOf(t, name) {
   if (!name) return null;
@@ -5179,7 +5210,7 @@ function offSeason() { const j = jst(); return (j.m === 9 && j.d >= 15) || j.m >
 // オフの動きの種類（上のボタンで絞り込む）
 const OFF_CATS = [["all", "すべて"], ["cut", "戦力外"], ["retire", "引退"], ["staff", "首脳陣"], ["trade", "トレード"], ["fa", "FA"], ["draft", "ドラフト"], ["newfor", "新外国人"], ["move", "そのほかの移籍"]];
 function offCat(x) {
-  if (x.kind === "cut" || x.kind === "offer") return "cut";
+  if (x.kind === "cut" || x.kind === "offer" || x.kind === "leave") return "cut";
   if (OFF_STAFF.has(x.kind)) return "staff";
   if (x.kind === "retire" || x.kind === "draft") return x.kind;
   if (x.kind === "fa_decl" || x.via === "fa") return "fa";
@@ -5221,7 +5252,7 @@ function renderOff() {
     : x.kind === "coach_out" ? `${x.role || "コーチ"}・今季限りで退団`
     : x.kind === "coach_in" ? `${x.role || "コーチ"}に就任`
     : x.kind === "coach_move" ? `${x.role || "コーチ"}から配置転換`
-    : x.kind === "mgr" ? (x.mid ? "シーズン途中で辞任" : "今季限りで退任") : x.kind === "retire" ? "現役引退" : x.kind === "offer" ? "来季の契約を結ばない（育成で再契約を打診）" : x.dev ? "育成選手の来季の契約を結ばない" : "来季の契約を結ばない";
+    : x.kind === "mgr" ? (x.mid ? "シーズン途中で辞任" : "今季限りで退任") : x.kind === "retire" ? "現役引退" : x.kind === "leave" ? "退団" : x.kind === "offer" ? "来季の契約を結ばない（育成で再契約を打診）" : x.dev ? "育成選手の来季の契約を結ばない" : "来季の契約を結ばない";
   const teams = calOrder().filter(t => CL.includes(t));
   const has = teams.filter(t => items.some(x => x.t === t)), none = teams.filter(t => !items.some(x => x.t === t));
   // パワプロ風：名前は守備位置の色のタイル（2つ以上守る選手は塗り分け）
@@ -5557,6 +5588,7 @@ function healthItems() {
       : bad.length ? { lv: "warn", k: "オフシーズン情報", v: `${fmtDT(o.checked_at)} 更新。${bad.join("・")}の公式サイトの一覧を開けていません（NPBの12球団ニュースから補っています）` }
       : { lv: "ok", k: "オフシーズン情報", v: `最新（${fmtDT(o.checked_at)} 更新）` });
     // スポナビの入退団情報（12球団の戦力外・引退をまとめた表・毎回）：球団のサイトが読めない球団の分もここから
+    if (LIVE_OFF.checked) out.push({ lv: "ok", k: "入退団情報（最新）", v: `スポーツナビを ${fmtDT(LIVE_OFF.checked)} に直接確認（今オフの退団 ${LIVE_OFF.items.length}件）` });
     const tr = o.transfer;
     if (tr) out.push(tr.rows === "開けない" ? { lv: "warn", k: "入退団情報", v: `スポーツナビの入退団情報を開けていません（${fmtDT(tr.at)}）` }
       : { lv: "ok", k: "入退団情報", v: `スポーツナビから ${fmtDT(tr.at)} 確認（今オフの退団 ${tr.rows}件）` });
