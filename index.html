@@ -42,7 +42,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260930085621">
+<meta name="build" content="20260930093858">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -3526,11 +3526,11 @@ function preHTML(g) {
         <ol class="stl">${x.bat.map(b => `<li data-pl="${t}|${esc(b.n)}|"><span class="sto num">${b.o}</span><span class="stp" style="--c:${PCOL[(POS_GR[b.pos] || "内野手")[0]]}">${esc(b.pos)}</span><span class="stnm">${pwName(t, b.n, POS_GR[b.pos] || "内野手")}</span><span class="sta num">${esc(b.avg || "")}</span></li>`).join("")}</ol>
         ${x.p ? `<div class="stpit" data-pl="${t}|${esc(x.p.n)}|pit"><span class="stk">先発</span><span class="stnm">${pwName(t, x.p.n, "投手")}</span><span class="sta num">${esc(x.p.era || "")}</span></div>` : ""}</div>`;
     st = `<details class="stm"${open ? " open" : ""} data-stm="${k}"><summary>スタメン発表<small>打順・守備・打率</small></summary>
-      <div class="stw">${col(g.a, lu.a)}${col(g.h, lu.h)}</div></details>`;
+      <div class="stw">${col(g.h, lu.h)}${col(g.a, lu.a)}</div></details>`;
   }
   return st + (g.st === "sched" ? benchHTML(g) : "") + bc;
 }
-// ベンチ入り選手（投手・捕手・内野手・外野手）：左右にビジター／ホーム。名前の枠はスタメンと同じ大きさ
+// ベンチ入り選手（投手・捕手・内野手・外野手）：左にホーム、右にビジター。名前の枠はスタメンと同じ大きさ
 const BENCH_GR = [["投手", "投"], ["捕手", "捕"], ["内野手", "内"], ["外野手", "外"]];
 function benchHTML(g) {
   const p = preOf(g), b = p && p.bench;
@@ -3542,7 +3542,7 @@ function benchHTML(g) {
     return `<div class="stc" style="${tv(t)}"><div class="sth"><i class="ykb">${sn(t)}</i>${fn(t)}</div>${rows ? `<ol class="stl">${rows}</ol>` : `<p class="stn">まだ発表されていません</p>`}</div>`;
   };
   return `<details class="stm bench"${open ? " open" : ""} data-stm="${k}"><summary>ベンチ入り<small>投手・捕手・内野手・外野手</small></summary>
-    <div class="stw">${col(g.a, b.a)}${col(g.h, b.h)}</div></details>`;
+    <div class="stw">${col(g.h, b.h)}${col(g.a, b.a)}</div></details>`;
 }
 // 予告先発の行（どの画面でもホームが左。「阪神 vs ヤクルト」の対戦カードの順）
 function ykHTML(g, homeFirst = true) {
@@ -3849,7 +3849,7 @@ function lineupHTML(g, d) {
   const res = r => r.results.map((x, i) => rcChip(x, (r.rbis || [])[i])).join("");
   let prev = 0;
   return `<div class="lu">
-    <div class="lut">打順<div class="lutabs">${[g.a, g.h].map(x => `<button type="button" data-k="${key}" data-t="${x}" class="${x === t ? "on" : ""}" style="${tv(x)}">${fn(x)}</button>`).join("")}</div></div>
+    <div class="lut">打順<div class="lutabs">${[g.h, g.a].map(x => `<button type="button" data-k="${key}" data-t="${x}" class="${x === t ? "on" : ""}" style="${tv(x)}">${fn(x)}</button>`).join("")}</div></div>
     ${RES_LEGEND}<table class="lutab">${rows.map(r => { const first = r.order !== prev; prev = r.order;
       return `<tr class="${r.starter ? "" : "sub"}${curName && sq(r.name) === curName ? " cur" : ""}"><td class="lo num">${first ? r.order : ""}</td><td class="lp">${esc(r.pos)}</td><td class="ln"><div class="lnm" data-pl="${t}|${esc(r.name)}"><span>${pwName(t, r.name, r.pos === "投" ? "投手" : undefined)}</span><em class="la num">${esc(r.avg || "")}</em></div>${r.results.length ? `<div class="lrw">${res(r)}</div>` : ""}</td></tr>`; }).join("")}</table>
   </div>`;
@@ -3868,7 +3868,7 @@ function pitchingHTML(g, d) {
   const curName = g.st === "live" && p && p.pitcher && def === t ? sq(p.pitcher.name) : null;
   const c = v => esc(v == null || v === "" ? "-" : v);
   return `<div class="lu pu">
-    <div class="lut">投手成績<div class="lutabs">${[g.a, g.h].map(x => `<button type="button" data-pk="${key}" data-t="${x}" class="${x === t ? "on" : ""}" style="${tv(x)}">${fn(x)}</button>`).join("")}</div></div>
+    <div class="lut">投手成績<div class="lutabs">${[g.h, g.a].map(x => `<button type="button" data-pk="${key}" data-t="${x}" class="${x === t ? "on" : ""}" style="${tv(x)}">${fn(x)}</button>`).join("")}</div></div>
     <div class="puw"><table class="putab num"><thead><tr><th class="pnx">投手</th><th>回</th><th>球数</th><th>安</th><th>本</th><th>振</th><th>四</th><th>失</th><th>責</th></tr></thead><tbody>${rows.map((r, i) => `<tr class="${curName && sq(r.name) === curName ? "cur" : ""}"><td class="pnx" data-pl="${t}|${esc(r.name)}"><b>${r.dec ? `<i class="dec d${{ "勝": "w", "敗": "l", "S": "s", "H": "h" }[r.dec] || ""}">${esc(r.dec)}</i>` : ""}${pwName(t, r.name, "投手")}</b><small>防 ${c(r.era)}</small></td><td>${c(r.ip)}</td><td>${c(r.np)}</td><td>${c(r.h)}</td><td>${c(r.hr)}</td><td>${c(r.so)}</td><td>${c(r.bb)}</td><td>${c(r.r)}</td><td class="er">${c(r.er)}</td></tr>`).join("")}</tbody></table></div>
   </div>`;
 }
