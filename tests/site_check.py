@@ -1948,6 +1948,8 @@ async def uniform_check(browser):
                 if (tile.closest('#rankList, #songList, #offList, #ptTbl, .sp-h, .pn3')) {
                   if (Math.round(r.height) < 34) ng.push(`${tab}：一覧の名前の札の高さがほかと違う（${b.textContent} ${Math.round(r.height)}px）`);
                   if (n <= 4 && fs !== 14) ng.push(`${tab}：一覧の名前の札の文字の大きさがほかと違う（${b.textContent} ${fs}px）`); } }
+              // 見出しの更新日：成績タブの3つの見出し（チーム成績・個人ランキング・チーム別成績）すべてに出す
+              if (tab === 'stats') for (const id of ['stAsof', 'rkAsof']) { const e = document.getElementById(id); if (!e || !/\\d+\\/\\d+/.test(e.textContent)) ng.push(`成績タブの見出しに更新日がない（${id}）`); }
               for (const e of document.querySelectorAll('.chip, .chips2 button, .seg button')) if (e.getBoundingClientRect().width && getComputedStyle(e).fontSize !== '14px') ng.push(`${tab}：切り替えボタンの文字の大きさがほかと違う（${e.textContent.trim()}）`);
               const rcs = [...document.querySelectorAll('.rc')].filter(e => e.getBoundingClientRect().width).map(e => getComputedStyle(e).fontSize + '/' + Math.round(e.getBoundingClientRect().height));
               if (new Set(rcs).size > 1) ng.push(`${tab}：打席の結果の札の大きさがそろっていない（${[...new Set(rcs)].join('・')}）`);
