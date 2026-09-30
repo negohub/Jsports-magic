@@ -42,7 +42,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260929203015">
+<meta name="build" content="20260930035551">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -4446,7 +4446,9 @@ const jump = (t, url, text) => {
 };
 // su：データ更新で見つけた、その選手の応援歌ページ（公式に応援歌ページがない西武など）。あればそれを優先
 const okUrl = u => typeof u === "string" && /^https:\/\/[^"'<>\s]+$/.test(u);
-const songLink = (t, x) => okUrl(x.su) ? x.su : SONG_ONE[t] ? SONG_ONE[t](x) : SONG_PAGE[t] ? jump(t, SONG_PAGE[t][0], x.n) : null;
+// ほかの球団へ移籍した選手は、元の球団の応援歌はもうない（公式のページからも消えている）ので、リンクを出さない
+const movedOut = (t, n) => { const o = typeof offOf === "function" ? offOf(t, n) : null; return !!(o && o.kind === "out"); };
+const songLink = (t, x) => movedOut(t, x.n) ? null : okUrl(x.su) ? x.su : SONG_ONE[t] ? SONG_ONE[t](x) : SONG_PAGE[t] ? jump(t, SONG_PAGE[t][0], x.n) : null;
 const songLabel = () => "応援歌";   // 応援歌のページを開くボタン：どの球団も「応援歌」にそろえる
 S.songTeam = store("songTeam") || "T"; S.songQ = "";
 // 起動したときのリーグの外の球団が選ばれていたら、そのリーグの先頭の球団にする
@@ -4590,7 +4592,7 @@ async function openPlayer(t, name, opt = {}) {
   const full = me ? me.n : name, no = opt.no || (me && me.no) || "";
   const gr = posGroups(t, full, me ? me.p : (opt.kind === "pit" ? "投手" : "内野手"));
   const chips = gr.map(g => `<i class="ps-pos" style="--c:${PCOL[g]}">${{ "投": "投手", "先": "先発", "中": "中継ぎ", "抑": "抑え", "捕": "捕手", "内": "内野手", "外": "外野手" }[g] || g}</i>`).join("");
-  const song = opt.song || (me && me.song);
+  const song = (opt.song || (me && me.song)) && !movedOut(t, full);   // 移籍した選手は、元の球団の応援歌を出さない
   const of = song && me ? songLink(t, me) : null;
   const btns = song ? `<div class="sp-b">${of ? `<a class="sof" href="${of}" target="_blank" rel="noopener">${songLabel(t)}</a>` : ""}<a class="sgo" href="${ytUrl(t, full)}" target="_blank" rel="noopener">応援歌を聴く</a></div>` : "";
   // パワプロ風：名前も守備位置の色のタイル（2つ以上守る選手は塗り分け）
