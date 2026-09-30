@@ -2002,6 +2002,28 @@ async def live_off_check(browser):
     await pg.close()
 
 
+async def player_today_check(browser):
+    """選手の画面：今日の試合（試合中・試合後）に出ていれば、その試合の成績をいちばん上に出す"""
+    pg, errs = await open_page(browser, 390, "pawa")
+    await pg.evaluate("""() => { const t = CL[0], o = CL[1]; const g = DATA.games.find(x => x.h === t && x.a === o) || DATA.games.find(x => x.h === t);
+      const today = g.d; jst = () => ({ y: +today.slice(0, 4), m: +today.slice(5, 7), d: +today.slice(8), iso: today }); liveWanted = () => false;
+      Object.assign(g, { st: 'live', hs: 3, as: 2, inn: '6回表' }); S.open[g.d + gkey(g)] = true; renderAll(); setTab('game'); }""")
+    await pg.wait_for_timeout(1500)
+    r = await pg.evaluate("""async () => { const ng = [], t = CL[0]; const g = DATA.games.find(x => x.d === jst().iso && (x.h === t || x.a === t)); const d = GD[g.d + gkey(g)];
+      if (!d) return ['試合の出場成績が読み込まれていない']; const side = g.a === t ? 0 : 1;
+      const bt = (d.lineups[side] || [])[0], pt = (d.pitchers[side] || [])[0];
+      await openPlayer(t, bt.name); await new Promise(r => setTimeout(r, 700));
+      const a = document.querySelector('.ps-today'); if (!a || !a.textContent.includes('今日の試合')) ng.push(`打者（${bt.name}）の画面に今日の試合の成績が出ない`);
+      await openPlayer(t, pt.name, { kind: 'pit' }); await new Promise(r => setTimeout(r, 700));
+      const c = document.querySelector('.ps-today'); if (!c || !c.textContent.includes('球数')) ng.push(`投手（${pt.name}）の画面に今日の試合の成績が出ない`);
+      return ng; }""")
+    for m in r:
+        bad(f"[選手の画面・今日の試合] {m}")
+    for e in errs:
+        bad(f"[選手の画面・今日の試合]: 画面のエラー {e}")
+    await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -2080,6 +2102,7 @@ async def main():
         await uniform_check(browser)
         await default_theme_check(browser)
         await live_off_check(browser)
+        await player_today_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
