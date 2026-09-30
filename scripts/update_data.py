@@ -503,7 +503,7 @@ SONG_EXTRA = {
 }
 # 公式に応援歌ページがない球団：まとめサイトの球団ページの表から、選手ごとのページ（なければ表の位置）を拾う
 SONG_LINK_PAGE = {"L": "https://www.yakyu-ouen.net/lions/"}
-SONG_REV = 4  # 判定のしかたを変えたら数字を上げる（上げると時期に関係なく1回やり直す）
+SONG_REV = 5  # 判定のしかたを変えたら数字を上げる（上げると時期に関係なく1回やり直す）
 # 背番号で並んでいるページ（ヤクルト公式）は背番号でも照合する
 SONG_BY_NUMBER = {"https://www.yakult-swallows.co.jp/players/song"}
 VARIANT = str.maketrans({"髙": "高", "﨑": "崎", "濵": "浜", "德": "徳", "瀨": "瀬", "邊": "辺", "邉": "辺", "塚": "塚", "・": "", "＝": "", "=": ""})
@@ -529,7 +529,7 @@ def song_links(url, html):
     return out
 
 
-def mark_songs(t, rows):
+def mark_songs(t, rows, moved_in=(), moved_out=()):
     """応援歌ページに名前（または背番号）が出てくる選手に song=True を付ける。どのページも読めなければ None
     SONG_LINK_PAGE の球団は、応援歌がある選手に su（タップしたときに開くページ）も付ける"""
     texts, numbers, ok = [squash(" ".join(SONG_EXTRA.get(t, [])))], set(), bool(SONG_EXTRA.get(t))
@@ -553,7 +553,12 @@ def mark_songs(t, rows):
     n = 0
     for r in rows:
         name = squash(r["n"])
-        r["song"] = (len(name) >= 2 and name in blob) or (not r["dev"] and r["no"] in numbers)
+        if name in moved_out:
+            # ほかの球団へ移籍した選手：元の球団の応援歌は、もう使われない（公式のページからも消える）
+            r["song"] = False
+            continue
+        # 移籍してきた選手は、背番号だけでは判定しない（その背番号の前の選手の応援歌を拾ってしまうため）。名前が出ているときだけ
+        r["song"] = (len(name) >= 2 and name in blob) or (name not in moved_in and not r["dev"] and r["no"] in numbers)
         n += r["song"]
         if r["song"] and links:
             # 名前が含まれる行を優先、なければ背番号が同じ行（表の名前が短い「ネビン」など）
@@ -1270,11 +1275,14 @@ def fetch_rosters(old):
     # 取りに行くのは1日1回まで（応援歌ページが読めない球団があっても、何度も取りに行かない）
     if len(rosters) == len(ROSTER_CODE) and (old or {}).get("roster_date") == today and (old or {}).get("song_rev") == SONG_REV:
         return rosters, today
+    # 移籍（トレードなど）した選手：前の回のオフシーズン情報から
+    moves = [x for x in (((old or {}).get("offseason") or {}).get("items") or []) if x.get("kind") in ("in", "out")]
     for t, code in ROSTER_CODE.items():
         html = fetch(f"https://npb.jp/bis/teams/rst_{code}.html")
         rows = parse_roster(html) if html else []
         if len(rows) >= 20:
-            n = mark_songs(t, rows)
+            n = mark_songs(t, rows, {squash(x["n"]) for x in moves if x["t"] == t and x["kind"] == "in"},
+                           {squash(x["n"]) for x in moves if x["t"] == t and x["kind"] == "out"})
             if n is None and t in rosters:  # 応援歌ページが読めなかったときは前回の判定を引き継ぐ
                 prev = {(r["no"], r["n"]): r for r in rosters[t]}
                 for r in rows:
