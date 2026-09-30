@@ -1749,7 +1749,9 @@ async def speed_health_check(browser):
             bad("[あなたの担当] パ・リーグの戦況に「あなた」のカードが出ている")
         await pg.evaluate("switchLeague('C')")
         # スタイリッシュでは「名前の色（パワプロ風）」の欄を出さない（最初はパワプロ風なので、スタイリッシュに切り替えてから見る）
-        await pg.evaluate("document.querySelector('#themeSeg button[data-theme=\"\"]').click(); openSheet()")
+        await pg.evaluate("document.querySelector('#themeSeg button[data-theme=\"\"]').click()")
+        await pg.wait_for_timeout(700)
+        await pg.evaluate("openSheet()")
         if not await pg.evaluate("document.getElementById('opSec').hidden"):
             bad("[名前の色] スタイリッシュでも「名前の色（パワプロ風）」の欄が出ている")
         for e in errs:
@@ -2054,6 +2056,37 @@ async def peek_check(browser):
             await pg.close()
 
 
+async def league_switch_check(browser):
+    """設定でリーグ・テーマを切り替えたら設定が閉じて画面が切り替わる。セ→パ→セと戻したとき、選んでいた球団（日程・応援歌・チーム別成績）が元に戻る"""
+    pg, errs = await open_page(browser, 390, "pawa")
+    ng = []
+    await pg.evaluate("setTab('cal'); S.calTeam = 'C'; keepTeam('calTeam', 'C'); S.songTeam = 'D'; keepTeam('songTeam', 'D'); S.ptTeam = 'S'; keepTeam('ptTeam', 'S'); renderAll()")
+    await pg.evaluate("openSheet()"); await pg.wait_for_timeout(400)
+    await pg.evaluate("document.querySelector('#lgSeg button[data-lg=\"P\"]').click()"); await pg.wait_for_timeout(900)
+    r = await pg.evaluate("[isPL(), document.getElementById('sheet').hidden, document.querySelector('main').classList.contains('swapping')]")
+    if not r[0]: ng.append("パ・リーグに切り替わっていない")
+    if not r[1]: ng.append("リーグを切り替えても設定の画面が閉じない")
+    if r[2]: ng.append("画面の切り替えの途中のまま（薄いまま）")
+    await pg.evaluate("S.calTeam = 'H'; keepTeam('calTeam', 'H'); openSheet()"); await pg.wait_for_timeout(400)
+    await pg.evaluate("document.querySelector('#lgSeg button[data-lg=\"C\"]').click()"); await pg.wait_for_timeout(900)
+    r = await pg.evaluate("[isPL(), S.calTeam, S.songTeam, S.ptTeam]")
+    if r[0]: ng.append("セ・リーグに戻っていない")
+    if r[1:] != ["C", "D", "S"]: ng.append(f"セ・リーグに戻したとき、選んでいた球団が戻らない（日程・応援歌・チーム別成績＝{r[1:]}）")
+    await pg.evaluate("openSheet()"); await pg.wait_for_timeout(400)
+    await pg.evaluate("document.querySelector('#lgSeg button[data-lg=\"P\"]').click()"); await pg.wait_for_timeout(900)
+    if await pg.evaluate("S.calTeam") != "H": ng.append("パ・リーグに戻したとき、パで選んでいた球団が戻らない")
+    await pg.evaluate("openSheet()"); await pg.wait_for_timeout(400)
+    await pg.evaluate("document.querySelector('#themeSeg button[data-theme=\"\"]').click()"); await pg.wait_for_timeout(900)
+    r = await pg.evaluate("[isPawa(), document.getElementById('sheet').hidden]")
+    if r[0]: ng.append("テーマが切り替わっていない")
+    if not r[1]: ng.append("テーマを切り替えても設定の画面が閉じない")
+    for m in ng:
+        bad(f"[設定の切り替え] {m}")
+    for e in errs:
+        bad(f"[設定の切り替え]: 画面のエラー {e}")
+    await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -2134,6 +2167,7 @@ async def main():
         await live_off_check(browser)
         await player_today_check(browser)
         await peek_check(browser)
+        await league_switch_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
