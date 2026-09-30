@@ -1337,6 +1337,14 @@ async def pitch_tile_check(browser):
           }
           box.querySelectorAll('.ptile').forEach(e => { const b = e.querySelector('b'), r = document.createRange(); r.selectNodeContents(b); const rr = r.getBoundingClientRect(), tr = e.getBoundingClientRect(); if (rr.width && (rr.left < tr.left + 0.5 || rr.right > tr.right - 0.5)) ng.push(`名前が札からはみ出している：${b.textContent}`); });
           box.querySelectorAll('.pn3').forEach(e => { const tl = e.querySelector('.ptile'), h = e.querySelector('.hd'); if (tl && h && Math.abs(tl.getBoundingClientRect().top - h.getBoundingClientRect().top) > 12) ng.push('名前の札と「右投」などが同じ行に並んでいない'); });
+          // 球数：投球ごとの「通算」がいちばん新しい（出場成績や投手の欄より大きければ、そちらを出す）
+          PD[k].pitcher.game = { np: '50', ip: '3', h: '2', so: '1', bb: '0', r: '0', bf: '12' }; PD[k].pitcher.np = 55;
+          PD[k].pitches = [{ n: 1, total: '57', type: 'ストレート', speed: '146km/h', res: 'ボール' }, { n: 2, total: '58', type: 'フォーク', speed: '137km/h', res: 'ファウル' }, { n: 3, total: '59', type: 'スライダー', speed: '127km/h', res: '空振り' }];
+          renderGame();
+          const gv = document.querySelector('.tgd .pgauge em');
+          if (!gv || gv.textContent.trim() !== '59') ng.push(`球数がいちばん新しい数（59）になっていない：${gv && gv.textContent}`);
+          const cn = [...document.querySelectorAll('.tgd .pcn')].map(e => e.textContent).join(',');
+          if (cn !== '1-0,1-1,1-2') ng.push(`1球ごとのカウントが違う：${cn}`);
           // ホームのチームは左：〇回裏（ホームの攻撃）は左が打者、〇回表（ビジターの攻撃）は左が投手
           const side = () => { const c = [...document.querySelectorAll('.tgd .pvs3 .pc3')].sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left);
             return c.length === 2 ? (c[0].classList.contains('pcp') ? 'pitcher' : 'batter') : ''; };
