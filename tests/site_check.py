@@ -1120,6 +1120,33 @@ async def offseason_check(browser):
             bad(f"[応援歌の判定] 移籍した選手の扱いが違う：{[(r['n'], r['song']) for r in rows]}")
     finally:
         ud.SONG_SOURCES, ud.SONG_BY_NUMBER, ud.SONG_LINK_PAGE, ud.SONG_EXTRA, ud.fetch = _bk
+    # 応援歌（DeNA）：公式ページの「選手ごとの見出し」の選手だけ。「選手の呼び方」の表やテーマ曲（汎用）の選手は入れない。
+    # まとめサイトは応援歌の表（背番号｜名前）の選手だけ（本文の「〇〇選手の応援歌を流用」などは使わない）
+    _bk2 = (ud.SONG_SOURCES, ud.fetch)
+    try:
+        ud.SONG_SOURCES = {"DB": ["https://sp.baystars.co.jp/player_songs/index", "https://www.yakyu-ouen.net/baystars/"]}
+        off_html = ("<h1>選手応援歌</h1><h2>投手</h2><h3>投手のテーマ（右投手）</h3><h3>外国人投手のテーマ</h3>"
+                    "<h4>選手の呼び方（苗字以外の場合）</h4><table><tr><td>#11 東 克樹 →アズマ</td><td>#19 山﨑 康晃 →ヤスアキ</td></tr></table>"
+                    "<h2>野手</h2><h3>林 琢真</h3><p>" + "シャープに打ち返し " * 30 + "</p><h3>牧 秀悟</h3><h3>度会 隆輝</h3><h3>松尾 汐恩</h3>"
+                    "<h3>宮﨑 敏郎</h3><h3>J.エンカーナシオン</h3><h2>監督・コーチ</h2><h3>代打のテーマ</h3><h3>捕手のテーマ</h3><h3>その他の右打者</h3>"
+                    "<h4>選手の呼び方（苗字以外の場合）</h4><table><tr><td>#57 東妻 純平 →ジュンペイ</td><td>#40 井上 朋也 →トモヤ</td></tr></table>")
+        ouen_html = ("<p>" + "石上泰輝選手にシュワーズ選手の応援歌が流用 東妻純平 " * 20 + "</p><table><tr><td>2</td><td>牧秀悟</td></tr><tr><td>4</td><td>度会隆輝</td></tr>"
+                     "<tr><td>5</td><td>松尾汐恩</td></tr><tr><td>6</td><td>森敬斗</td></tr><tr><td>7</td><td>佐野恵太</td></tr><tr><td>57</td><td>東妻純平</td></tr></table>")
+        names = ["林 琢真", "牧 秀悟", "度会 隆輝", "宮﨑 敏郎", "エンカーナシオン", "東 克樹", "山﨑 康晃", "東妻 純平", "井上 朋也", "石上 泰輝", "森 敬斗"]
+        ud.fetch = lambda url: off_html if "baystars.co.jp" in url else ouen_html
+        rows = [{"n": n, "no": "0", "dev": False} for n in names]
+        ud.mark_songs("DB", rows)
+        got = [r["n"] for r in rows if r["song"]]
+        if got != ["林 琢真", "牧 秀悟", "度会 隆輝", "宮﨑 敏郎", "エンカーナシオン"]:
+            bad(f"[応援歌の判定 DeNA] 公式の見出しの選手だけにならない：{got}")
+        ud.fetch = lambda url: None if "baystars.co.jp" in url else ouen_html
+        rows = [{"n": n, "no": "0", "dev": False} for n in names]
+        ud.mark_songs("DB", rows)
+        got = [r["n"] for r in rows if r["song"]]
+        if got != ["牧 秀悟", "度会 隆輝", "東妻 純平", "森 敬斗"]:
+            bad(f"[応援歌の判定 DeNA] 公式が読めないとき、まとめサイトの表の選手だけにならない：{got}")
+    finally:
+        ud.SONG_SOURCES, ud.fetch = _bk2
     dr = ud.parse_draft("<h3>阪神タイガース</h3><table><tr><td>1位</td><td>立石 正広</td><td>内野手</td><td>創価大</td></tr><tr><td>育成1位</td><td>山田 太郎</td><td>投手</td><td>○○高</td></tr></table><h3>読売ジャイアンツ</h3><table><tr><td>1位</td><td>竹丸 和幸</td><td>投手</td><td>鷺宮製作所</td></tr></table>")
     if [(x["t"], x["n"], x["round"]) for x in dr] != [("T", "立石 正広", "1位"), ("T", "山田 太郎", "育成1位"), ("G", "竹丸 和幸", "1位")]:
         bad(f"[オフの動きの読み取り] ドラフトの指名選手を正しく読めない：{dr}")
@@ -1800,12 +1827,16 @@ async def pre_game_check(browser):
               g.st = 'sched';
               const nine = t => (DATA.rosters[t] || []).filter(x => x.p !== '投手').slice(0, 9).map((x, i) => ({ o: i + 1, pos: ['中','二','三','一','左','右','捕','遊','投'][i], n: x.n, ba: '右', avg: '.25' + i }));
               const pit = t => ({ n: ((DATA.rosters[t] || []).find(x => x.p === '投手') || {}).n || 'テスト', th: '右', era: '2.50' });
+              const bench = t => { const ro = DATA.rosters[t] || []; const pk = (p, k) => ro.filter(x => x.p === p).slice(0, k).map(x => ({ n: x.n, bt: '右右', st: '.250' }));
+                return { '投手': pk('投手', 8), '捕手': pk('捕手', 2), '内野手': pk('内野手', 4), '外野手': pk('外野手', 3) }; };
               PRE = {}; PRE[`${g.d}|${g.h}|${g.a}`] = { tv: 'サンテレビ1、GAORA SPORTS', net: 'DAZN、虎テレ', radio: 'MBSラジオ、ABCラジオ',
-                lu: { h: { p: pit(g.h), bat: nine(g.h) }, a: { p: pit(g.a), bat: nine(g.a) } } };
+                lu: { h: { p: pit(g.h), bat: nine(g.h) }, a: { p: pit(g.a), bat: nine(g.a) } }, bench: { h: bench(g.h), a: bench(g.a) } };
+              S.stmOpen = {}; S.stmOpen['b|' + g.d + gkey(g)] = true;   // ベンチ入りを開いた状態で
               setTab('game'); renderGame();
               const card = [...document.querySelectorAll('#today .tg')].find(c => c.querySelector('.stm'));
               if (!card) return ['スタメンが出ない'];
-              if (card.querySelectorAll('.stl li').length !== 18) ng.push(`打順の数が違う（${card.querySelectorAll('.stl li').length}）`);
+              if (card.querySelectorAll('.stm:not(.bench) .stl li').length !== 18) ng.push(`打順の数が違う（${card.querySelectorAll('.stm:not(.bench) .stl li').length}）`);
+              if (!card.querySelector('.stm.bench .stl li')) ng.push('ベンチ入りが出ない');
               if (card.querySelectorAll('.stpit').length !== 2) ng.push('先発投手が出ない');
               if (card.querySelectorAll('.bc .bcr').length !== 3) ng.push('テレビ・ネット・ラジオが出ない');
               if (card.querySelector('.yk')) ng.push('スタメンが出ているのに予告先発の行も出ている');
@@ -1824,6 +1855,32 @@ async def pre_game_check(browser):
               g.st = 'sched'; PRE = {}; renderGame();
               return ng;
             }""")
+            for m in r:
+                bad(f"{label} {m}")
+            for e in errs:
+                bad(f"{label}: 画面のエラー {e}")
+            await pg.close()
+
+
+async def player_head_check(browser):
+    """選手の画面の見出し：長い名前（外国人選手）でも名前の枠・「中継ぎ」などの丸がはみ出さない・改行しない"""
+    for theme in ["", "pawa"]:
+        for width in [320, 390]:
+            label = f"[選手の画面の見出し {'パワプロ風' if theme else 'スタイリッシュ'} 幅{width}]"
+            pg, errs = await open_page(browser, width, theme)
+            r = await pg.evaluate("""() => { const ng = [];
+              const t = CL[0], ro = (DATA.rosters[t] || []).find(x => x.p === '投手');
+              for (const n of ['デュプランティエ', 'カスティーヨ', ro ? ro.n : 'テスト']) {
+                DATA.offseason = { season: 2026, items: [{ t, n, no: '140', kind: 'cut', role: '中', date: '2026-09-29', url: '', title: '' }], teams: {}, seen: {} };
+                openPlayer(t, n, { kind: 'pit' });
+                const h = document.querySelector('.sp-h'); if (!h) { ng.push('見出しが出ない'); continue; }
+                const R = h.getBoundingClientRect().right;
+                if ([...h.querySelectorAll('*')].some(e => e.getBoundingClientRect().right > R + 1)) ng.push(`${n}：見出しからはみ出す`);
+                if ([...h.querySelectorAll('.ps-pos')].some(e => e.getBoundingClientRect().height > 26)) ng.push(`${n}：守備・役割の丸が改行している`);
+                const tile = h.querySelector('.pstile'), b = tile && tile.querySelector('b');
+                if (b && b.scrollWidth > tile.clientWidth + 1) ng.push(`${n}：名前が枠からはみ出す`);
+              }
+              DATA.offseason = null; return ng; }""")
             for m in r:
                 bad(f"{label} {m}")
             for e in errs:
@@ -1905,6 +1962,7 @@ async def main():
         await speed_health_check(browser)
         await brand_check(browser)
         await pre_game_check(browser)
+        await player_head_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
