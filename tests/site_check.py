@@ -1698,7 +1698,7 @@ async def brand_check(browser):
     html = (ROOT / "index.html").read_text(encoding="utf-8")
     for need, why in [("<title>hobby baseball</title>", "ページの名前"), ('apple-mobile-web-app-title" content="hobby baseball"', "ホーム画面の名前"),
                       ('og:title" content="hobby baseball"', "OGPの名前"), ('og:image" content="https://negohub.github.io/hobby-baseball/ogp.png"', "OGPの画像"),
-                      ('rel="apple-touch-icon" href="apple-touch-icon.png"', "ホーム画面のアイコン"), ('id="splash"', "開いたときの演出")]:
+                      ('rel="apple-touch-icon" href="apple-touch-icon.png?v=', "ホーム画面のアイコン（中身の目印付き）"), ('id="splash"', "開いたときの演出")]:
         if need not in html:
             bad(f"[サイト名・アイコン] {why}が設定されていない")
     if "J SPORTS ペナントレース" in html:
@@ -1708,7 +1708,7 @@ async def brand_check(browser):
         if m.get("name") != "hobby baseball" or not any(i.get("sizes") == "512x512" for i in m.get("icons", [])):
             bad("[サイト名・アイコン] manifest.json の名前・アイコンが違う")
         for i in m.get("icons", []):
-            if not (ROOT / i["src"]).exists():
+            if not (ROOT / i["src"].split("?")[0]).exists():
                 bad(f"[サイト名・アイコン] アイコンの画像がない：{i['src']}")
     except (OSError, ValueError) as e:
         bad(f"[サイト名・アイコン] manifest.json を読めない：{e}")
@@ -1718,6 +1718,9 @@ async def brand_check(browser):
     if len(starts) < 10:
         bad(f"[サイト名・アイコン] 起動画面（apple-touch-startup-image）の指定が足りない：{len(starts)}")
     for f in starts:
+        if "?v=" not in f:
+            bad(f"[サイト名・アイコン] 起動画面の画像に中身の目印（?v=）がない：{f}")
+        f = f.split("?")[0]
         if not (ROOT / f).exists():
             bad(f"[サイト名・アイコン] 起動画面の画像がない：{f}")
     for f in ["ogp.png", "apple-touch-icon.png", "favicon.png", "splash.jpg"]:
@@ -1747,10 +1750,52 @@ async def brand_check(browser):
     await pg.wait_for_timeout(200)
     if not await pg.evaluate("!!document.getElementById('splash')"):
         bad("[開いたときの演出] 演出が出ない")
+    src = await pg.evaluate("(document.querySelector('#splash .sp-icon') || {}).getAttribute ? document.querySelector('#splash .sp-icon').getAttribute('src') : ''")
+    if "?v=" not in (src or ""):
+        bad(f"[開いたときの演出] 演出の絵に中身の目印（?v=）がない（前の絵が出てしまう）：{src}")
     await pg.wait_for_timeout(2000)
     if await pg.evaluate("!!document.getElementById('splash') || document.documentElement.classList.contains('splashing')"):
         bad("[開いたときの演出] 演出が終わっても消えない")
     await pg.close()
+
+
+async def pre_game_check(browser):
+    """今日の試合：放送予定（テレビ・ネット・ラジオ）と、発表されたスタメン（打順・守備・打率・先発）。はみ出さないか"""
+    for theme in ["", "pawa"]:
+        for width in [320, 390]:
+            label = f"[放送予定・スタメン {'パワプロ風' if theme else 'スタイリッシュ'} 幅{width}]"
+            pg, errs = await open_page(browser, width, theme)
+            r = await pg.evaluate("""() => {
+              const ng = [], d = jst().iso;
+              let g = DATA.games.find(x => x.d === d);
+              if (!g) { g = { d, h: CL[0], a: CL[1], st: 'sched', t: '18:00', v: '', hs: 0, as: 0 }; DATA.games.push(g); }
+              g.st = 'sched';
+              const nine = t => (DATA.rosters[t] || []).filter(x => x.p !== '投手').slice(0, 9).map((x, i) => ({ o: i + 1, pos: ['中','二','三','一','左','右','捕','遊','投'][i], n: x.n, ba: '右', avg: '.25' + i }));
+              const pit = t => ({ n: ((DATA.rosters[t] || []).find(x => x.p === '投手') || {}).n || 'テスト', th: '右', era: '2.50' });
+              PRE = {}; PRE[`${g.d}|${g.h}|${g.a}`] = { tv: 'サンテレビ1、GAORA SPORTS', net: 'DAZN、虎テレ', radio: 'MBSラジオ、ABCラジオ',
+                lu: { h: { p: pit(g.h), bat: nine(g.h) }, a: { p: pit(g.a), bat: nine(g.a) } } };
+              setTab('game'); renderGame();
+              const card = [...document.querySelectorAll('#today .tg')].find(c => c.querySelector('.stm'));
+              if (!card) return ['スタメンが出ない'];
+              if (card.querySelectorAll('.stl li').length !== 18) ng.push(`打順の数が違う（${card.querySelectorAll('.stl li').length}）`);
+              if (card.querySelectorAll('.stpit').length !== 2) ng.push('先発投手が出ない');
+              if (card.querySelectorAll('.bc .bcr').length !== 3) ng.push('テレビ・ネット・ラジオが出ない');
+              if (card.querySelector('.yk')) ng.push('スタメンが出ているのに予告先発の行も出ている');
+              const over = [...card.querySelectorAll('.stm *, .bc *')].filter(e => e.getBoundingClientRect().right > innerWidth + 1).length;
+              if (over) ng.push(`スタメン・放送予定が画面の外にはみ出す（${over}）`);
+              // 試合が始まったら：スタメンは出さず（打順は速報で見る）、放送予定だけ
+              g.st = 'live'; g.inn = '1回表'; renderGame();
+              const c2 = [...document.querySelectorAll('#today .tg')].find(c => c.querySelector('.bc'));
+              if (!c2) ng.push('試合中に放送予定が出ない');
+              if (document.querySelector('#today .stm')) ng.push('試合が始まってもスタメン発表が出ている');
+              g.st = 'sched'; PRE = {}; renderGame();
+              return ng;
+            }""")
+            for m in r:
+                bad(f"{label} {m}")
+            for e in errs:
+                bad(f"{label}: 画面のエラー {e}")
+            await pg.close()
 
 
 async def main():
@@ -1826,6 +1871,7 @@ async def main():
         await team_rank_menu_check(browser)
         await speed_health_check(browser)
         await brand_check(browser)
+        await pre_game_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
