@@ -1809,6 +1809,11 @@ async def pre_game_check(browser):
               if (card.querySelectorAll('.stpit').length !== 2) ng.push('先発投手が出ない');
               if (card.querySelectorAll('.bc .bcr').length !== 3) ng.push('テレビ・ネット・ラジオが出ない');
               if (card.querySelector('.yk')) ng.push('スタメンが出ているのに予告先発の行も出ている');
+              // パワプロ風：名前の枠は全員同じ幅。長い名前も枠からはみ出さない
+              const tw = [...card.querySelectorAll('.stm .stnm .sptile')].map(e => Math.round(e.getBoundingClientRect().width));
+              if (tw.length && Math.max(...tw) - Math.min(...tw) > 1) ng.push(`名前の枠の大きさがそろっていない（${Math.min(...tw)}〜${Math.max(...tw)}）`);
+              const cut = [...card.querySelectorAll('.stm .stnm .sptile b')].filter(b => b.scrollWidth > b.clientWidth + 1).length;
+              if (cut) ng.push(`名前が枠に収まっていない（${cut}人）`);
               const over = [...card.querySelectorAll('.stm *, .bc *')].filter(e => e.getBoundingClientRect().right > innerWidth + 1).length;
               if (over) ng.push(`スタメン・放送予定が画面の外にはみ出す（${over}）`);
               // 試合が始まったら：スタメンは出さず（打順は速報で見る）、放送予定だけ
