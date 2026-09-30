@@ -43,7 +43,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260930153715">
+<meta name="build" content="20260930155610">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -2458,7 +2458,7 @@ html.theme-pawa .ps-today{background:#FFF8DC;border-radius:14px;padding:10px 12p
     <h2>チーム成績<small id="stAsof"></small></h2>
     <div class="seg" id="tmSeg"><button type="button" data-k="bat" aria-pressed="true">打撃</button><button type="button" data-k="pit" aria-pressed="false">投手</button></div>
     <div class="ywrap"><table class="ytab tst" id="tmTbl"></table></div>
-    <h2>個人ランキング</h2>
+    <h2>個人ランキング<small id="rkAsof"></small></h2>
     <div class="rkbar"><div class="seg" id="rkSeg"><button type="button" data-k="bat" aria-pressed="true">打者</button><button type="button" data-k="pit" aria-pressed="false">投手</button></div>
       <label class="catsel"><select id="catSel" aria-label="項目"></select></label></div>
     <div id="rankList"></div>
@@ -5173,6 +5173,7 @@ async function liveStats(key) {
       const st = DATA[box] || (DATA[box] = { team: {}, leaders: {} });
       st.leaders = st.leaders || {};
       st.leaders[key] = j.rows;
+      if (j.asof) { st.leadersAt = st.leadersAt || {}; st.leadersAt[key] = j.asof; }   // 項目ごとの更新時刻（個人ランキングの見出しに出す）
       if (j.asof && asofVal(j.asof) > asofVal(st.asof)) st.asof = j.asof;
       return true;
     }).catch(() => false));
@@ -5474,6 +5475,9 @@ function renderStats(fromLive) {
   const st = statsData();
   if (!st) { $("tmTbl").innerHTML = ""; $("rankList").innerHTML = `<div class="rempty">成績データはまだありません。自動更新のあとに表示されます。</div>`; return; }
   $("stAsof").textContent = st.asof ? `${st.asof} ${/\d:\d\d/.test(st.asof) ? "更新" : "時点"}` : "";
+  // 個人ランキング：今の項目の更新時刻（なければ成績データ全体の時刻）。チーム成績・チーム別成績と同じ書き方
+  const rka = (st.leadersAt && st.leadersAt[S.cat]) || st.asof;
+  $("rkAsof").textContent = rka ? `${rka} ${/\d:\d\d/.test(rka) ? "更新" : "時点"}` : "";
   document.querySelectorAll("#tmSeg button").forEach(b => { b.setAttribute("aria-pressed", String(b.dataset.k === S.tmKind)); b.onclick = () => { S.tmKind = b.dataset.k; renderStats(); }; });
   const T = st.team || {};
   const RS = {}, RA = {};
