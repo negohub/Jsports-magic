@@ -1976,11 +1976,11 @@ async def default_theme_check(browser):
     px = await pg.evaluate("(() => { const c = drawCard(analyze(DATA.games, S.period, CONFIG)); const d = c.getContext('2d').getImageData(10, 10, 1, 1).data; return [d[0], d[1], d[2]]; })()")
     if not (px[2] > 180 and px[0] < 120):
         bad(f"[LINEの画像] パワプロ風のとき空色の画像になっていない（左上の色 {px}）")
-    await pg.evaluate("localStorage.setItem('theme', '')")
+    await pg.evaluate("localStorage.setItem('theme', ''); localStorage.setItem('mode', 'dark')")   # スタイリッシュ（ダーク）
     await pg.wait_for_timeout(300)
     await pg.reload(wait_until="load"); await pg.wait_for_timeout(1200)
     if await pg.evaluate("localStorage.getItem('theme')") != "":   # 重いときに保存が間に合わないことがあるので、もう一度
-        await pg.evaluate("localStorage.setItem('theme', '')"); await pg.wait_for_timeout(300)
+        await pg.evaluate("localStorage.setItem('theme', ''); localStorage.setItem('mode', 'dark')"); await pg.wait_for_timeout(300)
         await pg.reload(wait_until="load"); await pg.wait_for_timeout(1200)
     if await pg.evaluate("document.documentElement.classList.contains('theme-pawa')"):
         bad("[最初のテーマ] スタイリッシュを選んだ人がパワプロ風に戻っている")
@@ -2237,6 +2237,21 @@ async def light_check(browser):
     await ctx.close()
 
 
+async def line_image_check(browser):
+    """LINEで送る画像：パワプロ風の昼・夜、スタイリッシュの黒・白の4つ、それぞれ画面と同じ明るさで描く"""
+    for theme, mode, want, label in [("pawa", "light", "sky", "パワプロ風（昼）"), ("pawa", "dark", "navy", "パワプロ風（夜）"), ("", "dark", "black", "スタイリッシュ（ダーク）"), ("", "light", "white", "スタイリッシュ（ライト）")]:
+        pg, errs = await open_page(browser, 390, theme)
+        await pg.evaluate(f"store('mode','{mode}'); applyPawaMode()")
+        px = await pg.evaluate("(() => { const c = drawCard(analyze(DATA.games, S.period, CONFIG)); const d = c.getContext('2d').getImageData(10, 10, 1, 1).data; return [d[0], d[1], d[2]]; })()")
+        r, g, b = px
+        ok = {"sky": b > 180 and r < 120 and g > 100, "navy": b < 110 and r < 40 and b > r + 20, "black": max(px) < 30, "white": min(px) > 225}[want]
+        if not ok:
+            bad(f"[LINEの画像] {label}の色になっていない（左上の色 {px}）")
+        for e in errs:
+            bad(f"[LINEの画像 {label}]: 画面のエラー {e}")
+        await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -2321,6 +2336,7 @@ async def main():
         await cal_post_check(browser)
         await night_check(browser)
         await light_check(browser)
+        await line_image_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
