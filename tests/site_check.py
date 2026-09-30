@@ -1081,6 +1081,34 @@ async def offseason_check(browser):
     got = ud.off_coach("D", "u", "コーチングスタッフについて", "<h1>コーチングスタッフについて</h1><p>2026/10/08</p><p>嶋基宏ヘッドコーチが今季限りで退団することになりました。</p><p>また飯山裕志二軍監督は来季、一軍内野守備走塁コーチへ配置転換となります。</p><p>投手コーチ　山井 大介（留任）</p><p>新任 打撃コーチ　立浪 和義</p>", st, set(), 2026)
     if sorted((x["n"], x["kind"]) for x in got) != sorted([("嶋 基宏", "coach_out"), ("飯山 裕志", "coach_move"), ("立浪 和義", "coach_in")]):
         bad(f"[オフの動きの読み取り] コーチの退団・配置転換・就任を正しく読めない：{[(x['n'], x['kind']) for x in got]}")
+    # スポナビの入退団情報：今オフの退団（戦力外・引退・育成再契約の打診）だけ。移籍・入団・去年の分は取らない
+    tr_html = """<section id="5"><h3>阪神</h3><table><tr><th>更新日</th><th>状況</th><th>選手名</th><th>守備</th><th>備考</th></tr>
+      <tr><td>2026/9/29</td><td>退団</td><td><a>松原 快</a></td><td>投手</td><td>自由契約</td></tr>
+      <tr><td>2026/9/28</td><td>退団</td><td>岩貞 祐太</td><td>投手</td><td>引退</td></tr>
+      <tr><td>2026/7/21</td><td>入団</td><td>ガルシア</td><td>外野手</td><td>支配下契約(新外国人)</td></tr>
+      <tr><td>2025/10/1</td><td>退団</td><td>佐藤 蓮</td><td>投手</td><td>自由契約</td></tr></table></section>
+      <section id="1"><h3>巨人</h3><table><tr><td>2026/9/30</td><td>退団</td><td>板東 湧梧  ※</td><td>投手</td><td>自由契約</td></tr>
+      <tr><td>2026/9/30</td><td>退団</td><td>石田 隼都  ※</td><td>投手</td><td>自由契約→引退</td></tr>
+      <tr><td>2026/7/29</td><td>退団</td><td>若林 楽人</td><td>外野手</td><td>金銭トレード(西武）</td></tr></table></section>
+      <section id="3"><h3>DeNA</h3><table><tr><td>2026/9/30</td><td>退団</td><td>大貫 晋一</td><td>投手</td><td>自由契約→育成再契約を打診</td></tr></table></section>"""
+    got = [(x["t"], x["n"], x["kind"], x["date"], x["dev"]) for x in ud.parse_transfer(tr_html, 2026)]
+    want = [("T", "松原 快", "cut", "2026-09-29", False), ("T", "岩貞 祐太", "retire", "2026-09-28", False),
+            ("G", "板東 湧梧", "cut", "2026-09-30", True), ("G", "石田 隼都", "retire", "2026-09-30", True), ("DB", "大貫 晋一", "offer", "2026-09-30", False)]
+    if got != want:
+        bad(f"[入退団情報] 読み取りが違う：{got}")
+    _f = ud.fetch
+    try:
+        ud.fetch = lambda url: tr_html
+        from datetime import datetime as _dt
+        o = ud.merge_transfer({"season": 2026, "items": [{"t": "T", "n": "岩貞 祐太", "kind": "retire", "date": "2026-09-28", "url": "x"}]},
+                              2026, {"T": [{"n": "松原 快", "no": "46", "dev": False}]}, _dt(2026, 9, 30, 14, 0, tzinfo=ud.JST))
+        names = sorted((x["t"], x["n"]) for x in o["items"])
+        if names != sorted([("T", "岩貞 祐太"), ("T", "松原 快"), ("G", "板東 湧梧"), ("G", "石田 隼都"), ("DB", "大貫 晋一")]):
+            bad(f"[入退団情報] 足し方が違う：{names}")
+        if next(x for x in o["items"] if x["n"] == "岩貞 祐太").get("url") != "x":
+            bad("[入退団情報] 球団の発表から見つけていた選手を上書きしている")
+    finally:
+        ud.fetch = _f
     # 応援歌：移籍して出ていった選手は元の球団の応援歌なし。移籍してきた選手は背番号だけでは判定しない
     _bk = (ud.SONG_SOURCES, ud.SONG_BY_NUMBER, ud.SONG_LINK_PAGE, ud.SONG_EXTRA, ud.fetch)
     try:
