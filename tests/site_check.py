@@ -1837,6 +1837,11 @@ async def pre_game_check(browser):
               if (!card) return ['スタメンが出ない'];
               if (card.querySelectorAll('.stm:not(.bench) .stl li').length !== 18) ng.push(`打順の数が違う（${card.querySelectorAll('.stm:not(.bench) .stl li').length}）`);
               if (!card.querySelector('.stm.bench .stl li')) ng.push('ベンチ入りが出ない');
+              // ホームのチームは左
+              for (const st of card.querySelectorAll('.stm')) {
+                const first = st.querySelector('.stc .sth');
+                if (!first || !first.textContent.includes(fn(g.h))) ng.push(`${st.classList.contains('bench') ? 'ベンチ入り' : 'スタメン'}の左がホームのチームになっていない`);
+              }
               if (card.querySelectorAll('.stpit').length !== 2) ng.push('先発投手が出ない');
               if (card.querySelectorAll('.bc .bcr').length !== 3) ng.push('テレビ・ネット・ラジオが出ない');
               if (card.querySelector('.yk')) ng.push('スタメンが出ているのに予告先発の行も出ている');
