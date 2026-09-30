@@ -42,7 +42,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260930044936">
+<meta name="build" content="20260930073856">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -5287,7 +5287,7 @@ function healthItems() {
   out.push(!tsAt ? { lv: "warn", k: "チーム別成績", v: "まだ取り込まれていません（取り込むまでは一部の項目が「-」）" }
     : inSeason && hoursOld(tsAt) > 8 ? { lv: "warn", k: "チーム別成績", v: `${fmtDT(tsAt)} から更新されていません` }
     : { lv: "ok", k: "チーム別成績", v: `最新（${fmtDT(tsAt)} 更新）` });
-  // オフシーズン情報（各球団の公式発表・3時間に1回）：開けていない球団があれば知らせる
+  // オフシーズン情報（各球団の公式発表・1時間に1回）：開けていない球団があれば知らせる
   const o = DATA.offseason || {};
   if (offSeason() || (o.items || []).length) {
     const lgT = calOrder();
@@ -5296,6 +5296,10 @@ function healthItems() {
       : hoursOld(o.checked_at) > 8 ? { lv: "warn", k: "オフシーズン情報", v: `${fmtDT(o.checked_at)} から更新されていません` }
       : bad.length ? { lv: "warn", k: "オフシーズン情報", v: `${fmtDT(o.checked_at)} 更新。${bad.join("・")}の公式サイトの一覧を開けていません（NPBの12球団ニュースから補っています）` }
       : { lv: "ok", k: "オフシーズン情報", v: `最新（${fmtDT(o.checked_at)} 更新）` });
+    // スポナビの入退団情報（12球団の戦力外・引退をまとめた表・毎回）：球団のサイトが読めない球団の分もここから
+    const tr = o.transfer;
+    if (tr) out.push(tr.rows === "開けない" ? { lv: "warn", k: "入退団情報", v: `スポーツナビの入退団情報を開けていません（${fmtDT(tr.at)}）` }
+      : { lv: "ok", k: "入退団情報", v: `スポーツナビから ${fmtDT(tr.at)} 確認（今オフの退団 ${tr.rows}件）` });
     // 監督・コーチ一覧（NPB公式・1日1回）
     const stN = Object.keys(o.staff || {}).filter(t => lgT.includes(t)).length;
     out.push(stN >= lgT.length ? { lv: "ok", k: "監督・コーチ一覧", v: `${stN}球団（${(o.managers_date || "").slice(5).replace("-", "/")}）` }
