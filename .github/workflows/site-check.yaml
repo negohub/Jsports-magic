@@ -1,16 +1,9 @@
 name: site-check
 
-# サイト（index.html）を更新したときと、毎日1回、サイト全体を自動で検査する。
-# 問題があれば赤い×になる（Actions タブで「site-check」を開くと、どこがおかしいか一覧が見られる）
+# サイト全体の検査。手動のときだけ動かす（Actions → site-check → Run workflow）
+# （前は、ファイルを上げるたび・毎日1回に自動で動いていたが、ファイルを1つずつ上げる途中の状態で失敗して
+#   そのたびにメールが届いていたのでやめた。検査はサイトを渡す前に毎回すませている）
 on:
-  push:
-    paths:
-      - "index.html"
-      - "tests/**"
-      - "scripts/core.js"
-      - ".github/workflows/site-check.yaml"
-  schedule:
-    - cron: "30 3 * * *"   # 毎日 JST 12:30
   workflow_dispatch:
 
 jobs:
