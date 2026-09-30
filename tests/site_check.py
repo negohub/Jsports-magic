@@ -154,7 +154,9 @@ async def open_page(browser, width, theme, me="S", touch=False):
     pg = await browser.new_page(viewport={"width": width, "height": 844}, has_touch=touch)
     errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
-    await pg.add_init_script(f"localStorage.setItem('me','{me}'); localStorage.setItem('theme','{theme}'); localStorage.setItem('songTeam','T'); localStorage.setItem('league','C')")
+    # 明るさ：これまでの検査はスタイリッシュ＝黒、パワプロ風＝昼で作っているので、そのまま（ライト・夜は light_check・night_check で）
+    mode = "dark" if theme == "" else "light"
+    await pg.add_init_script(f"localStorage.setItem('me','{me}'); localStorage.setItem('theme','{theme}'); localStorage.setItem('mode','{mode}'); localStorage.setItem('songTeam','T'); localStorage.setItem('league','C')")
     await pg.route(LIVE + "**", route_live)
     await pg.route("https://api.open-meteo.com/**", lambda r: r.fulfill(status=500, body="x"))
     await pg.goto(URL)
@@ -340,7 +342,7 @@ async def data_refresh(browser):
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     try:
         pg = await browser.new_page(viewport={"width": 390, "height": 844})
-        await pg.add_init_script("localStorage.setItem('me','S'); localStorage.setItem('theme','')")
+        await pg.add_init_script("localStorage.setItem('me','S'); localStorage.setItem('theme',''); localStorage.setItem('mode','dark')")
         await pg.route("**/data/latest.json*", lambda r: r.fulfill(status=200, headers={"Content-Type": "application/json"}, body=served["body"]))
         await pg.goto(f"http://127.0.0.1:{srv.server_address[1]}/index.html")
         await pg.wait_for_timeout(900)
@@ -707,7 +709,7 @@ async def memory_check(browser):
         pg = await browser.new_page(viewport={"width": 390, "height": 844})
         errs = []
         pg.on("pageerror", lambda e: errs.append(str(e)))
-        await pg.add_init_script("localStorage.setItem('me','S'); localStorage.setItem('theme',''); localStorage.setItem('league','C')")
+        await pg.add_init_script("localStorage.setItem('me','S'); localStorage.setItem('theme',''); localStorage.setItem('mode','dark'); localStorage.setItem('league','C')")
         await pg.route("https://**", lambda r: r.abort())
         await pg.goto(url)
         await pg.wait_for_timeout(700)
@@ -1975,7 +1977,11 @@ async def default_theme_check(browser):
     if not (px[2] > 180 and px[0] < 120):
         bad(f"[LINEの画像] パワプロ風のとき空色の画像になっていない（左上の色 {px}）")
     await pg.evaluate("localStorage.setItem('theme', '')")
-    await pg.reload(); await pg.wait_for_timeout(700)
+    await pg.wait_for_timeout(300)
+    await pg.reload(wait_until="load"); await pg.wait_for_timeout(1200)
+    if await pg.evaluate("localStorage.getItem('theme')") != "":   # 重いときに保存が間に合わないことがあるので、もう一度
+        await pg.evaluate("localStorage.setItem('theme', '')"); await pg.wait_for_timeout(300)
+        await pg.reload(wait_until="load"); await pg.wait_for_timeout(1200)
     if await pg.evaluate("document.documentElement.classList.contains('theme-pawa')"):
         bad("[最初のテーマ] スタイリッシュを選んだ人がパワプロ風に戻っている")
     px = await pg.evaluate("(() => { const c = drawCard(analyze(DATA.games, S.period, CONFIG)); const d = c.getContext('2d').getImageData(10, 10, 1, 1).data; return [d[0], d[1], d[2]]; })()")
@@ -2020,6 +2026,14 @@ async def player_today_check(browser):
       const a = document.querySelector('.ps-today'); if (!a || !a.textContent.includes('今日の試合')) ng.push(`打者（${bt.name}）の画面に今日の試合の成績が出ない`);
       await openPlayer(t, pt.name, { kind: 'pit' }); await new Promise(r => setTimeout(r, 700));
       const c = document.querySelector('.ps-today'); if (!c || !c.textContent.includes('球数')) ng.push(`投手（${pt.name}）の画面に今日の試合の成績が出ない`);
+      // 今の打者・投手を開くと、今季の対戦成績（打者 vs 投手）
+      const k = g.d + gkey(g), p = PD[k];
+      if (p && p.batter && p.pitcher) {
+        p.vs = { avg: '.333', ab: '9', h: '3', hr: '1', rbi: '2', so: '1', bb: '0' };
+        const bteam = /裏/.test(p.half || '') ? g.h : g.a;
+        await openPlayer(bteam, p.batter.name); await new Promise(r => setTimeout(r, 700));
+        const v = document.querySelector('.ps-vs'); if (!v || !v.textContent.includes('.333')) ng.push('今の打者の画面に、今の投手との対戦成績が出ない');
+      }
       return ng; }""")
     for m in r:
         bad(f"[選手の画面・今日の試合] {m}")
@@ -2109,6 +2123,104 @@ async def cal_post_check(browser):
     await pg.close()
 
 
+NIGHT_CONTRAST_JS = r"""(tab) => {
+  const parse = s => { const cm = String(s).match(/color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)(?: \/ ([\d.]+))?\)/); if (cm) return { r: cm[1] * 255, g: cm[2] * 255, b: cm[3] * 255, a: cm[4] == null ? 1 : +cm[4] };
+    const m = String(s).match(/rgba?\(([^)]+)\)/); if (!m) return null; const v = m[1].split(",").map(x => parseFloat(x)); return { r: v[0], g: v[1], b: v[2], a: v.length > 3 ? v[3] : 1 }; };
+  const lum = c => { const f = x => { x /= 255; return x <= .03928 ? x / 12.92 : Math.pow((x + .055) / 1.055, 2.4); }; return .2126 * f(c.r) + .7152 * f(c.g) + .0722 * f(c.b); };
+  const bgOf = el => {
+    for (let e = el; e; e = e.parentElement) {
+      const cs = getComputedStyle(e);
+      const bi = cs.backgroundImage;
+      if (bi && bi !== "none") { const cols = [...bi.matchAll(/rgba?\([^)]+\)/g)].map(m => parse(m[0])).filter(c => c && c.a > .5); if (cols.length) return cols[Math.floor(cols.length / 2)]; }
+      const c = parse(cs.backgroundColor); if (c && c.a > .5) return c;
+    }
+    return { r: 11, g: 23, b: 51, a: 1 };
+  };
+  const out = [];
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  const seen = new Set();
+  while (walker.nextNode()) {
+    const t = walker.currentNode; if (!t.textContent.trim()) continue;
+    const el = t.parentElement; if (!el || seen.has(el) || el instanceof SVGElement) continue; seen.add(el);
+    const r = el.getBoundingClientRect(); if (!r.width || !r.height || r.bottom < 0 || r.top > innerHeight) continue;
+    const cs = getComputedStyle(el); if (cs.visibility === "hidden" || +cs.opacity < .3 || el.closest("[hidden],.tabbar,#sheet:not(.open),#peek:not(.on),.badge,.ykb,.hb")) continue;
+    const fg = parse(cs.color); if (!fg || fg.a < .3) continue;
+    const bg = bgOf(el), L1 = lum(fg), L2 = lum(bg), cr = (Math.max(L1, L2) + .05) / (Math.min(L1, L2) + .05);
+    if (cr < 2.6) out.push(`${tab}：${t.textContent.trim().slice(0, 14)}（${el.className || el.tagName}・コントラスト ${cr.toFixed(1)}）`);
+  }
+  return out.slice(0, 12);
+}
+"""
+
+
+async def night_check(browser):
+    """パワプロ風（夜）：自動（iPhone のダークモード）・昼・夜の切り替えと、夜のとき文字が背景に埋もれていないか（明るさの差）"""
+    ctx = await browser.new_context(viewport={"width": 390, "height": 844}, color_scheme="dark")
+    pg = await ctx.new_page()
+    await pg.add_init_script("Object.defineProperty(navigator, 'webdriver', { get: () => true }); localStorage.setItem('me','S'); localStorage.setItem('theme','pawa'); localStorage.setItem('league','C')")
+    await pg.goto(f"file://{ROOT}/index.html"); await pg.wait_for_timeout(700)
+    ng = []
+    if not await pg.evaluate("document.documentElement.classList.contains('pawa-dark')"): ng.append("自動なのに、iPhone がダークモードのとき夜にならない")
+    await pg.evaluate("store('mode','light'); applyPawaMode()")
+    if await pg.evaluate("document.documentElement.classList.contains('pawa-dark')"): ng.append("「昼」を選んでも夜のまま")
+    await pg.evaluate("store('mode','dark'); applyPawaMode(); renderAll()")
+    if not await pg.evaluate("document.documentElement.classList.contains('pawa-dark')"): ng.append("「夜」を選んでも夜にならない")
+    for tab in ["magic", "game", "cal", "std", "stats", "song", "off"]:
+        await pg.evaluate(f"setTab('{tab}')"); await pg.wait_for_timeout(600)
+        h = await pg.evaluate("document.documentElement.scrollHeight")
+        for y in range(0, min(h, 6000), 700):
+            await pg.evaluate(f"window.scrollTo(0,{y})"); await pg.wait_for_timeout(120)
+            ng += await pg.evaluate(NIGHT_CONTRAST_JS, tab)
+    await pg.evaluate("window.scrollTo(0,0); openSheet()"); await pg.wait_for_timeout(500)
+    ng += await pg.evaluate(NIGHT_CONTRAST_JS, "設定")
+    await pg.evaluate("closeSheet()"); await pg.wait_for_timeout(400)
+    # 試合を開いたとき（一球速報）と、選手の画面
+    await pg.evaluate("""() => { const t = CL[0], o = CL[1]; const g = DATA.games.find(x => x.h === t && x.a === o) || DATA.games.find(x => x.h === t);
+      const today = g.d; jst = () => ({ y: +today.slice(0, 4), m: +today.slice(5, 7), d: +today.slice(8), iso: today }); liveWanted = () => false;
+      Object.assign(g, { st: 'live', hs: 3, as: 2, inn: '4回裏' }); S.open[g.d + gkey(g)] = true; renderAll(); setTab('game'); }""")
+    await pg.wait_for_timeout(1200)
+    h = await pg.evaluate("document.documentElement.scrollHeight")
+    for y in range(0, min(h, 9000), 700):
+        await pg.evaluate(f"window.scrollTo(0,{y})"); await pg.wait_for_timeout(120)
+        ng += await pg.evaluate(NIGHT_CONTRAST_JS, "一球速報")
+    await pg.evaluate("window.scrollTo(0,0)")
+    await pg.evaluate("(async () => { const t = CL[0], ro = DATA.rosters[t].find(x => x.p === '投手'); await openPlayer(t, ro.n, { kind: 'pit' }); })()")
+    await pg.wait_for_timeout(900)
+    ng += await pg.evaluate(NIGHT_CONTRAST_JS, "選手の画面")
+    for m in list(dict.fromkeys(ng))[:10]:
+        bad(f"[パワプロ風（夜）] {m}")
+    await ctx.close()
+
+
+async def light_check(browser):
+    """スタイリッシュ（ライト）：自動・ライト・ダークの切り替えと、ライトのとき文字が背景に埋もれていないか"""
+    ctx = await browser.new_context(viewport={"width": 390, "height": 844}, color_scheme="light")
+    pg = await ctx.new_page()
+    await pg.add_init_script("Object.defineProperty(navigator, 'webdriver', { get: () => true }); localStorage.setItem('me','S'); localStorage.setItem('theme',''); localStorage.setItem('league','C')")
+    await pg.goto(f"file://{ROOT}/index.html"); await pg.wait_for_timeout(700)
+    ng = []
+    if not await pg.evaluate("document.documentElement.classList.contains('sty-light')"): ng.append("自動なのに、iPhone がライトモードのときライトにならない")
+    await pg.evaluate("store('mode','dark'); applyPawaMode()")
+    if await pg.evaluate("document.documentElement.classList.contains('sty-light')"): ng.append("「ダーク」を選んでもライトのまま")
+    await pg.evaluate("store('mode','light'); applyPawaMode(); renderAll()")
+    for tab in ["magic", "game", "cal", "std", "stats", "song", "off"]:
+        await pg.evaluate(f"setTab('{tab}')"); await pg.wait_for_timeout(600)
+        if tab == "game":
+            await pg.evaluate("""() => { const t = CL[0], o = CL[1]; const g = DATA.games.find(x => x.h === t && x.a === o) || DATA.games.find(x => x.h === t);
+              const today = g.d; jst = () => ({ y: +today.slice(0, 4), m: +today.slice(5, 7), d: +today.slice(8), iso: today }); liveWanted = () => false;
+              Object.assign(g, { st: 'live', hs: 3, as: 2, inn: '4回裏' }); S.open[g.d + gkey(g)] = true; renderAll(); setTab('game'); }""")
+            await pg.wait_for_timeout(1200)
+        h = await pg.evaluate("document.documentElement.scrollHeight")
+        for y in range(0, min(h, 9000), 700):
+            await pg.evaluate(f"window.scrollTo(0,{y})"); await pg.wait_for_timeout(120)
+            ng += await pg.evaluate(NIGHT_CONTRAST_JS, tab)
+    await pg.evaluate("window.scrollTo(0,0); openSheet()"); await pg.wait_for_timeout(500)
+    ng += await pg.evaluate(NIGHT_CONTRAST_JS, "設定")
+    for m in list(dict.fromkeys(ng))[:10]:
+        bad(f"[スタイリッシュ（ライト）] {m}")
+    await ctx.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -2191,6 +2303,8 @@ async def main():
         await peek_check(browser)
         await league_switch_check(browser)
         await cal_post_check(browser)
+        await night_check(browser)
+        await light_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
