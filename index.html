@@ -42,7 +42,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20260930095148">
+<meta name="build" content="20260930101811">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -822,6 +822,35 @@ h2{font-weight:700;margin-top:30px}
 .pnx3{margin-top:8px;font-size:10px;letter-spacing:.14em;color:#8A8A8A;font-weight:700;display:flex;gap:8px;align-items:baseline}
 .pnx3 b{letter-spacing:0;font-size:12.5px;color:#DADADA}
 .plist3{padding:6px 12px 10px;border-top:1px solid #1A1A1A}
+/* この打席のまとめ */
+.plhd{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px;padding:6px 0 8px;font-size:11.5px;color:#9A9AA5;border-bottom:1px solid #1A1A1A}
+.plhd b{font-size:12px;color:#F2F2F4;letter-spacing:.06em;margin-right:2px}
+.plhd em{font-style:normal;font-size:15px;font-weight:800;color:#F2F2F4;margin-right:1px}
+/* 1球ごとのカウント・いちばん新しい球 */
+.pl3 .pty{display:flex;flex-direction:column;line-height:1.2}
+.pl3 .pcn{font-size:10.5px;color:#8A8A92;font-weight:700;letter-spacing:.04em}
+.pl3.latest{background:linear-gradient(90deg,rgba(255,255,255,.07),transparent 80%);border-radius:10px;margin:0 -6px;padding:6px}
+/* 球数のめやす */
+.pgauge{display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:11px;color:#8A8A8A;position:relative}
+.pgauge i{flex:1;position:relative;height:8px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
+.pgauge i b{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,#2ECC71,#7BE0A0)}
+.pgauge.mid i b{background:linear-gradient(90deg,#F2B705,#FFD84D)}
+.pgauge.hi i b{background:linear-gradient(90deg,#E53935,#FF7A6E)}
+.pgauge i u{position:absolute;top:-2px;bottom:-2px;width:2px;background:rgba(255,255,255,.45);text-decoration:none}
+.pgauge em{font-style:normal;font-size:15px;font-weight:800;color:#F2F2F4;min-width:2.2em;text-align:right}
+/* 最後に受け取った時刻 */
+.pupd{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:#8A8A92;font-weight:600}
+.pupd i{width:6px;height:6px;border-radius:50%;background:#FF3B3B;animation:pupd 1.6s ease-in-out infinite}
+@keyframes pupd{0%,100%{opacity:1}50%{opacity:.25}}
+html.theme-pawa .plhd{color:#4A6390;border-bottom-color:#DCE7F5}
+html.theme-pawa .plhd b,html.theme-pawa .plhd em{color:#13264A}
+html.theme-pawa .pl3 .pcn{color:#6A7FA3}
+html.theme-pawa .pl3.latest{background:linear-gradient(90deg,#EEF5FF,#fff 80%)}
+html.theme-pawa .pgauge{color:#4A6390}
+html.theme-pawa .pgauge i{background:#DCE7F5}
+html.theme-pawa .pgauge i u{background:#7F93B5}
+html.theme-pawa .pgauge em{color:#13264A}
+html.theme-pawa .pupd{color:#4A6390}
 .pl3{display:grid;grid-template-columns:26px 80px 1fr 64px;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid #141414;font-size:13px}
 .pl3:last-child{border-bottom:0}
 .pl3 .pn{width:22px;height:22px;font-size:12px}
@@ -3621,13 +3650,17 @@ function loadDetails(force) {
   [...DATA.games.filter(g => g.d === today && (g.st === "live" || g.st === "final") && inLg(g)), ...postToday().filter(g => g.st === "live" || g.st === "final")]
     .forEach(g => { const k = g.d + gkey(g); if (force || g.st === "live" || !GD[k]) loadDetail(g); });
 }
-const PD = {}; // 一球速報
+const PD = {}, PD_AT = {}; // 一球速報（PD_AT：最後に受け取った時刻）
 async function loadPitch(g) {
   if (!CONFIG.liveApi) return;
   try {
     const r = await fetch(`${CONFIG.liveApi}?pitch=${gkey(g)}&t=${Date.now()}`, { cache: "no-store" });
     const d = await r.json();
-    if (d && !d.error && d.half) { HF.pitch = 0; const k = g.d + gkey(g), old = JSON.stringify(PD[k]); PD[k] = d; if (S.tab === "game" && old !== JSON.stringify(d)) renderGame(); }
+    if (d && !d.error && d.half) { HF.pitch = 0; const k = g.d + gkey(g), old = JSON.stringify(PD[k]); PD[k] = d; PD_AT[k] = Date.now();
+      if (S.tab === "game") {
+        if (old !== JSON.stringify(d)) renderGame();
+        else document.querySelectorAll(".pupd").forEach(e => { if (e.closest(".tg") && e.closest(".tg").dataset.open === k) e.lastChild.textContent = ` ${new Date(PD_AT[k]).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", second: "2-digit" })} 更新`; });
+      } }
     else HF.pitch++;
   } catch { HF.pitch++; }
 }
@@ -3635,7 +3668,14 @@ function loadPitches() {
   const today = jst().iso;
   [...DATA.games.filter(g => g.d === today && g.st === "live" && inLg(g)), ...postToday().filter(g => g.st === "live")].forEach(loadPitch);
 }
-setInterval(() => { if (S.tab === "game" && !document.hidden) loadPitches(); }, 15 * 1000);
+// 一球速報：試合を開いている間は6秒ごと、閉じているときは15秒ごと
+let pitchTick = 0;
+setInterval(() => {
+  if (S.tab !== "game" || document.hidden) return;
+  pitchTick++;
+  const opened = Object.keys(S.open || {}).some(k => S.open[k] && DATA.games.some(g => g.st === "live" && g.d + gkey(g) === k));
+  if (opened || pitchTick % 5 === 0) loadPitches();
+}, 3 * 1000);
 const pitchCls = r => /ボール|四球|死球/.test(r) ? "b" : /空振|見逃|ファウル|ストライク|三振/.test(r) ? "s" : /犠/.test(r) ? "sac" : /安打|ヒット|二塁打|三塁打|本塁打|出塁|失策|エラー/.test(r) ? "h" : "o";
 // その回の打席結果（出場成績）から、今どの塁に誰がいるかを割り出す。
 // 公式記録の略号で進塁を決め、スコア表のその回の得点と合わない分は、先の走者が生還したものとして取り除く
@@ -3738,12 +3778,25 @@ function pitchHTML(g) {
   const fieldHTML = `<div class="fldw">${field}${runnerTiles(RUN)}</div>`;
   const pcell = (k, v) => v != null && v !== "" ? `<div><span>${k}</span><b class="num">${esc(String(v))}</b></div>` : "";
   const pg = p.pitcher && p.pitcher.game, bg = p.batter && p.batter.game;
+  // 球数は投球のたびに増える：投球ごとの「通算」・投手の欄・出場成績（少し遅れて更新）のうち、いちばん大きい数を使う
+  const numOf = v => { const n = parseInt(String(v == null ? "" : v).replace(/[^0-9]/g, ""), 10); return isFinite(n) ? n : 0; };
+  const npNow = p.pitcher ? Math.max(numOf(pg && pg.np), numOf(p.pitcher.np), ...list.map(x => numOf(x.total))) : 0;
+  const bfNow = p.pitcher ? Math.max(numOf(pg && pg.bf), numOf(p.pitcher.bf)) : 0;
+  // この打席のカウントの動き（1球ごとのボール・ストライク）
+  let cb = 0, cs = 0;
+  const cnt = list.map(x => { const r = String(x.res || "").normalize("NFKC");
+    if (/ボール/.test(r)) cb = Math.min(3, cb + 1); else if (/ファウル|ファール/.test(r)) { if (cs < 2) cs++; } else if (/見逃|空振|ストライク/.test(r)) cs = Math.min(2, cs + 1);
+    return `${cb}-${cs}`; });
+  const top = list.reduce((m, x) => Math.max(m, kmh(x.speed)), 0);
+  // 球数のめやす（100球で1本分）：80球から黄色、100球から赤
+  const gauge = npNow ? `<div class="pgauge ${npNow >= 100 ? "hi" : npNow >= 80 ? "mid" : ""}"><span>球数</span><i><b style="width:${Math.min(100, npNow / 1.2)}%"></b><u style="left:${100 / 1.2}%"></u></i><em class="num">${npNow}</em></div>` : "";
+  const upd = PD_AT[g.d + gkey(g)] ? new Date(PD_AT[g.d + gkey(g)]).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
   const lastRes = last ? String(last.res || "").normalize("NFKC").trim() : "";
   const abDone = !!lastRes && !/^(ボール|見逃し|空振り|ファウル|ストライク|ファール)$/.test(lastRes);
   return `<div class="pbox">
     ${last ? `<div class="plast ${pitchCls(last.res)}${newPitch(g, last) ? " fresh" : ""}"><span class="pn">${last.n}</span><div class="plr"><b>${esc(last.res)}</b><small>${esc(last.type)}</small></div><div class="pkm num"><b>${kmh(last.speed) || "-"}</b><small>km/h</small></div></div>` : ""}
     <div class="pmid">
-      <div class="pinn"><b>${esc(p.half || "")}</b><span style="${tv(atk)}"><i></i>${fn(atk)}攻撃</span></div>
+      <div class="pinn"><b>${esc(p.half || "")}</b><span style="${tv(atk)}"><i></i>${fn(atk)}攻撃</span>${upd ? `<small class="pupd"><i></i>${` ${upd} 更新`}</small>` : ""}</div>
       <div class="bso3"><div><span>B</span>${lamp(p.b || 0, 3, "b")}</div><div><span>S</span>${lamp(p.s || 0, 2, "s")}</div><div><span>O</span>${lamp(p.o || 0, 2, "o")}</div></div>
     </div>
     <div class="fwrap">${fieldHTML}</div>
@@ -3751,7 +3804,7 @@ function pitchHTML(g) {
       <div class="pc3 pcp" style="${tv(def)}"><span class="wm num">${esc(p.pitcher ? p.pitcher.no : "")}</span>
         <div class="pr3">PITCHER<em>${fn(def)}</em></div>
         ${p.pitcher ? `<div class="pn3" data-pl="${def}|${esc(p.pitcher.name)}|pit"><b>${pwName(def, p.pitcher.name, "投手")}</b>${hand(p.pitcher.hand)}</div>
-        <div class="pg3">${pcell("防", p.pitcher.era)}${pcell("球", pg ? pg.np : p.pitcher.np)}${pcell("回", pg && pg.ip)}${pcell("安", pg && pg.h)}${pcell("振", pg && pg.so)}${pcell("四", pg && pg.bb)}${pcell("失", pg && pg.r)}${pcell("打", pg ? pg.bf : p.pitcher.bf)}</div>` : ""}
+        ${gauge}<div class="pg3">${pcell("防", p.pitcher.era)}${gauge ? "" : pcell("球", npNow || "")}${pcell("回", pg && pg.ip)}${pcell("安", pg && pg.h)}${pcell("振", pg && pg.so)}${pcell("四", pg && pg.bb)}${pcell("失", pg && pg.r)}${pcell("打", bfNow || "")}</div>` : ""}
       </div>
       <div class="pc3" style="${tv(atk)}"><span class="wm num">${esc(p.batter ? p.batter.no : "")}</span>
         <div class="pr3${abDone ? " done" : ""}">${abDone ? `<span class="abt">打席終了</span><span class="abd rc ${resCls(lastRes)}">${esc(lastRes)}</span>` : "BATTER"}<em>${fn(atk)}</em></div>
@@ -3761,7 +3814,7 @@ function pitchHTML(g) {
         ${p.next ? `<div class="pnx3${abDone ? " up" : ""}">${abDone ? "次の打者" : "NEXT"}<b data-pl="${atk}|${esc(p.next)}">${esc(callName(atk, p.next))}</b></div>` : ""}
       </div>
     </div>
-    ${list.length ? `<div class="plist3">${list.map(x => `<div class="pl3 ${pitchCls(x.res)}"><span class="pn">${x.n}</span><span class="pty">${esc(x.type)}</span><span class="pbar"><i style="width:${spd(x.speed)}%"></i><b class="num">${kmh(x.speed) ? `${kmh(x.speed)}<small>km</small>` : ""}</b></span><span class="prs">${esc(x.res)}</span></div>`).join("")}</div>` : `<p class="pnone">この打席はまだ投球がありません</p>`}
+    ${list.length ? `<div class="plist3"><div class="plhd"><b>この打席</b><span><em class="num">${list.length}</em>球</span>${top ? `<span>最速 <em class="num">${top}</em>km</span>` : ""}<span>カウント <em class="num">${cnt[cnt.length - 1] || "0-0"}</em></span></div>${list.map((x, i) => `<div class="pl3 ${pitchCls(x.res)}${i === list.length - 1 ? " latest" : ""}"><span class="pn">${x.n}</span><span class="pty">${esc(x.type)}<small class="pcn num">${cnt[i]}</small></span><span class="pbar"><i style="width:${spd(x.speed)}%"></i><b class="num">${kmh(x.speed) ? `${kmh(x.speed)}<small>km</small>` : ""}</b></span><span class="prs">${esc(x.res)}</span></div>`).join("")}</div>` : `<p class="pnone">この打席はまだ投球がありません</p>`}
   </div>`;
 }
 
