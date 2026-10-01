@@ -1238,6 +1238,78 @@ def parse_transfer(html, season):
     return out
 
 
+# ===== ベースボールチャンネルの「今季の戦力外通告・現役引退・自由契約・退団選手一覧」（12球団。発表の当日に更新される） =====
+# スポナビの入退団情報は反映が遅れることがあるので、もう1つの元として使う。記事の場所は毎年変わるので「自由契約」のタグの一覧から探す
+BBC_TAGS = ["https://www.baseballchannel.jp/tag/%E8%87%AA%E7%94%B1%E5%A5%91%E7%B4%84/", "https://www.baseballchannel.jp/tag/%E6%88%A6%E5%8A%9B%E5%A4%96%E9%80%9A%E5%91%8A/"]
+BBC_KIND = [(re.compile(r"引退"), "retire"), (re.compile(r"戦力外"), "cut"), (re.compile(r"自由契約"), "cut"), (re.compile(r"退団"), "leave")]
+BBC_SHORT = {"阪神": "T", "DeNA": "DB", "巨人": "G", "中日": "D", "広島": "C", "ヤクルト": "S", "ソフトバンク": "H", "日本ハム": "F",
+             "オリックス": "B", "楽天": "E", "西武": "L", "ロッテ": "M"}
+
+
+def parse_bbc(html, season):
+    """一覧の表（日付｜球団｜選手｜ポジション）を、直前の見出し（戦力外通告・引退表明・自由契約・退団）ごとに読む"""
+    soup = BeautifulSoup(html, "html.parser")
+    out = []
+    for tb in soup.find_all("table"):
+        h = tb.find_previous(["h2", "h3", "h4"])
+        head = norm(h.get_text(" ")) if h else ""
+        kind = next((k for rx, k in BBC_KIND if rx.search(head)), None)
+        if not kind or re.search(r"移籍|トレード|FA|入団|加入", head):
+            continue
+        for tr in tb.find_all("tr"):
+            c = [re.sub(r"\s+", " ", norm(td.get_text(" "))).strip() for td in tr.find_all(["td", "th"])]
+            if len(c) < 3:
+                continue
+            m = re.match(r"(\d{1,2})月(\d{1,2})日", c[0])
+            t = BBC_SHORT.get(c[1])
+            if not m or not t:
+                continue
+            mo, d = int(m.group(1)), int(m.group(2))
+            if not (1 <= mo <= 12 and 1 <= d <= 31):
+                continue
+            y = season if mo >= 3 else season + 1
+            date = f"{y:04d}-{mo:02d}-{d:02d}"
+            if date < f"{season}-09-01":
+                continue
+            name = c[2].replace("※", "").strip()
+            if name:
+                out.append({"t": t, "n": name, "dev": "※" in c[2], "kind": kind, "date": date, "note": head})
+    return out
+
+
+def fetch_bbc(season):
+    """タグの一覧から今季の「戦力外通告 現役引退 自由契約 退団選手」の一覧の記事を探し、各ページ（［1/4ページ］など）を読む"""
+    url = None
+    for tag in BBC_TAGS:
+        html = fetch(tag)
+        if not html:
+            continue
+        for a in BeautifulSoup(html, "html.parser").find_all("a", href=True):
+            tx = norm(a.get_text(" "))
+            if f"{season}年" in tx and "戦力外" in tx and "一覧" in tx and "baseballchannel.jp" in a["href"] and not re.search(r"今日の|月\d+日発表", tx):
+                url = a["href"].split("?")[0]
+                if "プロ野球" in tx:   # 12球団まとめを優先
+                    break
+        if url:
+            break
+    if not url:
+        return None, []
+    base = url.rstrip("/")
+    got, seen = [], set()
+    for page in range(1, 7):
+        u = base + "/" if page == 1 else f"{base}/{page}/"
+        html = fetch(u)
+        if not html:
+            break
+        rows = parse_bbc(html, season)
+        key = tuple((x["t"], x["n"]) for x in rows)
+        if page > 1 and (not rows or key in seen):
+            break
+        seen.add(key)
+        got += rows
+    return url, got
+
+
 def merge_transfer(off, season, rosters, now=None):
     """スポナビの入退団情報を、オフシーズン情報に足す（すでに球団の発表から見つけている選手はそのまま。種類が変わったときだけ直す）"""
     now = now or datetime.now(JST)
@@ -1245,6 +1317,15 @@ def merge_transfer(off, season, rosters, now=None):
         return off
     html = fetch(TRANSFER_URL)
     got = parse_transfer(html, season) if html else []
+    # もう1つの元：ベースボールチャンネルの一覧（スポナビより早いことがある）
+    try:
+        bbc_url, bbc = fetch_bbc(season)
+    except Exception as e:
+        bbc_url, bbc = None, []
+        print(f"[戦力外の一覧（ベースボールチャンネル）] 読めない：{e}")
+    have = {(x["t"], squash(x["n"])) for x in got}
+    got += [x for x in bbc if (x["t"], squash(x["n"])) not in have]
+    print(f"[戦力外の一覧（ベースボールチャンネル）] {bbc_url or '見つからない'}：今オフ {len(bbc)}件")
     items = {(x["t"], squash(x["n"])): x for x in off.get("items") or []}
     add = upd = 0
     for x in got:
@@ -1257,12 +1338,14 @@ def merge_transfer(off, season, rosters, now=None):
                 cur["kind"], cur["date"] = x["kind"], x["date"]
                 upd += 1
             continue
+        _bbc = x in bbc
         items[key] = {"t": x["t"], "n": (ro or {}).get("n") or x["n"], "no": (ro or {}).get("no", ""), "dev": bool((ro or {}).get("dev")) or x["dev"],
-                      "kind": x["kind"], "date": x["date"], "url": TRANSFER_URL, "title": "スポーツナビ 入退団情報", "src": "sponavi"}
+                      "kind": x["kind"], "date": x["date"], "url": bbc_url if _bbc else TRANSFER_URL,
+                      "title": "ベースボールチャンネル 戦力外・引退一覧" if _bbc else "スポーツナビ 入退団情報", "src": "bbc" if _bbc else "sponavi"}
         add += 1
     off = dict(off)
     off["items"] = sorted(items.values(), key=lambda x: (x["date"], x["t"], x["n"]), reverse=True)
-    off["transfer"] = {"at": now.isoformat(timespec="seconds"), "rows": len(got) if html else "開けない", "added": add}
+    off["transfer"] = {"at": now.isoformat(timespec="seconds"), "rows": len(got) if (html or bbc) else "開けない", "added": add, "bbc": len(bbc)}
     print(f"[入退団情報（スポナビ）] 今オフの退団 {len(got) if html else '開けない'}件 → 追加 {add}人・種類の更新 {upd}人")
     return off
 
