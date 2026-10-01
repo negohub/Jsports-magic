@@ -47,7 +47,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20261001104459">
+<meta name="build" content="20261001113423">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -6535,7 +6535,7 @@ const MGR_POS = { "藤川球児": "投", "阿部慎之助": "捕", "相川亮二
 const mgrPos = n => MGR_POS[nk(n)] || "内";
 const mgrTile = (n, cls = "") => { const p = mgrPos(n); return `<span class="ptile ${cls} ${TILEC[p] || "pi"}${nmCls(n)}" style="${tileStyle([p])}"><b>${esc(n)}</b></span>`; };
 // 「公示 任意引退・自由契約」のページ（去年の一覧）から拾ってしまったものは出さない（データ更新でも消すが、念のため画面側でも）
-const offItems = () => offMerged().filter(x => OFF_LABEL[x.kind] && TEAM[x.t] && !/\/announce\//.test(x.url || ""));
+const offItems = () => offUniq(offMerged()).filter(x => OFF_LABEL[x.kind] && TEAM[x.t] && !/\/announce\//.test(x.url || ""));
 // 今オフの退団：GitHub の自動更新（15分ごとの予定だが、GitHub の都合で1〜数時間あくことがある）を待たずに、
 // 中継プログラム経由でスポナビの「入退団情報」をその場で読み、まだ入っていない選手を足す（10分ごと・オフのタブを開いたとき）
 let LIVE_OFF = { at: 0, items: [], checked: null }, liveOffBusy = false;
@@ -6552,13 +6552,22 @@ async function loadLiveOff(force) {
     }
   } catch {} finally { liveOffBusy = false; }
 }
+// 同じ選手・同じ種類の項目は1つだけ（どこから入っても二重に出ない）。日付の新しいほうを残す
+function offUniq(list) {
+  const m = new Map();
+  for (const x of list) { const k = x.t + "|" + nk(x.n) + "|" + x.kind; const c = m.get(k); if (!c || (x.date || "") > (c.date || "")) m.set(k, x); }
+  return [...m.values()];
+}
 function offMerged() {
   const base = ((DATA && DATA.offseason) || {}).items || [];
   if (!LIVE_OFF.items.length) return base;
   const have = new Set(base.map(x => x.t + "|" + nk(x.n)));
   const add = [];
   for (const x of LIVE_OFF.items) {
-    if (!TEAM[x.t] || have.has(x.t + "|" + nk(x.n))) continue;
+    const key = x.t + "|" + nk(x.n);
+    if (!TEAM[x.t] || have.has(key)) continue;
+    have.add(key);   // 同じ選手が2回以上来ても1回だけ（元の一覧が複数ページで同じ表をくり返すことがある）
+    have.add(x.t + "|" + nk(x.n));   // 最新の一覧の中で同じ選手が何度出てきても1回だけ
     const ro = ((DATA.rosters || {})[x.t] || []).find(r => nk(r.n) === nk(x.n));
     add.push({ t: x.t, n: ro ? ro.n : x.n, no: ro ? ro.no : "", dev: ro ? !!ro.dev : !!x.dev, kind: x.kind, date: x.date,
       url: x.url || "https://baseball.yahoo.co.jp/npb/transfer", title: x.src === "bbc" ? "ベースボールチャンネル 戦力外・引退一覧" : "スポーツナビ 入退団情報", src: "live" });
