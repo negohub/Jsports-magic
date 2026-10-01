@@ -1350,6 +1350,15 @@ async def pitch_tile_check(browser):
           if (document.querySelector('.tgd .rleg')) ng.push('打順の上に色の説明が出ている');
           if (!box.querySelector('.pbox.v2') && !box.closest('.pbox.v2') && !document.querySelector('.tgd .pbox.v2')) ng.push('一球速報がシンプル版になっていない');
           if (document.querySelector('.tgd .pg3')) ng.push('一球速報に細かい成績の表が残っている');
+          // ランナー：一球速報のページの塁の埋まり方を信じる（計算と違っても）。ダイヤモンドの走者の名前を当てはめる。リクエストは帯で
+          PD[k].occ = ['1', '3']; PD[k].rnames = ['リチャード', '大城']; PD[k].runners = {}; PD[k].req = 'リクエスト 判定変更 セーフ→アウト'; renderGame();
+          const rt = [...document.querySelectorAll('.tgd .rtile, .tgd .fld text')].map(e => e.textContent).join(',');
+          const rn = [...document.querySelectorAll('.tgd .ptile.rtile, .tgd .rname')].length;
+          if (!document.querySelector('.tgd .preq') || !document.querySelector('.tgd .preq').textContent.includes('判定変更')) ng.push('リクエストが出ない');
+          const occTiles = document.querySelectorAll('.tgd .fldw .ptile.rtile').length;
+          if (isPawa() && occTiles !== 2) ng.push(`ランナーの札の数が塁の埋まり方（2人）と合わない：${occTiles}`);
+          PD[k].occ = []; PD[k].rnames = []; PD[k].req = null; renderGame();
+          if (isPawa() && document.querySelectorAll('.tgd .fldw .ptile.rtile').length) ng.push('ランナーなしなのに走者の札が出ている');
           // NEXT の打者もパワプロ風の札。スコアボードは赤い枠なし・攻撃中のマスは「-」
           if (!box.querySelector('.pnx3 .ptile')) ng.push('NEXT の打者がパワプロ風の札になっていない');
           if (document.querySelector('.ls td.cur, .ls th.cur')) ng.push('スコアボードに今の回の枠（赤）が残っている');
