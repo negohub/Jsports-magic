@@ -1302,11 +1302,12 @@ def fetch_bbc(season):
         if not html:
             break
         rows = parse_bbc(html, season)
-        key = tuple((x["t"], x["n"]) for x in rows)
-        if page > 1 and (not rows or key in seen):
-            break
-        seen.add(key)
-        got += rows
+        fresh = [x for x in rows if (x["t"], squash(x["n"])) not in seen]
+        if page > 1 and not fresh:
+            break   # 次のページがない（同じ表がくり返される）
+        for x in fresh:
+            seen.add((x["t"], squash(x["n"])))
+        got += fresh
     return url, got
 
 
@@ -1323,8 +1324,13 @@ def merge_transfer(off, season, rosters, now=None):
     except Exception as e:
         bbc_url, bbc = None, []
         print(f"[戦力外の一覧（ベースボールチャンネル）] 読めない：{e}")
-    have = {(x["t"], squash(x["n"])) for x in got}
-    got += [x for x in bbc if (x["t"], squash(x["n"])) not in have]
+    have = set()
+    uniq = []
+    for x in got + bbc:   # 同じ選手は1回だけ（スポナビが先）
+        k = (x["t"], squash(x["n"]))
+        if k not in have:
+            have.add(k); uniq.append(x)
+    got = uniq
     print(f"[戦力外の一覧（ベースボールチャンネル）] {bbc_url or '見つからない'}：今オフ {len(bbc)}件")
     items = {(x["t"], squash(x["n"])): x for x in off.get("items") or []}
     add = upd = 0
@@ -1344,7 +1350,11 @@ def merge_transfer(off, season, rosters, now=None):
                       "title": "ベースボールチャンネル 戦力外・引退一覧" if _bbc else "スポーツナビ 入退団情報", "src": "bbc" if _bbc else "sponavi"}
         add += 1
     off = dict(off)
-    off["items"] = sorted(items.values(), key=lambda x: (x["date"], x["t"], x["n"]), reverse=True)
+    # 同じ球団・同じ選手（名前の空白の有無だけ違うもの）・同じ種類は1つにまとめる
+    uniq = {}
+    for x in items.values():
+        uniq.setdefault((x["t"], squash(x["n"]), x.get("kind")), x)
+    off["items"] = sorted(uniq.values(), key=lambda x: (x["date"], x["t"], x["n"]), reverse=True)
     off["transfer"] = {"at": now.isoformat(timespec="seconds"), "rows": len(got) if (html or bbc) else "開けない", "added": add, "bbc": len(bbc)}
     print(f"[入退団情報（スポナビ）] 今オフの退団 {len(got) if html else '開けない'}件 → 追加 {add}人・種類の更新 {upd}人")
     return off
