@@ -2002,7 +2002,8 @@ async def live_off_check(browser):
     pg, errs = await open_page(browser, 390, "pawa")
     r = await pg.evaluate("""() => { const ng = [], t = CL[0], ro = DATA.rosters[t] || [];
       DATA.offseason = { season: 2026, items: [{ t, n: ro[0].n, no: ro[0].no, kind: 'cut', date: '2026-09-29', url: 'x', title: '' }], teams: {}, seen: {} };
-      LIVE_OFF.items = [{ t, n: ro[0].n, kind: 'cut', date: '2026-09-29' }, { t, n: ro[1].n, kind: 'cut', date: '2026-09-30' }, { t, n: 'テスト 退団', kind: 'leave', date: '2026-09-30' }];
+      LIVE_OFF.items = [{ t, n: ro[0].n, kind: 'cut', date: '2026-09-29' }, { t, n: ro[1].n, kind: 'cut', date: '2026-09-30' }, { t, n: 'テスト 退団', kind: 'leave', date: '2026-09-30' },
+        { t, n: ro[1].n.replace(/\\s+/g, ''), kind: 'cut', date: '2026-09-30' }, { t, n: ro[1].n, kind: 'cut', date: '2026-09-30' }, { t, n: 'テスト退団', kind: 'leave', date: '2026-09-30' }];   // 同じ選手が何度も（空白あり・なし）
       LIVE_OFF.checked = new Date().toISOString();
       const it = offItems().filter(x => x.t === t);
       if (it.length !== 3) ng.push(`入退団情報の最新が足されていない（${it.length}人）`);
