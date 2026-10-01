@@ -537,7 +537,7 @@ async def wording_check(browser):
               if (best && li) {
                 const w = said(li, ['黄色', 'オレンジ']), c = rgb(getComputedStyle(best).color);
                 if (w === '黄色' && !(c[0] > 200 && c[1] > 170 && c[2] < 120)) ng.push(`チーム成績のトップは「黄色」と書いているのに ${c}`);
-                if (w === 'オレンジ' && !(c[0] > 190 && c[1] > 60 && c[1] < 170 && c[2] < 80)) ng.push(`チーム成績のトップは「オレンジ」と書いているのに ${c}`);
+                if (w === 'オレンジ' && !(c[0] > 150 && c[0] > c[1] * 1.6 && c[1] > 40 && c[2] < 80))   /* 読みやすさのため濃いオレンジ（168,79,0 など）も可 */ ng.push(`チーム成績のトップは「オレンジ」と書いているのに ${c}`);
               }
               setTab('std');
               const first = document.querySelector('.ytbl td.yc2.first b'), li2 = [...document.querySelectorAll('#v-std .howto li')].find(l => l.textContent.includes('年間成績'));
@@ -2143,10 +2143,13 @@ NIGHT_CONTRAST_JS = r"""(tab) => {
     const t = walker.currentNode; if (!t.textContent.trim()) continue;
     const el = t.parentElement; if (!el || seen.has(el) || el instanceof SVGElement) continue; seen.add(el);
     const r = el.getBoundingClientRect(); if (!r.width || !r.height || r.bottom < 0 || r.top > innerHeight) continue;
-    const cs = getComputedStyle(el); if (cs.visibility === "hidden" || +cs.opacity < .3 || el.closest("[hidden],.tabbar,#sheet:not(.open),#peek:not(.on),.badge,.ykb,.hb")) continue;
+    const cs = getComputedStyle(el); if (cs.visibility === "hidden" || +cs.opacity < .3 || el.closest("[hidden],.tabbar,#sheet:not(.open),#peek:not(.on),.badge,.ykb,.hb,.bk,.k1,.k2")) continue;
     const fg = parse(cs.color); if (!fg || fg.a < .3) continue;
+    // 縁取りの文字（空の上の白抜きの見出しなど）は、縁取りで読めるので数えない
+    if ((cs.webkitTextStrokeWidth && parseFloat(cs.webkitTextStrokeWidth) > 0) || (cs.textShadow && (cs.textShadow.match(/rgb/g) || []).length >= 3)) continue;
+    const fs = parseFloat(cs.fontSize), fw = +cs.fontWeight || 400, big = fs >= 24 || (fs >= 18.66 && fw >= 700);
     const bg = bgOf(el), L1 = lum(fg), L2 = lum(bg), cr = (Math.max(L1, L2) + .05) / (Math.min(L1, L2) + .05);
-    if (cr < 2.6) out.push(`${tab}：${t.textContent.trim().slice(0, 14)}（${el.className || el.tagName}・コントラスト ${cr.toFixed(1)}）`);
+    if (cr < (big ? 3 : 4.5)) out.push(`${tab}：${t.textContent.trim().slice(0, 14)}（${el.className || el.tagName}・コントラスト ${cr.toFixed(1)}）`);
   }
   return out.slice(0, 12);
 }
@@ -2252,6 +2255,35 @@ async def line_image_check(browser):
         await pg.close()
 
 
+async def contrast_all_check(browser):
+    """4つの見た目（パワプロ風の昼・夜、スタイリッシュの黒・白）すべてで、文字と地の明るさの差が一般的な基準（ふつうの文字4.5・大きい文字3）以上か。
+    セ・パ、全タブ、試合を開いたところ、設定の画面"""
+    for theme, mode, label in [("pawa", "light", "パワプロ風（昼）"), ("pawa", "dark", "パワプロ風（夜）"), ("", "dark", "スタイリッシュ（黒）"), ("", "light", "スタイリッシュ（白）")]:
+        pg, errs = await open_page(browser, 390, theme)
+        await pg.evaluate(f"store('mode','{mode}'); applyPawaMode(); renderAll()")
+        ng = []
+        for lg in ["C", "P"]:
+            if lg == "P":
+                await pg.evaluate("switchLeague('P')"); await pg.wait_for_timeout(300)
+            for tab in ["magic", "game", "cal", "std", "stats", "song", "off"]:
+                await pg.evaluate(f"setTab('{tab}')"); await pg.wait_for_timeout(450)
+                if tab == "game" and lg == "C":
+                    await pg.evaluate("""() => { const t = CL[0], o = CL[1]; const g = DATA.games.find(x => x.h === t && x.a === o) || DATA.games.find(x => x.h === t);
+                      const today = g.d; jst = () => ({ y: +today.slice(0, 4), m: +today.slice(5, 7), d: +today.slice(8), iso: today }); liveWanted = () => false;
+                      Object.assign(g, { st: 'live', hs: 3, as: 2, inn: '4回裏' }); S.open[g.d + gkey(g)] = true; renderAll(); setTab('game'); }""")
+                    await pg.wait_for_timeout(1100)
+                h = await pg.evaluate("document.documentElement.scrollHeight")
+                for y in range(0, min(h, 9000), 760):
+                    await pg.evaluate(f"window.scrollTo(0,{y})"); await pg.wait_for_timeout(70)
+                    ng += await pg.evaluate(NIGHT_CONTRAST_JS, f"{lg}:{tab}")
+            await pg.evaluate("window.scrollTo(0,0); openSheet()"); await pg.wait_for_timeout(450)
+            ng += await pg.evaluate(NIGHT_CONTRAST_JS, f"{lg}:設定")
+            await pg.evaluate("closeSheet()"); await pg.wait_for_timeout(300)
+        for m in list(dict.fromkeys(ng))[:8]:
+            bad(f"[読みやすさ {label}] {m}")
+        await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -2337,6 +2369,7 @@ async def main():
         await night_check(browser)
         await light_check(browser)
         await line_image_check(browser)
+        await contrast_all_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
