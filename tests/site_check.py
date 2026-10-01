@@ -2037,10 +2037,15 @@ async def player_today_check(browser):
       // 今の打者・投手を開くと、今季の対戦成績（打者 vs 投手）
       const k = g.d + gkey(g), p = PD[k];
       if (p && p.batter && p.pitcher) {
-        p.vs = { avg: '.333', ab: '9', h: '3', hr: '1', rbi: '2', so: '1', bb: '0' };
-        const bteam = /裏/.test(p.half || '') ? g.h : g.a;
+        // 今の打者を開くと、今日の相手との今季の成績と、今の投手の左右の成績（スポナビの選手のページ）
+        const bteam = /裏/.test(p.half || '') ? g.h : g.a, opp = bteam === g.h ? g.a : g.h;
+        p.ids = Object.assign({}, p.ids, { [p.batter.name]: '1700044' });
+        SPLIT['1700044'] = { at: Date.now(), d: { kind: 'bat', team: { [opp]: { '打率': '.267', '打数': '30', '安打': '8', '本塁打': '1', 'OPS': '.771' } },
+          lr: [{ p: '右投', b: '左打者', '打率': '.287', '打数': '181', '安打': '52', '本塁打': '7' }, { p: '右投', b: '右打者', '打率': '.250', '打数': '40', '安打': '10', '本塁打': '1' }, { p: '左投', b: '左打者', '打率': '.246', '打数': '65', '安打': '16', '本塁打': '1' }, { p: '左投', b: '右打者', '打率': '.300', '打数': '20', '安打': '6', '本塁打': '0' }] } };
         await openPlayer(bteam, p.batter.name); await new Promise(r => setTimeout(r, 700));
-        const v = document.querySelector('.ps-vs'); if (!v || !v.textContent.includes('.333')) ng.push('今の打者の画面に、今の投手との対戦成績が出ない');
+        const v = document.querySelector('.ps-vs');
+        if (!v || !v.textContent.includes('.267')) ng.push('今の打者の画面に、今日の相手との今季の成績が出ない');
+        if (!v || !/対[左右]投手/.test(v.textContent)) ng.push('今の打者の画面に、今の投手の左右との成績が出ない');
       }
       return ng; }""")
     for m in r:
