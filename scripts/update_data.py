@@ -715,6 +715,8 @@ def off_article(t, url, list_title, html, roster, season, manager=None):
     head = text[:max(400, text.find(title[:10]) + 400 if title[:10] and title[:10] in text else 400)]
     for m in OFF_DATE.finditer(head):
         y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        if not (1 <= mo <= 12 and 1 <= d <= 31):
+            continue   # 「10月0日」のような読み違い
         if y < season - 1:
             continue
         old = y == season - 1 or (y == season and mo < 9)
@@ -796,6 +798,8 @@ def off_moves(t, url, list_title, html, rosters, season):
     date = ""
     for m in OFF_DATE.finditer(text[:600]):
         y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        if not (1 <= mo <= 12 and 1 <= d <= 31):
+            continue   # 「10月0日」のような読み違い
         if y < season - 1:
             continue
         if y == season - 1 or (y == season and mo < 9):
@@ -906,6 +910,8 @@ def off_coach(t, url, list_title, html, staff, known, season):
     date = ""
     for m in OFF_DATE.finditer(text[:600]):
         y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        if not (1 <= mo <= 12 and 1 <= d <= 31):
+            continue   # 「10月0日」のような読み違い
         if y < season or (y == season and mo < 9):
             return []   # オフより前の記事（シーズン中の配置転換などは入れない）
         date = f"{y:04d}-{mo:02d}-{d:02d}"
@@ -1646,6 +1652,12 @@ def main():
     offseason = safe("戦力外・引退", lambda: fetch_offseason(season, old, rosters, off_force, os.environ.get("OFF_FORCE") == "1"), (old or {}).get("offseason"))
     # スポナビの入退団情報（毎回。球団のサイトが読めない球団の分も拾う）
     offseason = safe("入退団情報", lambda: merge_transfer(offseason, season, rosters), offseason)
+    # 前の回までに入った「10月0日」のような日付は、見つけた日（今日）に直す
+    if offseason and offseason.get("items"):
+        _today = datetime.now(JST).strftime("%Y-%m-%d")
+        for _x in offseason["items"]:
+            if re.search(r"-00$|-00-", _x.get("date") or ""):
+                _x["date"] = _today
     if (old and old_games == all_games and old_stats == stats and old.get("prev_order") == prev_order
             and old_stats_p == stats_p and old.get("prev_order_p") == prev_order_p
             and old.get("checked") == month and old.get("rosters") == rosters and old.get("song_rev") == SONG_REV
