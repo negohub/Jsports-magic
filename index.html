@@ -47,7 +47,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20261001151953">
+<meta name="build" content="20261001155638">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -7127,12 +7127,36 @@ function healthItems() {
   return out;
 }
 function fmtDT(iso) { const d = jp(iso); return `${d.m}/${d.d} ${d.hm}`; }
+// 試合の結果が反映されていない（自動更新が遅れている）と気づいたら：中継プログラムに頼んで、GitHub のデータの自動更新をすぐ動かす。
+// 数分後にデータを読み直す。どの端末からでも、中継プログラム側で10分に1回まで
+let KICK = { at: 0, res: null };
+async function kickIfStuck() {
+  if (!CONFIG.liveApi || Date.now() - KICK.at < 10 * 60e3) return;
+  const today = jst().iso, nowH = new Date(Date.now() + 9 * 3600e3).getUTCHours() + new Date(Date.now() + 9 * 3600e3).getUTCMinutes() / 60;
+  const stuck = DATA.games.filter(inLg).filter(g => (g.st === "sched" || g.st === "live") && (g.d < today || (g.d === today && g.t && nowH > parseInt(g.t, 10) + 4)));
+  if (!stuck.length) return;
+  KICK.at = Date.now();
+  try {
+    KICK.res = await (await fetch(`${CONFIG.liveApi}?kick=1`)).json();
+    renderHealth();
+    if (KICK.res && (KICK.res.kicked || KICK.res.reason === "recent")) {
+      // 自動更新は2〜4分で終わる：3分・6分後にデータを読み直す
+      [3, 6].forEach(m => setTimeout(async () => { try { const d = await fetchData(); if (d._sig !== RAWSIG) { writeCache(d); DATA = d; RAWSIG = d._sig; renderAll(); } } catch {} }, m * 60e3));
+    }
+  } catch {}
+}
+setInterval(() => { if (!document.hidden) kickIfStuck(); }, 60e3);
 function renderHealth() {
   const items = healthItems();
   const worst = items.some(x => x.lv === "ng") ? "ng" : items.some(x => x.lv === "warn") ? "warn" : "ok";
   $("gearDot").hidden = true;   // 歯車の右上の点は出さない（データの状態は設定の中で見る）
   const w = $("hWarn");
-  if (worst === "ng") { w.hidden = false; w.textContent = "⚠ 試合結果の自動更新が止まっている可能性があります"; w.className = "hwarn ng"; }
+  if (worst === "ng") {
+    w.hidden = false; w.className = "hwarn ng";
+    w.textContent = KICK.res && (KICK.res.kicked || KICK.res.reason === "recent") ? "⟳ 試合結果の自動更新が遅れていたので、いま取り込み直しています（数分で反映されます）"
+      : KICK.res && KICK.res.reason === "no_token" ? "⚠ 試合結果の自動更新が止まっています（中継プログラムに GitHub の合い鍵 GH_TOKEN が入っていません）"
+      : "⚠ 試合結果の自動更新が止まっている可能性があります";
+  }
   else w.hidden = true;
   $("healthBox").innerHTML = items.map(x => `<div class="hi ${x.lv}"><i></i><b>${x.k}</b><span>${esc(x.v)}</span></div>`).join("");
 }
@@ -7352,6 +7376,7 @@ async function load() {
     if (DATA === SNAP) { fromSnap = true; renderAll(); }
   }
   pollLive();
+  setTimeout(kickIfStuck, 4000);
 }
 let lastSiteCheck = 0;
 async function check(force) {
