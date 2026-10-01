@@ -1453,7 +1453,8 @@ async def post_bracket_check(browser):
               renderAll(); setTab('std');
               const s = lgPost(lg);
               if (s.s1.win !== rk[1]) ng.push(`ファーストステージで並んだのに2位が勝ち上がらない（${s.s1.win}）`);
-              if (s.sf.wh !== 4 || s.sf.win !== rk[0]) ng.push(`ファイナルの1位の勝ち数（アドバンテージ込み）・勝ち上がりが違う（${s.sf.wh}・${s.sf.win}）`);
+              // 2026年からの新ルール：アドバンテージは1勝か2勝（ファースト勝者が1位と10ゲーム差以上か勝率5割未満なら2勝）
+              if (s.sf.wh !== 3 + s.R.adv || s.sf.win !== rk[0]) ng.push(`ファイナルの1位の勝ち数（アドバンテージ${s.R.adv}込み）・勝ち上がりが違う（${s.sf.wh}・${s.sf.win}）`);
               const box = document.getElementById('bracketBox'), txt = box.innerText;
               if (!txt.includes(fn(rk[1]) + 'がファイナルステージへ')) ng.push('ファーストステージの勝ち上がりの文言が出ない');
               if (!txt.includes(fn(rk[0]) + 'が日本シリーズへ')) ng.push('ファイナルステージの勝ち上がりの文言が出ない');
@@ -2419,6 +2420,34 @@ async def kick_check(browser):
     await pg.close()
 
 
+async def csf_rule_check(browser):
+    """2026年からのCSファイナルステージ：ファースト勝者が1位と10ゲーム差以上か勝率5割未満なら、2勝のアドバンテージ・7試合制（先に5勝・10/20に第7戦）"""
+    pg, errs = await open_page(browser, 390, "pawa")
+    r = await pg.evaluate("""() => { const ng = [];
+      const rows = [{ t: 'A', w: 80, l: 60 }, { t: 'B', w: 72, l: 68 }, { t: 'C', w: 69, l: 71 }, { t: 'D', w: 71, l: 69 }];
+      const b = csfRule(rows, 'A', 'B'), c = csfRule(rows, 'A', 'C'), d = csfRule(rows, 'A', 'D');
+      if (b.two || b.adv !== 1 || b.need !== 4 || b.total !== 6) ng.push(`8ゲーム差・勝率5割以上なのに2勝のアドバンテージになる：${JSON.stringify(b)}`);
+      if (!c.two || c.adv !== 2 || c.need !== 5 || c.total !== 7) ng.push(`勝率5割未満なのに2勝のアドバンテージにならない：${JSON.stringify(c)}`);
+      if (d.two) ng.push(`9ゲーム差・勝率5割以上なのに2勝のアドバンテージになる：${JSON.stringify(d)}`);
+      const e = csfRule([{ t: 'A', w: 85, l: 55 }, { t: 'E', w: 75, l: 65 }], 'A', 'E');
+      if (!e.two) ng.push(`ちょうど10ゲーム差なのに2勝のアドバンテージにならない：${JSON.stringify(e)}`);
+      // 勝ち抜け：2勝のアドバンテージで1位が3勝（計5勝）したら1位の勝ち
+      const s = seriesOf([{ st: 'final', h: 'A', a: 'C', hs: 3, as: 1 }, { st: 'final', h: 'A', a: 'C', hs: 3, as: 1 }, { st: 'final', h: 'A', a: 'C', hs: 3, as: 1 }], 'A', 'C', 5, 2, 7);
+      if (s.win !== 'A' || s.wh !== 5) ng.push(`2勝のアドバンテージで3勝しても勝ち抜けにならない：${JSON.stringify(s)}`);
+      // パ・リーグ（今のデータでは1位が独走）：勝ち上がり表に新ルールの説明、日程に第7戦（10/20）
+      switchLeague('P'); setTab('std'); renderAll();
+      if (!/新ルール/.test((document.querySelector('.bk-rule') || {}).textContent || '')) ng.push('勝ち上がり表に新ルールの説明が出ない');
+      const lp = lgPost('P');
+      if ((lp.rule2.two || lp.rule3.two) && !postGames().some(g => g.stage === 'CSF' && g.no === 7)) ng.push('7試合制になりうるのに、日程に第7戦がない');
+      switchLeague('C');
+      return ng.filter(Boolean); }""")
+    for m in r:
+        bad(f"[CSの新ルール] {m}")
+    for e in errs:
+        bad(f"[CSの新ルール]: 画面のエラー {e}")
+    await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -2508,6 +2537,7 @@ async def main():
         await contrast_all_check(browser)
         await meaning_color_check(browser)
         await kick_check(browser)
+        await csf_rule_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
