@@ -47,7 +47,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20261001113423">
+<meta name="build" content="20261001115328">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -3497,6 +3497,8 @@ html .tgo em:not(#z):not(#y):not(#x){color:#fff !important;background:#C62828 !i
 html.theme-pawa:not(.pawa-dark) .sgrp .num:not(#z):not(#y),html.theme-pawa:not(.pawa-dark) .ptile small.num:not(#z){color:#22355A !important}
 html.theme-pawa #songList .ptile small:not(#z):not(#y){color:#13264A !important;opacity:.85}
 html.theme-pawa.pawa-dark .bi small:not(#z):not(#y),html.theme-pawa.pawa-dark .bug small:not(#z):not(#y){color:#fff !important}
+.ps-lr{display:flex;align-items:baseline;gap:8px;margin-top:10px;font-size:12px}
+.ps-lr span{font-weight:700}.ps-lr b{font-size:17px;font-weight:900}.ps-lr small{opacity:.8}
 </style>
 </head>
 <body>
@@ -6250,23 +6252,47 @@ function statGrid(title, main, sub) {
     <div class="ps-main">${main.map(([k, v]) => `<div><small>${k}</small><b class="num">${c(v)}</b></div>`).join("")}</div>
     <div class="ps-sub">${sub.map(([k, v]) => `<div><small>${k}</small><span class="num">${c(v)}</span></div>`).join("")}</div></div>`;
 }
-// 今の打者と投手の今季の対戦成績（一球速報に出ている今の対戦だけ。スポナビの一球速報の「対戦成績」）
+// 今日の相手との今季の成績：スポナビの選手のページの「対チーム別成績」と「対左右別成績」（中継プログラム ?split=ID）。
+// 一球速報のページに出ている選手（打順・ベンチ・今の打者と投手）のIDを使う。今の打者なら今の投手の左右、今の投手なら今の打者の左右の成績も
+const SPLIT = {};
 function matchupLine(t, full) {
   const today = jst().iso, k0 = nk(full);
-  const g = DATA.games.find(x => x.d === today && (x.h === t || x.a === t) && x.st === "live");
+  const g = DATA.games.find(x => x.d === today && (x.h === t || x.a === t) && (x.st === "live" || x.st === "final"));
   const p = g && PD[g.d + gkey(g)];
-  if (!p || !p.batter || !p.pitcher) return "";
+  if (!p || !p.ids || !CONFIG.liveApi) return "";
   const same = n => { const a = nk(n); return a === k0 || (a.length >= 2 && k0.startsWith(a)) || (k0.length >= 2 && a.startsWith(k0)); };
-  const isBat = same(p.batter.name), isPit = same(p.pitcher.name);
-  if (!isBat && !isPit) return "";
-  const bt = /裏/.test(p.half || "") ? g.h : g.a, pt = bt === g.h ? g.a : g.h;
-  const head = `今季の対戦・${esc(callName(bt, p.batter.name))}（打者）vs ${esc(callName(pt, p.pitcher.name))}（投手）`;
-  const v = p.vs;
-  if (!v || v.ab == null) return `<div class="ps-sec ps-vs"><div class="ps-t">${head}</div><p class="ps-load">今季の対戦はまだありません（または対戦成績を読み込めていません）</p></div>`;
-  const cell = (k, x) => `<div><small>${k}</small><b class="num">${esc(x == null || x === "" ? "-" : String(x))}</b></div>`;
-  return `<div class="ps-sec ps-vs"><div class="ps-t">${head}</div>
-    <div class="ps-main">${cell("打率", v.avg)}${cell("打数", v.ab)}${cell("安打", v.h)}${cell("本塁打", v.hr)}</div>
-    <div class="ps-main">${cell("打点", v.rbi)}${cell("三振", v.so)}${cell("四死球", v.bb)}${cell("", "")}</div></div>`;
+  const idKey = Object.keys(p.ids).find(same);
+  if (!idKey) return "";
+  const id = p.ids[idKey], opp = g.h === t ? g.a : g.h;
+  const isBat = p.batter && same(p.batter.name), isPit = p.pitcher && same(p.pitcher.name);
+  const render = d => {
+    if (!d || (!d.team && !d.lr)) return `<p class="ps-load">今季の対${esc(fn(opp))}の成績を読み込めませんでした</p>`;
+    const r = (d.team || {})[opp];
+    const cell = (k, x) => `<div><small>${k}</small><b class="num">${esc(x == null || x === "" ? "-" : String(x))}</b></div>`;
+    let h = "";
+    if (!r) h += `<p class="ps-load">今季の${esc(fn(opp))}戦の出場はまだありません</p>`;
+    else if (d.kind === "pit") h += `<div class="ps-main">${cell("防御率", r["防御率"])}${cell("登板", r["登板"] || r["試合"])}${cell("勝敗", `${r["勝利"] || r["勝"] || 0}-${r["敗戦"] || r["敗北"] || r["敗"] || 0}`)}${cell("投球回", r["投球回"])}</div>`;
+    else h += `<div class="ps-main">${cell("打率", r["打率"])}${cell("打数-安打", `${r["打数"] || 0}-${r["安打"] || 0}`)}${cell("本塁打", r["本塁打"])}${cell("OPS", r["OPS"])}</div>`;
+    // 左右：今の打者→今の投手の投げ手、今の投手→今の打者の打ち手
+    const lr = d.lr || [], line = (lab, o) => o && o["打率"] && o["打率"] !== "-" ? `<div class="ps-lr"><span>${lab}</span><b class="num">${esc(o["打率"])}</b><small>${esc(o["打数"] || "-")}打数${esc(o["安打"] || "-")}安打・本${esc(o["本塁打"] || "0")}</small></div>` : "";
+    if (isBat && p.pitcher) {
+      const ph = /左/.test(p.pitcher.hand || "") ? "左投" : "右投", bh = /左/.test(p.batter.hand || "") ? "左打者" : /両/.test(p.batter.hand || "") ? (ph === "左投" ? "右打者" : "左打者") : "右打者";
+      h += line(`対${ph === "左投" ? "左" : "右"}投手（今の${esc(callName(opp, p.pitcher.name))}）`, lr.find(o => o.p === ph && o.b === bh));
+    }
+    if (isPit && p.batter) {
+      const bh = /左/.test(p.batter.hand || "") ? "左打者" : "右打者";
+      h += line(`対${bh === "左打者" ? "左" : "右"}打者（今の${esc(callName(opp, p.batter.name))}）`, lr.find(o => o.b === bh && (!o.p || o.p === (/左/.test(p.pitcher.hand || "") ? "左投" : "右投"))) || lr.find(o => o.b === bh));
+    }
+    return h;
+  };
+  const head = `<div class="ps-t">今季の対${esc(fn(opp))}${isBat ? "（打席中）" : isPit ? "（登板中）" : ""}</div>`;
+  const c = SPLIT[id];
+  if (c && Date.now() - c.at < 30 * 60e3) return `<div class="ps-sec ps-vs" id="psVs">${head}${render(c.d)}</div>`;
+  fetch(`${CONFIG.liveApi}?split=${id}`).then(r => r.json()).then(d => {
+    SPLIT[id] = { at: Date.now(), d };
+    const e = document.getElementById("psVs"); if (e && e.dataset.id === id) e.innerHTML = head + render(d);
+  }).catch(() => { const e = document.getElementById("psVs"); if (e && e.dataset.id === id) e.innerHTML = head + render(null); });
+  return `<div class="ps-sec ps-vs" id="psVs" data-id="${id}">${head}<p class="ps-load">読み込み中…</p></div>`;
 }
 // 今日の試合の出場成績（一球速報の打順・投手成績と同じデータ）。出ていなければ空
 function todayLine(t, full) {
