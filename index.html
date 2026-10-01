@@ -47,7 +47,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20261001115328">
+<meta name="build" content="20261001120852">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -3213,6 +3213,7 @@ html.sty-light:not(.theme-pawa) .offtag.k-in:not(#z){background:#1B7F3B !importa
 html.sty-light:not(.theme-pawa) #detail .dtm{color:#171717 !important}
 html.sty-light:not(.theme-pawa) .offtag.k-in:not(#z):not(#y){background:#1B7F3B !important;color:#fff !important}
 html.sty-light:not(.theme-pawa) .tgo em:not(#z):not(#y):not(#x){color:#fff !important;background:#C62828 !important}
+html.sty-light:not(.theme-pawa) .preq{background:#FFE680;color:#FFFFFF}
 /* ===== 文字の読みやすさ（contrast_fix.py） ===== */
 html.theme-pawa:not(.pawa-dark) .pl3 .pcn:not(#z){color:#576B8D !important}
 html.theme-pawa:not(.pawa-dark) .rbi:not(#z){background:linear-gradient(180deg,#1C842E,#198634) !important}
@@ -3367,6 +3368,7 @@ html.sty-light:not(.theme-pawa) .wxb.go i:not(#z){background:#1E854A !important}
 html.sty-light:not(.theme-pawa) .offtag:not(#z){background:#E12D33 !important}
 html.sty-light:not(.theme-pawa) .mgtab td.best:not(#z){color:#7B640A !important}
 html.sty-light:not(.theme-pawa) .ls td.now:not(#z){color:#895D0B !important}
+html.sty-light:not(.theme-pawa) .preq:not(#z){background:#8F7300 !important}
 /* ===== パワプロ風（夜）：パワプロの形（太い枠・札・青い見出し）はそのまま、色は紺の1系統にそろえる =====
    地：いちばん奥 #0B1733 → パネル #16243F → 表の行 #1A2A49／#16243F → 見出しの帯 青のグラデーション
    文字：#E7EEF9、うすい文字 #A3B6D8。アクセントは黄色（#FFD84D）だけ。球団の色は札・丸・左の帯だけに残す */
@@ -3499,6 +3501,12 @@ html.theme-pawa #songList .ptile small:not(#z):not(#y){color:#13264A !important;
 html.theme-pawa.pawa-dark .bi small:not(#z):not(#y),html.theme-pawa.pawa-dark .bug small:not(#z):not(#y){color:#fff !important}
 .ps-lr{display:flex;align-items:baseline;gap:8px;margin-top:10px;font-size:12px}
 .ps-lr span{font-weight:700}.ps-lr b{font-size:17px;font-weight:900}.ps-lr small{opacity:.8}
+/* 一球速報：リクエスト（リプレー検証） */
+.preq{display:flex;align-items:center;gap:8px;padding:9px 14px;background:#FFE680;color:#2A1F00;font-size:13px;font-weight:700;border-top:1px solid rgba(0,0,0,.08)}
+.preq b{font-weight:900;letter-spacing:.06em}
+.preq span{font-weight:700}
+html.theme-pawa.pawa-dark .preq:not(#z){background:#4A3B0E;color:#FFE680}
+html:not(.theme-pawa):not(.sty-light) .preq:not(#z){background:#3A3000;color:#FFE680}
 </style>
 </head>
 <body>
@@ -5091,15 +5099,30 @@ function pitchHTML(g) {
   const bmap = { "一": "1", "二": "2", "三": "3" };
   const SIM = simRunners(p, d, g);
   const hasBases = p.bases && Object.keys(p.bases).length;
-  const on = k => sit ? (sit.includes("満塁") || sit.includes(k)) : hasBases ? !!p.bases[bmap[k]] : !!SIM[bmap[k]];
+  // 塁の埋まり方：一球速報のページの見出し（いちばん新しい）→ 出場成績の状況 → 図の印 → 計算、の順に信じる
+  const on = k => Array.isArray(p.occ) ? p.occ.includes(bmap[k]) : sit ? (sit.includes("満塁") || sit.includes(k)) : hasBases ? !!p.bases[bmap[k]] : !!SIM[bmap[k]];
   const atk = YSHORT[p.attack] || (p.half && p.half.includes("表") ? g.a : g.h);
   const def = atk === g.h ? g.a : g.h;
   const hand = h => `<em class="hd ${/左/.test(h) ? "l" : "r"}">${esc(h)}</em>`;
   const kmh = x => parseInt(x, 10) || 0;
   const spd = sp => Math.max(6, Math.min(100, ((kmh(sp) - 90) / 70) * 100));
   // 名前：実際にランナーがいる塁に、割り出した走者を下の塁から順に当てはめる
-  const RN = (() => { const occ = ["1", "2", "3"].filter(b => on({ "1": "一", "2": "二", "3": "三" }[b])), names = ["1", "2", "3"].map(b => SIM[b]).filter(Boolean), o = {};
-    occ.forEach((b, i) => { if (names[i]) o[b] = names[i]; }); return o; })();
+  // 名前：①一球速報のページのダイヤモンドの走者（人数が塁の数と合うとき）を、計算した位置を手がかりに当てはめる
+  //       ②合わなければ、計算した走者を下の塁から順に当てはめる。どちらでも人数が足りない塁は名前を出さない（間違えるより出さない）
+  const RN = (() => {
+    const occ = ["1", "2", "3"].filter(b => on({ "1": "一", "2": "二", "3": "三" }[b])), o = {};
+    const page = (p.rnames || []).filter(Boolean), sq = x => nk(x || "");
+    if (page.length && page.length === occ.length) {
+      const left = page.slice();
+      occ.forEach(b => { const i = left.findIndex(n => SIM[b] && (sq(n) === sq(SIM[b]) || sq(SIM[b]).startsWith(sq(n)) || sq(n).startsWith(sq(SIM[b])))); if (i >= 0) { o[b] = left[i]; left.splice(i, 1); } });
+      occ.filter(b => !o[b]).forEach(b => { if (left.length) o[b] = left.shift(); });
+      return o;
+    }
+    const names = ["1", "2", "3"].map(b => SIM[b]).filter(Boolean);
+    if (names.length === occ.length) occ.forEach((b, i) => { o[b] = names[i]; });
+    else occ.forEach(b => { if (SIM[b]) o[b] = SIM[b]; });   // 人数が合わないときは、計算と同じ塁の走者だけ
+    return o;
+  })();
   const RUN = [["2", 150, 34], ["1", 238, 96], ["3", 62, 96]].map(([b, x, y]) => {
     const full = runnerOK(p, b, atk, on) ? p.runners[b] : RN[b];
     return full ? { t: atk, x, y, full, short: callName(atk, full) } : null;
@@ -5146,6 +5169,7 @@ function pitchHTML(g) {
   const cntNow = cnt[cnt.length - 1] || "";
   return `<div class="pbox v2">
     ${last ? `<div class="plast ${pitchCls(last.res)}${newPitch(g, last) ? " fresh" : ""}"><span class="pn">${last.n}</span><div class="plr"><b>${esc(last.res)}</b><small>${esc(last.type)}${cntNow && !abDone ? `<em class="pcnt num">${cntNow}</em>` : ""}</small></div><div class="pkm num"><b>${kmh(last.speed) || "-"}</b><small>km/h</small></div></div>` : ""}
+    ${p.req ? `<div class="preq"><i aria-hidden="true">📹</i><b>リクエスト</b><span>${esc(p.req.replace(/^リクエスト\s*/, "") || "検証中")}</span></div>` : ""}
     <div class="pmid">
       <div class="pinn"><b>${esc(p.half || "")}</b><span style="${tv(atk)}"><i></i>${fn(atk)}攻撃</span>${upd ? `<small class="pupd"><i></i>${` ${upd} 更新`}</small>` : ""}</div>
       <div class="bso3"><div><span>B</span>${lamp(p.b || 0, 3, "b")}</div><div><span>S</span>${lamp(p.s || 0, 2, "s")}</div><div><span>O</span>${lamp(p.o || 0, 2, "o")}</div></div>
