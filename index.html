@@ -47,7 +47,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20261001120852">
+<meta name="build" content="20261001132156">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -4923,12 +4923,22 @@ function benchHTML(g) {
   const p = preOf(g), b = p && p.bench;
   if (!b || (!b.h && !b.a)) return "";
   const k = "b|" + g.d + gkey(g), open = S.stmOpen[k] === true;   // 最初は閉じておく
-  const col = (t, x) => {
-    const rows = BENCH_GR.filter(([gr]) => x && (x[gr] || []).length).map(([gr, c]) => x[gr].map(pl =>
-      `<li data-pl="${t}|${esc(pl.n)}|${c === "投" ? "pit" : ""}"><span class="sto"></span><span class="stp" style="--c:${PCOL[c]}">${c}</span><span class="stnm">${pwName(t, pl.n, gr)}</span><span class="sta num">${esc(pl.st || "")}</span></li>`).join("")).join("");
-    return `<div class="stc" style="${tv(t)}"><div class="sth"><i class="ykb">${sn(t)}</i>${fn(t)}</div>${rows ? `<ol class="stl">${rows}</ol>` : `<p class="stn">まだ発表されていません</p>`}</div>`;
+  // 試合が始まったら：もう出た選手（登板した投手・打席に立った／守った野手）は外して、ベンチに残っている選手だけ
+  const d = GD[g.d + gkey(g)], started = g.st === "live" || g.st === "final";
+  const usedOf = t => {
+    const side = t === g.a ? 0 : 1, set = [];
+    if (d) { ((d.lineups || [])[side] || []).forEach(x => set.push(nk(x.name || ""))); ((d.pitchers || [])[side] || []).forEach(x => set.push(nk(x.name || ""))); }
+    return set.filter(Boolean);
   };
-  return `<details class="stm bench"${open ? " open" : ""} data-stm="${k}"><summary>ベンチ入り<small>投手・捕手・内野手・外野手</small></summary>
+  const played = (used, n) => { const a = nk(n); return used.some(u => u === a || (u.length >= 2 && a.startsWith(u)) || (a.length >= 2 && u.startsWith(a))); };
+  const col = (t, x) => {
+    const used = started ? usedOf(t) : [];
+    const rows = BENCH_GR.map(([gr, c]) => [gr, c, ((x && x[gr]) || []).filter(pl => !played(used, pl.n))]).filter(([, , l]) => l.length).map(([gr, c, l]) => l.map(pl =>
+      `<li data-pl="${t}|${esc(pl.n)}|${c === "投" ? "pit" : ""}"><span class="sto"></span><span class="stp" style="--c:${PCOL[c]}">${c}</span><span class="stnm">${pwName(t, pl.n, gr)}</span><span class="sta num">${esc(pl.st || "")}</span></li>`).join("")).join("");
+    const none = started ? "ベンチに残っている選手はいません" : "まだ発表されていません";
+    return `<div class="stc" style="${tv(t)}"><div class="sth"><i class="ykb">${sn(t)}</i>${fn(t)}</div>${rows ? `<ol class="stl">${rows}</ol>` : `<p class="stn">${none}</p>`}</div>`;
+  };
+  return `<details class="stm bench"${open ? " open" : ""} data-stm="${k}"><summary>${started ? "ベンチ（残り）" : "ベンチ入り"}<small>${started ? "まだ出ていない選手" : "投手・捕手・内野手・外野手"}</small></summary>
     <div class="stw">${col(g.h, b.h)}${col(g.a, b.a)}</div></details>`;
 }
 // 予告先発の行（どの画面でもホームが左。「阪神 vs ヤクルト」の対戦カードの順）
@@ -5112,6 +5122,18 @@ function pitchHTML(g) {
   const RN = (() => {
     const occ = ["1", "2", "3"].filter(b => on({ "1": "一", "2": "二", "3": "三" }[b])), o = {};
     const page = (p.rnames || []).filter(Boolean), sq = x => nk(x || "");
+    // 打席が終わって打者が塁に出た直後は、ページのダイヤモンドの走者は「打席の前」のまま（打者がまだ入っていない）。
+    // そのときは打者を一塁に置き、残りの塁に、前からいた走者を下の塁から順に当てはめる（押し出し・進塁で1つずつ先の塁へ）
+    const pl = p.pitches || [], lr2 = pl.length ? String(pl[pl.length - 1].res || "").normalize("NFKC") : "";
+    const reached = p.batter && pl.length && (["h", "bb", "e"].includes(resCls(lr2)) || /振逃|野選|フィルダース/.test(lr2)) && !/本塁打|本$/.test(lr2);
+    if (reached && occ.includes("1") && page.length === occ.length - 1 && !page.some(n => sq(n) === sq(p.batter.name))) {
+      o["1"] = p.batter.name;
+      const rest = occ.filter(b => b !== "1");
+      const left = page.slice();
+      rest.forEach(b => { const i = left.findIndex(n => SIM[b] && (sq(n) === sq(SIM[b]) || sq(SIM[b]).startsWith(sq(n)) || sq(n).startsWith(sq(SIM[b])))); if (i >= 0) { o[b] = left[i]; left.splice(i, 1); } });
+      rest.filter(b => !o[b]).forEach(b => { if (left.length) o[b] = left.shift(); });
+      return o;
+    }
     if (page.length && page.length === occ.length) {
       const left = page.slice();
       occ.forEach(b => { const i = left.findIndex(n => SIM[b] && (sq(n) === sq(SIM[b]) || sq(SIM[b]).startsWith(sq(n)) || sq(n).startsWith(sq(SIM[b])))); if (i >= 0) { o[b] = left[i]; left.splice(i, 1); } });
@@ -5169,7 +5191,13 @@ function pitchHTML(g) {
   const cntNow = cnt[cnt.length - 1] || "";
   return `<div class="pbox v2">
     ${last ? `<div class="plast ${pitchCls(last.res)}${newPitch(g, last) ? " fresh" : ""}"><span class="pn">${last.n}</span><div class="plr"><b>${esc(last.res)}</b><small>${esc(last.type)}${cntNow && !abDone ? `<em class="pcnt num">${cntNow}</em>` : ""}</small></div><div class="pkm num"><b>${kmh(last.speed) || "-"}</b><small>km/h</small></div></div>` : ""}
-    ${p.req ? `<div class="preq"><i aria-hidden="true">📹</i><b>リクエスト</b><span>${esc(p.req.replace(/^リクエスト\s*/, "") || "検証中")}</span></div>` : ""}
+    ${(() => {   // リクエスト（リプレー検証）・判定の変更・危険球・退場など：一球速報の見出し、なければテキスト速報のその回のいちばん新しいできごと
+      const nt = ((d && d.notes) || []).filter(x => x.half === p.half).slice(-1)[0];
+      const txt = p.req ? p.req.replace(/^リクエスト\s*/, "") || "検証中" : nt ? nt.text : "";
+      if (!txt) return "";
+      const lab = /リクエスト|リプレ|検証|判定/.test((p.req || "") + txt) ? "リクエスト" : /危険球/.test(txt) ? "危険球" : /退場/.test(txt) ? "退場" : /警告/.test(txt) ? "警告" : "審判";
+      return `<div class="preq"><i aria-hidden="true">${lab === "リクエスト" ? "📹" : "⚠️"}</i><b>${lab}</b><span>${esc(txt.replace(/^リクエスト\s*/, ""))}</span></div>`;
+    })()}
     <div class="pmid">
       <div class="pinn"><b>${esc(p.half || "")}</b><span style="${tv(atk)}"><i></i>${fn(atk)}攻撃</span>${upd ? `<small class="pupd"><i></i>${` ${upd} 更新`}</small>` : ""}</div>
       <div class="bso3"><div><span>B</span>${lamp(p.b || 0, 3, "b")}</div><div><span>S</span>${lamp(p.s || 0, 2, "s")}</div><div><span>O</span>${lamp(p.o || 0, 2, "o")}</div></div>
