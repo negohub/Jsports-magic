@@ -2306,6 +2306,47 @@ async def contrast_all_check(browser):
         await pg.close()
 
 
+async def runner_request_check(browser):
+    """一球速報：打者が塁に出た直後の走者（ページのダイヤモンドは打席の前のまま）と、リクエストなどのできごとの表示"""
+    pg, errs = await open_page(browser, 390, "pawa")
+    await pg.evaluate("""() => { const t = CL[0], o = CL[1]; const g = DATA.games.find(x => x.h === t && x.a === o) || DATA.games.find(x => x.h === t);
+      const today = g.d; jst = () => ({ y: +today.slice(0, 4), m: +today.slice(5, 7), d: +today.slice(8), iso: today }); liveWanted = () => false;
+      Object.assign(g, { st: 'live', hs: 1, as: 1, inn: '4回表' }); S.open[g.d + gkey(g)] = true; renderAll(); setTab('game'); }""")
+    await pg.wait_for_timeout(1300)
+    r = await pg.evaluate("""() => { const ng = [], g = DATA.games.find(x => x.st === 'live'), k = g.d + gkey(g), p = PD[k], d = GD[k];
+      const ro = (DATA.rosters[g.a] || []).filter(x => x.p !== '投手');
+      // 死球で一二塁：ページの走者は打席の前（一塁にいた選手だけ）
+      Object.assign(p, { half: '4回表', occ: ['1', '2'], rnames: [ro[0].n], runners: {}, bases: {}, req: null,
+        batter: { name: ro[1].n, no: '52', hand: '右打', avg: '.125' },
+        pitches: [{ n: 1, total: '58', type: 'ストレート', speed: '', res: '見逃し' }, { n: 2, total: '59', type: 'ストレート', speed: '147km/h', res: '死球' }] });
+      d.notes = [{ half: '4回表', name: ro[1].n, text: 'リクエスト（判定変わらず）' }];
+      renderGame();
+      const tiles = [...document.querySelectorAll('.tgd .fldw .rtile')].map(e => e.textContent.replace(/\\s+/g, ''));
+      const want1 = callName(g.a, ro[1].n).replace(/\\s+/g, ''), want2 = callName(g.a, ro[0].n).replace(/\\s+/g, '');
+      if (tiles.length !== 2 || !tiles.includes(want1) || !tiles.includes(want2)) ng.push(`死球の直後の走者が違う（${tiles.join('・')}／正しくは ${want1}・${want2}）`);
+      const one = [...document.querySelectorAll('.tgd .fldw .rtile')].find(e => e.textContent.replace(/\\s+/g, '') === want1);
+      const two = [...document.querySelectorAll('.tgd .fldw .rtile')].find(e => e.textContent.replace(/\\s+/g, '') === want2);
+      if (one && two && !(one.getBoundingClientRect().left > two.getBoundingClientRect().left)) ng.push('打者が一塁（右側）、前からいた走者が二塁（上）になっていない');
+      // ベンチ：もう出た選手（登板した投手・打席に立った野手）は外す
+      const bp = (DATA.rosters[g.h] || []).filter(x => x.p === '投手').slice(0, 3), bf = (DATA.rosters[g.h] || []).filter(x => x.p !== '投手').slice(0, 2);
+      PRE[`${g.d}|${g.h}|${g.a}`] = Object.assign({}, PRE[`${g.d}|${g.h}|${g.a}`] || {}, { bench: { h: { '投手': bp.map(x => ({ n: x.n, st: '2.00' })), '内野手': bf.map(x => ({ n: x.n, st: '.250' })) }, a: {} } });
+      d.pitchers = d.pitchers || [[], []]; d.pitchers[1] = (d.pitchers[1] || []).concat([{ name: bp[0].n, ip: '1', np: 15 }]);
+      d.lineups = d.lineups || [[], []]; d.lineups[1] = (d.lineups[1] || []).concat([{ name: bf[0].n, order: '7', pos: '代打', results: ['中飛'] }]);
+      S.stmOpen['b|' + g.d + gkey(g)] = true; renderGame();
+      const bnames = [...document.querySelectorAll('.tgd .stm.bench .stl li')].map(e => e.dataset.pl.split('|')[1]);
+      if (bnames.includes(bp[0].n)) ng.push(`登板した投手（${bp[0].n}）がベンチに残っている`);
+      if (bnames.includes(bf[0].n)) ng.push(`代打で出た野手（${bf[0].n}）がベンチに残っている`);
+      if (!bnames.includes(bp[1].n)) ng.push(`まだ出ていない投手（${bp[1].n}）がベンチから消えている`);
+      const rq = document.querySelector('.tgd .preq');
+      if (!rq || !/リクエスト/.test(rq.textContent) || !/判定変わらず/.test(rq.textContent)) ng.push('リクエストのできごとが一球速報に出ない');
+      return ng; }""")
+    for m in r:
+        bad(f"[一球速報の走者・リクエスト] {m}")
+    for e in errs:
+        bad(f"[一球速報の走者・リクエスト]: 画面のエラー {e}")
+    await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -2385,6 +2426,7 @@ async def main():
         await default_theme_check(browser)
         await live_off_check(browser)
         await player_today_check(browser)
+        await runner_request_check(browser)
         await peek_check(browser)
         await league_switch_check(browser)
         await cal_post_check(browser)
