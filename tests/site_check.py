@@ -2405,6 +2405,20 @@ async def meaning_color_check(browser):
     await pg.close()
 
 
+async def kick_check(browser):
+    """試合の結果が反映されていないとき：中継プログラムに自動更新を頼み（10分に1回まで）、上のお知らせを「取り込み直しています」に"""
+    pg, errs = await open_page(browser, 390, "pawa")
+    r = await pg.evaluate("""async () => { const ng = [], g = DATA.games.find(x => x.st === 'final' && inLg(x)); g.st = 'sched'; const calls = []; const of = window.fetch;
+      window.fetch = (u, ...a) => { if (String(u).includes('kick=1')) { calls.push(u); return Promise.resolve(new Response(JSON.stringify({ kicked: true }))); } return of(u, ...a); };
+      KICK.at = 0; await kickIfStuck(); await kickIfStuck(); renderHealth(); window.fetch = of;
+      if (calls.length !== 1) ng.push(`取り込み直しの頼み方が違う（${calls.length}回）`);
+      if (!/取り込み直しています/.test(document.getElementById('hWarn').textContent)) ng.push('上のお知らせが「取り込み直しています」にならない');
+      g.st = 'final'; return ng; }""")
+    for m in r:
+        bad(f"[自動更新の取り込み直し] {m}")
+    await pg.close()
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -2493,6 +2507,7 @@ async def main():
         await line_image_check(browser)
         await contrast_all_check(browser)
         await meaning_color_check(browser)
+        await kick_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
