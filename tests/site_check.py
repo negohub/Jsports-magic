@@ -1122,6 +1122,13 @@ async def offseason_check(browser):
             bad(f"[応援歌の判定] 移籍した選手の扱いが違う：{[(r['n'], r['song']) for r in rows]}")
     finally:
         ud.SONG_SOURCES, ud.SONG_BY_NUMBER, ud.SONG_LINK_PAGE, ud.SONG_EXTRA, ud.fetch = _bk
+    # ベースボールチャンネルの戦力外・引退の一覧：見出しごとに種類（戦力外・引退・退団）。移籍の表と、今オフより前は取らない
+    bb = ud.parse_bbc("""<h2>戦力外通告</h2><table><tr><th>日付</th><th>球団</th><th>選手</th><th>ポジション</th></tr><tr><td>10月1日</td><td>広島</td><td>小園海斗</td><td>内野手</td></tr>
+      <tr><td>9月30日</td><td>巨人</td><td>板東湧梧※</td><td>投手</td></tr></table><h2>引退表明</h2><table><tr><td>9月28日</td><td>阪神</td><td>岩貞祐太</td><td>投手</td></tr>
+      <tr><td>8月15日</td><td>中日</td><td>中田翔</td><td>内野手</td></tr></table><h2>退団</h2><table><tr><td>9月30日</td><td>ロッテ</td><td>中村奨吾</td><td>内野手</td></tr></table>
+      <h2>移籍</h2><table><tr><td>10月1日</td><td>西武</td><td>誰か</td><td>投手</td></tr></table>""", 2026)
+    if [(x["t"], x["n"], x["kind"], x["date"], x["dev"]) for x in bb] != [("C", "小園海斗", "cut", "2026-10-01", False), ("G", "板東湧梧", "cut", "2026-09-30", True), ("T", "岩貞祐太", "retire", "2026-09-28", False), ("M", "中村奨吾", "leave", "2026-09-30", False)]:
+        bad(f"[戦力外の一覧（ベースボールチャンネル）] 読み取りが違う：{bb}")
     # 応援歌（DeNA）：公式ページの「選手ごとの見出し」の選手だけ。「選手の呼び方」の表やテーマ曲（汎用）の選手は入れない。
     # まとめサイトは応援歌の表（背番号｜名前）の選手だけ（本文の「〇〇選手の応援歌を流用」などは使わない）
     _bk2 = (ud.SONG_SOURCES, ud.fetch)
