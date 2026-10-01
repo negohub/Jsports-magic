@@ -2298,10 +2298,40 @@ async def contrast_all_check(browser):
                 for y in range(0, min(h, 9000), 760):
                     await pg.evaluate(f"window.scrollTo(0,{y})"); await pg.wait_for_timeout(70)
                     ng += await pg.evaluate(NIGHT_CONTRAST_JS, f"{lg}:{tab}")
-            await pg.evaluate("window.scrollTo(0,0); openSheet()"); await pg.wait_for_timeout(450)
+            await pg.evaluate("window.scrollTo(0,0); openSheet(); document.querySelectorAll('#sheet details').forEach(d => (d.open = true))"); await pg.wait_for_timeout(450)
             ng += await pg.evaluate(NIGHT_CONTRAST_JS, f"{lg}:設定")
             await pg.evaluate("closeSheet()"); await pg.wait_for_timeout(300)
-        for m in list(dict.fromkeys(ng))[:8]:
+        # 隠れている所：折りたたみ（見方など）を全部開いた各タブ、日程の詳しい欄（勝ち・負け・引き分け）、長押しの中身、選手の画面、オフの全部の種類
+        await pg.evaluate("switchLeague('C')"); await pg.wait_for_timeout(300)
+        for tab in ["magic", "game", "cal", "std", "stats", "song", "off"]:
+            await pg.evaluate(f"setTab('{tab}'); document.querySelectorAll('#v-{tab} details').forEach(d => (d.open = true))"); await pg.wait_for_timeout(350)
+            h = await pg.evaluate("document.documentElement.scrollHeight")
+            for y in range(0, min(h, 12000), 760):
+                await pg.evaluate(f"window.scrollTo(0,{y})"); await pg.wait_for_timeout(60)
+                ng += await pg.evaluate(NIGHT_CONTRAST_JS, f"開いた:{tab}")
+        await pg.evaluate("setTab('cal'); window.scrollTo(0,0)"); await pg.wait_for_timeout(300)
+        for kind in ["w", "l", "d"]:
+            ok = await pg.evaluate("""(kd) => { const t = S.calTeam; const g = DATA.games.find(x => x.st === 'final' && (x.h === t || x.a === t) && (kd === 'd' ? x.hs === x.as : kd === 'w' ? ((x.h === t ? x.hs - x.as : x.as - x.hs) > 0) : ((x.h === t ? x.hs - x.as : x.as - x.hs) < 0)));
+              if (!g) return false; S.calMonth = +g.d.slice(5, 7); S.calSel = g.d; renderCal(); const e = document.getElementById('detail'); if (e) e.scrollIntoView({ block: 'center' }); return true; }""", kind)
+            if ok:
+                await pg.wait_for_timeout(250)
+                ng += await pg.evaluate(NIGHT_CONTRAST_JS, f"日程の詳しい欄（{kind}）")
+        for js, lab in [("openPeek({ kind: 'team', t: CL[0] })", "長押し（チーム）"), ("(() => { const g = DATA.games.find(x => x.st === 'final'); return g && openPeek({ kind: 'game', d: g.d, h: g.h, a: g.a }); })()", "長押し（試合）"),
+                        ("openPeek({ kind: 'pl', t: CL[0], n: (DATA.rosters[CL[0]] || [])[3].n })", "長押し（選手）")]:
+            await pg.evaluate(js); await pg.wait_for_timeout(350)
+            ng += await pg.evaluate(NIGHT_CONTRAST_JS.replace("#peek:not(.on),", ""), lab)
+            await pg.evaluate("closePeek()"); await pg.wait_for_timeout(250)
+        await pg.evaluate("(async () => { const t = CL[0], ro = (DATA.rosters[t] || []).find(x => x.p === '投手'); await openPlayer(t, ro.n, { kind: 'pit' }); })()"); await pg.wait_for_timeout(800)
+        ng += await pg.evaluate(NIGHT_CONTRAST_JS, "選手の画面")
+        await pg.evaluate("""() => { const t = CL[0], ro = DATA.rosters[t] || [], kinds = ['cut', 'offer', 'leave', 'retire', 'mgr', 'out', 'in', 'fa_decl', 'draft', 'coach_in', 'coach_out', 'coach_move'];
+          DATA.offseason = { season: 2026, items: kinds.map((k, i) => ({ t, n: k === 'mgr' || /coach/.test(k) ? 'テスト 監督' + i : ro[i].n, no: ro[i].no, kind: k, via: k === 'out' || k === 'in' ? 'trade' : '', to: k === 'out' ? CL[1] : '', from: k === 'in' ? CL[1] : '', role: '中', date: '2026-10-01', url: '', title: '', round: '1位' })), teams: {}, seen: {} };
+          jst = () => ({ y: 2026, m: 10, d: 1, iso: '2026-10-01' }); S.offCat = 'all'; closeSheet(); renderAll(); setTab('off'); }""")
+        await pg.wait_for_timeout(600)
+        h = await pg.evaluate("document.documentElement.scrollHeight")
+        for y in range(0, min(h, 6000), 760):
+            await pg.evaluate(f"window.scrollTo(0,{y})"); await pg.wait_for_timeout(60)
+            ng += await pg.evaluate(NIGHT_CONTRAST_JS, "オフ（全部の種類）")
+        for m in list(dict.fromkeys(ng))[:10]:
             bad(f"[読みやすさ {label}] {m}")
         await pg.close()
 
@@ -2344,6 +2374,34 @@ async def runner_request_check(browser):
         bad(f"[一球速報の走者・リクエスト] {m}")
     for e in errs:
         bad(f"[一球速報の走者・リクエスト]: 画面のエラー {e}")
+    await pg.close()
+
+
+async def meaning_color_check(browser):
+    """色で意味を表す所が、4つの見た目すべてで説明どおりの色か：優勝ラインの「黄色＝ペース」、チーム成績のトップの数字（暗い画面は黄色・明るい画面は濃いオレンジ）。
+    あわせて、呼び名からの戦力外の照らし合わせ（「山野」を山野辺翔と取り違えない）"""
+    for theme, mode, label, dark in [("pawa", "light", "パワプロ風（昼）", False), ("pawa", "dark", "パワプロ風（夜）", True), ("", "dark", "スタイリッシュ（黒）", True), ("", "light", "スタイリッシュ（白）", False)]:
+        pg, errs = await open_page(browser, 390, theme)
+        await pg.evaluate(f"store('mode','{mode}'); applyPawaMode(); setTab('std'); renderAll()"); await pg.wait_for_timeout(500)
+        r = await pg.evaluate("""(dark) => { const ng = [], rgb = s => (s.match(/[\\d.]+/g) || []).map(Number);
+          const pc = document.querySelector('.race td.pace');
+          if (pc) { const [r, g, b, a = 1] = rgb(getComputedStyle(pc).backgroundColor); if (!(r > b + 40 && g > b + 20 && a > .1)) ng.push(`優勝ラインの「黄色」の行が黄色くない（${getComputedStyle(pc).backgroundColor}）`); }
+          setTab('stats'); renderAll();
+          const bt = document.querySelector('#tmTbl td.best');
+          if (bt) { const [r, g, b] = rgb(getComputedStyle(bt).color);
+            if (dark ? !(r > 200 && g > 170 && b < 140) : !(r > 120 && r > g + 30 && b < 60)) ng.push(`チーム成績のトップの数字が${dark ? '黄色' : '濃いオレンジ'}でない（${getComputedStyle(bt).color}）`); }
+          return ng; }""", dark)
+        for m in r:
+            bad(f"[色の意味 {label}] {m}")
+        await pg.close()
+    pg, errs = await open_page(browser, 390, "pawa")
+    r = await pg.evaluate("""() => { DATA.rosters.S = DATA.rosters.S || []; for (const x of [{ n: '山野 太一', no: '47', p: '投手' }, { n: '山野辺 翔', no: '2', p: '内野手' }]) if (!DATA.rosters.S.some(r => r.n === x.n)) DATA.rosters.S.push(x);
+      DATA.offseason = { season: 2026, items: [{ t: 'S', n: '山野辺 翔', kind: 'cut', date: '2026-09-29' }], teams: {}, seen: {} };
+      return [offOf('S', '山野'), offOf('S', '山野 太一'), offOf('S', '山野辺')].map(x => x && x.n); }""")
+    if r[0] or r[1]:
+        bad(f"[戦力外の照らし合わせ] 「山野（山野太一）」を戦力外（山野辺翔）と取り違えている：{r}")
+    if r[2] != "山野辺 翔":
+        bad(f"[戦力外の照らし合わせ] 「山野辺」が戦力外の山野辺翔にならない：{r}")
     await pg.close()
 
 
@@ -2434,6 +2492,7 @@ async def main():
         await light_check(browser)
         await line_image_check(browser)
         await contrast_all_check(browser)
+        await meaning_color_check(browser)
         await browser.close()
     print()
     # Actions の実行結果のページ（Summary）にも一覧を書く
