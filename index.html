@@ -47,7 +47,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20261001011320">
+<meta name="build" content="20261001104459">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -6561,7 +6561,7 @@ function offMerged() {
     if (!TEAM[x.t] || have.has(x.t + "|" + nk(x.n))) continue;
     const ro = ((DATA.rosters || {})[x.t] || []).find(r => nk(r.n) === nk(x.n));
     add.push({ t: x.t, n: ro ? ro.n : x.n, no: ro ? ro.no : "", dev: ro ? !!ro.dev : !!x.dev, kind: x.kind, date: x.date,
-      url: "https://baseball.yahoo.co.jp/npb/transfer", title: "スポーツナビ 入退団情報", src: "live" });
+      url: x.url || "https://baseball.yahoo.co.jp/npb/transfer", title: x.src === "bbc" ? "ベースボールチャンネル 戦力外・引退一覧" : "スポーツナビ 入退団情報", src: "live" });
   }
   return add.length ? base.concat(add) : base;
 }
