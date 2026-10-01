@@ -47,7 +47,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20261001155638">
+<meta name="build" content="20261001171351">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -3225,6 +3225,7 @@ html.sty-light:not(.theme-pawa) .offtag.k-in:not(#z):not(#y){background:#1B7F3B 
 html.sty-light:not(.theme-pawa) .tgo em:not(#z):not(#y):not(#x){color:#fff !important;background:#C62828 !important}
 html.sty-light:not(.theme-pawa) .preq{background:#FFE680;color:#FFFFFF}
 html.sty-light:not(.theme-pawa) .offtag.k-coach_in:not(#z):not(#y),html.sty-light:not(.theme-pawa) .offtag.k-coach_move:not(#z):not(#y){background:#1B7F3B !important;color:#fff !important}
+html.sty-light:not(.theme-pawa) .bk-rule b{color:#AA8A0E}
 /* ===== 文字の読みやすさ（contrast_fix.py） ===== */
 html.theme-pawa:not(.pawa-dark) .pl3 .pcn:not(#z){color:#576B8D !important}
 html.theme-pawa:not(.pawa-dark) .rbi:not(#z){background:linear-gradient(180deg,#1C842E,#198634) !important}
@@ -3381,6 +3382,7 @@ html.sty-light:not(.theme-pawa) .offtag:not(#z){background:#E12D33 !important}
 html.sty-light:not(.theme-pawa) .mgtab td.best:not(#z){color:#7B640A !important}
 html.sty-light:not(.theme-pawa) .ls td.now:not(#z){color:#895D0B !important}
 html.sty-light:not(.theme-pawa) .preq:not(#z){background:#8F7300 !important}
+html.sty-light:not(.theme-pawa) .bk-rule b:not(#z){color:#7B640A !important}
 /* ===== パワプロ風（夜）：パワプロの形（太い枠・札・青い見出し）はそのまま、色は紺の1系統にそろえる =====
    地：いちばん奥 #0B1733 → パネル #16243F → 表の行 #1A2A49／#16243F → 見出しの帯 青のグラデーション
    文字：#E7EEF9、うすい文字 #A3B6D8。アクセントは黄色（#FFD84D）だけ。球団の色は札・丸・左の帯だけに残す */
@@ -3553,6 +3555,13 @@ html.sty-light:not(.theme-pawa) .race td.pace:not(#z):not(#y){background:#FFF1B8
 html.sty-light:not(.theme-pawa) .rnote .k2:not(#z){background:#FFF1B8 !important;color:#5A4300 !important}
 html.theme-pawa:not(.pawa-dark) .race td.pace:not(#z):not(#y){background:#FFF3C4 !important;color:#13264A !important;font-weight:800 !important}
 html.theme-pawa.pawa-dark .race td.clinch:not(#z):not(#y){color:#FF8A80 !important}
+.bk-rule{margin:8px 0 0;padding:10px 12px;border-radius:12px;font-size:12.5px;line-height:1.6;background:rgba(255,210,31,.10);border:1px solid rgba(255,210,31,.35)}
+.bk-rule b{display:block;font-size:11.5px;letter-spacing:.06em;margin-bottom:2px;color:#FFD21F}
+html.theme-pawa:not(.pawa-dark) .bk-rule{background:#FFF8DC;border-color:#F2D27A;color:#13264A}
+html.theme-pawa:not(.pawa-dark) .bk-rule b{color:#8A5A00}
+html.sty-light:not(.theme-pawa) .bk-rule{background:#FFF8DC;border-color:#E9CF7A;color:#15161A}
+html.sty-light:not(.theme-pawa) .bk-rule b{color:#7A5200}
+html.theme-pawa.pawa-dark .bk-rule b{color:#FFD84D}
 </style>
 </head>
 <body>
@@ -3645,7 +3654,7 @@ html.theme-pawa.pawa-dark .race td.clinch:not(#z):not(#y){color:#FF8A80 !importa
     <div class="hist cl-only" id="hist"></div>
     <h2 class="cl-only">担当者別 年間成績</h2>
     <div class="tot cl-only" id="tot"></div>
-    <details class="howto"><summary>見方</summary><ul><li>順位表：勝差は1位とのゲーム差。1位の勝差の欄は優勝マジック。</li><li>クライマックスシリーズ・日本シリーズ：勝ち上がり表で、各ステージの勝敗（ファイナルステージの1位は1勝のアドバンテージ込み）と1試合ずつの結果（上の球団から見て○勝ち・●負け・△引き分け）を出します。シーズン終了までは今の順位で表示します。</li><li>順位表の残試合は、日程に入っている試合と、振替待ち（中止になって振替日がまだ決まっていない試合）を合わせた数です。</li><li>優勝ライン：首位と、まだ優勝の可能性がある球団の、残り試合の勝敗ごとの最終勝率。赤字は首位がこの成績以上なら優勝（優勝マジックと同じ）、黄色の背景は今の勝率のペースを保った場合。優勝が決まると表示されなくなります。</li><li>対戦成績：左の球団から見た勝数-負数（引分数）。<span class="cl-only">例：神の行・巨の列＝阪神の巨人戦。</span><span class="pl-only">例：ソの行・日の列＝ソフトバンクの日本ハム戦。</span></li><li class="cl-only">月度ごとの支払い：順位は左から1位で、一番右が最下位（支払い）。広島は対象外。</li><li class="cl-only">担当者ごとの年間成績：数字は各月度の順位（<span class="th-s">白</span><span class="th-p">金色</span>＝1位、赤＝最下位、点線の枠＝集計中）。支払いの少ない順、同じなら平均順位の順。MVPはいちばん上の人、「最多」は支払いの回数がいちばん多い人。</li></ul></details>
+    <details class="howto"><summary>見方</summary><ul><li>順位表：勝差は1位とのゲーム差。1位の勝差の欄は優勝マジック。</li><li>クライマックスシリーズ・日本シリーズ：勝ち上がり表で、各ステージの勝敗（ファイナルステージの1位はアドバンテージ込み。2026年からは、ファーストステージの勝者が1位と10ゲーム差以上か勝率5割未満なら2勝のアドバンテージ・7試合制、それ以外は1勝・6試合制）と1試合ずつの結果（上の球団から見て○勝ち・●負け・△引き分け）を出します。シーズン終了までは今の順位で表示します。</li><li>順位表の残試合は、日程に入っている試合と、振替待ち（中止になって振替日がまだ決まっていない試合）を合わせた数です。</li><li>優勝ライン：首位と、まだ優勝の可能性がある球団の、残り試合の勝敗ごとの最終勝率。赤字は首位がこの成績以上なら優勝（優勝マジックと同じ）、黄色の背景は今の勝率のペースを保った場合。優勝が決まると表示されなくなります。</li><li>対戦成績：左の球団から見た勝数-負数（引分数）。<span class="cl-only">例：神の行・巨の列＝阪神の巨人戦。</span><span class="pl-only">例：ソの行・日の列＝ソフトバンクの日本ハム戦。</span></li><li class="cl-only">月度ごとの支払い：順位は左から1位で、一番右が最下位（支払い）。広島は対象外。</li><li class="cl-only">担当者ごとの年間成績：数字は各月度の順位（<span class="th-s">白</span><span class="th-p">金色</span>＝1位、赤＝最下位、点線の枠＝集計中）。支払いの少ない順、同じなら平均順位の順。MVPはいちばん上の人、「最多」は支払いの回数がいちばん多い人。</li></ul></details>
   </section>
   <section class="view" id="v-game" aria-label="今日の試合" hidden>
     <section class="blk" id="todayBlk">
@@ -5902,8 +5911,11 @@ function postToday() {
   return postGames().filter(g => g.d === today && g.h && g.a && g.st !== "canc");
 }
 function postGames() {
-  const list = (DATA.post || []).filter(g => g.stage === "JS" || (g.lg || "C") === (isPL() ? "P" : "C")).map(g => ({ ...g }));
+  const lgNow2 = isPL() ? "P" : "C";
+  const list = (DATA.post || []).filter(g => g.stage === "JS" || (g.lg || "C") === lgNow2).map(g => ({ ...g }));
   if (!list.length) return list;
+  // 2026年からの新ルールで7試合制になる（なりうる）ときは、ファイナルステージの第7戦を足す
+  try { const lp = lgPost(lgNow2), g7 = lp.csf.find(g => g.no === 7); if (g7 && !list.some(g => g.stage === "CSF" && g.no === 7)) list.push({ d: g7.d, stage: "CSF", no: 7, lg: lgNow2, only7: g7.only7 }); } catch {}
   const done = seasonOver(), rk = done ? seasonTable(DATA.games, calOrder()).map(r => r.t) : null;
   const wins = (stage, t) => list.filter(g => g.stage === stage && g.st === "final" && g.hs !== g.as && ((g.h === t && g.hs > g.as) || (g.a === t && g.as > g.hs))).length;
   const cs1 = rk ? [rk[1], rk[2]] : null;
@@ -6056,23 +6068,61 @@ function renderCal() {
 function lgRank(lg) {
   const cur = LEAGUE;
   useLeague(lg);
-  try { return { rk: seasonTable(DATA.games, calOrder(), pendingMakeups()).map(r => r.t), done: seasonOver() }; }
+  try { const rows = seasonTable(DATA.games, calOrder(), pendingMakeups()); return { rk: rows.map(r => r.t), rows, done: seasonOver() }; }
   finally { useLeague(cur); }
+}
+// 2026年からのファイナルステージの決まり（NPB「2026年 セ・パ クライマックスシリーズについてのお知らせ」）：
+// ファーストステージの勝者が、①1位とレギュラーシーズンで10ゲーム差以上、または②勝率5割未満なら、
+// 7試合制・1位に2勝のアドバンテージ・先に5勝。そうでなければ6試合制・1勝のアドバンテージ・先に4勝
+function csfRule(rows, first, chal) {
+  const r1 = rows.find(r => r.t === first), rc = rows.find(r => r.t === chal);
+  if (!r1 || !rc) return { adv: 1, need: 4, total: 6, two: false, why: [] };
+  const gb = ((r1.w - rc.w) + (rc.l - r1.l)) / 2, pct = rc.w + rc.l ? rc.w / (rc.w + rc.l) : 0;
+  const why = [];
+  if (gb >= 10) why.push(`1位と${gb.toFixed(1)}ゲーム差`);
+  if (pct < .5) why.push(`勝率${pct.toFixed(3).replace(/^0/, "")}`);
+  return why.length ? { adv: 2, need: 5, total: 7, two: true, why, gb, pct } : { adv: 1, need: 4, total: 6, two: false, why, gb, pct };
 }
 // 1つの対戦：hi＝上位（引き分けで並んだら勝ち上がる側）、need＝先に何勝、adv＝上位のアドバンテージ、total＝最大の試合数
 function seriesOf(gs, hi, lo, need, adv, total) {
   const w = t => gs.filter(g => g.st === "final" && g.hs !== g.as && ((g.h === t && g.hs > g.as) || (g.a === t && g.as > g.hs))).length;
   const wh = (hi ? w(hi) : 0) + adv, wl = lo ? w(lo) : 0, played = gs.filter(g => g.st === "final" || g.st === "canc").length;
-  const win = hi && wh >= need ? hi : lo && wl >= need ? lo : hi && lo && played >= total ? (wh >= wl ? hi : lo) : null;
+  const rest = Math.max(0, total - played);
+  const win = hi && wh >= need ? hi : lo && wl >= need ? lo : hi && lo && played >= total ? (wh >= wl ? hi : lo)
+    : hi && lo && total < 99 && wh >= wl + rest ? hi : null;   // 上位の勝ち数が下位と同じ以上になると決まった時点で上位の勝ち（並んだら上位）
   return { wh, wl, win };
 }
+// lgPost は日程の1日ごとなど何度も呼ばれるので、同じデータ・同じ状態の間は計算を使い回す（1秒）
+const LGPOST_MEMO = {};
 function lgPost(lg) {
+  const key = lg + "|" + (DATA.updated || "") + "|" + DATA.games.length + "|" + JSON.stringify((DATA.post || []).map(g => [g.st, g.hs, g.as, g.h, g.a]));
+  const m = LGPOST_MEMO[lg];
+  if (m && m.key === key && Date.now() - m.at < 1000) return m.v;
+  const v = lgPostCalc(lg);
+  LGPOST_MEMO[lg] = { key, at: Date.now(), v };
+  return v;
+}
+function lgPostCalc(lg) {
   const all = (DATA.post || []).filter(g => g.stage !== "JS" && (g.lg || "C") === lg);
-  const { rk, done } = lgRank(lg);
+  const { rk, rows, done } = lgRank(lg);
   const by = st => all.filter(g => g.stage === st).sort((a, b) => a.no - b.no);
-  const cs1 = by("CS1"), csf = by("CSF");
-  const s1 = seriesOf(cs1, rk[1], rk[2], 2, 0, 3), sf = seriesOf(csf, rk[0], s1.win, 4, 1, 6);
-  return { rk, done, cs1, csf, s1, sf };
+  const cs1 = by("CS1");
+  const s1 = seriesOf(cs1, rk[1], rk[2], 2, 0, 3);
+  // ファイナルステージの決まり：勝ち上がりが決まれば、その球団で。まだなら2位・3位それぞれの場合
+  const rule = s1.win ? csfRule(rows, rk[0], s1.win) : null;
+  const rule2 = csfRule(rows, rk[0], rk[1]), rule3 = csfRule(rows, rk[0], rk[2]);
+  const R = rule || (rule2.two && rule3.two ? rule2 : { adv: 1, need: 4, total: 6, two: false, why: [] });
+  // 7試合制のときは第7戦（10/20）がある：日程にまだなければ、第6戦の次の日に足す
+  let csf = by("CSF");
+  const maybe7 = rule ? rule.two : (rule2.two || rule3.two);
+  if (maybe7 && csf.length === 6 && !csf.some(g => g.no === 7)) {
+    const d6 = new Date(csf[5].d + "T00:00:00+09:00"); d6.setDate(d6.getDate() + 1);
+    const d7 = `${d6.getFullYear()}-${String(d6.getMonth() + 1).padStart(2, "0")}-${String(d6.getDate()).padStart(2, "0")}`;
+    csf = csf.concat([{ ...csf[5], d: d7, no: 7, st: "sched", hs: undefined, as: undefined, only7: !(rule && rule.two) }]);
+  }
+  if (!(rule ? rule.two : maybe7)) csf = csf.filter(g => g.no <= 6);
+  const sf = seriesOf(csf.filter(g => !g.only7 || (rule && rule.two)), rk[0], s1.win, R.need, R.adv, R.total);
+  return { rk, rows, done, cs1, csf, s1, sf, rule, rule2, rule3, R };
 }
 function renderBracket() {
   const box = $("bracketBox"), post = DATA.post || [];
@@ -6104,7 +6154,13 @@ function renderBracket() {
   const L = lg === "C" ? "セ" : "パ";
   box.innerHTML = `<h2>CS・日本シリーズ</h2>${pro ? `<p class="bk-note">${pro}</p>` : ""}<div class="bk">
     ${stage(`${L}・CSファーストステージ`, "先に2勝（3試合・並んだら2位）", me.cs1, tm(me.rk[1], "2位", me.s1.wh, me.s1.win), tm(me.rk[2], "3位", me.s1.wl, me.s1.win), { ...me.s1, hi: me.rk[1] }, "がファイナルステージへ")}
-    ${stage(`${L}・CSファイナルステージ`, "先に4勝（1位に1勝のアドバンテージ・6試合）", me.csf, tm(me.rk[0], "1位", me.sf.wh, me.sf.win, 1), tm(me.s1.win, "ファースト勝者", me.sf.wl, me.sf.win), { ...me.sf, hi: me.rk[0] }, `が日本シリーズへ（${L}・リーグ代表）`)}
+    ${stage(`${L}・CSファイナルステージ`, me.rule ? (me.rule.two ? "先に5勝（1位に2勝のアドバンテージ・7試合）" : "先に4勝（1位に1勝のアドバンテージ・6試合）") : "先に4勝（6試合・1位に1勝のアドバンテージ）／条件により先に5勝（7試合・2勝のアドバンテージ）", me.csf, tm(me.rk[0], "1位", me.sf.wh, me.sf.win, me.R.adv), tm(me.s1.win, "ファースト勝者", me.sf.wl, me.sf.win), { ...me.sf, hi: me.rk[0] }, `が日本シリーズへ（${L}・リーグ代表）`)}
+    ${(() => {   // 2026年からの決まり：どちらの形になるか（なりそうか）を説明
+      const r = me.rule, f = me.rk[0], two = x => x.two ? `2勝のアドバンテージ・7試合制（${x.why.join("・")}）` : `1勝のアドバンテージ・6試合制（1位と${x.gb.toFixed(1)}ゲーム差・勝率${x.pct.toFixed(3).replace(/^0/, "")}）`;
+      const txt = r ? `${fn(me.s1.win)}が相手なので、${two(r)}${me.done ? "" : "（今の成績で計算・シーズン終了で確定）"}`
+        : `ファーストステージの勝者が「1位と10ゲーム差以上」または「勝率5割未満」なら、1位に2勝のアドバンテージ・7試合制（10/20に第7戦）。今の成績では、${fn(me.rk[1])}が勝ち上がれば${two(me.rule2)}、${fn(me.rk[2])}なら${two(me.rule3)}${me.done ? "" : "（シーズン終了で確定）"}`;
+      return `<p class="bk-rule"><b>2026年からの新ルール</b>${esc(txt)}</p>`;
+    })()}
     ${stage("日本シリーズ", "先に4勝（7試合）", jsg, tm(seW, "セ代表", js.wh, js.win), tm(paW, "パ代表", js.wl, js.win), { ...js, hi: seW }, "が日本一")}
   </div>`;
 }
