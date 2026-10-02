@@ -2343,6 +2343,11 @@ async def rec_check(browser):
             const ov = [...document.querySelectorAll('#recTbl .rectile b')].filter(b => b.scrollWidth > b.clientWidth + 1).map(b => b.textContent); if (ov.length) ng.push(`名前が札に収まらない（${ov}）`);
             const t1 = tile('中村 剛也'), a1 = t1 && t1.parentElement.querySelector('.recact'); if (a1 && a1.getBoundingClientRect().top < t1.getBoundingClientRect().bottom - 1) ng.push('現役の印が札に重なっている');
           } else if (document.querySelector('#recTbl .ptile')) ng.push('スタイリッシュで札になっている');
+          // 実働期間：全員「1959-1980」の形（4けた-4けた）。行ごとに1行・2行がばらばらにならない
+          { const ps = [...document.querySelectorAll('#recTbl td.rp')];
+            if (!ps.length) ng.push('実働期間の列がない');
+            const bad1 = ps.map(td => td.textContent).filter(x => !/^\\d{4}-\\d{4}$/.test(x)); if (bad1.length) ng.push(`実働期間の書き方がそろっていない（${bad1}）`);
+            const lines = ps.map(td => new Set([...td.querySelectorAll('.yr')].map(y => Math.round(y.getBoundingClientRect().top))).size); if (new Set(lines).size > 1) ng.push(`実働期間の行数がそろっていない（${lines}）`); }
           if (!/^10\\/1 時点$/.test(document.getElementById('recAsof').textContent)) ng.push(`いつ現在かが出ない（${document.getElementById('recAsof').textContent}）`);
           const sel = document.getElementById('recCat'); sel.value = 'avg'; sel.dispatchEvent(new Event('change'));
           if (!/\\.320/.test(txt())) ng.push('部門（打率）に切り替わらない');
@@ -2408,6 +2413,65 @@ async def tab_group_check(browser):
         for e in errs:
             bad(f"[タブの整理]: 画面のエラー {e}")
         await pg.close()
+
+
+async def pennant_check(browser):
+    """リーグ優勝：試合タブのいちばん上に優勝マジックと「今日決まる条件」。各試合の「勝ったら」に優勝決定・マジックの動き。
+    決まったら「リーグ優勝」と決まった日。直接対決の札は、最下位争いが動く試合だけ"""
+    for th in ["pawa", ""]:
+        pg, errs = await open_page(browser, 390, th, me="T")
+        r = await pg.evaluate("""() => { const ng = [];
+          const base = seasonTable(DATA.games, calOrder(), pendingMakeups());
+          const X = base[0];
+          const next = DATA.games.filter(g => g.st !== 'final' && g.st !== 'canc' && (g.h === X.t || g.a === X.t)).map(g => g.d).sort()[0];
+          if (X.magic == null || X.magic === 0 || !next) return ['skip'];
+          const [y, m, d] = next.split('-').map(Number); jst = () => ({ y, m, d, iso: next });
+          renderAll(); setTab('game');
+          const box = document.getElementById('pennantBox').innerText;
+          if (!box.includes('M' + X.magic)) ng.push(`優勝マジックが出ない（${box}）`);
+          const st = pennantState();
+          const decides = [...document.querySelectorAll('#today .tgo')].some(o => /リーグ優勝が決定/.test(o.innerText));
+          if (st.combos.length && !/優勝が決まります/.test(box)) ng.push(`今日決まる条件が出ない（${box}）`);
+          if (!st.combos.length && /優勝が決まります/.test(box)) ng.push('今日は決まらないのに、決まると書いている');
+          if (decides && !st.combos.length) ng.push('試合の「勝ったら」と上の箱の言うことが食い違う');
+          // 条件の言葉が正しいか：言葉どおりの結果にすると本当に決まる（主な条件の1つ目で試す）
+          if (st.combos.length) {
+            const w = pennantWords(st);
+            if (!w || !w.main) ng.push('主な条件が空');
+            if (/undefined|null|NaN/.test(box)) ng.push(`条件の言葉が壊れている（${box}）`);
+          }
+          // 直接対決の札：両方とも「大きな動きなし」の試合には付かない
+          for (const tg of document.querySelectorAll('#today .tg')) {
+            const sides = [...tg.querySelectorAll('.tgo')].map(o => o.innerText);
+            if (sides.length === 2 && sides.every(x => /大きな動きなし/.test(x)) && tg.querySelector('.vsb')) ng.push(`動きのない試合に直接対決の札（${tg.dataset.gk}）`);
+          }
+          // 優勝が決まったあと：首位の残りを全部勝ちにして、決まった日が出る
+          const keep = DATA.games;
+          DATA = { ...DATA, games: DATA.games.map(g => g.st !== 'final' && g.st !== 'canc' && (g.h === X.t || g.a === X.t) ? { ...g, st: 'final', hs: g.h === X.t ? 5 : 0, as: g.a === X.t ? 5 : 0 } : g) };
+          renderAll(); setTab('game');
+          const st2 = pennantState(), box2 = document.getElementById('pennantBox').innerText;
+          if (!st2.done || !/リーグ優勝/.test(box2) || !/\\d+\\/\\d+ に決定/.test(box2)) ng.push(`優勝が決まったあとの表示が違う（${box2}）`);
+          DATA = { ...DATA, games: keep }; renderAll();
+          return ng; }""")
+        if r == ["skip"]:
+            print("[リーグ優勝] 優勝マジックがない時期なので一部を飛ばしました")
+            r = []
+        for m in r:
+            bad(f"[リーグ優勝 {'パワプロ風' if th else 'スタイリッシュ'}] {m}")
+        for e in errs:
+            bad(f"[リーグ優勝]: 画面のエラー {e}")
+        await pg.close()
+    # 条件の言葉：組み合わせから決まった言い方（決まった例）
+    pg, errs = await open_page(browser, 390, "pawa", me="T")
+    w = await pg.evaluate("""() => { const G = (h, a) => ({ d: '2026-10-03', h, a, st: 'sched' });
+      const open = [G('C', 'T'), G('G', 'DB')];
+      // 阪神が勝つ（a）か、巨人が負ける（DeNAの勝ち a）、どちらも引き分け（dd）で決まる
+      const combos = ['ah','aa','ad','hh'.replace('hh','ha'),'da','ca'].filter(x => x.length === 2 && !x.includes('c'));
+      const list = ['ah', 'aa', 'ad', 'ha', 'da', 'dd'];
+      return pennantWords({ t: 'T', open, combos: list }); }""")
+    if not w or w.get("main") != "阪神が勝つか、巨人が負ける" or w.get("extra") != "阪神と巨人がどちらも引き分け":
+        bad(f"[リーグ優勝] 条件の言葉が違う：{w}")
+    await pg.close()
 
 
 async def player_today_check(browser):
@@ -2914,6 +2978,7 @@ async def main():
         await pitch_align_check(browser)
         await rec_check(browser)
         await tab_group_check(browser)
+        await pennant_check(browser)
         await player_today_check(browser)
         await runner_request_check(browser)
         await peek_check(browser)
