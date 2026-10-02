@@ -2334,6 +2334,15 @@ async def rec_check(browser):
           const rv = [...document.querySelectorAll('#recTbl tbody td.rv')].map(e => e.textContent);
           if (rv[0] !== '868') ng.push(`記録の列が太字の列になっていない（${rv}）`);
           if (!document.querySelector('#recTbl .recact')) ng.push('現役の印が出ない');
+          // パワプロ風は名前の札：今の選手は名簿の守備位置の色、引退した打者は白、投手の記録はピンク。スタイリッシュは文字
+          const tile = n => [...document.querySelectorAll('#recTbl td.rn')].find(td => td.textContent.includes(n))?.querySelector('.ptile');
+          if (isPawa()) {
+            if (!tile('王 貞治') || !tile('王 貞治').classList.contains('pwh')) ng.push(`引退した打者（王 貞治）が白い札でない（${tile('王 貞治')?.className}）`);
+            const nk2 = tile('中村 剛也'); if (!nk2 || nk2.classList.contains('pwh') || !nk2.classList.contains(TILEC[posGroups('L', '中村 剛也', '内野手')[0]])) ng.push(`今の選手（中村 剛也）が名簿の守備位置の色でない（${nk2?.className}）`);
+            if (document.querySelectorAll('#recTbl td.rn').length !== document.querySelectorAll('#recTbl td.rn .ptile').length) ng.push('札になっていない名前がある');
+            const ov = [...document.querySelectorAll('#recTbl .rectile b')].filter(b => b.scrollWidth > b.clientWidth + 1).map(b => b.textContent); if (ov.length) ng.push(`名前が札に収まらない（${ov}）`);
+            const t1 = tile('中村 剛也'), a1 = t1 && t1.parentElement.querySelector('.recact'); if (a1 && a1.getBoundingClientRect().top < t1.getBoundingClientRect().bottom - 1) ng.push('現役の印が札に重なっている');
+          } else if (document.querySelector('#recTbl .ptile')) ng.push('スタイリッシュで札になっている');
           if (!/^10\\/1 時点$/.test(document.getElementById('recAsof').textContent)) ng.push(`いつ現在かが出ない（${document.getElementById('recAsof').textContent}）`);
           const sel = document.getElementById('recCat'); sel.value = 'avg'; sel.dispatchEvent(new Event('change'));
           if (!/\\.320/.test(txt())) ng.push('部門（打率）に切り替わらない');
@@ -2343,6 +2352,7 @@ async def rec_check(browser):
           if (/\\(1986\\)/.test(txt())) ng.push('年度のかっこが残っている');
           document.querySelector('#recSide button[data-k="p"]').click();
           if (!/江夏 豊/.test(txt()) || !/401/.test(txt())) ng.push('シーズンの投手（奪三振）に切り替わらない');
+          if (isPawa() && [...document.querySelectorAll('#recTbl td.rn .ptile')].some(t => !t.classList.contains('pp') && !t.classList.contains('ps'))) ng.push('投手の記録の札がピンク（投手の色）でない');
           if ([...document.querySelectorAll('#recCat option')].map(o => o.value).join() !== 'so') ng.push('記録のない部門が選べてしまう');
           document.querySelector('#recKind button[data-k="ac"]').click(); document.querySelector('#recSide button[data-k="b"]').click();
           if (!/中村 剛也/.test(txt())) ng.push('現役の通算に切り替わらない');
