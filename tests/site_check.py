@@ -1074,6 +1074,13 @@ async def offseason_check(browser):
     tr = ud.parse_trades('<table><tr><td>2026/5/13</td><td>山本 祐大</td><td>捕 手</td><td>50</td><td>横浜DeNA</td><td>→</td><td>39</td><td>福岡ソフトバンク</td></tr><tr><td>2026/5/13</td><td>尾形 崇斗</td><td>投 手</td><td>39</td><td>福岡ソフトバンク</td><td>→</td><td>36</td><td>横浜DeNA</td></tr><tr><td>2026/1/30</td><td>田中 千晴</td><td>投 手</td><td>48</td><td>読売</td><td>→</td><td>29</td><td>東北楽天</td></tr></table>', 2026)
     if [(x["n"], x["from"], x["to"], x["d"]) for x in tr] != [("山本 祐大", "DB", "H", "2026-05-13"), ("尾形 崇斗", "H", "DB", "2026-05-13")]:
         bad(f"[オフの動きの読み取り] NPBのトレードの公示を正しく読めない：{tr}")
+    # 育成から支配下登録（NPB公式の公示「新規支配下選手登録」）：育成から移行した選手だけ。新外国人・去年の分は取らない
+    rg = ud.parse_registered('<table><tr><td>2026/7/31</td><td><a href="https://npb.jp/announcement/2026/registered_l.html">埼玉西武ライオンズ</a></td><td><a href="x">是澤 涼輔</a></td><td>捕 手</td><td>122 → 65</td><td>（育成選手から移行）</td></tr>'
+                             '<tr><td>2026/7/30</td><td><a href="https://npb.jp/announcement/2026/registered_h.html">福岡ソフトバンクホークス</a></td><td>Ｌ．ロドリゲス</td><td>投 手</td><td>156 → 85</td><td>（育成選手から移行）</td></tr>'
+                             '<tr><td>2026/7/30</td><td><a href="https://npb.jp/announcement/2026/registered_h.html">福岡ソフトバンクホークス</a></td><td>Ｊ．ラトリッジ</td><td>投 手</td><td>14</td><td></td></tr>'
+                             '<tr><td>2025/7/31</td><td><a href="https://npb.jp/announcement/2025/registered_t.html">阪神タイガース</a></td><td>去年 太郎</td><td>投 手</td><td>120 → 90</td><td>（育成選手から移行）</td></tr></table>', 2026)
+    if [(x["t"], x["n"], x["no_dev"], x["no"], x["d"]) for x in rg] != [("L", "是澤 涼輔", "122", "65", "2026-07-31"), ("H", "L.ロドリゲス", "156", "85", "2026-07-30")]:
+        bad(f"[入退団の読み取り] NPBの新規支配下選手登録の公示を正しく読めない：{rg}")
     if ud.OFF_TITLE_MOVE.search("FANCLUB 2026/9/25 あなたの推し") or not ud.OFF_TITLE_MOVE_NG.search("新入団選手情報"):
         bad("[オフの動きの読み取り] ファンクラブの記事や新入団選手の一覧を、移籍の発表として読んでしまう")
     # 首脳陣：NPBの監督・コーチ一覧と、コーチの退団・配置転換・留任・新任の読み取り
@@ -1785,7 +1792,7 @@ async def speed_health_check(browser):
         teams: { G: { err: 'ニュース一覧を開けない' } }, staff: { T: [], G: [], DB: [], D: [], C: [], S: [] }, managers_date: '2026-10-01', draft_status: { 'https://npb.jp/draft/2026/': 0 } };
       const it = healthItems(), get = k => it.find(x => x.k === k) || {};
       const ng = [];
-      if (get('オフシーズン情報').lv !== 'warn' || !String(get('オフシーズン情報').v).includes('巨人')) ng.push('開けていない球団（巨人）がデータの状態に出ない');
+      if (get('入退団（球団・NPBの発表）').lv !== 'warn' || !String(get('入退団（球団・NPBの発表）').v).includes('巨人')) ng.push('開けていない球団（巨人）がデータの状態に出ない');
       if (get('監督・コーチ一覧').lv !== 'ok') ng.push('監督・コーチ一覧の行が出ない');
       if (!get('ドラフト').k) ng.push('ドラフトの行が出ない');
       return ng;
@@ -2078,6 +2085,38 @@ async def off_pos_check(browser):
             bad(f"[オフの札の色 {lg}] {m}")
     for e in errs:
         bad(f"[オフの札の色]: 画面のエラー {e}")
+    await pg.close()
+
+
+async def promote_check(browser):
+    """入退団のタブ：タブの名前は「入退団」。育成から支配下登録は自分の見出しの下に（退団の中に混ぜない）。退団ではないので選手の札は付けない"""
+    pg, errs = await open_page(browser, 390, "pawa")
+    r = await pg.evaluate("""() => { const ng = [], t = CL.find(x => (DATA.rosters[x] || []).length >= 3), ro = DATA.rosters[t];
+      DATA.offseason = { season: 2026, checked_at: new Date().toISOString(), teams: {}, seen: {}, items: [
+        { t, n: ro[0].n, no: ro[0].no, dev: false, kind: 'promote', date: '2026-03-11', pos: ro[0].p, no_dev: '128', url: 'https://npb.jp/announcement/2026/pn_registered.html', title: 'x' },
+        { t, n: ro[1].n, no: ro[1].no, dev: false, kind: 'cut', date: '2026-09-29', url: 'u', title: 'x' }] };
+      jst = () => ({ y: 2026, m: 10, d: 2, iso: '2026-10-02' }); renderAll(); setTab('off'); S.offCat = 'all'; renderOff();
+      const tl = document.querySelector('.tabbar button[data-tab="off"] .tl');
+      if (!tl || tl.textContent !== '入退団') ng.push(`タブの名前が「入退団」でない（${tl && tl.textContent}）`);
+      if (/オフ/.test(document.getElementById('offHead').textContent)) ng.push('見出しに「オフ」が残っている');
+      const box = [...document.querySelectorAll('#offList .ofteam')].find(e => e.querySelector('.ofh').textContent.includes(fn(t)));
+      if (!box) { ng.push('球団の欄がない'); return ng; }
+      const secs = [...box.querySelectorAll('.ofsec')].map(e => e.textContent);
+      if (!secs.includes('育成から支配下登録')) ng.push(`「育成から支配下登録」の見出しがない（${secs}）`);
+      // 並び：退団の見出しのあと、支配下登録の見出しの下に支配下の選手
+      const kids = [...box.children], iP = kids.findIndex(e => e.classList.contains('ofsec') && e.textContent === '育成から支配下登録');
+      const promoRow = kids.findIndex(e => e.classList.contains('ofr') && e.querySelector('.k-promote'));
+      if (promoRow < iP) ng.push('支配下登録の選手が「退団」の中に入っている');
+      if (!/128 → /.test(box.textContent)) ng.push('育成のときの背番号から新しい背番号への変化が出ない');
+      if (offOf(t, ro[0].n)) ng.push('支配下登録の選手に、退団の札（offTag）が付いてしまう');
+      if (!offOf(t, ro[1].n)) ng.push('戦力外の選手の札が出なくなった');
+      S.offCat = 'promote'; renderOff();
+      if (!document.querySelector('#offList .k-promote')) ng.push('「支配下登録」で絞り込むと出ない');
+      return ng; }""")
+    for m in r:
+        bad(f"[入退団・支配下登録] {m}")
+    for e in errs:
+        bad(f"[入退団・支配下登録]: 画面のエラー {e}")
     await pg.close()
 
 
@@ -2578,6 +2617,7 @@ async def main():
         await default_theme_check(browser)
         await live_off_check(browser)
         await off_pos_check(browser)
+        await promote_check(browser)
         await player_today_check(browser)
         await runner_request_check(browser)
         await peek_check(browser)
