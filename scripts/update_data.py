@@ -1679,7 +1679,128 @@ def write_archive(data, force=False):
         print(f"[記録] 保存できませんでした: {e}")
 
 
+# ================= 歴代記録（NPB公式「歴代最高記録」：通算・通算（現役）・シーズン） =================
+# 1日1回だけ取りに行く（約130ページ）。取れなかったページは前の分を残す。data/records.json（記録タブを開いたときに読む）
+RECORDS_OUT = os.path.join(os.path.dirname(OUT), "records.json")
+REC_BAT = [("g", "試合"), ("tpa", "打席"), ("ab", "打数"), ("r", "得点"), ("h", "安打"), ("2b", "二塁打"), ("3b", "三塁打"), ("hr", "本塁打"),
+           ("tb", "塁打"), ("rbi", "打点"), ("sb", "盗塁"), ("cs", "盗塁刺"), ("sh", "犠打"), ("sf", "犠飛"), ("bb", "四球"), ("ibb", "故意四球"),
+           ("hp", "死球"), ("so", "三振"), ("gdp", "併殺打"), ("avg", "打率"), ("slg", "長打率"), ("obp", "出塁率")]
+REC_PIT = [("g", "登板"), ("cg", "完投"), ("sho", "完封勝"), ("nbb", "無四球試合"), ("w", "勝利"), ("l", "敗北"), ("sv", "セーブ"), ("hld", "ホールド"),
+           ("hldp", "HP"), ("pct", "勝率"), ("ip", "投球回"), ("h", "被安打"), ("hr", "被本塁打"), ("bb", "与四球"), ("hb", "与死球"), ("so", "奪三振"),
+           ("wp", "暴投"), ("bk", "ボーク"), ("r", "失点"), ("er", "自責点"), ("era", "防御率")]
+REC_KINDS = [("lt", "通算"), ("ac", "現役"), ("ss", "シーズン")]
+REC_ROWS = 50          # 1つの記録で残す順位（ページの上から）
+REC_EVERY = 20 * 3600  # これより新しければ取りに行かない
+REC_BUDGET = 150       # 1回の更新で記録に使う秒数の上限（超えたら残りは次の回に）
+
+
+def parse_record_page(html):
+    """NPBの歴代最高記録の1ページ：見出し（順位・選手・(所属)・記録・年度…）と行。いつ現在か（「2026年10月1日（木） 現在」「2025年度シーズン終了 現在」）と条件の注記"""
+    soup = BeautifulSoup(html, "html.parser")
+    text = norm(soup.get_text("\n"))
+    asof = ""
+    m = re.search(r"(\d{4}年(?:\d{1,2}月\d{1,2}日(?:\s*\(.\))?|度シーズン終了))\s*現在", text)
+    if m:
+        asof = m.group(1).replace(" ", "")
+    for tb in soup.find_all("table"):
+        trs = tb.find_all("tr")
+        if len(trs) < 2:
+            continue
+        head = [norm(c.get_text(" ", strip=True)) for c in trs[0].find_all(["th", "td"])]
+        if not head or head[0] != "順位" or not any("選手" in h for h in head):
+            continue
+        rows = []
+        for tr in trs[1:]:
+            cells = [re.sub(r"\s+", " ", norm(c.get_text(" ", strip=True))).strip() for c in tr.find_all(["td", "th"])]
+            # 順位の数字で始まる行だけ（最後の「( * 2026シーズンの現役選手 )」などの注記の行は読まない）
+            if len(cells) < 3 or not re.fullmatch(r"\d+", cells[0]):
+                continue
+            rows.append((cells + [""] * len(head))[:len(head)])
+            if len(rows) >= REC_ROWS:
+                break
+        if not rows:
+            continue
+        # 見出しが空の列（「*」＝今シーズンの現役選手の印）は、行ごとの印 a にして列から外す
+        act = None
+        for i, h in enumerate(head):
+            if i and not h and all(r[i] in ("", "*") for r in rows):
+                act = i
+                break
+        flags = []
+        if act is not None:
+            flags = [1 if r[act] == "*" else 0 for r in rows]
+            head = head[:act] + head[act + 1:]
+            rows = [r[:act] + r[act + 1:] for r in rows]
+        note = ""
+        prev = tb.find_previous(string=re.compile(r"以上|規定|以下"))
+        if prev:
+            note = norm(str(prev)).strip()[:60]
+        out = {"cols": head, "rows": rows, "asof": asof, "note": note}
+        if any(flags):
+            out["act"] = flags
+        return out
+    return None
+
+
+def rec_fetch(url):
+    """歴代記録の1ページ：ないページ（404）で何度も待たないよう、試すのは2回まで・待ちは短く"""
+    for i in range(2):
+        try:
+            r = requests.get(url, timeout=20, headers={"User-Agent": "Mozilla/5.0 (hobby-baseball)"})
+            if r.status_code == 404:
+                return None
+            if r.status_code == 200:
+                r.encoding = r.apparent_encoding if not r.encoding or r.encoding.lower() == "iso-8859-1" else r.encoding
+                return r.text
+        except requests.RequestException:
+            pass
+        time.sleep(1)
+    return None
+
+
+def update_records(force=False):
+    prev = {}
+    if os.path.exists(RECORDS_OUT):
+        try:
+            with open(RECORDS_OUT, encoding="utf-8") as f:
+                prev = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            prev = {}
+    lists = dict(prev.get("lists") or {})
+    done = dict(prev.get("done") or {})
+    tried = dict(prev.get("tried") or {})   # 取りに行った時刻（ないページ：たとえば通算の出塁率 も、1日1回だけ試す）
+    now = time.time()
+    start, got, fail = time.time(), 0, 0
+    for kind, _ in REC_KINDS:
+        for side, keys in (("b", REC_BAT), ("p", REC_PIT)):
+            for key, label in keys:
+                k = f"{kind}{side}_{key}"
+                if not force and max(done.get(k, 0), tried.get(k, 0)) > now - REC_EVERY:
+                    continue
+                if time.time() - start > REC_BUDGET:
+                    break
+                html = rec_fetch(f"https://npb.jp/bis/history/{k}.html")
+                tried[k] = now
+                page = parse_record_page(html) if html else None
+                if page:
+                    lists[k] = page; done[k] = now; got += 1
+                else:
+                    fail += 1
+    out = {"src": "https://npb.jp/bis/history/", "at": datetime.now(JST).isoformat(timespec="seconds"), "at_ts": now,
+           "kinds": [{"k": k, "n": n} for k, n in REC_KINDS],
+           "bat": [{"k": k, "n": n} for k, n in REC_BAT], "pit": [{"k": k, "n": n} for k, n in REC_PIT],
+           "lists": lists, "done": done, "tried": tried}
+    if got or fail or not os.path.exists(RECORDS_OUT):
+        with open(RECORDS_OUT, "w", encoding="utf-8") as f:
+            json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
+    print(f"[歴代記録] 取得 {got}ページ・取れず {fail}ページ（全{len(lists)}件）")
+
+
 def main():
+    try:
+        update_records()
+    except Exception as e:   # 記録が取れなくても、ふだんのデータ更新は止めない
+        print(f"[歴代記録] 取得できませんでした: {e}")
     season = int(os.environ.get("SEASON") or datetime.now(JST).year)
     old = None
     if os.path.exists(OUT):
