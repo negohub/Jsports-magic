@@ -2275,6 +2275,30 @@ async def pos_icon_check(browser):
         await ctx.close()
 
 
+async def pitch_align_check(browser):
+    """投手成績の表：今の投手の▶・勝敗の印があっても、名前（札）の位置はどの行も同じ。▶は1つだけ"""
+    for th in ["pawa", ""]:
+        pg, errs = await open_page(browser, 390, th)
+        r = await pg.evaluate("""() => { const ng = [];
+          const gg = { d: '2026-10-02', h: 'S', a: 'G', st: 'live', hs: 0, as: 0 }, k = gg.d + gkey(gg), ro = DATA.rosters.G.filter(r => r.p === '投手');
+          PD[k] = { half: '3回裏', attack: Object.keys(YSHORT).find(x => YSHORT[x] === 'S'), pitcher: { name: ro[2].n } }; S.pu = S.pu || {}; S.pu[k] = 'G';
+          for (const decs of [['H', '', ''], ['', '', ''], ['勝', 'S', '']]) {
+            const P = ro.slice(0, 3).map((r, i) => ({ name: r.n, dec: decs[i], era: '3.15', ip: '1', np: '20', h: '0', hr: '0', so: '1', bb: '0', r: '0', er: '0' }));
+            const w = document.createElement('div'); w.innerHTML = pitchingHTML(gg, { pitchers: [P, P] }); document.getElementById('v-game').prepend(w); setTab('game');
+            const xs = [...w.querySelectorAll('td.pnx')].map(td => { const t = td.querySelector('.ptile') || [...td.querySelector('b').childNodes].find(n => n.nodeType === 3); if (t.nodeType === 3) { const rg = document.createRange(); rg.selectNodeContents(t); return Math.round(rg.getBoundingClientRect().left); } return Math.round(t.getBoundingClientRect().left); });
+            if (new Set(xs).size > 1) ng.push(`印（${decs.join('・') || 'なし'}）と▶があると名前の位置がずれる（${xs}）`);
+            const cur = w.querySelector('tr.cur'), marks = cur ? [...cur.querySelectorAll('*')].filter(e => getComputedStyle(e, '::before').content.includes('▶')).length : 0;
+            if (marks !== 1) ng.push(`今の投手の▶が${marks}個`);
+            w.remove();
+          }
+          delete PD[k]; return ng; }""")
+        for m in r:
+            bad(f"[投手成績の並び {'パワプロ風' if th else 'スタイリッシュ'}] {m}")
+        for e in errs:
+            bad(f"[投手成績の並び]: 画面のエラー {e}")
+        await pg.close()
+
+
 async def player_today_check(browser):
     """選手の画面：今日の試合（試合中・試合後）に出ていれば、その試合の成績をいちばん上に出す"""
     pg, errs = await open_page(browser, 390, "pawa")
@@ -2776,6 +2800,7 @@ async def main():
         await tab_lens_check(browser)
         await fast_start_check(browser)
         await pos_icon_check(browser)
+        await pitch_align_check(browser)
         await player_today_check(browser)
         await runner_request_check(browser)
         await peek_check(browser)
