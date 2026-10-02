@@ -304,7 +304,7 @@ async def starters_check(pg, label):
 
 
 async def season_end(pg, label):
-    await pg.evaluate("DATA.games.forEach(g=>{ if(g.st==='sched'||g.st==='live'||g.st==='canc'){ g.st='final'; g.hs=3; g.as=2; } }); renderAll(); setTab('magic')")
+    await pg.evaluate("DATA.games.forEach(g=>{ if(g.st==='sched'||g.st==='live'||g.st==='canc'){ g.st='final'; g.hs=3; g.as=2; } }); renderAll(); renderAllNow(); setTab('magic')")   # 優勝ラインは順位タブにある。後回しの描画を先に済ませてから見る
     await pg.wait_for_timeout(200)
     t = await pg.evaluate("document.getElementById('ttl').textContent")
     if "最終結果" not in t:
@@ -1257,9 +1257,9 @@ async def weather_stop_check(browser):
         print("  （中継プログラムの試験は、worker/worker.js がないため省略）")
         return
     import subprocess, tempfile
-    src = wk.read_text(encoding="utf-8") + "\nexport { weatherOf, parse };\n"
+    src = wk.read_text(encoding="utf-8") + "\nexport { weatherOf, headerOf, parse, parseGame };\n"
     test = r"""
-import { weatherOf, parse } from "./w.mjs";
+import { weatherOf, headerOf, parse, parseGame } from "./w.mjs";
 const ok = (n, got, want) => { if (JSON.stringify(got) !== JSON.stringify(want)) console.log("NG " + n + " " + JSON.stringify(got)); };
 const k = l => (weatherOf(l) || {}).kind || null;
 ok("中断", k(["19:05 降雨のため試合中断"]), "中断");
@@ -1270,6 +1270,13 @@ ok("ノーゲーム", k(["5回表 降雨ノーゲーム"]), "ノーゲーム");
 ok("コールド", k(["7回裏 降雨コールドゲーム"]), "コールド");
 ok("案内は拾わない", k(["試合中止時の払い戻しについて", "雨天中止の場合のチケット"]), null);
 ok("関係ない中断", k(["ビデオ判定のため中断"]), null);
+// 10/2 の誤り：試合ページの「新着ニュース」の見出し（ほかの試合の中止振替）や、下の「今日の日程・結果」のほかの試合の中断を、この試合の中止・中断と読んでいた
+const news = "【NPB】追加日程＆予備日を発表 9 月29 日中止振替分『阪神ｰヤクルト』が8日に決定 日テレNEWS NNN 2026/10/2 14:10";
+ok("ニュースの見出しは拾わない", ((l, f) => (weatherOf(l, f) || {}).kind || null)([news, "阪神 10月8日、甲子園でヤクルト戦 追加日程を発表 デイリースポーツ 2026/10/2 13:55", "29 阪神 - 試合中止 甲子園", "9/29 試合中止"], []), null);
+const pg = (status, extra) => `<html><body><div>セ・リーグ 25回戦</div><div>10月2日（金） 18:00 神宮</div><div>ヤクルト</div><div>${status}</div><div>巨人</div><div>後攻</div><div>先攻</div>${extra || ""}<h2>10月2日（金）の日程・結果</h2><div>ロッテ</div><div>試合中断</div><div>雨天中止</div><h2>順位表</h2><h2>新着ニュース</h2><ul><li>${news}</li><li>巨人―広島 降雨コールド 2026/10/2 21:00</li></ul></body></html>`;
+ok("試合前のページ（ニュース・ほかの試合に中止・中断）", (parseGame(pg("18:00")) || {}).w || null, null);
+ok("見出しに試合中止", ((parseGame(pg("試合中止")) || {}).w || {}).kind, "中止");
+ok("本文の降雨中断", ((parseGame(pg("3 - 1", "<p>5回裏</p><p>19:05 降雨のため試合中断</p>")) || {}).w || {}).kind, "中断");
 const g = parse('<a href="/scores/2026/0929/t-s-24/">阪神 1 - 0 ヤクルト 5回表 中断 降雨</a><a href="/scores/2026/0929/g-c-25/">巨人 - 広島 中止</a>');
 ok("NPB 中断", [g[0].st, g[0].w && g[0].w.kind], ["live", "中断"]);
 ok("NPB 中止", g[1].st, "canc");
@@ -1462,7 +1469,8 @@ async def post_bracket_check(browser):
               if (s.s1.win !== rk[1]) ng.push(`ファーストステージで並んだのに2位が勝ち上がらない（${s.s1.win}）`);
               // 2026年からの新ルール：アドバンテージは1勝か2勝（ファースト勝者が1位と10ゲーム差以上か勝率5割未満なら2勝）
               if (s.sf.wh !== 3 + s.R.adv || s.sf.win !== rk[0]) ng.push(`ファイナルの1位の勝ち数（アドバンテージ${s.R.adv}込み）・勝ち上がりが違う（${s.sf.wh}・${s.sf.win}）`);
-              const box = document.getElementById('bracketBox'), txt = box.innerText;
+              const box = document.getElementById('bracketBox'); box.style.contentVisibility = 'visible';   // 画面の外は並べるのを後回しにしているので、読む前に並べる
+              const txt = box.innerText;
               if (!txt.includes(fn(rk[1]) + 'がファイナルステージへ')) ng.push('ファーストステージの勝ち上がりの文言が出ない');
               if (!txt.includes(fn(rk[0]) + 'が日本シリーズへ')) ng.push('ファイナルステージの勝ち上がりの文言が出ない');
               if (!/○ 3-1/.test(txt) || !/● 2-5/.test(txt) || !/△ 4-4/.test(txt)) ng.push('1試合ずつの結果（○●△）が出ない');
@@ -1768,7 +1776,7 @@ async def speed_health_check(browser):
         # パ・リーグ（担当者なし）では「あなたの担当」を出さない。セ・リーグでは出す
         if await pg.evaluate("document.getElementById('meSec').hidden"):
             bad("[あなたの担当] セ・リーグで設定に「あなたの担当」が出ない")
-        await pg.evaluate("switchLeague('P')")
+        await pg.evaluate("switchLeague('P'); setTab('magic')")
         if not await pg.evaluate("document.getElementById('meSec').hidden"):
             bad("[あなたの担当] パ・リーグでも設定に「あなたの担当」が出ている")
         if await pg.evaluate("document.getElementById('meCard').innerText.trim()"):
@@ -2035,6 +2043,7 @@ async def live_off_check(browser):
       else if (gz[0].no !== '042') ng.push('同じ人をまとめたとき、背番号のある方が残っていない');
       if (!offItems().some(x => x.kind === 'promote')) ng.push('育成から支配下登録が出ない');
       jst = () => ({ y: 2026, m: 10, d: 1, iso: '2026-10-01' }); renderAll(); setTab('off'); renderOff();
+      document.querySelectorAll('#offList .ofteam').forEach(e => (e.style.contentVisibility = 'visible'));   // 画面の外は並べるのを後回しにしているので、読む前に並べる
       if (!/育成から支配下登録/.test(document.getElementById('offList').innerText)) ng.push('オフの一覧に「育成から支配下登録」が出ない');
       const txt = document.getElementById('offList').innerText;
       if (!txt.includes('退団')) ng.push('オフの一覧に「退団」が出ない');
@@ -2155,6 +2164,73 @@ async def tab_lens_check(browser):
                 if worst < need:
                     bad(f"[開いているタブ {label} {tab}] {what}が下の地に埋もれる（比 {worst:.2f}、必要 {need}）")
             await pg.evaluate("document.querySelectorAll('style').forEach(s => { if (s.textContent.includes('visibility:hidden !important') && s.textContent.includes('.tabbar button .tl')) s.remove(); })")
+        await ctx.close()
+
+
+async def fast_start_check(browser):
+    """起動の速さ：開いたタブだけすぐ描き、ほかのタブは後で描く。まだ描いていないタブも、押した瞬間に描いてから出す。
+    データが変わったら全部のタブが描き直される。タブの切り替えは透明から始めない（押した瞬間に中身が見える）"""
+    pg, errs = await open_page(browser, 390, "pawa")
+    r = await pg.evaluate("""async () => { const ng = [];
+      // 1) データが変わったとき：開いているタブはすぐ、ほかは後で（押したら必ず最新）
+      setTab('magic'); const before = document.getElementById('today').innerHTML;
+      DATA = JSON.parse(JSON.stringify(DATA)); DATA.games.filter(g => g.d === jst().iso).forEach(g => { g.st = 'final'; g.hs = 9; g.as = 8; });
+      renderAll();
+      if (!TAB_DIRTY.has('song') && !TAB_DIRTY.has('game') && !TAB_DIRTY.has('std')) { /* 手が空いて全部描き終わっていてもよい */ }
+      setTab('game');
+      if (TAB_DIRTY.has('game')) ng.push('試合タブを押しても描かれない');
+      const got = document.getElementById('today').innerHTML;
+      if (DATA.games.some(g => g.d === jst().iso) && got === before) ng.push('データが変わったのに、試合タブが前のまま');
+      // 2) 手が空けば全部描き終わる
+      renderAll(); await new Promise(r => setTimeout(r, 2500));
+      if (TAB_DIRTY.size) ng.push(`手が空いても描き終わらないタブがある（${[...TAB_DIRTY]}）`);
+      // 3) 切り替えの動きは透明から始めない
+      const kf = [...document.styleSheets].flatMap(s => { try { return [...s.cssRules]; } catch { return []; } }).filter(r => r.type === CSSRule.KEYFRAMES_RULE && (r.name === 'vin' || r.name === 'vin2'));
+      for (const k of kf) for (const f of k.cssRules) if (/opacity\\s*:\\s*0(\\.0*)?\\s*(;|$)/.test(f.style.cssText)) ng.push(`タブの切り替え（${k.name}）が透明から始まる`);
+      // 4) 予告先発・放送とスタメンを端末に覚えていて、開き直したときすぐ出せる
+      keepLive('pre-v1', { 'x|T|G': { tv: 'テスト' } });
+      if (!restoreLive('pre-v1')['x|T|G']) ng.push('放送とスタメンを端末に覚えていない');
+      return ng; }""")
+    for m in r:
+        bad(f"[起動の速さ] {m}")
+    for e in errs:
+        bad(f"[起動の速さ]: 画面のエラー {e}")
+    await pg.close()
+
+
+async def pos_icon_check(browser):
+    """守備位置のアイコン（パワプロのオーダー画面の形）：色の種類が名前の札と同じ・昼も夜も同じ明るい色・文字が読める・2文字も枠に収まる"""
+    for scheme in ["light", "dark"]:
+        ctx = await browser.new_context(viewport={"width": 390, "height": 844}, color_scheme=scheme)
+        pg = await ctx.new_page()
+        await pg.add_init_script("localStorage.setItem('me','S'); localStorage.setItem('theme','pawa'); localStorage.setItem('mode','auto'); localStorage.setItem('league','C')")
+        await pg.route(LIVE + "**", route_live)
+        await pg.goto(URL); await pg.wait_for_timeout(800)
+        r = await pg.evaluate("""() => { const ng = [];
+          const want = { '投': 'pz-pp', '捕': 'pz-pc', '一': 'pz-pi', '二': 'pz-pi', '三': 'pz-pi', '遊': 'pz-pi', '左': 'pz-po', '中': 'pz-po', '右': 'pz-po', '打': 'pz-pn', '走': 'pz-pn', '打左': 'pz-po' };
+          const box = document.createElement('div'); box.innerHTML = Object.keys(want).map(p => posIcon(p)).join('') + '<table class="lutab"><tr><td class="lp">' + posIcon('打左') + '</td></tr></table>';
+          document.getElementById('v-magic').prepend(box);
+          const lum = c => { const v = c.match(/[\\d.]+/g).slice(0, 3).map(x => +x / 255).map(x => x <= .03928 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4); return .2126 * v[0] + .7152 * v[1] + .0722 * v[2]; };
+          [...box.querySelectorAll('.posic')].slice(0, Object.keys(want).length).forEach((e, i) => {
+            const p = Object.keys(want)[i];
+            if (!e.classList.contains(want[p])) ng.push(`「${p}」の色の種類が違う（${e.className}）`);
+            const cs = getComputedStyle(e);
+            if (cs.borderTopWidth !== '2px') ng.push(`「${p}」に縁がない`);
+            const top = cs.getPropertyValue('--pt').trim(), fg = cs.color;
+            const t = document.createElement('i'); t.style.color = top; document.body.append(t); const bg = getComputedStyle(t).color; t.remove();
+            const a = lum(fg), b = lum(bg), cr = (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
+            if (cr < 4.5) ng.push(`「${p}」の文字が読みにくい（${cr.toFixed(2)}）`);
+            if (lum(bg) < .5) ng.push(`「${p}」が暗い色になっている（${bg}）`);
+          });
+          const w = box.querySelector('.lutab .posic'); if (w.scrollWidth > 30 || w.getBoundingClientRect().width > 30.5) ng.push(`2文字（打左）が打順の表の枠からはみ出す（${w.getBoundingClientRect().width}px）`);
+          box.remove();
+          // 選手の画面の守備位置も同じ形
+          const n = DATA.rosters.S.find(r => r.p === '捕手').n; openPlayer('S', n);
+          const c = document.querySelector('#songPick .ps-pos');
+          if (!c || !c.classList.contains('pz-pc') || getComputedStyle(c).borderTopWidth !== '2px') ng.push(`選手の画面の守備位置がアイコンの形でない（${c && c.className}）`);
+          return ng; }""")
+        for m in r:
+            bad(f"[守備位置のアイコン {'夜' if scheme == 'dark' else '昼'}] {m}")
         await ctx.close()
 
 
@@ -2657,6 +2733,8 @@ async def main():
         await off_pos_check(browser)
         await promote_check(browser)
         await tab_lens_check(browser)
+        await fast_start_check(browser)
+        await pos_icon_check(browser)
         await player_today_check(browser)
         await runner_request_check(browser)
         await peek_check(browser)
