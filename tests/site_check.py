@@ -2039,6 +2039,48 @@ async def live_off_check(browser):
     await pg.close()
 
 
+async def off_pos_check(browser):
+    """オフの一覧の名前の札の色＝選手の画面の札の色＝名簿の守備位置（「A・マルティネス」など頭文字つきの名前も名簿の選手として扱う）"""
+    pg, errs = await open_page(browser, 390, "pawa")
+    for lg in ["C", "P"]:
+        r = await pg.evaluate("""async (lg) => { const ng = [];
+          switchLeague(lg); jst = () => ({ y: 2026, m: 10, d: 2, iso: '2026-10-02' });
+          // 頭文字つきの名前（ベースボールチャンネルの書き方）を、名簿の外国人選手の各守備位置で1人ずつ足す
+          const want = { '投手': ['pp', 'ps'], '捕手': ['pc'], '内野手': ['pi'], '外野手': ['po'] };
+          for (const t of CL) for (const pos of Object.keys(want)) {
+            const ro = (DATA.rosters[t] || []).find(r => r.p === pos && /^[ァ-ヴー]+$/.test(r.n));
+            if (ro && !offItems().some(x => x.t === t && nkOff(x.n) === nkOff(ro.n))) (DATA.offseason.items = DATA.offseason.items || []).push({ t, n: 'Z・' + ro.n, no: '', dev: !!ro.dev, kind: 'cut', date: '2026-10-01', url: 'https://www.baseballchannel.jp/npb/291604/', title: 'x', src: 'bbc' });
+          }
+          setTab('off'); S.offCat = 'all'; renderOff();
+          const rows = [...document.querySelectorAll('#offList .onm[data-pl]')];
+          if (!rows.length) ng.push('オフの一覧に選手がいない');
+          const col = el => { const c = [...el.classList].find(k => ['pp', 'ps', 'pc', 'pi', 'po'].includes(k)); return c + '|' + (el.getAttribute('style') || ''); };
+          for (const el of rows) {
+            const [t, n] = el.dataset.pl.split('|'), tile = el.querySelector('.ptile');
+            if (!tile) { ng.push(`${n}：名前の札がない`); continue; }
+            const ro = rosterOf(t, n);
+            if (/^[A-Za-z]{1,2}[・.．]/.test(n.normalize('NFKC')) && ro) ng.push(`${n}：名簿の名前（${ro.n}）にそろっていない`);
+            const row = el.closest('.ofr');
+            if (ro && ro.no && !row.querySelector('.ono')) ng.push(`${n}：名簿に背番号があるのに出ていない`);
+            const first = [...tile.classList].find(k => ['pp', 'ps', 'pc', 'pi', 'po'].includes(k));
+            if (ro && want[ro.p] && !want[ro.p].includes(first)) ng.push(`${n}：札の色が名簿の守備位置（${ro.p}）と違う（${first}）`);
+            await openPlayer(t, n);
+            const st = document.querySelector('#songPick .ptile');
+            if (!st) ng.push(`${n}：選手の画面に名前の札がない`);
+            else if (col(st).split('|')[0] !== col(tile).split('|')[0] || col(st).split('|')[1] !== col(tile).split('|')[1]) ng.push(`${n}：一覧と選手の画面で札の色が違う（${col(tile)} / ${col(st)}）`);
+            const chip = document.querySelector('#songPick .ps-poss i');
+            if (ro && chip && ro.p !== '投手' && chip.textContent !== ro.p) ng.push(`${n}：選手の画面の守備位置が名簿（${ro.p}）と違う（${chip.textContent}）`);
+            if (ro && chip && ro.p === '投手' && !['投手', '先発', '中継ぎ', '抑え'].includes(chip.textContent)) ng.push(`${n}：選手の画面で投手なのに「${chip.textContent}」`);
+          }
+          document.getElementById('songSheet').classList.remove('open'); document.getElementById('songSheet').hidden = true;
+          return ng; }""", lg)
+        for m in r[:30]:
+            bad(f"[オフの札の色 {lg}] {m}")
+    for e in errs:
+        bad(f"[オフの札の色]: 画面のエラー {e}")
+    await pg.close()
+
+
 async def player_today_check(browser):
     """選手の画面：今日の試合（試合中・試合後）に出ていれば、その試合の成績をいちばん上に出す"""
     pg, errs = await open_page(browser, 390, "pawa")
@@ -2535,6 +2577,7 @@ async def main():
         await uniform_check(browser)
         await default_theme_check(browser)
         await live_off_check(browser)
+        await off_pos_check(browser)
         await player_today_check(browser)
         await runner_request_check(browser)
         await peek_check(browser)
