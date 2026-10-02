@@ -47,7 +47,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・入退団情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20261002095740">
+<meta name="build" content="20261002102416">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -1221,6 +1221,9 @@ h2::before{transform:none;width:5px;height:18px;border-radius:3px;background:lin
 .lnm{display:flex;align-items:baseline;gap:10px}
 .lnm span{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lnm .la{font-style:normal;margin-left:auto;font-size:12px;color:#9A9A9A;flex:0 0 auto}
+.lnm .posic{flex:none;align-self:center}
+html:not(.theme-pawa) .lnm .posic{color:#9A9A9A;font-size:12px;font-weight:600}
+html:not(.theme-pawa) .lnm>span:first-child{min-width:5.5em}   /* 守備位置の列がそろうように */
 .lutab tr.sub .lnm span{font-weight:400;color:#C8C8C8;font-size:12.5px}
 .lrw{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
 .lrw .rc{font-size:11.5px;padding:2px 7px;margin:0}
@@ -1696,26 +1699,33 @@ html.theme-pawa .bcv{color:#13264A}
 .stc{min-width:0}
 .sth{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;margin:0 0 4px;color:#F2F2F4}
 .stl{list-style:none;margin:0;padding:0;display:grid;gap:3px}
-.stl li,.stpit{display:grid;grid-template-columns:14px 20px minmax(0,1fr) auto;align-items:center;gap:4px;min-height:28px;cursor:pointer}
+.stl li,.stpit{display:grid;grid-template-columns:20px minmax(0,1fr) 24px 34px;align-items:center;gap:4px;min-height:28px;cursor:pointer}
+.stl li .posic{justify-self:center}
+.stpit .stnm{grid-column:2}.stpit .sta{grid-column:4}
+.stl li .sta,.stpit .sta{text-align:right;white-space:nowrap;overflow:hidden}   /* 打率の欄は全員同じ幅（名前の札の幅をそろえるため） */
+html.theme-pawa .stl li .posic{width:24px;min-width:24px}
+/* 幅の狭いiPhone（SEなど）：ホーム・ビジターが2列に並ぶので、打順・打率の欄を詰めて名前の札の幅を確保する（守備位置の札は名前と同じ高さのまま少し細く） */
+@media (max-width:374px){
+  .stl li,.stpit{grid-template-columns:11px minmax(0,1fr) 20px 26px;gap:3px}
+  .stl li .sta,.stpit .sta{font-size:10px}
+  .stpit .stk{font-size:9px;letter-spacing:-.5px}
+  html.theme-pawa .stl li .posic{width:20px;min-width:20px}
+  html.theme-pawa .stl li .posic b{font-size:12px !important}
+}
 .stpit{margin-top:5px;padding-top:5px;border-top:1px dashed rgba(255,255,255,.12)}
-.stpit .stk{grid-column:1 / span 2}
+.stpit .stk{grid-column:1;white-space:nowrap;font-size:10px}
 .sto{font-size:11px;color:var(--muted);text-align:right;font-weight:700}
 .stp{display:inline-grid;place-items:center;height:18px;border-radius:5px;color:#13264A;font-size:10.5px;font-weight:800}
 /* スタイリッシュ：今までどおり（スタメンは色の四角、打順の表は文字だけ） */
 html:not(.theme-pawa) .posic{font-style:normal}
 html:not(.theme-pawa) .posic.stp.pz-pp{background:#F9B3C7}html:not(.theme-pawa) .posic.stp.pz-pc{background:#6FD3F0}html:not(.theme-pawa) .posic.stp.pz-pi{background:#F9D564}html:not(.theme-pawa) .posic.stp.pz-po{background:#84D877}html:not(.theme-pawa) .posic.stp.pz-pn{background:#C9CED8}
-/* パワプロ風：オーダー画面の守備位置のアイコン（明るい色の四角・同じ色の濃い縁と文字・上に光） */
-html.theme-pawa .posic,html.theme-pawa .ps-pos{display:inline-grid;place-items:center;box-sizing:border-box;min-width:22px;height:22px;padding:0 3px;border-radius:6px;border:2px solid var(--pb);
-  background:linear-gradient(180deg,var(--pt) 0%,var(--pt) 45%,var(--pf) 100%);color:var(--px) !important;font-style:normal;font-size:12.5px;font-weight:900;line-height:1;letter-spacing:0;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 1px 0 rgba(0,0,0,.18);text-shadow:0 1px 0 rgba(255,255,255,.55);vertical-align:middle}
-html.theme-pawa .posic.wide{font-size:9.5px;letter-spacing:-1px;padding:0 1px;max-width:30px}   /* 「打左」など2文字：打順の表の幅（30px）に収める */
-html.theme-pawa .ps-pos{height:22px;padding:0 7px;font-size:11px;border-radius:6px}
-html.theme-pawa .posic.pz-pp,html.theme-pawa .ps-pos.pz-pp{--pt:#FFE6EC;--pf:#F7AFC1;--pb:#D9506F;--px:#A3213F}
-html.theme-pawa .posic.pz-ps,html.theme-pawa .ps-pos.pz-ps{--pt:#FFE0DA;--pf:#F59C8D;--pb:#CF5A4A;--px:#8E2A1E}
-html.theme-pawa .posic.pz-pc,html.theme-pawa .ps-pos.pz-pc{--pt:#DDF8FE;--pf:#86DCF3;--pb:#2FA3C8;--px:#0E5E77}
-html.theme-pawa .posic.pz-pi,html.theme-pawa .ps-pos.pz-pi{--pt:#FFF6C6;--pf:#F9D35C;--pb:#D6A21E;--px:#6E4D00}
-html.theme-pawa .posic.pz-po,html.theme-pawa .ps-pos.pz-po{--pt:#E1FAD8;--pf:#93DE88;--pb:#3FA43A;--px:#1F661C}
-html.theme-pawa .posic.pz-pn{--pt:#F4F6FA;--pf:#D3DAE6;--pb:#8A97AD;--px:#3B4A63}
+/* パワプロ風：守備位置は名前の札と同じ札（字・色・枠・光）を、名前の札と同じ高さの四角にしたもの */
+html.theme-pawa .ptile.sptile.posic{box-sizing:border-box;width:26px;min-width:26px;height:26px;padding:0;border-radius:7px;flex:none;justify-content:center;cursor:inherit}
+html.theme-pawa .ptile.sptile.posic b{font-size:13.5px !important;letter-spacing:0 !important;margin:0}
+html.theme-pawa .ptile.sptile.posic.wide b{font-size:10px !important;letter-spacing:-.5px !important}
+html.theme-pawa .ptile.pnu{background:linear-gradient(180deg,#F1F4F9,#C9D2E0);border-color:#8A97AD}   /* 代打・代走など：灰色の札 */
+html.theme-pawa .ptile.sptile.pschip{box-sizing:border-box;height:26px;padding:0 9px;cursor:default}
+html.theme-pawa .ptile.sptile.pschip b{font-size:12px}
 .stk{font-size:10.5px;font-weight:800;color:var(--muted)}
 .stnm{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:13px;font-weight:700;color:#F2F2F4}
 .sta{font-size:11px;color:var(--muted)}
@@ -2513,7 +2523,6 @@ html.theme-pawa.pawa-dark .ykv{color:#AEBCD5}
 html.theme-pawa.pawa-dark .bc{background:#18253B;border:2px solid #224167}
 html.theme-pawa.pawa-dark .bck{color:#AEBCD5}
 html.theme-pawa.pawa-dark .bcv{color:#DEE5F2}
-html.theme-pawa.pawa-dark .posic,html.theme-pawa.pawa-dark .ps-pos{text-shadow:0 1px 0 rgba(22,36,63,.55)}
 html.theme-pawa.pawa-dark .stm{background:#18253B;border:2px solid #224167}
 html.theme-pawa.pawa-dark .stm summary,html.theme-pawa.pawa-dark .sth,html.theme-pawa.pawa-dark .stnm{color:#DEE5F2}
 html.theme-pawa.pawa-dark .stm summary small,html.theme-pawa.pawa-dark .sto,html.theme-pawa.pawa-dark .sta,html.theme-pawa.pawa-dark .stk,html.theme-pawa.pawa-dark .stn,html.theme-pawa.pawa-dark .stm summary::after{color:#AEBCD5}
@@ -3043,6 +3052,7 @@ html.sty-light:not(.theme-pawa) .ftab td.fr.w b{color:#171717}
 html.sty-light:not(.theme-pawa) .ftab td.fr.d b{color:#5C5C5C}
 html.sty-light:not(.theme-pawa) .ls td.scd.on{background:#3A2E06}
 html.sty-light:not(.theme-pawa) .lnm .la{color:#5C5C5C}
+html.sty-light:not(.theme-pawa) .lnm .posic{color:#5C5C5C}
 html.sty-light:not(.theme-pawa) .lutab tr.sub .lnm span{color:#383838}
 html.sty-light:not(.theme-pawa) .lutab tr.cur .lnm span::before{color:#AA8A0E}
 html.sty-light:not(.theme-pawa) .putab th{border-bottom:1px solid #E0E0E0}
@@ -4989,8 +4999,13 @@ async function loadPre(force) {
 }
 const preOf = g => PRE[`${g.d}|${g.h}|${g.a}`] || null;
 // 守備位置のアイコン（パワプロのオーダー画面のように、四角に1文字。色は名前の札と同じ：投＝ピンク・捕＝水色・内野＝黄・外野＝緑・先発＝赤。代打・代走などは灰色）
-const POSIC_K = { "投": "pp", "捕": "pc", "一": "pi", "二": "pi", "三": "pi", "遊": "pi", "左": "po", "中": "po", "右": "po" };
-const posIcon = (pos, extra) => { const p = String(pos || "").trim(); const k = POSIC_K[p] || POSIC_K[p.slice(-1)] || "pn"; return `<span class="posic pz-${k}${[...p].length > 1 ? " wide" : ""}${extra ? " " + extra : ""}">${esc(p)}</span>`; };
+const POSIC_K = { "投": "pp", "捕": "pc", "一": "pi", "二": "pi", "三": "pi", "遊": "pi", "左": "po", "中": "po", "右": "po", "内": "pi", "外": "po" };   // 内・外：ベンチ入りの区分
+// パワプロ風：名前の札と同じ札（同じ字・同じ色・同じ枠）を小さな四角にして使う。スタイリッシュは今までどおり
+const posIcon = (pos, extra) => {
+  const p = String(pos || "").trim(), k = POSIC_K[p] || POSIC_K[p.slice(-1)] || "pn", wide = [...p].length > 1 ? " wide" : "";
+  if (document.documentElement.classList.contains("theme-pawa")) return `<span class="ptile sptile posic ${k === "pn" ? "pnu" : k}${wide}${extra ? " " + extra : ""}"><b>${esc(p)}</b></span>`;
+  return `<span class="posic pz-${k}${wide}${extra ? " " + extra : ""}">${esc(p)}</span>`;
+};
 const POS_GR = { "投": "投手", "捕": "捕手", "一": "内野手", "二": "内野手", "三": "内野手", "遊": "内野手", "左": "外野手", "中": "外野手", "右": "外野手", "指": "内野手" };
 // 放送予定（テレビ・ネット配信・ラジオ：試合が終わるまで）と、発表されたスタメン（試合が始まるまで）
 function preHTML(g) {
@@ -5004,7 +5019,7 @@ function preHTML(g) {
     const k = g.d + gkey(g), open = S.stmOpen[k] !== false;   // 最初は開いておく（ベンチ入りは閉じておく）
     const col = (t, x) => !x || !(x.bat || []).length ? `<div class="stc" style="${tv(t)}"><div class="sth"><i class="ykb">${sn(t)}</i>${fn(t)}</div><p class="stn">まだ発表されていません</p></div>`
       : `<div class="stc" style="${tv(t)}"><div class="sth"><i class="ykb">${sn(t)}</i>${fn(t)}</div>
-        <ol class="stl">${x.bat.map(b => `<li data-pl="${t}|${esc(b.n)}|"><span class="sto num">${b.o}</span>${posIcon(b.pos, "stp")}<span class="stnm">${pwName(t, b.n, POS_GR[b.pos] || "内野手")}</span><span class="sta num">${esc(b.avg || "")}</span></li>`).join("")}</ol>
+        <ol class="stl">${x.bat.map(b => `<li data-pl="${t}|${esc(b.n)}|"><span class="sto num">${b.o}</span><span class="stnm">${pwName(t, b.n, POS_GR[b.pos] || "内野手")}</span>${posIcon(b.pos, "stp")}<span class="sta num">${esc(b.avg || "")}</span></li>`).join("")}</ol>
         ${x.p ? `<div class="stpit" data-pl="${t}|${esc(x.p.n)}|pit"><span class="stk">先発</span><span class="stnm">${pwName(t, x.p.n, "投手")}</span><span class="sta num">${esc(x.p.era || "")}</span></div>` : ""}</div>`;
     st = `<details class="stm"${open ? " open" : ""} data-stm="${k}"><summary>スタメン発表<small>打順・守備・打率</small></summary>
       <div class="stw">${col(g.h, lu.h)}${col(g.a, lu.a)}</div></details>`;
@@ -5028,7 +5043,7 @@ function benchHTML(g) {
   const col = (t, x) => {
     const used = started ? usedOf(t) : [];
     const rows = BENCH_GR.map(([gr, c]) => [gr, c, ((x && x[gr]) || []).filter(pl => !played(used, pl.n))]).filter(([, , l]) => l.length).map(([gr, c, l]) => l.map(pl =>
-      `<li data-pl="${t}|${esc(pl.n)}|${c === "投" ? "pit" : ""}"><span class="sto"></span><span class="stp" style="--c:${PCOL[c]}">${c}</span><span class="stnm">${pwName(t, pl.n, gr)}</span><span class="sta num">${esc(pl.st || "")}</span></li>`).join("")).join("");
+      `<li data-pl="${t}|${esc(pl.n)}|${c === "投" ? "pit" : ""}"><span class="sto"></span><span class="stnm">${pwName(t, pl.n, gr)}</span>${posIcon(c, "stp")}<span class="sta num">${esc(pl.st || "")}</span></li>`).join("")).join("");
     const none = started ? "ベンチに残っている選手はいません" : "まだ発表されていません";
     return `<div class="stc" style="${tv(t)}"><div class="sth"><i class="ykb">${sn(t)}</i>${fn(t)}</div>${rows ? `<ol class="stl">${rows}</ol>` : `<p class="stn">${none}</p>`}</div>`;
   };
@@ -5405,7 +5420,7 @@ function lineupHTML(g, d) {
   return `<div class="lu">
     <div class="lut">打順<div class="lutabs">${[g.h, g.a].map(x => `<button type="button" data-k="${key}" data-t="${x}" class="${x === t ? "on" : ""}" style="${tv(x)}">${fn(x)}</button>`).join("")}</div></div>
     <table class="lutab">${rows.map(r => { const first = r.order !== prev; prev = r.order;
-      return `<tr class="${r.starter ? "" : "sub"}${curName && sq(r.name) === curName ? " cur" : ""}"><td class="lo num">${first ? r.order : ""}</td><td class="lp">${posIcon(r.pos)}</td><td class="ln"><div class="lnm" data-pl="${t}|${esc(r.name)}"><span>${pwName(t, r.name, r.pos === "投" ? "投手" : undefined)}</span><em class="la num">${esc(r.avg || "")}</em></div>${r.results.length ? `<div class="lrw">${res(r)}</div>` : ""}</td></tr>`; }).join("")}</table>
+      return `<tr class="${r.starter ? "" : "sub"}${curName && sq(r.name) === curName ? " cur" : ""}"><td class="lo num">${first ? r.order : ""}</td><td class="ln"><div class="lnm" data-pl="${t}|${esc(r.name)}"><span>${pwName(t, r.name, r.pos === "投" ? "投手" : undefined)}</span>${posIcon(r.pos, "lpi")}<em class="la num">${esc(r.avg || "")}</em></div>${r.results.length ? `<div class="lrw">${res(r)}</div>` : ""}</td></tr>`; }).join("")}</table>
   </div>`;
 }
 // 投手成績（その試合に投げた投手。登板順）
@@ -6541,7 +6556,10 @@ async function openPlayer(t, name, opt = {}) {
   const me = rosterOf(t, name);
   const full = me ? me.n : name, no = opt.no || (me && me.no) || "";
   const gr = posGroups(t, full, me ? me.p : (opt.kind === "pit" ? "投手" : guessPos(t, name)));
-  const chips = gr.map(g => `<i class="ps-pos pz-${TILEC[g] || "pi"}" style="--c:${PCOL[g]}">${{ "投": "投手", "先": "先発", "中": "中継ぎ", "抑": "抑え", "捕": "捕手", "内": "内野手", "外": "外野手" }[g] || g}</i>`).join("");
+  const PSL = { "投": "投手", "先": "先発", "中": "中継ぎ", "抑": "抑え", "捕": "捕手", "内": "内野手", "外": "外野手" };
+  const chips = gr.map(g => document.documentElement.classList.contains("theme-pawa")
+    ? `<i class="ptile sptile pschip ${TILEC[g] || "pi"}"><b>${PSL[g] || g}</b></i>`
+    : `<i class="ps-pos" style="--c:${PCOL[g]}">${PSL[g] || g}</i>`).join("");
   const song = (opt.song || (me && me.song)) && !movedOut(t, full);   // 移籍した選手は、元の球団の応援歌を出さない
   const of = song && me ? songLink(t, me) : null;
   const btns = song ? `<div class="sp-b">${of ? `<a class="sof" href="${of}" target="_blank" rel="noopener">${songLabel(t)}</a>` : ""}<a class="sgo" href="${ytUrl(t, full)}" target="_blank" rel="noopener">応援歌を聴く</a></div>` : "";
