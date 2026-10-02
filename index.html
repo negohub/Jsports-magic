@@ -47,7 +47,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・入退団情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20261002195639">
+<meta name="build" content="20261002202018">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -771,6 +771,14 @@ html.theme-pawa .pnbox .pnm{color:#C2185B !important}
 .tgo li.vic{color:#FFD21F;font-weight:800}.tgo li.pmg{font-weight:700}   /* pmg：優勝マジックの動き（.pn は別の所で使われているので使わない） */
 html.theme-pawa .tgo li.vic{color:#C2185B !important}
 html.theme-pawa.pawa-dark .tgo li.vic:not(#z){color:#FFD84D !important}
+/* 球団の印（丸・四角に1文字）の文字は、どこに置いても球団ごとの文字色（--ti：阪神・巨人は黒、ほかは白）。
+   日程の詳細（#detail *）などの「中の文字はすべて紺」の指定に負けないように */
+html #detail .ykb:not(#z),html #detail .badge:not(#z),html .ykb:not(#z){color:var(--ti,#fff) !important}
+/* 設定の「名前の色」：選んでいるボタンは、4つの見た目すべてで、その色で塗りつぶし＋紺の太い縁＋丸の中にチェック（選んでいないボタンとひと目で違う） */
+html:not(#y) .op-b.op-b[aria-pressed="true"]:not(#z){background:var(--c) !important;color:#13264A !important;border:2px solid #13264A !important;box-shadow:0 0 0 2px var(--c) !important}
+html:not(#y) .op-b.op-b[aria-pressed="true"]:not(#z) i{display:inline-grid;place-items:center;width:16px;height:16px;background:#13264A !important}
+html:not(#y) .op-b.op-b[aria-pressed="true"]:not(#z) i::after{content:"";width:7px;height:4px;border:solid #fff;border-width:0 0 2px 2px;transform:translateY(-1px) rotate(-45deg)}
+html:not(#y) .op-b.op-b[aria-pressed="false"]:not(#z){opacity:.85}
 html.theme-pawa.pawa-dark .pnbox .pnm:not(#z){color:#FFD84D !important}
 .ic-crown{fill:none !important;stroke:currentColor !important;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
 .tgo li .ic-crown{width:16px;height:16px;vertical-align:-3px;margin-right:4px}
@@ -2951,6 +2959,7 @@ html.sty-light:not(.theme-pawa) .se-box .se-l{color:#AA8A0E}
 html.sty-light:not(.theme-pawa) .se-box small{color:#5C5C5C}
 html.sty-light:not(.theme-pawa) .pnbox .pnm{color:#AA8A0E}
 html.sty-light:not(.theme-pawa) .tgo li.vic{color:#AA8A0E}
+html.sty-light:not(.theme-pawa):not(#y) .op-b.op-b[aria-pressed="true"]:not(#z) i{background:#13264A !important}
 html.sty-light:not(.theme-pawa) .se-foot span{background:#F4F4F4}
 html.sty-light:not(.theme-pawa) .se-sum{color:#383838}
 html.sty-light:not(.theme-pawa) .se-sum b{color:#171717}
@@ -3412,6 +3421,7 @@ html:not(.theme-pawa):not(.sty-light) .sgt small:not(#z),html:not(.theme-pawa):n
 html:not(.theme-pawa):not(.sty-light) .tgo b em:not(#z){background:#ED0000 !important}
 html:not(.theme-pawa):not(.sty-light) .h2h td.self:not(#z){color:#808080 !important}
 html:not(.theme-pawa):not(.sty-light) .ftab td.fr.l b:not(#z){color:#858585 !important}
+html:not(.theme-pawa):not(.sty-light) .op-b.op-b[aria-pressed="true"]:not(#z){color:#5A84D5 !important}
 html:not(.theme-pawa):not(.sty-light) .pn:not(#z){color:#B3B3B3 !important}
 html:not(.theme-pawa):not(.sty-light) .o .pn:not(#z){background:#ED0000 !important}
 html:not(.theme-pawa):not(.sty-light) .h .pn:not(#z){background:#0A6DFF !important}
