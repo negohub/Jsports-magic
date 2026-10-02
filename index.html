@@ -47,7 +47,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・入退団情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20261002183608">
+<meta name="build" content="20261002190554">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -2059,7 +2059,15 @@ html.theme-pawa{background:#CDEBFF}
 .recact{display:inline-block;margin-left:5px;padding:1px 5px;border-radius:5px;font-size:9.5px;font-weight:800;vertical-align:1px;background:#17703D;color:#fff;letter-spacing:0}
 .recnote{margin:4px 2px 8px;font-size:11.5px;color:var(--muted)}
 /* パワプロ風：名前の札（名前の欄の幅いっぱい・名前の長さで字を小さく）。引退した打者は白い札 */
-html.theme-pawa .rectab td.rn{container-type:inline-size;min-width:92px}
+/* 表のマスは大きさの基準（container）になれないので、中の箱を基準にする（名前が長くても列が広がりすぎない） */
+html.theme-pawa .rectab td.rn{min-width:92px}
+html.theme-pawa .rectab .recnmw{container-type:inline-size;width:100%}
+.rectab .yr{display:inline}
+@media (max-width:374px){
+  html.theme-pawa .rectab td.rn{min-width:70px}
+  .rectab td.rp .yr{display:block;line-height:1.2}
+  .rectab td.rt{white-space:normal;line-height:1.2}
+}
 html.theme-pawa .rectab .rectile{display:flex;justify-content:center;align-items:center;box-sizing:border-box;width:100%;height:26px;padding:0 4px}
 html.theme-pawa .rectab .rectile b{font-size:min(13px, calc((100cqw - 10px) / var(--n, 3))) !important;letter-spacing:0 !important;white-space:nowrap;overflow:hidden}
 html.theme-pawa .rectab td.rn .recact{margin-top:6px}
@@ -7680,7 +7688,7 @@ async function loadRec(force) {
     }
   } catch {} finally { recBusy = false; if (S.tab === "rec" && !REC) renderRec(); }
 }
-const recCell = v => esc(String(v == null ? "" : v).replace(/^\((.*)\)$/, "$1").replace(/^([^\s]{1})\s([^\s]{1})$/, "$1$2").replace(/^(\d{4})-(\d{2})(\d{2})$/, (m, a, b, c) => a.slice(0, 2) === b ? `${a}-${c}` : m));
+const recCell = v => esc(String(v == null ? "" : v).replace(/^\((.*)\)$/, "$1").replace(/^([^\s]{1})\s([^\s]{1})$/, "$1$2"));   // 実働期間は全員「1959-1980」の形（4けた-4けた）でそろえる
 function renderRec() {
   recRestore();
   const kind = S.recKind || "lt", side = S.recSide || "b";
@@ -7703,7 +7711,9 @@ function renderRec() {
   // いちばん太くする列：部門と同じ名前の列（なければ選手の右の列）
   let vi = L.cols.findIndex(c => c === label || c.replace(/\s/g, "") === label);
   if (vi < 0) vi = Math.min(L.cols.length - 1, L.cols.findIndex(c => /選手/.test(c)) + 1);
-  const ni = L.cols.findIndex(c => /選手/.test(c));
+  const ni = L.cols.findIndex(c => /選手/.test(c)), pi = L.cols.findIndex(c => /実働|期間/.test(c)), ti = L.cols.findIndex(c => /所属/.test(c));
+  // 実働期間：全員「1959-1980」の形。狭い画面では全員そろって「1959-」「1980」の2行に
+  const period = v => { const m = String(v || "").replace(/^\((.*)\)$/, "$1").match(/^(\d{4})-(\d{4})$/); return m ? `<span class="yr">${m[1]}-</span><span class="yr">${m[2]}</span>` : recCell(v); };
   // 名簿（12球団）：名前 → 球団・守備位置。同じ名前が2人いるときは使わない（取り違えないように）
   const byName = new Map();
   for (const [t, ro] of Object.entries(DATA.rosters || {})) for (const r of ro) { const k = nk(r.n); byName.set(k, byName.has(k) ? null : { t, n: r.n, p: r.p }); }
@@ -7727,7 +7737,7 @@ function renderRec() {
   const head = L.cols.map((c, i) => `<th class="${i === vi ? "rv" : i === ni ? "rn" : ""}">${esc(c.replace(/^\((.*)\)$/, "$1"))}</th>`).join("");
   const body = L.rows.map((r, ri) => {
     const act = (L.act && L.act[ri]) || (kind !== "ss" && ni >= 0 && nowNames.has(nk(r[ni])));
-    return `<tr>${r.map((v, i) => i === ni ? `<td class="rn">${isPawa() ? recTile(v, nowHit(r, ri)) : `<span class="recnm">${esc(v)}</span>`}${act ? `<span class="recact">現役</span>` : ""}</td>` : `<td class="${i === vi ? "rv" : i === 0 ? "rk" : ""}">${recCell(v)}</td>`).join("")}</tr>`;
+    return `<tr>${r.map((v, i) => i === ni ? `<td class="rn">${isPawa() ? `<div class="recnmw">${recTile(v, nowHit(r, ri))}</div>` : `<span class="recnm">${esc(v)}</span>`}${act ? `<span class="recact">現役</span>` : ""}</td>` : `<td class="${i === vi ? "rv" : i === 0 ? "rk" : i === pi ? "rp" : i === ti ? "rt" : ""}">${i === pi ? period(v) : recCell(v)}</td>`).join("")}</tr>`;
   }).join("");
   tbl.innerHTML = `<thead><tr>${head}</tr></thead><tbody>${body}</tbody>`;
   $("recNote").textContent = L.note || "";
