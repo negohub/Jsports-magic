@@ -47,7 +47,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・入退団情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20261002102416">
+<meta name="build" content="20261002112723">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -1227,7 +1227,7 @@ html:not(.theme-pawa) .lnm>span:first-child{min-width:5.5em}   /* 守備位置�
 .lutab tr.sub .lnm span{font-weight:400;color:#C8C8C8;font-size:12.5px}
 .lrw{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
 .lrw .rc{font-size:11.5px;padding:2px 7px;margin:0}
-.lutab tr.cur .lnm span::before{content:"▶ ";color:#FFD21F;font-size:10px}
+.lutab tr.cur .lo::before{content:"▶";color:#FFD21F;font-size:9px;margin-right:1px;vertical-align:1px}   /* 今の打者の印は打順の数字の前に1つだけ（名前・守備位置の札の中には付けない。札の位置もずらさない） */
 .lutab tr.cur .ln::before{content:none}
 /* 投手成績 */
 .puw{overflow-x:auto}
@@ -1276,6 +1276,8 @@ html:not(.theme-pawa) .lnm>span:first-child{min-width:5.5em}   /* 守備位置�
 .rc.bb{background:rgba(76,217,138,.14);color:#6FE3A1;box-shadow:inset 0 0 0 1px rgba(76,217,138,.42)}
 .rc.sac{background:rgba(255,255,255,.05);color:#C8C8C8;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
 .rc.e{background:rgba(255,209,102,.14);color:#FFD166;box-shadow:inset 0 0 0 1px rgba(255,209,102,.42)}
+.rc.sb{background:rgba(64,214,200,.14);color:#5FE0D2;box-shadow:inset 0 0 0 1px rgba(64,214,200,.45)}
+.rleg .sb{background:rgba(64,214,200,.14);color:#5FE0D2}
 .rc.k{background:rgba(255,122,122,.10);color:#FF8A8A;box-shadow:inset 0 0 0 1px rgba(255,122,122,.38)}
 .rc.o{background:rgba(255,255,255,.05);color:#9A9A9A;box-shadow:inset 0 0 0 1px rgba(255,255,255,.10)}
 .rc em{color:inherit;opacity:.75;margin-right:3px;font-style:normal}
@@ -1296,6 +1298,8 @@ html.theme-pawa .rc.h,html.theme-pawa .rc.hr{background:linear-gradient(180deg,#
 html.theme-pawa .rc.bb,html.theme-pawa .rc.sac{background:linear-gradient(180deg,#F2D56B,#D9AE2E) !important;color:#4A3200 !important;text-shadow:0 1px 0 rgba(255,255,255,.35)}
 html.theme-pawa .rc.o,html.theme-pawa .rc.k{background:linear-gradient(180deg,#63C0F2,#2F92D6) !important}
 html.theme-pawa .rc.e{background:linear-gradient(180deg,#C9CFD5,#99A2AA) !important}
+html.theme-pawa .rc.sb{background:linear-gradient(180deg,#2BB8A8,#138A7D) !important;color:#fff !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -2px 0 rgba(0,0,0,.18) !important}
+html.theme-pawa .rleg .sb{background:#138A7D !important;color:#fff !important}
 html.theme-pawa .rc.h,html.theme-pawa .rc.hr,html.theme-pawa .rc.o,html.theme-pawa .rc.k,html.theme-pawa .rc.e{color:#fff !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -2px 0 rgba(0,0,0,.18) !important}
 html.theme-pawa .rc.bb,html.theme-pawa .rc.sac{color:#4A3200 !important}
 html.theme-pawa .rc em{color:inherit !important;opacity:.8;margin-right:3px;font-style:normal}
@@ -2438,6 +2442,8 @@ html.theme-pawa.pawa-dark .rc.h,html.theme-pawa.pawa-dark .rc.hr{background:line
 html.theme-pawa.pawa-dark .rc.bb,html.theme-pawa.pawa-dark .rc.sac{background:linear-gradient(180deg,#F2D56B,#D9AE2E) !important;color:#4A3200 !important}
 html.theme-pawa.pawa-dark .rc.o,html.theme-pawa.pawa-dark .rc.k{background:linear-gradient(180deg,#63C0F2,#2F92D6) !important}
 html.theme-pawa.pawa-dark .rc.e{background:linear-gradient(180deg,#C9CFD5,#99A2AA) !important}
+html.theme-pawa.pawa-dark .rc.sb{background:linear-gradient(180deg,#2BB8A8,#138A7D) !important;color:#fff !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -2px 0 rgba(0,0,0,.18) !important}
+html.theme-pawa.pawa-dark .rleg .sb{background:#138A7D !important;color:#fff !important}
 html.theme-pawa.pawa-dark .rbi{color:#fff;background:linear-gradient(180deg,#4CD964,#1FA842);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -2px 0 rgba(0,0,0,.18)}
 html.theme-pawa.pawa-dark .rleg .h{background:#D93A57 !important;color:#fff !important}
 html.theme-pawa.pawa-dark .rleg .bb{background:#D9AE2E !important;color:#4A3200 !important}
@@ -3054,7 +3060,7 @@ html.sty-light:not(.theme-pawa) .ls td.scd.on{background:#3A2E06}
 html.sty-light:not(.theme-pawa) .lnm .la{color:#5C5C5C}
 html.sty-light:not(.theme-pawa) .lnm .posic{color:#5C5C5C}
 html.sty-light:not(.theme-pawa) .lutab tr.sub .lnm span{color:#383838}
-html.sty-light:not(.theme-pawa) .lutab tr.cur .lnm span::before{color:#AA8A0E}
+html.sty-light:not(.theme-pawa) .lutab tr.cur .lo::before{color:#AA8A0E}
 html.sty-light:not(.theme-pawa) .putab th{border-bottom:1px solid #E0E0E0}
 html.sty-light:not(.theme-pawa) .putab td{border-bottom:1px solid #DFDFDF}
 html.sty-light:not(.theme-pawa) .putab td.pnx b{color:#171717}
@@ -3074,6 +3080,8 @@ html.sty-light:not(.theme-pawa) .rc.hr{color:#AA0E3D}
 html.sty-light:not(.theme-pawa) .rc.bb{color:#1E9A53}
 html.sty-light:not(.theme-pawa) .rc.sac{background:rgba(20,24,40,0.045);color:#383838}
 html.sty-light:not(.theme-pawa) .rc.e{color:#AA7B0E}
+html.sty-light:not(.theme-pawa) .rc.sb{color:#1E9A8C}
+html.sty-light:not(.theme-pawa) .rleg .sb{color:#1E9A8C}
 html.sty-light:not(.theme-pawa) .rc.k{color:#AA0E0E}
 html.sty-light:not(.theme-pawa) .rc.o{background:rgba(20,24,40,0.045);color:#5C5C5C}
 html.sty-light:not(.theme-pawa) .rleg .h{color:#0E61AA}
@@ -3265,6 +3273,8 @@ html.sty-light:not(.theme-pawa) .bk-rule b{color:#AA8A0E}
 html.sty-light:not(.theme-pawa) .offtag.k-promote{background:#1B7F3B !important;color:#fff !important}
 /* ===== 文字の読みやすさ（contrast_fix.py） ===== */
 html.theme-pawa:not(.pawa-dark) .pl3 .pcn:not(#z){color:#576B8D !important}
+html.theme-pawa:not(.pawa-dark) .rc.sb:not(#z){background:linear-gradient(180deg,#1E8277,#138A7D) !important}
+html.theme-pawa:not(.pawa-dark) .rleg .sb:not(#z){background:#138A7D !important}
 html.theme-pawa:not(.pawa-dark) .rbi:not(#z){background:linear-gradient(180deg,#1C842E,#198634) !important}
 html.theme-pawa:not(.pawa-dark) .rleg .h:not(#z){background:#D83653 !important}
 html.theme-pawa:not(.pawa-dark) .rleg .o:not(#z){background:#247CB8 !important}
@@ -3320,6 +3330,8 @@ html.theme-pawa:not(.pawa-dark) .wxd span.wxhi:not(#z){color:#1C68CC !important}
 html.theme-pawa:not(.pawa-dark) .wxc small.wxhi:not(#z){color:#1C68CC !important}
 html.theme-pawa:not(.pawa-dark) .ytbl td.yc2.last b:not(#z){background:linear-gradient(180deg,#EA1000,#E32C27) !important}
 html.theme-pawa.pawa-dark .rtab .rkm.r1:not(#z),html.theme-pawa.pawa-dark .rtab .rkm.r2:not(#z),html.theme-pawa.pawa-dark .rtab .rkm.r3:not(#z){color:#7699DC !important}
+html.theme-pawa.pawa-dark .rc.sb:not(#z){background:linear-gradient(180deg,#1E8277,#138A7D) !important}
+html.theme-pawa.pawa-dark .rleg .sb:not(#z){background:#138A7D !important}
 html.theme-pawa.pawa-dark .rbi:not(#z){background:linear-gradient(180deg,#1C842E,#198634) !important}
 html.theme-pawa.pawa-dark .rleg .h:not(#z){background:#D83653 !important}
 html.theme-pawa.pawa-dark .rleg .o:not(#z){background:#247CB8 !important}
@@ -3399,6 +3411,8 @@ html.sty-light:not(.theme-pawa) .pnx3.up:not(#z){color:#7B640A !important}
 html.sty-light:not(.theme-pawa) .putab .dec.ds:not(#z){background:#8D721B !important}
 html.sty-light:not(.theme-pawa) .rc.bb:not(#z){color:#17743E !important}
 html.sty-light:not(.theme-pawa) .rc.e:not(#z){color:#84600B !important}
+html.sty-light:not(.theme-pawa) .rc.sb:not(#z){color:#177469 !important}
+html.sty-light:not(.theme-pawa) .rleg .sb:not(#z){color:#177469 !important}
 html.sty-light:not(.theme-pawa) .rleg .bb:not(#z){color:#17743E !important}
 html.sty-light:not(.theme-pawa) .rleg .e:not(#z){color:#84600B !important}
 html.sty-light:not(.theme-pawa) .rnote .k2:not(#z){color:#7B640A !important}
@@ -4807,7 +4821,7 @@ function resCls(x) {
 function rcChip(x) {
   return `<span class="rcw"><span class="rc ${resCls(x)}">${esc(x)}</span></span>`;
 }
-const RES_LEGEND = `<div class="rleg sty"><span class="h">安打</span><span class="hr">本塁打</span><span class="bb">四死球</span><span class="k">三振</span><span class="sac">犠打飛</span><span class="e">失策</span><span class="o">凡打</span></div><div class="rleg pw"><span class="h">安打・本塁打</span><span class="bb">四死球・犠打飛</span><span class="o">凡打・三振</span><span class="e">失策</span></div>`;
+const RES_LEGEND = `<div class="rleg sty"><span class="h">安打</span><span class="hr">本塁打</span><span class="bb">四死球</span><span class="k">三振</span><span class="sac">犠打飛</span><span class="e">失策</span><span class="o">凡打</span><span class="sb">盗塁成功</span></div><div class="rleg pw"><span class="h">安打・本塁打</span><span class="bb">四死球・犠打飛</span><span class="o">凡打・三振</span><span class="e">失策</span><span class="sb">盗塁成功</span></div>`;
 
 /* ---------- アイコン（線画・サイト共通） ---------- */
 const IC = {
@@ -5415,12 +5429,14 @@ function lineupHTML(g, d) {
   const rows = t === g.h ? L[1] : L[0];
   const sq = x => (x || "").normalize("NFKC").replace(/\s+/g, "");
   const curName = g.st === "live" && p && p.batter && atk === t ? sq(p.batter.name) : null;
-  const res = r => r.results.map((x, i) => rcChip(x, (r.rbis || [])[i])).join("");
+  // 盗塁成功：出場成績の盗塁の数だけ、打席の結果のあとに「盗塁成功」の札を付ける（何回に走ったかは出場成績に載っていない）
+  const sbN = r => Math.max(0, parseInt(r.sb, 10) || 0);
+  const res = r => r.results.map((x, i) => rcChip(x, (r.rbis || [])[i])).join("") + Array.from({ length: sbN(r) }, () => `<span class="rcw"><span class="rc sb">盗塁成功</span></span>`).join("");
   let prev = 0;
   return `<div class="lu">
     <div class="lut">打順<div class="lutabs">${[g.h, g.a].map(x => `<button type="button" data-k="${key}" data-t="${x}" class="${x === t ? "on" : ""}" style="${tv(x)}">${fn(x)}</button>`).join("")}</div></div>
     <table class="lutab">${rows.map(r => { const first = r.order !== prev; prev = r.order;
-      return `<tr class="${r.starter ? "" : "sub"}${curName && sq(r.name) === curName ? " cur" : ""}"><td class="lo num">${first ? r.order : ""}</td><td class="ln"><div class="lnm" data-pl="${t}|${esc(r.name)}"><span>${pwName(t, r.name, r.pos === "投" ? "投手" : undefined)}</span>${posIcon(r.pos, "lpi")}<em class="la num">${esc(r.avg || "")}</em></div>${r.results.length ? `<div class="lrw">${res(r)}</div>` : ""}</td></tr>`; }).join("")}</table>
+      return `<tr class="${r.starter ? "" : "sub"}${curName && sq(r.name) === curName ? " cur" : ""}"><td class="lo num">${first ? r.order : ""}</td><td class="ln"><div class="lnm" data-pl="${t}|${esc(r.name)}"><span>${pwName(t, r.name, r.pos === "投" ? "投手" : undefined)}</span>${posIcon(r.pos, "lpi")}<em class="la num">${esc(r.avg || "")}</em></div>${r.results.length || sbN(r) ? `<div class="lrw">${res(r)}</div>` : ""}</td></tr>`; }).join("")}</table>
   </div>`;
 }
 // 投手成績（その試合に投げた投手。登板順）
