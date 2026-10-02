@@ -47,7 +47,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・入退団情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20261002052855">
+<meta name="build" content="20261002061428">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -1423,8 +1423,8 @@ h2 small{white-space:normal;margin-left:10px;line-height:1.5}
 }
 /* ページ切り替え・開閉をなめらかに */
 @media (prefers-reduced-motion:no-preference){
-  .view:not([hidden]){animation:vin .35s cubic-bezier(.22,1,.36,1)}
-  @keyframes vin{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:none}}
+  .view:not([hidden]){animation:vin .28s cubic-bezier(.22,1,.36,1)}
+  @keyframes vin{0%{transform:translateY(6px)}100%{transform:none}}
   .tgd{animation:vin .35s cubic-bezier(.22,1,.36,1)}
   .chip,.tbtn,.tgx,.seg button{transition:background .25s ease,color .25s ease,box-shadow .25s ease,transform .15s ease}
   .chip:active,.tbtn:active,.tgx:active,.shot:active{transform:scale(.97)}
@@ -2013,9 +2013,12 @@ html.theme-pawa{background:#CDEBFF}
 .tabbar button .tl,.tabbar button svg{transition:none !important;will-change:transform,opacity;backface-visibility:hidden}
 /* 選択中のタブのレンズ：少し弾むばねの動きですべる */
 .tabbar .lens{transition:transform .55s cubic-bezier(.3,1.35,.45,1),width .55s cubic-bezier(.3,1.35,.45,1)}
-/* 画面の切り替え：少し浮き上がりながらふわっと */
-.view:not([hidden]){animation:vin2 .45s cubic-bezier(.2,1,.3,1)}
-@keyframes vin2{0%{opacity:0;transform:translate3d(0,10px,0)}100%{opacity:1;transform:none}}
+/* 画面の下のほう（まだ見えていない所）は、見える所まで来てから並べる。タブを押した瞬間の仕事を減らして、すぐ画面を出すため
+   （対応していない古いiPhoneでは、今までどおり全部並べるだけ） */
+#raceBox,#bracketBox,#h2h,#hist,#tot,.ofteam{content-visibility:auto;contain-intrinsic-size:auto 420px}
+/* 画面の切り替え：押した瞬間に中身を出す（透明から始めると「パッと出ない」ので、少しだけ下から浮き上がる動きだけ） */
+.view:not([hidden]){animation:vin2 .28s cubic-bezier(.2,1,.3,1)}
+@keyframes vin2{0%{transform:translate3d(0,6px,0)}100%{transform:none}}
 /* ボタン：押した瞬間にほんの少し沈む */
 button,.chip,.tbtn,.ptile,.tgx,.shot{transition:transform .25s cubic-bezier(.2,1.4,.4,1)}
 button:active,.chip:active,.tbtn:active,.ptile:active,.tgx:active,.shot:active{transform:scale(.96)}
@@ -4444,6 +4447,7 @@ function hideSwipeHint() {
 }
 function setTab(t) {
   S.tab = t;
+  renderTab(t);
   // 重い描き直しは、画面がふわっと出てくる動き（0.45秒）の邪魔をしないよう、動きが落ち着いてから
   if (t === "stats") setTimeout(() => { liveStats(S.cat); renderTeamIn(); }, 260);
   if (t === "game" || t === "cal") setTimeout(() => loadStarters(), 260);
@@ -4818,7 +4822,10 @@ function renderGame() {
   $("noGame").hidden = !$("todayBlk").hidden;
 }
 // ===== 予告先発 =====
-let YK = {}, ykAt = 0, ykBusy = false;
+const todayKey = () => { const j = jst(); return j.iso; };
+function keepLive(k, v) { try { localStorage.setItem(k, JSON.stringify({ d: todayKey(), v })); } catch {} }
+function restoreLive(k) { try { const c = JSON.parse(localStorage.getItem(k) || "null"); return c && c.d === todayKey() && c.v && typeof c.v === "object" ? c.v : {}; } catch { return {}; } }
+let YK = restoreLive("yk-v1"), ykAt = 0, ykBusy = false;
 async function loadStarters(force) {
   if (!CONFIG.liveApi || ykBusy || (!force && Date.now() - ykAt < 5 * 60e3)) return;
   ykBusy = true;
@@ -4827,9 +4834,10 @@ async function loadStarters(force) {
     const d = await r.json();
     ykAt = Date.now();
     if (d && d.starters && JSON.stringify(d.starters) !== JSON.stringify(YK)) {
-      YK = d.starters;
-      if (S.tab === "game") renderGame();
-      if (S.tab === "cal") renderCal();
+      YK = d.starters; keepLive("yk-v1", YK);
+      if (S.tab === "game") renderGame(); else TAB_DIRTY.add("game");
+      if (S.tab === "cal") renderCal(); else TAB_DIRTY.add("cal");
+      renderRestSoon();
     }
   } catch {} finally { ykBusy = false; }
 }
@@ -4940,7 +4948,7 @@ document.addEventListener("touchcancel", () => { clearTimeout(PEEK.timer); if (P
 document.addEventListener("click", e => { if (Date.now() < PEEK.until) { e.preventDefault(); e.stopPropagation(); } }, true);
 document.addEventListener("contextmenu", e => { if (peekTarget(e.target)) e.preventDefault(); });
 // ===== 今日の試合の放送予定・スタメン（スポナビの試合トップ。スタメンは発表されたら） =====
-let PRE = {}, preAt = 0, preBusy = false;
+let PRE = restoreLive("pre-v1"), preAt = 0, preBusy = false;
 S.stmOpen = S.stmOpen || {};   // スタメンの折りたたみ（試合ごと。閉じたら覚える）
 async function loadPre(force) {
   if (!CONFIG.liveApi || preBusy || (!force && Date.now() - preAt < 60e3)) return;
@@ -4954,7 +4962,7 @@ async function loadPre(force) {
     if (d && d.games && d.date) {
       const next = {};
       for (const [k, v] of Object.entries(d.games)) { const [h, a] = k.split("-"); next[`${d.date}|${h}|${a}`] = v; }
-      if (JSON.stringify(next) !== JSON.stringify(PRE)) { PRE = next; if (S.tab === "game") renderGame(); }
+      if (JSON.stringify(next) !== JSON.stringify(PRE)) { PRE = next; keepLive("pre-v1", PRE); if (S.tab === "game") renderGame(); else { TAB_DIRTY.add("game"); renderRestSoon(); } }
     }
   } catch {} finally { preBusy = false; }
 }
@@ -5070,7 +5078,7 @@ async function loadDetail(g) {
   try {
     const r = await fetch(`${CONFIG.liveApi}?game=${gkey(g)}&t=${Date.now()}`, { cache: "no-store" });
     const d = await r.json();
-    if (d && !d.error) { GD[g.d + gkey(g)] = d; HF.detail = 0; if (S.tab === "game") renderGame(); } else HF.detail++;
+    if (d && !d.error) { GD[g.d + gkey(g)] = d; HF.detail = 0; if (S.tab === "game") renderGame(); else { TAB_DIRTY.add("game"); renderRestSoon(); } } else HF.detail++;
   } catch { HF.detail++; }
 }
 function loadDetails(force) {
@@ -5312,7 +5320,8 @@ function runnerTiles(list) {
   }).join("");
 }
 // 速報の呼び名：名簿で探して苗字にする（同じ球団に同じ苗字がいれば「佐藤輝」のように区別）。名簿にいなければそのまま
-function callName(t, name) {
+const callName = memoBy(() => DATA && DATA.rosters, callNameRaw);
+function callNameRaw(t, name) {
   const n = String(name || "").trim();
   if (!n) return "";
   const ro = (DATA.rosters || {})[t] || [], k = nk(n);
@@ -6282,7 +6291,23 @@ function restoreTeams() {
 restoreTeams();
 const ytUrl = (t, n) => "https://www.youtube.com/results?search_query=" + encodeURIComponent(`${TEAM[t].n} ${n.replace(/\s+/g, "")} 応援歌`);
 // 選手の呼び名（タイル・ランキング用）
-function shortName(t, full) {
+// 同じ材料なら計算をやり直さない（名前の札1枚ごとに名簿を何度も見直していて、描画が遅かった）
+// dep：材料（名簿・発表の一覧など）。材料が入れ替わったら覚えていた答えを捨てる
+function memoBy(depFn, fn, copy) {
+  let dep, m = new Map();
+  return (...a) => {
+    const d = depFn();
+    const same = Array.isArray(d) ? Array.isArray(dep) && d.length === dep.length && d.every((x, i) => x === dep[i]) : d === dep;
+    if (!same) { dep = d; m = new Map(); }
+    const k = a.join("\u0001");
+    if (m.has(k)) { const v = m.get(k); return copy && Array.isArray(v) ? v.slice() : v; }
+    const v = fn(...a);
+    m.set(k, v);
+    return copy && Array.isArray(v) ? v.slice() : v;
+  };
+}
+const shortName = memoBy(() => DATA && DATA.rosters, shortNameRaw);
+function shortNameRaw(t, full) {
   const k = String(full || "").normalize("NFKC").replace(/[\s*＊+＋]/g, "");
   const ov = (CONFIG.nameShort || {})[k];
   if (ov) return ov;
@@ -6302,7 +6327,8 @@ function rankName(t, n) {
 // 選手タイルの色：今季守ったポジションの試合数が多い順（3試合以上のもの。最大3色）。データがなければ名簿の守備位置
 const PCOL = { "投": "#F9B3C7", "先": "#F58A7C", "中": "#F9B3C7", "抑": "#F9B3C7", "捕": "#6FD3F0", "内": "#F9D564", "外": "#84D877" };
 const PKEY = { "投手": "投", "捕手": "捕", "内野手": "内", "外野手": "外" };
-function posGroups(t, name, fallback) {
+const posGroups = memoBy(() => [DATA && DATA.fpos, typeof offItems === "function" ? offItems() : null, document.documentElement.classList.contains("theme-pawa")], posGroupsRaw, true);
+function posGroupsRaw(t, name, fallback) {
   const T = ((DATA.fpos || {}).teams || {})[t] || {};
   const key = String(name || "").replace(/[\s*＊]/g, "");
   let d = T[key];
@@ -6757,7 +6783,7 @@ async function loadLiveOff(force) {
     if (d && Array.isArray(d.items)) {
       const before = JSON.stringify(LIVE_OFF.items);
       LIVE_OFF.items = d.items; LIVE_OFF.checked = d.at || new Date().toISOString();
-      if (before !== JSON.stringify(d.items)) renderOff();
+      if (before !== JSON.stringify(d.items)) { if (S.tab === "off") renderOff(); else { syncOffTab(); TAB_DIRTY.add("off"); renderRestSoon(); } }
     }
   } catch {} finally { liveOffBusy = false; }
 }
@@ -6802,7 +6828,8 @@ function offMerged() {
 }
 setInterval(() => { if (!document.hidden && (S.tab === "off" || S.tab === "song" || S.tab === "stats")) loadLiveOff(); }, 60e3);
 // 名前（名簿の名前・NPBの表の名前・名字だけ）から、その選手の発表を探す
-function offOf(t, name) {
+const offOf = memoBy(() => typeof offItems === "function" ? offItems() : null, offOfRaw);
+function offOfRaw(t, name) {
   if (!name) return null;
   const k = nk(name), list = offItems().filter(x => x.t === t && x.kind !== "mgr" && x.kind !== "promote" && !OFF_IN.has(x.kind));
   const exact = list.find(x => nk(x.n) === k);
@@ -6831,21 +6858,25 @@ function offCat(x) {
   return "move";
 }
 S.offCat = "all";
-function renderOff() {
-  const allItems = offItems().filter(x => CL.includes(x.t));
-  // 種類のボタン：その種類の発表があるものだけ
-  const cats = OFF_CATS.filter(([k]) => k === "all" || allItems.some(x => offCat(x) === k));
-  if (!cats.some(([k]) => k === S.offCat)) S.offCat = "all";
-  const items = S.offCat === "all" ? allItems : allItems.filter(x => offCat(x) === S.offCat);
+// 入退団のタブを出すか（9月後半〜12月、または発表があるとき）。タブの数に合わせてタブバーを並べ直す。軽いので、描画を後回しにするときも毎回やる
+function syncOffTab() {
   const show = offSeason() || offItems().length > 0;
-  // 戦力外のタブはオフ（9月後半〜12月、または発表があるとき）だけ出す。タブの数に合わせてタブバーを並べ直す
   const btn = document.querySelector('.tabbar button[data-tab="off"]');
   if (btn.hidden === show) {
     btn.hidden = !show;
     document.querySelector(".tabbar nav").style.setProperty("--tabs", String(document.querySelectorAll(".tabbar button:not([hidden])").length));
     requestAnimationFrame(() => moveLens(true));
   }
-  if (!show) { if (S.tab === "off") setTab("magic"); return; }
+  if (!show && S.tab === "off") setTab("magic");
+  return show;
+}
+function renderOff() {
+  const allItems = offItems().filter(x => CL.includes(x.t));
+  // 種類のボタン：その種類の発表があるものだけ
+  const cats = OFF_CATS.filter(([k]) => k === "all" || allItems.some(x => offCat(x) === k));
+  if (!cats.some(([k]) => k === S.offCat)) S.offCat = "all";
+  const items = S.offCat === "all" ? allItems : allItems.filter(x => offCat(x) === S.offCat);
+  if (!syncOffTab()) return;
   const cut = items.filter(x => x.kind === "cut" || x.kind === "offer").length, ret = items.filter(x => x.kind === "retire").length, mg = items.filter(x => x.kind === "mgr").length;
   $("offHead").firstChild.textContent = isPL() ? "パ・リーグ 入退団情報" : "セ・リーグ 入退団情報";
   $("offCats").hidden = cats.length < 3;   // 種類が1つだけなら出さない
@@ -7412,6 +7443,24 @@ function virtualMakeups() {
   for (const p of pendingMakeups()) for (let i = 0; i < p.n; i++) list.push({ d, h: p.a, a: p.b || "__", st: "sched", t: "", v: "", virt: true });
   return { pid: fin.id, list };
 }
+const TAB_RENDER = { magic: () => renderMagic(), game: () => renderGame(), cal: () => renderCal(), std: () => renderStd(), stats: () => renderStats(), song: () => renderSong(), off: () => renderOff() };
+const TAB_IDLE_ORDER = ["game", "std", "cal", "stats", "magic", "off", "song"];   // 開かれやすい順
+let TAB_DIRTY = new Set(), restTimer = 0;
+function renderTab(t) { if (TAB_DIRTY.has(t)) { TAB_DIRTY.delete(t); TAB_RENDER[t](); } }
+function renderRestSoon() {
+  if (restTimer) return;
+  const idle = cb => (window.requestIdleCallback ? requestIdleCallback(cb, { timeout: 400 }) : setTimeout(cb, 16));
+  const step = () => {
+    restTimer = 0;
+    const t = TAB_IDLE_ORDER.find(k => TAB_DIRTY.has(k));
+    if (!t) return;
+    renderTab(t);
+    restTimer = idle(step);
+  };
+  restTimer = idle(step);
+}
+// 全部のタブをすぐ描き終える（検査や、全部の画面がそろっている必要があるとき）
+function renderAllNow() { for (const t of [...TAB_DIRTY]) renderTab(t); }
 function renderAll() {
   CONFIG.prevOrder = calOrder(); // 同率時の最後の決め手（前年度順位）
   const vm = virtualMakeups(); CONFIG.finalPid = vm.pid; CONFIG.virtual = vm.list;
@@ -7421,8 +7470,13 @@ function renderAll() {
   document.documentElement.classList.toggle("lg-p", isPL());
   $("stdTtl").textContent = isPL() ? "パ・リーグ順位表" : "セ・リーグ順位表";
   $("stripe").innerHTML = calOrder().map(t => `<i style="${tv(t)}"></i>`).join("");
-  renderMagic(); renderGame(); renderCal(); renderStd(); renderStats(); renderSong(); renderOff();
+  // 開いているタブだけすぐ描き、ほかのタブは手が空いたときに1つずつ描く（開いた瞬間に画面が出るように）。
+  // まだ描いていないタブを開いたときは、その場で描いてから出す（setTab → renderTab）
+  syncOffTab();
+  TAB_DIRTY = new Set(Object.keys(TAB_RENDER));
+  renderTab(S.tab);
   renderHealth();
+  renderRestSoon();
   $("note").textContent = fromSnap ? "自動更新データを読み込めなかったため、ページ内に保存したデータを表示しています。" : "";
 }
 const BUILD = document.querySelector('meta[name="build"]').content;
@@ -7481,6 +7535,13 @@ async function load() {
   }
   pollLive();
   setTimeout(kickIfStuck, 4000);
+  prefetchTabs();
+}
+// 開く前に、ほかのタブの中身（予告先発・放送とスタメン・試合の詳細・入退団の最新）を裏で取っておく。タブを押した瞬間に全部そろった画面を出すため
+function prefetchTabs() {
+  const idle = cb => (window.requestIdleCallback ? requestIdleCallback(cb, { timeout: 1500 }) : setTimeout(cb, 200));
+  idle(() => { try { loadStarters(); loadPre(); if (S.tab !== "game") { loadDetails(); } } catch {} });
+  idle(() => { try { if (typeof loadLiveOff === "function") loadLiveOff(); } catch {} });
 }
 let lastSiteCheck = 0;
 async function check(force) {
