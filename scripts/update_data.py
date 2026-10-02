@@ -873,6 +873,29 @@ def parse_trades(html, season):
     return out
 
 
+def parse_registered(html, season):
+    """NPBの公示「新規支配下選手登録」の表：日付｜球団（registered_<球団>.html へのリンク）｜名前｜守備｜背番号（育成の番号 → 新しい番号）｜（育成選手から移行）
+    育成から支配下に上がった選手だけ取る（新外国人などの新しい登録は取らない）"""
+    codes = {v: k for k, v in ROSTER_CODE.items()}
+    out = []
+    for tr in BeautifulSoup(html, "html.parser").find_all("tr"):
+        cells = [norm(c.get_text(" ", strip=True)) for c in tr.find_all(["td", "th"])]
+        if len(cells) < 5 or not any("育成選手から移行" in c for c in cells):
+            continue
+        m = re.match(r"^(\d{4})/(\d{1,2})/(\d{1,2})$", cells[0])
+        if not m or int(m.group(1)) != season:
+            continue
+        a = tr.find("a", href=re.compile(r"registered_([a-z]+)\.html"))
+        t = codes.get(re.search(r"registered_([a-z]+)\.html", a["href"]).group(1)) if a else None
+        if not t:
+            continue
+        nos = re.findall(r"\d{1,3}", cells[4])
+        out.append({"t": t, "n": re.sub(r"\s+", " ", cells[2]).strip(), "pos": re.sub(r"\s+", "", cells[3]),
+                    "no": nos[-1] if nos else "", "no_dev": nos[0] if len(nos) > 1 else "",
+                    "d": f"{m.group(1)}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"})
+    return out
+
+
 def parse_staff(html):
     """NPBの「監督・コーチ一覧」の表（位置・番号・氏名）。「〜以降の動き」の表は読まない"""
     soup = BeautifulSoup(html, "html.parser")
@@ -1102,6 +1125,19 @@ def fetch_offseason(season, old, rosters, force=False, any_month=False):
                 items[key] = it
     if trades:
         print(f"[トレード] {len(trades)}人（NPB公示）")
+    # 育成から支配下登録（NPB公式の公示「新規支配下選手登録」）：今季の1月〜7月末の分。そのあと戦力外・引退などがあれば、そちらを残す
+    reg_url = f"https://npb.jp/announcement/{season}/pn_registered.html"
+    html = fetch(reg_url)
+    promos = parse_registered(html, season) if html else []
+    for x in promos:
+        key = (x["t"], x["n"])
+        cur = items.get(key)
+        if cur and cur.get("kind") != "promote":
+            continue
+        items[key] = {"t": x["t"], "n": x["n"], "no": x["no"], "dev": False, "kind": "promote", "date": x["d"], "pos": x["pos"], "no_dev": x["no_dev"],
+                      "url": reg_url, "title": "新規支配下選手登録（NPB公示）"}
+    if promos:
+        print(f"[支配下登録] {len(promos)}人（NPB公示）")
     # ドラフト会議の指名選手（10月〜）
     draft_st = {}
     if now.month >= 10 or any_month:
