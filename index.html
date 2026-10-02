@@ -47,7 +47,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・入退団情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20261002180218">
+<meta name="build" content="20261002183608">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -2058,6 +2058,12 @@ html.theme-pawa{background:#CDEBFF}
 .rectab .recmsg{text-align:center;padding:24px 8px;font-weight:600;white-space:normal}
 .recact{display:inline-block;margin-left:5px;padding:1px 5px;border-radius:5px;font-size:9.5px;font-weight:800;vertical-align:1px;background:#17703D;color:#fff;letter-spacing:0}
 .recnote{margin:4px 2px 8px;font-size:11.5px;color:var(--muted)}
+/* パワプロ風：名前の札（名前の欄の幅いっぱい・名前の長さで字を小さく）。引退した打者は白い札 */
+html.theme-pawa .rectab td.rn{container-type:inline-size;min-width:92px}
+html.theme-pawa .rectab .rectile{display:flex;justify-content:center;align-items:center;box-sizing:border-box;width:100%;height:26px;padding:0 4px}
+html.theme-pawa .rectab .rectile b{font-size:min(13px, calc((100cqw - 10px) / var(--n, 3))) !important;letter-spacing:0 !important;white-space:nowrap;overflow:hidden}
+html.theme-pawa .rectab td.rn .recact{margin-top:6px}
+html.theme-pawa .ptile.pwh{background:linear-gradient(180deg,#FFFFFF,#E6EAF1);border-color:#A9B4C6}
 html.theme-pawa .rectab td.rv{color:#C2185B}
 #recKind{margin-bottom:8px}
 /* 画面の下のほう（まだ見えていない所）は、見える所まで来てから並べる。タブを押した瞬間の仕事を減らして、すぐ画面を出すため
@@ -7698,11 +7704,30 @@ function renderRec() {
   let vi = L.cols.findIndex(c => c === label || c.replace(/\s/g, "") === label);
   if (vi < 0) vi = Math.min(L.cols.length - 1, L.cols.findIndex(c => /選手/.test(c)) + 1);
   const ni = L.cols.findIndex(c => /選手/.test(c));
-  const nowNames = new Set(Object.values(DATA.rosters || {}).flat().map(r => nk(r.n)));
+  // 名簿（12球団）：名前 → 球団・守備位置。同じ名前が2人いるときは使わない（取り違えないように）
+  const byName = new Map();
+  for (const [t, ro] of Object.entries(DATA.rosters || {})) for (const r of ro) { const k = nk(r.n); byName.set(k, byName.has(k) ? null : { t, n: r.n, p: r.p }); }
+  const nowNames = new Set([...byName.keys()]);
+  const curY = (DATA && DATA.season) || jst().y, yi = L.cols.findIndex(c => /年度/.test(c));
+  // 今の選手（名簿の守備位置の色の札）：通算・現役はNPBの現役の印（*）か現役の一覧、シーズンは名簿にいて年度が近いもの
+  const nowHit = (r, ri) => {
+    const h = ni >= 0 ? byName.get(nk(r[ni])) : null;
+    if (!h) return null;
+    if (kind === "ss") { const y = parseInt(String(r[yi] || "").replace(/\D/g, "").slice(0, 4), 10); return y && y >= curY - 25 ? h : null; }
+    return (L.act && L.act[ri]) || kind === "ac" ? h : null;
+  };
+  // パワプロ風の名前の札：今の選手は名簿の守備位置の色、引退した投手はピンク、引退した打者は白（守備位置の記録がないので色を付けない）
+  const recTile = (name, h) => {
+    let cls, sty = "";
+    if (h) { const gr = posGroups(h.t, h.n, h.p); cls = TILEC[gr[0]] || "pi"; sty = tileStyle(gr); }
+    else cls = side === "p" ? "pp" : "pwh";
+    const bare = String(name).replace(/\s+/g, "");
+    return `<span class="ptile sptile rectile ${cls}${nmCls(bare)}" style="--n:${[...String(name)].length};${sty}"><b>${esc(name)}</b></span>`;
+  };
   const head = L.cols.map((c, i) => `<th class="${i === vi ? "rv" : i === ni ? "rn" : ""}">${esc(c.replace(/^\((.*)\)$/, "$1"))}</th>`).join("");
   const body = L.rows.map((r, ri) => {
     const act = (L.act && L.act[ri]) || (kind !== "ss" && ni >= 0 && nowNames.has(nk(r[ni])));
-    return `<tr>${r.map((v, i) => i === ni ? `<td class="rn"><span class="recnm">${esc(v)}</span>${act ? `<span class="recact">現役</span>` : ""}</td>` : `<td class="${i === vi ? "rv" : i === 0 ? "rk" : ""}">${recCell(v)}</td>`).join("")}</tr>`;
+    return `<tr>${r.map((v, i) => i === ni ? `<td class="rn">${isPawa() ? recTile(v, nowHit(r, ri)) : `<span class="recnm">${esc(v)}</span>`}${act ? `<span class="recact">現役</span>` : ""}</td>` : `<td class="${i === vi ? "rv" : i === 0 ? "rk" : ""}">${recCell(v)}</td>`).join("")}</tr>`;
   }).join("");
   tbl.innerHTML = `<thead><tr>${head}</tr></thead><tbody>${body}</tbody>`;
   $("recNote").textContent = L.note || "";
