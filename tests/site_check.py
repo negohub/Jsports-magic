@@ -1353,7 +1353,7 @@ async def pitch_tile_check(browser):
           S.open[k] = true; S.lu = S.lu || {}; renderAll(); setTab('game');
           const box = document.querySelector('.tgd');
           if (!box) return ['一球速報が開けない'];
-          const groups = { '投手・打者': '.pn3 .ptile', '走者': '.ptile.rtile', '打順': '.lnm .ptile', '投手の表': '.putab td.pnx .ptile' };
+          const groups = { '投手・打者': '.pn3 .ptile', '走者': '.ptile.rtile', '打順': '.lnm .ptile:not(.posic)', '打順の守備位置': '.lnm .ptile.posic', '投手の表': '.putab td.pnx .ptile' };
           for (const [n, sel] of Object.entries(groups)) {
             const ws = [...box.querySelectorAll(sel)].map(e => Math.round(e.getBoundingClientRect().width));
             if (ws.length && new Set(ws).size > 1) ng.push(`${n}の札の大きさがそろっていない：${[...new Set(ws)].join(',')}`);
@@ -1911,7 +1911,7 @@ async def pre_game_check(browser):
               const tw = [...card.querySelectorAll('.stm .stnm .sptile')].map(e => Math.round(e.getBoundingClientRect().width));
               if (tw.length && Math.max(...tw) - Math.min(...tw) > 1) ng.push(`名前の枠の大きさがそろっていない（${Math.min(...tw)}〜${Math.max(...tw)}）`);
               const cut = [...card.querySelectorAll('.stm .stnm .sptile b')].filter(b => b.scrollWidth > b.clientWidth + 1).length;
-              if (cut) ng.push(`名前が枠に収まっていない（${cut}人）`);
+              if (cut) ng.push(`名前が枠に収まっていない（${cut}人：${[...card.querySelectorAll('.stm .stnm .sptile b')].filter(b => b.scrollWidth > b.clientWidth + 1).slice(0, 3).map(b => b.textContent + ' ' + b.scrollWidth + '/' + b.clientWidth + ' ' + getComputedStyle(b).fontSize).join('、')}）`);
               const over = [...card.querySelectorAll('.stm *, .bc *')].filter(e => e.getBoundingClientRect().right > innerWidth + 1).length;
               if (over) ng.push(`スタメン・放送予定が画面の外にはみ出す（${over}）`);
               // 試合が始まったら：スタメンは出さず（打順は速報で見る）、放送予定だけ
@@ -1976,7 +1976,7 @@ async def uniform_check(browser):
                   DATA.offseason = { season: 2026, items: ro.slice(0, 10).map(x => ({ t, n: x.n, no: x.no, kind: 'cut', date: '2026-09-29', url: '', title: '' })), teams: {}, seen: {} }; renderAll(); setTab('off'); }""")
                 await pg.wait_for_timeout(700)
             ng += await pg.evaluate("""(tab) => { const ng = [];
-              for (const b of document.querySelectorAll('.ptile b')) { const tile = b.closest('.ptile'), r = tile.getBoundingClientRect(); if (!r.width) continue;
+              for (const b of document.querySelectorAll('.ptile:not(.posic):not(.pschip) b')) { const tile = b.closest('.ptile'), r = tile.getBoundingClientRect(); if (!r.width) continue;   // 守備位置のアイコンは名前ではない
                 const cs = getComputedStyle(b), n = [...b.textContent.replace(/\\s/g, '')].length, fs = parseFloat(cs.fontSize), ls = (parseFloat(cs.letterSpacing) || 0) / fs;
                 const want = n <= 2 ? .7 : n <= 4 ? .08 : n <= 6 ? 0 : -.02;
                 if (Math.abs(ls - want) > .015) ng.push(`${tab}：名前の札の字間がほかと違う（${b.textContent} ${ls.toFixed(2)}em）`);
@@ -2199,7 +2199,8 @@ async def fast_start_check(browser):
 
 
 async def pos_icon_check(browser):
-    """守備位置のアイコン（パワプロのオーダー画面の形）：色の種類が名前の札と同じ・昼も夜も同じ明るい色・文字が読める・2文字も枠に収まる"""
+    """守備位置のアイコン（パワプロ風）：名前の札と同じ札（同じ字・同じ文字の色・同じ枠と色）を小さな四角にしたもの。
+    色の種類は名前の札と同じ。並びはパワプロのオーダー画面のように名前の右（スタメン・打順の表）。選手の画面の守備位置も同じ札"""
     for scheme in ["light", "dark"]:
         ctx = await browser.new_context(viewport={"width": 390, "height": 844}, color_scheme=scheme)
         pg = await ctx.new_page()
@@ -2207,29 +2208,45 @@ async def pos_icon_check(browser):
         await pg.route(LIVE + "**", route_live)
         await pg.goto(URL); await pg.wait_for_timeout(800)
         r = await pg.evaluate("""() => { const ng = [];
-          const want = { '投': 'pz-pp', '捕': 'pz-pc', '一': 'pz-pi', '二': 'pz-pi', '三': 'pz-pi', '遊': 'pz-pi', '左': 'pz-po', '中': 'pz-po', '右': 'pz-po', '打': 'pz-pn', '走': 'pz-pn', '打左': 'pz-po' };
-          const box = document.createElement('div'); box.innerHTML = Object.keys(want).map(p => posIcon(p)).join('') + '<table class="lutab"><tr><td class="lp">' + posIcon('打左') + '</td></tr></table>';
-          document.getElementById('v-magic').prepend(box);
-          const lum = c => { const v = c.match(/[\\d.]+/g).slice(0, 3).map(x => +x / 255).map(x => x <= .03928 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4); return .2126 * v[0] + .7152 * v[1] + .0722 * v[2]; };
-          [...box.querySelectorAll('.posic')].slice(0, Object.keys(want).length).forEach((e, i) => {
-            const p = Object.keys(want)[i];
-            if (!e.classList.contains(want[p])) ng.push(`「${p}」の色の種類が違う（${e.className}）`);
-            const cs = getComputedStyle(e);
-            if (cs.borderTopWidth !== '2px') ng.push(`「${p}」に縁がない`);
-            const top = cs.getPropertyValue('--pt').trim(), fg = cs.color;
-            const t = document.createElement('i'); t.style.color = top; document.body.append(t); const bg = getComputedStyle(t).color; t.remove();
-            const a = lum(fg), b = lum(bg), cr = (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
-            if (cr < 4.5) ng.push(`「${p}」の文字が読みにくい（${cr.toFixed(2)}）`);
-            if (lum(bg) < .5) ng.push(`「${p}」が暗い色になっている（${bg}）`);
+          const want = { '投': 'pp', '捕': 'pc', '一': 'pi', '二': 'pi', '三': 'pi', '遊': 'pi', '左': 'po', '中': 'po', '右': 'po', '打': 'pnu', '走': 'pnu', '打左': 'po' };
+          const g = { d: '2026-10-02', h: 'S', a: 'G', st: 'final', hs: 1, as: 0 }, ro = DATA.rosters.G.filter(r => !r.dev);
+          const pick = p => ro.find(r => r.p === p) || ro[0];
+          const rows = Object.keys(want).map((p, i) => ({ order: Math.min(i + 1, 9), pos: p, starter: i < 9, name: pick({ '投': '投手', '捕': '捕手', '左': '外野手', '中': '外野手', '右': '外野手' }[p] || '内野手').n, avg: '.250', results: [] }));
+          const lu = document.createElement('div'); lu.innerHTML = lineupHTML(g, { lineups: [rows, rows] });
+          document.getElementById('v-magic').prepend(lu);
+          [...lu.querySelectorAll('.lnm')].forEach((m, i) => {
+            const p = Object.keys(want)[i], nm = m.querySelector('.ptile:not(.posic)'), ic = m.querySelector('.posic');
+            if (!ic) { ng.push(`「${p}」のアイコンがない`); return; }
+            if (!ic.classList.contains('ptile') || !ic.classList.contains(want[p])) ng.push(`「${p}」が名前と同じ札でない・色の種類が違う（${ic.className}）`);
+            if (nm.compareDocumentPosition(ic) !== Node.DOCUMENT_POSITION_FOLLOWING || ic.getBoundingClientRect().left < nm.getBoundingClientRect().right - 1) ng.push(`打順の表：「${p}」が名前の右にない`);
+            const a = getComputedStyle(ic), b = getComputedStyle(nm), ab = getComputedStyle(ic.querySelector('b')), bb = getComputedStyle(nm.querySelector('b'));
+            if (ab.fontFamily !== bb.fontFamily || ab.fontWeight !== bb.fontWeight || ab.color !== bb.color) ng.push(`「${p}」の字が名前と違う（${ab.fontWeight} ${ab.color} / ${bb.fontWeight} ${bb.color}）`);
+            if (a.borderTopWidth !== b.borderTopWidth || a.borderTopStyle !== b.borderTopStyle || a.boxShadow !== b.boxShadow) ng.push(`「${p}」の枠が名前の札と違う`);
+            if (Math.abs(ic.getBoundingClientRect().height - nm.getBoundingClientRect().height) > 1) ng.push(`「${p}」の高さが名前の札と違う`);
+            if (ic.scrollWidth > ic.clientWidth + 1) ng.push(`「${p}」の字が札からはみ出す`);
           });
-          const w = box.querySelector('.lutab .posic'); if (w.scrollWidth > 30 || w.getBoundingClientRect().width > 30.5) ng.push(`2文字（打左）が打順の表の枠からはみ出す（${w.getBoundingClientRect().width}px）`);
-          box.remove();
-          // 選手の画面の守備位置も同じ形
+          // 同じ色の種類なら、名前の札とまったく同じ色（地・枠）
+          const same = (cls) => { const t = document.createElement('div'); t.innerHTML = `<span class="ptile sptile ${cls}"><b>名前</b></span>` + posIcon(cls === 'pc' ? '捕' : cls === 'pi' ? '遊' : cls === 'po' ? '左' : '投'); lu.append(t);
+            const [x, y] = t.children; const cx = getComputedStyle(x), cy = getComputedStyle(y);
+            if (cx.backgroundImage !== cy.backgroundImage || cx.borderTopColor !== cy.borderTopColor) ng.push(`${cls}：アイコンの色が名前の札と違う`); };
+          ['pp', 'pc', 'pi', 'po'].forEach(same);
+          if (lu.querySelector('td.lp')) ng.push('打順の表に、名前の左の守備位置の列が残っている');
+          lu.remove();
+          // スタメン
+          const so = DATA.rosters.S;
+          PRE['2026-10-02|S|G'] = { lu: { h: { bat: so.slice(0, 2).map((r, i) => ({ o: i + 1, pos: '三', n: r.n, avg: '.3' })) }, a: { bat: [] } } };
+          const pre = document.createElement('div'); pre.innerHTML = preHTML({ d: '2026-10-02', h: 'S', a: 'G', st: 'sched' }); document.getElementById('v-magic').prepend(pre);
+          const lis = pre.querySelectorAll('.stl li'); if (!lis.length) ng.push('スタメンの試しの表示が出ない');
+          lis.forEach(li => { const nm = li.querySelector('.stnm .ptile'), ic = li.querySelector('.posic');
+            if (!nm || !ic || !ic.classList.contains('ptile') || ic.getBoundingClientRect().left < nm.getBoundingClientRect().right - 1) ng.push('スタメン：守備位置が名前の右の札になっていない');
+            else if (Math.abs(ic.getBoundingClientRect().height - nm.getBoundingClientRect().height) > 1) ng.push('スタメン：守備位置の高さが名前の札と違う'); });
+          pre.remove(); delete PRE['2026-10-02|S|G'];
+          // 選手の画面の守備位置も名前と同じ札
           const n = DATA.rosters.S.find(r => r.p === '捕手').n; openPlayer('S', n);
-          const c = document.querySelector('#songPick .ps-pos');
-          if (!c || !c.classList.contains('pz-pc') || getComputedStyle(c).borderTopWidth !== '2px') ng.push(`選手の画面の守備位置がアイコンの形でない（${c && c.className}）`);
+          const c = document.querySelector('#songPick .ps-poss .ptile');
+          if (!c || !c.classList.contains('pc')) ng.push(`選手の画面の守備位置が名前と同じ札でない（${c && c.className}）`);
           return ng; }""")
-        for m in r:
+        for m in r[:20]:
             bad(f"[守備位置のアイコン {'夜' if scheme == 'dark' else '昼'}] {m}")
         await ctx.close()
 
