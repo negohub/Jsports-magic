@@ -47,7 +47,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・入退団情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20261002045125">
+<meta name="build" content="20261002052855">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -3285,7 +3285,6 @@ html.theme-pawa:not(.pawa-dark) .wxr small:not(#z){color:#1C68CC !important}
 html.theme-pawa:not(.pawa-dark) .wxd span.wxhi:not(#z){color:#1C68CC !important}
 html.theme-pawa:not(.pawa-dark) .wxc small.wxhi:not(#z){color:#1C68CC !important}
 html.theme-pawa:not(.pawa-dark) .ytbl td.yc2.last b:not(#z){background:linear-gradient(180deg,#EA1000,#E32C27) !important}
-html.theme-pawa.pawa-dark .tabbar button[aria-selected="true"]:not(#z){color:#7699DC !important}
 html.theme-pawa.pawa-dark .rtab .rkm.r1:not(#z),html.theme-pawa.pawa-dark .rtab .rkm.r2:not(#z),html.theme-pawa.pawa-dark .rtab .rkm.r3:not(#z){color:#7699DC !important}
 html.theme-pawa.pawa-dark .rbi:not(#z){background:linear-gradient(180deg,#1C842E,#198634) !important}
 html.theme-pawa.pawa-dark .rleg .h:not(#z){background:#D83653 !important}
@@ -3298,6 +3297,7 @@ html.theme-pawa.pawa-dark .shot:not(#z){background:linear-gradient(180deg,#21852
 html.theme-pawa.pawa-dark .ytbl td.yc2.last b:not(#z){background:#E32C27 !important}
 html.theme-pawa.pawa-dark .day .ps:not(#z){background:linear-gradient(180deg,#AF5F00,#B75A00) !important}
 html.theme-pawa.pawa-dark .sgo:not(#z),html.theme-pawa.pawa-dark .sbtn.go:not(#z){background:linear-gradient(180deg,#21852F,#19862E) !important}
+html.theme-pawa.pawa-dark .tabbar button[aria-selected="true"]:not(#z){color:#3A5992 !important}
 html.theme-pawa.pawa-dark .srow .sgo:not(#z){background:linear-gradient(180deg,#21852F,#19862E) !important}
 html.theme-pawa.pawa-dark .offtag.k-coach_in:not(#z){background:linear-gradient(180deg,#278472,#138D75) !important}
 html.theme-pawa.pawa-dark .offtag.k-coach_move:not(#z){background:linear-gradient(180deg,#677A7B,#6E7879) !important}
@@ -3451,7 +3451,11 @@ html.theme-pawa.pawa-dark .tabbar{background:linear-gradient(180deg,rgba(60,96,1
   box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 1px 0 rgba(170,200,255,.35),inset 0 0 0 1px rgba(120,160,230,.25) !important}
 html.theme-pawa.pawa-dark .tabbar::before{background:radial-gradient(120% 70% at 18% -10%,rgba(160,195,255,.28),transparent 55%),radial-gradient(90% 60% at 100% 120%,rgba(120,160,230,.15),transparent 60%) !important}
 html.theme-pawa.pawa-dark .tabbar button{color:rgba(220,230,248,.7) !important}
-html.theme-pawa.pawa-dark .tabbar button[aria-selected="true"]{color:#13264A !important}
+html.theme-pawa.pawa-dark .tabbar button[aria-selected="true"]:not(#z){color:#13264A !important}
+/* 開いているタブ（黄色のレンズ）：夜も昼と同じ明るい黄色に（暗い紺の上で透けて濁った黄土色になり、文字が読みにくかった）。
+   アイコンも文字と同じ紺に（白は黄色の上で見えにくい。ほかの3つの見た目もアイコンと文字は同じ色） */
+html.theme-pawa.pawa-dark .tabbar .lens{background:radial-gradient(120% 90% at 50% 0%,rgba(255,246,190,.99),rgba(255,218,90,.97) 58%,rgba(250,196,40,.96)) !important}
+html.theme-pawa .tabbar button[aria-selected="true"] svg:not(#z),html.theme-pawa.pawa-dark .tabbar button[aria-selected="true"] svg:not(#z){color:#13264A !important}
 html.theme-pawa.pawa-dark .minibar{background:linear-gradient(180deg,rgba(60,96,170,.55),rgba(22,36,63,.7)),rgba(11,23,51,.35) !important;box-shadow:0 10px 26px rgba(0,0,0,.4),inset 0 1px 0 rgba(170,200,255,.35) !important;color:#E7EEF9}
 html.theme-pawa.pawa-dark .minibar *{color:inherit}
 html.theme-pawa.pawa-dark .sheet-card{background:linear-gradient(180deg,rgba(40,66,120,.92),rgba(20,33,60,.9) 40%),rgba(11,23,51,.5) !important;box-shadow:0 20px 50px rgba(0,0,0,.5),inset 0 1px 0 rgba(170,200,255,.35) !important;color:#E7EEF9}
