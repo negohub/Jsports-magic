@@ -1209,6 +1209,15 @@ def parse_transfer(html, season):
             continue
         for tr in tb.find_all("tr"):
             c = [re.sub(r"\s+", " ", norm(td.get_text(" "))).strip() for td in tr.find_all(["td", "th"])]
+            # 入団のうち「育成から支配下」は支配下登録（今季の1月から）。それ以外の入団は取らない
+            if len(c) >= 5 and c[1] == "入団" and re.search(r"育成.{0,8}支配下|支配下.{0,8}育成", c[4]):
+                m0 = re.match(r"(\d{4})/(\d{1,2})/(\d{1,2})", c[0])
+                if m0:
+                    d0 = f"{int(m0.group(1)):04d}-{int(m0.group(2)):02d}-{int(m0.group(3)):02d}"
+                    nm0 = c[2].replace("※", "").strip()
+                    if d0 >= f"{season}-01-01" and nm0:
+                        out.append({"t": t, "n": nm0, "dev": False, "kind": "promote", "date": d0, "note": c[4]})
+                continue
             if len(c) < 5 or c[1] != "退団":
                 continue
             m = re.match(r"(\d{4})/(\d{1,2})/(\d{1,2})", c[0])
@@ -1311,6 +1320,11 @@ def fetch_bbc(season):
     return url, got
 
 
+def okey(n):
+    """照らし合わせ用：空白なし・外国人の名前の頭の「F・」「J.」なども外す（「F・グズマン」と「グズマン」は同じ人）"""
+    return squash(re.sub(r"^\s*[A-Za-z]{1,2}\s*[・.．]\s*", "", norm(n or "")))
+
+
 def merge_transfer(off, season, rosters, now=None):
     """スポナビの入退団情報を、オフシーズン情報に足す（すでに球団の発表から見つけている選手はそのまま。種類が変わったときだけ直す）"""
     now = now or datetime.now(JST)
@@ -1327,16 +1341,16 @@ def merge_transfer(off, season, rosters, now=None):
     have = set()
     uniq = []
     for x in got + bbc:   # 同じ選手は1回だけ（スポナビが先）
-        k = (x["t"], squash(x["n"]))
+        k = (x["t"], okey(x["n"]))
         if k not in have:
             have.add(k); uniq.append(x)
     got = uniq
     print(f"[戦力外の一覧（ベースボールチャンネル）] {bbc_url or '見つからない'}：今オフ {len(bbc)}件")
-    items = {(x["t"], squash(x["n"])): x for x in off.get("items") or []}
+    items = {(x["t"], okey(x["n"])): x for x in off.get("items") or []}
     add = upd = 0
     for x in got:
-        ro = next((r for r in rosters.get(x["t"]) or [] if squash(r.get("n", "")) == squash(x["n"])), None)
-        key = (x["t"], squash(x["n"]))
+        ro = next((r for r in rosters.get(x["t"]) or [] if okey(r.get("n", "")) == okey(x["n"])), None)
+        key = (x["t"], okey(x["n"]))
         cur = items.get(key)
         if cur:
             # 戦力外→引退などに変わったとき（新しい日付のとき）だけ直す。移籍・監督などの項目には手を出さない
@@ -1353,7 +1367,7 @@ def merge_transfer(off, season, rosters, now=None):
     # 同じ球団・同じ選手（名前の空白の有無だけ違うもの）・同じ種類は1つにまとめる
     uniq = {}
     for x in items.values():
-        uniq.setdefault((x["t"], squash(x["n"]), x.get("kind")), x)
+        uniq.setdefault((x["t"], okey(x["n"]), x.get("kind")), x)
     off["items"] = sorted(uniq.values(), key=lambda x: (x["date"], x["t"], x["n"]), reverse=True)
     off["transfer"] = {"at": now.isoformat(timespec="seconds"), "rows": len(got) if (html or bbc) else "開けない", "added": add, "bbc": len(bbc)}
     print(f"[入退団情報（スポナビ）] 今オフの退団 {len(got) if html else '開けない'}件 → 追加 {add}人・種類の更新 {upd}人")
