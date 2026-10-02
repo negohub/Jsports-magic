@@ -2124,6 +2124,40 @@ async def promote_check(browser):
     await pg.close()
 
 
+async def tab_lens_check(browser):
+    """開いているタブの文字とアイコンが、その下の実際の地（レンズ）の上で読めるか（4つの見た目すべて・画面の色を実際に読む）"""
+    import io
+    from PIL import Image
+    def lum(c):
+        f = lambda x: x / 12.92 if x <= .03928 else ((x + .055) / 1.055) ** 2.4
+        r, g, b = [v / 255 for v in c[:3]]
+        return .2126 * f(r) + .7152 * f(g) + .0722 * f(b)
+    def ratio(a, b):
+        la, lb = lum(a), lum(b)
+        return (max(la, lb) + .05) / (min(la, lb) + .05)
+    for theme, scheme, label in [("pawa", "light", "パワプロ風（昼）"), ("pawa", "dark", "パワプロ風（夜）"), ("", "dark", "スタイリッシュ（黒）"), ("", "light", "スタイリッシュ（白）")]:
+        ctx = await browser.new_context(viewport={"width": 390, "height": 844}, color_scheme=scheme, device_scale_factor=2)
+        pg = await ctx.new_page()
+        await pg.add_init_script(f"localStorage.setItem('me','S'); localStorage.setItem('theme','{theme}'); localStorage.setItem('mode','auto'); localStorage.setItem('league','C')")
+        await pg.goto(URL); await pg.wait_for_timeout(1000)
+        for tab in ["magic", "song"]:
+            await pg.evaluate(f"setTab('{tab}')"); await pg.wait_for_timeout(900)
+            fg = await pg.evaluate("""() => { const b = document.querySelector('.tabbar button[aria-selected="true"]'); const p = s => getComputedStyle(s).color.match(/\\d+/g).map(Number);
+              const r = e => { const x = e.getBoundingClientRect(); return [x.left, x.top, x.width, x.height]; };
+              return { tl: p(b.querySelector('.tl')), sv: p(b.querySelector('svg')), rt: r(b.querySelector('.tl')), rs: r(b.querySelector('svg')) }; }""")
+            await pg.add_style_tag(content=".tabbar button .tl,.tabbar button svg{visibility:hidden !important}")
+            await pg.wait_for_timeout(150)
+            img = Image.open(io.BytesIO(await pg.screenshot())).convert("RGB")
+            for key, rect, need, what in [("tl", "rt", 4.5, "文字"), ("sv", "rs", 3.0, "アイコン")]:
+                x, y, w, h = fg[rect]
+                px = [img.getpixel((int((x + w * i / 6) * 2), int((y + h * j / 4) * 2))) for i in range(1, 6) for j in range(1, 4)]
+                worst = min(ratio(fg[key], c) for c in px)
+                if worst < need:
+                    bad(f"[開いているタブ {label} {tab}] {what}が下の地に埋もれる（比 {worst:.2f}、必要 {need}）")
+            await pg.evaluate("document.querySelectorAll('style').forEach(s => { if (s.textContent.includes('visibility:hidden !important') && s.textContent.includes('.tabbar button .tl')) s.remove(); })")
+        await ctx.close()
+
+
 async def player_today_check(browser):
     """選手の画面：今日の試合（試合中・試合後）に出ていれば、その試合の成績をいちばん上に出す"""
     pg, errs = await open_page(browser, 390, "pawa")
@@ -2622,6 +2656,7 @@ async def main():
         await live_off_check(browser)
         await off_pos_check(browser)
         await promote_check(browser)
+        await tab_lens_check(browser)
         await player_today_check(browser)
         await runner_request_check(browser)
         await peek_check(browser)
