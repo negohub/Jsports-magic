@@ -47,7 +47,7 @@
 <meta name="twitter:description" content="セ・パ12球団の戦況・マジック・試合速報・順位・成績・応援歌・オフシーズン情報">
 <meta name="twitter:image" content="https://negohub.github.io/hobby-baseball/ogp.png">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="build" content="20261001171351">
+<meta name="build" content="20261002030318">
 <style>
 :root{
   --bg:#000; --p1:#101010; --p2:#1A1A1A; --line:#2B2B2B; --line2:#1F1F1F;
@@ -3226,6 +3226,7 @@ html.sty-light:not(.theme-pawa) .tgo em:not(#z):not(#y):not(#x){color:#fff !impo
 html.sty-light:not(.theme-pawa) .preq{background:#FFE680;color:#FFFFFF}
 html.sty-light:not(.theme-pawa) .offtag.k-coach_in:not(#z):not(#y),html.sty-light:not(.theme-pawa) .offtag.k-coach_move:not(#z):not(#y){background:#1B7F3B !important;color:#fff !important}
 html.sty-light:not(.theme-pawa) .bk-rule b{color:#AA8A0E}
+html.sty-light:not(.theme-pawa) .offtag.k-promote{background:#1B7F3B !important;color:#fff !important}
 /* ===== 文字の読みやすさ（contrast_fix.py） ===== */
 html.theme-pawa:not(.pawa-dark) .pl3 .pcn:not(#z){color:#576B8D !important}
 html.theme-pawa:not(.pawa-dark) .rbi:not(#z){background:linear-gradient(180deg,#1C842E,#198634) !important}
@@ -3562,6 +3563,7 @@ html.theme-pawa:not(.pawa-dark) .bk-rule b{color:#8A5A00}
 html.sty-light:not(.theme-pawa) .bk-rule{background:#FFF8DC;border-color:#E9CF7A;color:#15161A}
 html.sty-light:not(.theme-pawa) .bk-rule b{color:#7A5200}
 html.theme-pawa.pawa-dark .bk-rule b{color:#FFD84D}
+.offtag.k-promote{background:#1B7F3B !important;color:#fff !important}
 </style>
 </head>
 <body>
@@ -6707,7 +6709,7 @@ async function liveStats(key) {
   if (res.some(Boolean) && S.tab === "stats") renderStats(true);
 }
 // ================= 今オフの戦力外・引退（各球団の公式発表を自動で集めたもの） =================
-const OFF_LABEL = { cut: "戦力外", offer: "戦力外", leave: "退団", retire: "引退", mgr: "退任", out: "移籍", fa_decl: "FA宣言", in: "加入", draft: "ドラフト",
+const OFF_LABEL = { promote: "支配下", cut: "戦力外", offer: "戦力外", leave: "退団", retire: "引退", mgr: "退任", out: "移籍", fa_decl: "FA宣言", in: "加入", draft: "ドラフト",
   coach_out: "退団", coach_in: "就任", coach_move: "配置転換" };
 const OFF_IN = new Set(["in", "draft", "coach_in"]);
 const OFF_STAFF = new Set(["mgr", "coach_out", "coach_in", "coach_move"]);   // 首脳陣（監督・コーチ）   // 入団する選手（ほかは退団・残るかどうか未定）
@@ -6740,17 +6742,25 @@ function offUniq(list) {
   for (const x of list) { const k = x.t + "|" + nk(x.n) + "|" + x.kind; const c = m.get(k); if (!c || (x.date || "") > (c.date || "")) m.set(k, x); }
   return [...m.values()];
 }
+// 照らし合わせ用の名前：空白をなくし、外国人の名前の頭の「F・」「J.」なども外す（「F・グズマン」と「グズマン」は同じ人）
+const nkOff = n => nk(String(n || "").normalize("NFKC").replace(/^\s*[A-Za-z]{1,2}\s*[・.．]\s*/, ""));
 function offMerged() {
-  const base = ((DATA && DATA.offseason) || {}).items || [];
+  // データの中で同じ選手の同じ種類が2回あるとき（球団の発表とスポナビ・ベースボールチャンネルで名前の書き方が違う）は1回に（背番号のある方を残す）
+  const pick = new Map();
+  for (const x of ((DATA && DATA.offseason) || {}).items || []) {
+    if (OFF_STAFF.has(x.kind)) { pick.set(Symbol(), x); continue; }
+    const key = x.t + "|" + String(x.kind).replace(/^(offer|leave)$/, "cut") + "|" + nkOff(x.n), cur = pick.get(key);
+    if (!cur || (!cur.no && x.no)) pick.set(key, x);
+  }
+  const base = [...pick.values()];
   if (!LIVE_OFF.items.length) return base;
-  const have = new Set(base.map(x => x.t + "|" + nk(x.n)));
+  const have = new Set(base.map(x => x.t + "|" + nkOff(x.n)));
   const add = [];
   for (const x of LIVE_OFF.items) {
-    const key = x.t + "|" + nk(x.n);
+    const key = x.t + "|" + nkOff(x.n);
     if (!TEAM[x.t] || have.has(key)) continue;
-    have.add(key);   // 同じ選手が2回以上来ても1回だけ（元の一覧が複数ページで同じ表をくり返すことがある）
-    have.add(x.t + "|" + nk(x.n));   // 最新の一覧の中で同じ選手が何度出てきても1回だけ
-    const ro = ((DATA.rosters || {})[x.t] || []).find(r => nk(r.n) === nk(x.n));
+    have.add(key);   // 同じ選手が2回以上来ても1回だけ
+    const ro = ((DATA.rosters || {})[x.t] || []).find(r => nkOff(r.n) === nkOff(x.n));
     add.push({ t: x.t, n: ro ? ro.n : x.n, no: ro ? ro.no : "", dev: ro ? !!ro.dev : !!x.dev, kind: x.kind, date: x.date,
       url: x.url || "https://baseball.yahoo.co.jp/npb/transfer", title: x.src === "bbc" ? "ベースボールチャンネル 戦力外・引退一覧" : "スポーツナビ 入退団情報", src: "live" });
   }
@@ -6774,8 +6784,9 @@ const offTag = (t, name) => { const o = offOf(t, name); return o ? `<span class=
 // 出す期間：9月後半〜12月（発表があれば9月前半でも）
 function offSeason() { const j = jst(); return (j.m === 9 && j.d >= 15) || j.m >= 10; }
 // オフの動きの種類（上のボタンで絞り込む）
-const OFF_CATS = [["all", "すべて"], ["cut", "戦力外"], ["retire", "引退"], ["staff", "首脳陣"], ["trade", "トレード"], ["fa", "FA"], ["draft", "ドラフト"], ["newfor", "新外国人"], ["move", "そのほかの移籍"]];
+const OFF_CATS = [["all", "すべて"], ["cut", "戦力外"], ["retire", "引退"], ["staff", "首脳陣"], ["trade", "トレード"], ["fa", "FA"], ["draft", "ドラフト"], ["newfor", "新外国人"], ["promote", "支配下登録"], ["move", "そのほかの移籍"]];
 function offCat(x) {
+  if (x.kind === "promote") return "promote";
   if (x.kind === "cut" || x.kind === "offer" || x.kind === "leave") return "cut";
   if (OFF_STAFF.has(x.kind)) return "staff";
   if (x.kind === "retire" || x.kind === "draft") return x.kind;
@@ -6818,6 +6829,7 @@ function renderOff() {
     : x.kind === "coach_out" ? `${x.role || "コーチ"}・今季限りで退団`
     : x.kind === "coach_in" ? `${x.role || "コーチ"}に就任`
     : x.kind === "coach_move" ? `${x.role || "コーチ"}から配置転換`
+    : x.kind === "promote" ? "育成から支配下登録"
     : x.kind === "mgr" ? (x.mid ? "シーズン途中で辞任" : "今季限りで退任") : x.kind === "retire" ? "現役引退" : x.kind === "leave" ? "退団" : x.kind === "offer" ? "来季の契約を結ばない（育成で再契約を打診）" : x.dev ? "育成選手の来季の契約を結ばない" : "来季の契約を結ばない";
   const teams = calOrder().filter(t => CL.includes(t));
   const has = teams.filter(t => items.some(x => x.t === t)), none = teams.filter(t => !items.some(x => x.t === t));
