@@ -1257,9 +1257,9 @@ async def weather_stop_check(browser):
         print("  （中継プログラムの試験は、worker/worker.js がないため省略）")
         return
     import subprocess, tempfile
-    src = wk.read_text(encoding="utf-8") + "\nexport { weatherOf, headerOf, parse, parseGame };\n"
+    src = wk.read_text(encoding="utf-8") + "\nexport { weatherOf, headerOf, parse, parseGame, fixDoublePlays };\n"
     test = r"""
-import { weatherOf, headerOf, parse, parseGame } from "./w.mjs";
+import { weatherOf, headerOf, parse, parseGame, fixDoublePlays } from "./w.mjs";
 const ok = (n, got, want) => { if (JSON.stringify(got) !== JSON.stringify(want)) console.log("NG " + n + " " + JSON.stringify(got)); };
 const k = l => (weatherOf(l) || {}).kind || null;
 ok("中断", k(["19:05 降雨のため試合中断"]), "中断");
@@ -1277,6 +1277,12 @@ const pg = (status, extra) => `<html><body><div>セ・リーグ 25回戦</div><d
 ok("試合前のページ（ニュース・ほかの試合に中止・中断）", (parseGame(pg("18:00")) || {}).w || null, null);
 ok("見出しに試合中止", ((parseGame(pg("試合中止")) || {}).w || {}).kind, "中止");
 ok("本文の降雨中断", ((parseGame(pg("3 - 1", "<p>5回裏</p><p>19:05 降雨のため試合中断</p>")) || {}).w || {}).kind, "中断");
+// 併殺打：テキスト速報のダブルプレーを、出場成績の「三ゴロ」→「三併打」に。ゲッツー崩れ・三振ゲッツー・すでに「併」付きは変えない
+{ const t = `<h2>テキスト速報</h2><h1>1回裏</h1><ol><li><p>5番 大山 悠輔 一死満塁</p><p>5-4-3のダブルプレー 3アウト</p></li><li><p>4番 佐藤 輝明 無死満塁</p><p>空振り三振 盗塁失敗でダブルプレー</p></li><li><p>3番 森下 翔太 無死一塁</p><p>ショートゴロ ゲッツー崩れ</p></li><li><p>2番 中野 拓夢 無死一塁</p><p>セカンドゴロ併殺打</p></li></ol>`;
+  const d = parseGame(t), nm = x => (x || "").normalize("NFKC").replace(/\\s+/g, "");
+  const box = { lineups: [[], [{ name: "大山 悠輔", inn: ["三ゴロ"] }, { name: "佐藤 輝明", inn: ["空三振"] }, { name: "森下 翔太", inn: ["遊ゴロ"] }, { name: "中野 拓夢", inn: ["二併打"] }]] };
+  fixDoublePlays(box, d.dps, nm);
+  ok("併殺打", box.lineups[1].map(r => (r.results || r.inn).join(",")), ["三併打", "空三振", "遊ゴロ", "二併打"]); }
 const g = parse('<a href="/scores/2026/0929/t-s-24/">阪神 1 - 0 ヤクルト 5回表 中断 降雨</a><a href="/scores/2026/0929/g-c-25/">巨人 - 広島 中止</a>');
 ok("NPB 中断", [g[0].st, g[0].w && g[0].w.kind], ["live", "中断"]);
 ok("NPB 中止", g[1].st, "canc");
@@ -2232,6 +2238,24 @@ async def pos_icon_check(browser):
           ['pp', 'pc', 'pi', 'po'].forEach(same);
           if (lu.querySelector('td.lp')) ng.push('打順の表に、名前の左の守備位置の列が残っている');
           lu.remove();
+          // 今の打者の印（▶）は行の頭に1つだけ。盗塁成功の札。「三併打」は凡打の色
+          { const gg = { d: '2026-10-02', h: 'S', a: 'G', st: 'live', hs: 0, as: 0 }, k = gg.d + gkey(gg), atkName = Object.keys(YSHORT).find(x => YSHORT[x] === 'G');
+            PD[k] = { half: '1回表', attack: atkName, batter: { name: ro[0].n } };
+            const rr = [{ order: 1, pos: '中', starter: true, name: ro[0].n, avg: '.250', results: ['三併打', '左安'], sb: '1' }, { order: 2, pos: '走', starter: false, name: ro[1].n, avg: '.250', results: [], sb: '2' }];
+            const saveLu = S.lu[k]; S.lu[k] = 'G';
+            const w = document.createElement('div'); w.innerHTML = lineupHTML(gg, { lineups: [rr, rr] }); document.getElementById('v-magic').prepend(w);
+            const cur = w.querySelector('tr.cur');
+            if (!cur) ng.push('今の打者の行が出ない');
+            else { const marks = [...cur.querySelectorAll('*')].filter(e => getComputedStyle(e, '::before').content.includes('▶')).length;
+              if (marks !== 1) ng.push(`今の打者の印（▶）が${marks}個（1個だけのはず）`);
+              if (getComputedStyle(cur.querySelector('.posic'), '::before').content.includes('▶') || getComputedStyle(cur.querySelector('.lnm .ptile:not(.posic)'), '::before').content.includes('▶')) ng.push('名前・守備位置の札の中に▶が付いている'); }
+            const sbs = [...w.querySelectorAll('tr')].map(t => t.querySelectorAll('.rc.sb').length);
+            if (sbs.join() !== '1,2') ng.push(`盗塁成功の札の数が違う（${sbs}）`);
+            if (![...w.querySelectorAll('.rc.sb')].every(e => e.textContent === '盗塁成功')) ng.push('盗塁成功の札の文字が違う');
+            const dp = [...w.querySelectorAll('.rc')].find(e => e.textContent === '三併打');
+            if (!dp || !dp.classList.contains('o')) ng.push('「三併打」が凡打の色になっていない');
+            const leg = document.createElement('div'); leg.innerHTML = RES_LEGEND; if (![...leg.querySelectorAll('.sb')].length) ng.push('見方に盗塁成功がない');
+            w.remove(); delete PD[k]; if (saveLu === undefined) delete S.lu[k]; else S.lu[k] = saveLu; }
           // スタメン
           const so = DATA.rosters.S;
           PRE['2026-10-02|S|G'] = { lu: { h: { bat: so.slice(0, 2).map((r, i) => ({ o: i + 1, pos: '三', n: r.n, avg: '.3' })) }, a: { bat: [] } } };
