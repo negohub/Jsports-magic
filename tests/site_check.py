@@ -924,9 +924,9 @@ async def offseason_check(browser):
                   DATA.offseason = { season: 2026, checked_at: '2026-09-29T15:00:00+09:00', items: items.concat([bogus]), teams: {}, seen: {}, mgr_rec: mgrRec };
                   jst = () => ({ y: 2026, m: 10, d: 1, iso: '2026-10-01' });
                   renderAll(); setTab('off');
-                  const tb = document.querySelector('.tabbar button[data-tab="off"]'), blk = document.getElementById('v-off');
-                  if (tb.hidden || blk.hidden) { ng.push('戦力外のタブが出ない'); return ng; }
-                  if (getComputedStyle(document.querySelector('.tabbar nav')).gridTemplateColumns.split(' ').length !== 8) ng.push('タブが8つ並んでいない（記録のタブを入れて8つ）');
+                  const tb = document.querySelector('#subNav button[data-p="off"]'), blk = document.getElementById('v-off');
+                  if (!tb || document.getElementById('subNav').hidden || blk.hidden) { ng.push('「選手」の中に入退団の切り替えが出ない'); return ng; }
+                  if (getComputedStyle(document.querySelector('.tabbar nav')).gridTemplateColumns.split(' ').length !== 5) ng.push('下のタブが5つ並んでいない');
                   const tbb = [...document.querySelectorAll('.tabbar button:not([hidden])')].map(b => b.getBoundingClientRect());
                   if (tbb.some((b, i) => i && b.left < tbb[i - 1].right - 1)) ng.push('タブのボタンが重なっている');
                   if (tbb.some(b => b.right > innerWidth)) ng.push('タブバーが画面からはみ出している');
@@ -1036,9 +1036,9 @@ async def offseason_check(browser):
                   const keep = DATA.offseason, keepJst = jst;
                   setTab('off'); DATA.offseason = null; jst = () => ({ y: 2026, m: 6, d: 1, iso: '2026-06-01' }); renderAll();
                   const ng = [];
-                  if (!document.querySelector('.tabbar button[data-tab="off"]').hidden) ng.push('オフでないのに戦力外のタブが出ている');
-                  if (getComputedStyle(document.querySelector('.tabbar nav')).gridTemplateColumns.split(' ').length !== 7) ng.push('タブが7つに戻らない（記録のタブを入れて7つ）');
-                  if (S.tab !== 'magic') ng.push('戦力外のタブが消えたのに、その画面のまま');
+                  if (document.querySelector('#subNav button[data-p="off"]') || !document.getElementById('subNav').hidden) ng.push('オフでないのに入退団の切り替えが出ている');
+                  if (getComputedStyle(document.querySelector('.tabbar nav')).gridTemplateColumns.split(' ').length !== 5) ng.push('下のタブが5つのままでない');
+                  if (S.tab !== 'song') ng.push('入退団が消えたのに、その画面のまま（応援歌に戻るはず）');
                   if (tabOrder().includes('off')) ng.push('消えたタブにスワイプで行ける');
                   DATA.offseason = keep; jst = keepJst; renderAll();   // 元に戻す
                   return ng;
@@ -2134,8 +2134,8 @@ async def promote_check(browser):
         { t, n: ro[0].n, no: ro[0].no, dev: false, kind: 'promote', date: '2026-03-11', pos: ro[0].p, no_dev: '128', url: 'https://npb.jp/announcement/2026/pn_registered.html', title: 'x' },
         { t, n: ro[1].n, no: ro[1].no, dev: false, kind: 'cut', date: '2026-09-29', url: 'u', title: 'x' }] };
       jst = () => ({ y: 2026, m: 10, d: 2, iso: '2026-10-02' }); renderAll(); setTab('off'); S.offCat = 'all'; renderOff();
-      const tl = document.querySelector('.tabbar button[data-tab="off"] .tl');
-      if (!tl || tl.textContent !== '入退団') ng.push(`タブの名前が「入退団」でない（${tl && tl.textContent}）`);
+      const tl = document.querySelector('#subNav button[data-p="off"]');
+      if (!tl || tl.textContent !== '入退団') ng.push(`切り替えの名前が「入退団」でない（${tl && tl.textContent}）`);
       if (/オフ/.test(document.getElementById('offHead').textContent)) ng.push('見出しに「オフ」が残っている');
       const box = [...document.querySelectorAll('#offList .ofteam')].find(e => e.querySelector('.ofh').textContent.includes(fn(t)));
       if (!box) { ng.push('球団の欄がない'); return ng; }
@@ -2351,15 +2351,52 @@ async def rec_check(browser):
           await new Promise(r => setTimeout(r, 600));
           if (!/読み込(み中|めませんでした)/.test(txt())) ng.push('読み込めないときの知らせがない');
           REC = keep; renderRec();
-          // タブが8つでも名前が収まる
-          document.querySelector('.tabbar button[data-tab="off"]').hidden = false; syncOffTab();
-          for (const b of document.querySelectorAll('.tabbar button:not([hidden]) .tl')) if (b.scrollWidth > b.clientWidth + 1 || b.getBoundingClientRect().width > b.closest('button').getBoundingClientRect().width + 1) ng.push(`タブの名前がはみ出す（${b.textContent}）`);
-          if (document.querySelector('.tabbar nav').style.getPropertyValue('--tabs') !== String(document.querySelectorAll('.tabbar button:not([hidden])').length)) ng.push('タブの数とタブバーの列の数が合わない');
+          // 下のタブの名前が収まる
+          for (const b of document.querySelectorAll('.tabbar button .tl')) if (b.scrollWidth > b.clientWidth + 1 || b.getBoundingClientRect().width > b.closest('button').getBoundingClientRect().width + 1) ng.push(`タブの名前がはみ出す（${b.textContent}）`);
           return ng; }""")
         for m in r:
             bad(f"[歴代記録 {'パワプロ風' if th else 'スタイリッシュ'}] {m}")
         for e in errs:
             bad(f"[歴代記録]: 画面のエラー {e}")
+        await pg.close()
+
+
+async def tab_group_check(browser):
+    """下のタブは5つ（戦況・試合・順位・データ・選手）で、季節で数が変わらない。グループの中は上の切り替え（今日｜日程・今季｜歴代・応援歌｜入退団）。
+    タブを押すと最後に開いていたページへ。今のタブをもう一度押すといちばん上へ。スワイプはページの順。開き直しても最後のページを覚えている"""
+    for th in ["pawa", ""]:
+        pg, errs = await open_page(browser, 390, th)
+        r = await pg.evaluate("""async () => { const ng = [];
+          const names = [...document.querySelectorAll('.tabbar button')].map(b => b.querySelector('.tl').textContent).join();
+          if (names !== '戦況,試合,順位,データ,選手') ng.push(`下のタブの並び・名前が違う（${names}）`);
+          const click = g => document.querySelector(`.tabbar button[data-grp="${g}"]`).click();
+          const sub = () => [...document.querySelectorAll('#subNav:not([hidden]) button')].map(b => b.textContent + (b.getAttribute('aria-pressed') === 'true' ? '*' : '')).join();
+          click('game'); if (S.tab !== 'game' || sub() !== '今日*,日程') ng.push(`試合：${S.tab} ${sub()}`);
+          document.querySelector('#subNav button[data-p="cal"]').click(); if (S.tab !== 'cal' || sub() !== '今日,日程*') ng.push(`日程に切り替わらない（${S.tab} ${sub()}）`);
+          if (document.querySelector('.tabbar button[aria-selected="true"]').dataset.grp !== 'game') ng.push('日程のときに「試合」のタブが選ばれていない');
+          click('data'); if (S.tab !== 'stats' || sub() !== '今季*,歴代') ng.push(`データ：${S.tab} ${sub()}`);
+          document.querySelector('#subNav button[data-p="rec"]').click(); if (S.tab !== 'rec') ng.push('歴代に切り替わらない');
+          click('std'); if (S.tab !== 'std' || !document.getElementById('subNav').hidden) ng.push('順位で上の切り替えが出ている');
+          click('game'); if (S.tab !== 'cal') ng.push(`試合を押すと最後に開いていた日程に戻らない（${S.tab}）`);
+          click('data'); if (S.tab !== 'rec') ng.push(`データを押すと最後に開いていた歴代に戻らない（${S.tab}）`);
+          window.scrollTo(0, 400); click('data'); await new Promise(r => setTimeout(r, 700));
+          if (S.tab !== 'rec' || scrollY > 5) ng.push(`今のタブをもう一度押してもいちばん上に戻らない（${S.tab} ${scrollY}）`);
+          if (JSON.parse(localStorage.getItem('sub-v1') || '{}').game !== 'cal') ng.push('最後に開いていたページを端末に覚えていない');
+          const ord = tabOrder().join(); if (!/^magic,game,cal,std,stats,rec,song/.test(ord)) ng.push(`スワイプの順が違う（${ord}）`);
+          // 季節で下のタブの数が変わらない
+          const cols = () => getComputedStyle(document.querySelector('.tabbar nav')).gridTemplateColumns.split(' ').length;
+          if (cols() !== 5) ng.push(`下のタブが5列でない（${cols()}）`);
+          click('player'); const withOff = sub();
+          if (OFF_SHOWN && withOff !== '応援歌*,入退団') ng.push(`選手：${withOff}`);
+          if (!OFF_SHOWN && !document.getElementById('subNav').hidden) ng.push('入退団がない時期に上の切り替えが出ている');
+          const tbb = [...document.querySelectorAll('.tabbar button')].map(b => b.getBoundingClientRect());
+          if (tbb.some((b, i) => i && b.left < tbb[i - 1].right - 1) || tbb.some(b => b.right > innerWidth)) ng.push('下のタブが重なる・はみ出す');
+          const sb = [...document.querySelectorAll('#subNav button')].map(b => b.getBoundingClientRect().width); if (sb.length && Math.max(...sb) - Math.min(...sb) > 1) ng.push('上の切り替えのボタンの幅がそろっていない');
+          return ng; }""")
+        for m in r:
+            bad(f"[タブの整理 {'パワプロ風' if th else 'スタイリッシュ'}] {m}")
+        for e in errs:
+            bad(f"[タブの整理]: 画面のエラー {e}")
         await pg.close()
 
 
@@ -2866,6 +2903,7 @@ async def main():
         await pos_icon_check(browser)
         await pitch_align_check(browser)
         await rec_check(browser)
+        await tab_group_check(browser)
         await player_today_check(browser)
         await runner_request_check(browser)
         await peek_check(browser)
