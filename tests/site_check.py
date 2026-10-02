@@ -2019,7 +2019,16 @@ async def live_off_check(browser):
       if (it.length !== 3) ng.push(`入退団情報の最新が足されていない（${it.length}人）`);
       if (it.filter(x => x.n === ro[0].n).length !== 1) ng.push('同じ選手が2回入っている');
       if (!it.some(x => x.kind === 'leave')) ng.push('「退団」が入っていない');
+      // 外国人の名前の書き方の違い（「F・グズマン」と「グズマン」）は同じ人。育成から支配下登録も出す
+      DATA.offseason.items.push({ t, n: 'グズマン', no: '042', dev: true, kind: 'cut', date: '2026-10-01', url: 'x' }, { t, n: 'F・グズマン', kind: 'cut', date: '2026-10-01', src: 'sponavi' },
+        { t, n: ro[2].n, no: ro[2].no, kind: 'promote', date: '2026-07-25', url: 'y' });
+      LIVE_OFF.items.push({ t, n: 'F・グズマン', kind: 'cut', date: '2026-10-01', src: 'bbc' });
+      const gz = offItems().filter(x => x.t === t && /グズマン/.test(x.n));
+      if (gz.length !== 1) ng.push(`「F・グズマン」と「グズマン」が別々に出ている（${gz.length}件）`);
+      else if (gz[0].no !== '042') ng.push('同じ人をまとめたとき、背番号のある方が残っていない');
+      if (!offItems().some(x => x.kind === 'promote')) ng.push('育成から支配下登録が出ない');
       jst = () => ({ y: 2026, m: 10, d: 1, iso: '2026-10-01' }); renderAll(); setTab('off'); renderOff();
+      if (!/育成から支配下登録/.test(document.getElementById('offList').innerText)) ng.push('オフの一覧に「育成から支配下登録」が出ない');
       const txt = document.getElementById('offList').innerText;
       if (!txt.includes('退団')) ng.push('オフの一覧に「退団」が出ない');
       LIVE_OFF.items = []; return ng; }""")
