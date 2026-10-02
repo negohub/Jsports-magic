@@ -2110,6 +2110,10 @@ async def promote_check(browser):
       if (!/128 → /.test(box.textContent)) ng.push('育成のときの背番号から新しい背番号への変化が出ない');
       if (offOf(t, ro[0].n)) ng.push('支配下登録の選手に、退団の札（offTag）が付いてしまう');
       if (!offOf(t, ro[1].n)) ng.push('戦力外の選手の札が出なくなった');
+      // 絞り込みのボタンの並び：出ていく人 → 移る人 → 入ってくる人 → 首脳陣
+      const ORDER = ['すべて', '戦力外', '引退', 'トレード', 'FA', 'そのほかの移籍', 'ドラフト', '新外国人', '支配下登録', '首脳陣'];
+      const shown = [...document.querySelectorAll('#offCats button')].map(b => b.textContent);
+      if (shown.join() !== ORDER.filter(x => shown.includes(x)).join()) ng.push(`絞り込みのボタンの並びが違う（${shown}）`);
       S.offCat = 'promote'; renderOff();
       if (!document.querySelector('#offList .k-promote')) ng.push('「支配下登録」で絞り込むと出ない');
       return ng; }""")
